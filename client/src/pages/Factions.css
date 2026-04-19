@@ -1,0 +1,521 @@
+/* ═══════════════════════════════════════════════════════════════
+   FACTIONS PAGE STYLES
+   ═══════════════════════════════════════════════════════════════ */
+
+.factions-page {
+    min-height: 100vh;
+    background: #0d0b14;
+    color: #fff;
+    position: relative;
+    overflow-x: hidden;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ── Background ──────────────────────────────────────────────── */
+.faction-ambient-light {
+    position: absolute;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, #6366f1 0%, transparent 60%);
+    top: -200px;
+    right: 5%;
+    opacity: 0.08;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* ── Nav ─────────────────────────────────────────────────────── */
+.factions-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 28px 50px;
+    position: relative;
+    z-index: 10;
+    border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.factions-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.leave-faction-btn {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #f87171;
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.leave-faction-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
+/* ── Stats Banner ────────────────────────────────────────────── */
+.factions-stats-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    padding: 20px;
+    background: rgba(99, 102, 241, 0.04);
+    border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+    position: relative;
+    z-index: 1;
+}
+
+.faction-stat {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: #a1a1aa;
+}
+.faction-stat strong { color: #fff; font-size: 1rem; }
+
+.faction-stat-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Main Container ──────────────────────────────────────────── */
+.factions-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 50px 100px;
+    position: relative;
+    z-index: 1;
+}
+
+/* ── Loading / Empty States ──────────────────────────────────── */
+.factions-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 100px 0;
+    color: #555;
+}
+
+.factions-loading-ring {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 3px solid rgba(99, 102, 241, 0.15);
+    border-top-color: #6366f1;
+    animation: faction-spin 1s linear infinite;
+}
+@keyframes faction-spin { to { transform: rotate(360deg); } }
+
+.factions-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 100px 20px;
+    text-align: center;
+}
+.empty-emblem {
+    font-size: 3.5rem;
+    opacity: 0.3;
+}
+.factions-empty h3 { font-size: 1.5rem; color: #555; margin: 0; }
+.factions-empty p { color: #444; font-size: 0.95rem; margin: 0; max-width: 400px; }
+
+/* ── Factions Grid ───────────────────────────────────────────── */
+.factions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 24px;
+    margin-top: 40px;
+}
+
+/* ── Faction Card ────────────────────────────────────────────── */
+.faction-card {
+    position: relative;
+    background: rgba(22, 18, 34, 0.8);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+}
+.faction-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(99,102,241,0.05) 0%, transparent 60%);
+    pointer-events: none;
+}
+.faction-card:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 60px rgba(99, 102, 241, 0.15);
+}
+.my-faction-card {
+    border-color: rgba(251, 191, 36, 0.35);
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.08);
+}
+.my-faction-card:hover { border-color: rgba(251, 191, 36, 0.6); }
+
+.faction-rank-number {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #555;
+    letter-spacing: 1px;
+}
+
+.faction-top-crown {
+    position: absolute;
+    top: 12px;
+    right: 46px;
+    color: #fbbf24;
+    filter: drop-shadow(0 0 8px rgba(251,191,36,0.5));
+}
+
+/* Card Top */
+.faction-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+.faction-emblem {
+    font-size: 2.5rem;
+    flex-shrink: 0;
+    line-height: 1;
+    filter: drop-shadow(0 0 12px rgba(99,102,241,0.3));
+}
+.faction-info { flex: 1; }
+.faction-info h3 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin: 0 0 4px;
+    color: #fff;
+    letter-spacing: -0.3px;
+}
+.faction-desc {
+    font-size: 0.8rem;
+    color: #71717a;
+    margin: 0 0 8px;
+    line-height: 1.4;
+}
+.faction-owner-line {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    color: #555;
+}
+.faction-owner-line strong { color: #a1a1aa; }
+
+/* XP Section */
+.faction-xp-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.faction-xp-bar-track {
+    flex: 1;
+    height: 5px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 99px;
+    overflow: hidden;
+}
+.faction-xp-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #818cf8);
+    border-radius: 99px;
+    transition: width 1s ease;
+    box-shadow: 0 0 8px rgba(99,102,241,0.5);
+}
+.faction-xp-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #fbbf24;
+    white-space: nowrap;
+}
+
+/* Card Bottom */
+.faction-card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.faction-members-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.member-pip {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(99,102,241,0.15);
+    border: 1px solid rgba(99,102,241,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #818cf8;
+    transition: all 0.2s;
+}
+.member-pip:hover { background: rgba(99,102,241,0.3); }
+.member-pip.more {
+    background: rgba(255,255,255,0.05);
+    color: #555;
+    font-size: 0.65rem;
+    border-color: rgba(255,255,255,0.05);
+}
+.member-count-label {
+    font-size: 0.72rem;
+    color: #555;
+    margin-left: 4px;
+}
+
+/* Faction Actions */
+.faction-action-area { display: flex; align-items: center; }
+
+.enlist-btn {
+    padding: 8px 18px;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #818cf8;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+}
+.enlist-btn:hover {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.6);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.my-faction-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.25);
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #fbbf24;
+}
+
+/* ── Create Modal ────────────────────────────────────────────── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.faction-modal {
+    background: #100e1a;
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 480px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.7), 0 0 40px rgba(99,102,241,0.1);
+}
+
+.faction-modal-header { text-align: center; }
+.faction-modal-header h3 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin: 10px 0 6px;
+    color: #fff;
+}
+.faction-modal-header p {
+    color: #555;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.emblem-picker label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #555;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 10px;
+}
+.emblems-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+}
+.emblem-btn {
+    aspect-ratio: 1;
+    font-size: 1.3rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.emblem-btn:hover { background: rgba(99,102,241,0.15); transform: scale(1.1); }
+.emblem-btn.selected {
+    background: rgba(99,102,241,0.2);
+    border-color: rgba(99,102,241,0.5);
+    box-shadow: 0 0 12px rgba(99,102,241,0.3);
+    transform: scale(1.15);
+}
+
+.faction-form-group { display: flex; flex-direction: column; gap: 8px; }
+.faction-form-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #71717a;
+}
+
+.faction-input, .faction-textarea {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(99,102,241,0.15);
+    border-radius: 10px;
+    color: white;
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 12px 16px;
+    outline: none;
+    transition: all 0.2s;
+    resize: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+.faction-input:focus, .faction-textarea:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
+.faction-input::placeholder, .faction-textarea::placeholder { color: #444; }
+
+.faction-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+/* ── Shared Utilities (re-used from leaderboard) ─────────────── */
+.factions-page .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+.factions-page .back-btn:hover {
+    background: rgba(255,255,255,0.09);
+    transform: translateX(-4px);
+}
+
+.factions-page .nav-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.factions-page .primary-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    background: rgba(99,102,241,0.15);
+    border: 1px solid rgba(99,102,241,0.3);
+    color: #818cf8;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.factions-page .primary-btn:hover:not(:disabled) {
+    background: rgba(99,102,241,0.25);
+    color: #fff;
+    transform: translateY(-1px);
+}
+.factions-page .primary-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.factions-page .secondary-btn {
+    padding: 10px 22px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #71717a;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.factions-page .secondary-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+.factions-page .glow-btn {
+    box-shadow: 0 0 20px rgba(99,102,241,0.2);
+}
+.factions-page .glow-btn:hover {
+    box-shadow: 0 0 30px rgba(99,102,241,0.35);
+}
+
+/* ── Reused BG from Home ─────────────────────────────────────── */
+.factions-page .bg-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.factions-page .noise-texture {
+    position: absolute; inset: 0;
+    background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+    opacity: 0.1; pointer-events: none;
+}
+.factions-page .grid-background {
+    position: absolute; inset: 0;
+    background-size: 50px 50px;
+    background-image:
+        linear-gradient(to right, rgba(99,102,241,0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(99,102,241,0.05) 1px, transparent 1px);
+}

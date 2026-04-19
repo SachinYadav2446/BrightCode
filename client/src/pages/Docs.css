@@ -1,0 +1,111 @@
+.docs-page {
+  min-height: 100vh;
+  background: var(--bg-dark);
+  color: var(--text-main);
+  padding: 40px 0;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.docs-container {
+  max-width: 1000px;
+  width: 90%;
+  margin: 0 auto;
+}
+
+.docs-header {
+  text-align: center;
+  margin-bottom: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.docs-icon-wrapper {
+  background: rgba(251, 191, 36, 0.1);
+  padding: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+.docs-header h1 {
+  font-size: 2.5rem;
+  letter-spacing: -1px;
+  margin: 0;
+  background: linear-gradient(to right, #fff, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.docs-header p {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+.docs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+}
+
+.doc-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  padding: 30px;
+  border-radius: 16px;
+  transition: var(--transition);
+}
+
+.doc-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(251, 191, 36, 0.3);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8);
+}
+
+.doc-icon {
+  background: rgba(251, 191, 36, 0.1);
+  display: inline-flex;
+  padding: 12px;
+  border-radius: 12px;
+  color: var(--secondary);
+  margin-bottom: 20px;
+}
+
+.doc-card h2 {
+  font-size: 1.3rem;
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.doc-card p {
+  color: #a8a29e;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.doc-card code {
+  background: rgba(0,0,0,0.3);
+  color: #fbbf24;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.docs-footer-note {
+  margin-top: 60px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  opacity: 0.6;
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+}
+
+@media (max-width: 768px) {
+  .docs-grid {
+    grid-template-columns: 1fr;
+  }
+}
