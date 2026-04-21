@@ -25,6 +25,10 @@ const PODIUM_CONFIG = [
 
 const Leaderboard = () => {
     const navigate = useNavigate();
+    const goBackPreserveScroll = () => {
+        if (window.history.length > 1) navigate(-1);
+        else navigate('/');
+    };
     const { user, updateXP } = useAuth();
     const [rankers, setRankers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -126,7 +130,7 @@ const Leaderboard = () => {
 
             {/* Nav */}
             <nav className="leaderboard-nav">
-                <button onClick={() => navigate('/')} className="back-btn">
+                <button onClick={goBackPreserveScroll} className="back-btn">
                     <ArrowLeft size={20} /> Back to Hub
                 </button>
 

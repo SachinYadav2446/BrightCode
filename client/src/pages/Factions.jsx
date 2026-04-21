@@ -12,6 +12,10 @@ const EMBLEMS = ['⚔️', '🛡️', '🔥', '⚡', '🌙', '💎', '🦅', '�
 const Factions = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const goBackPreserveScroll = () => {
+        if (window.history.length > 1) navigate(-1);
+        else navigate('/');
+    };
     const [factions, setFactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [myFactionId, setMyFactionId] = useState(null);
@@ -105,7 +109,7 @@ const Factions = () => {
 
             {/* Nav */}
             <nav className="factions-nav">
-                <button onClick={() => navigate('/')} className="back-btn">
+                <button onClick={goBackPreserveScroll} className="back-btn">
                     <ArrowLeft size={20} /> Back to Hub
                 </button>
                 <div className="nav-title">
