@@ -1,20 +1,9 @@
 .arcade-page {
     min-height: 100vh;
-    /* BLOOD BATH THEME */
-    --blood-0: #050505;
-    --blood-1: #0b0000;
-    --blood-2: #140000;
-    --blood: #dc2626;
-    --blood-dark: #7f1d1d;
-    --blood-hot: #ff3b3b;
-    --steel: rgba(255, 255, 255, 0.09);
-    --steel-hi: rgba(255, 255, 255, 0.16);
-    --text-dim: #b8b2af;
     background:
-        radial-gradient(circle at 15% 15%, rgba(220, 38, 38, 0.14) 0%, transparent 40%),
-        radial-gradient(circle at 80% 55%, rgba(127, 29, 29, 0.12) 0%, transparent 45%),
-        radial-gradient(circle at 40% 100%, rgba(255, 59, 59, 0.08) 0%, transparent 55%),
-        linear-gradient(180deg, var(--blood-2), var(--blood-0));
+        radial-gradient(circle at 18% 18%, rgba(255, 59, 59, 0.14) 0%, transparent 42%),
+        radial-gradient(circle at 86% 68%, rgba(127, 29, 29, 0.12) 0%, transparent 52%),
+        linear-gradient(180deg, #090000, #000);
     display: flex;
     flex-direction: column;
     position: relative;
@@ -22,18 +11,7 @@
 }
 
 .arcade-page::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: 
-        radial-gradient(circle at 20% 30%, rgba(220, 38, 38, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(127, 29, 29, 0.08) 0%, transparent 42%),
-        radial-gradient(circle at 55% 25%, rgba(255, 59, 59, 0.05) 0%, transparent 45%);
-    pointer-events: none;
-    z-index: 0;
+    content: none;
 }
 
 .arcade-page::after {
@@ -44,7 +22,7 @@
     width: 100%;
     height: 100%;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3complete%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    opacity: 0.035;
+    opacity: 0.05;
     pointer-events: none;
     mix-blend-mode: overlay;
     z-index: 1;
@@ -60,7 +38,10 @@
     justify-content: space-between;
     align-items: center;
     padding: 0 40px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(255, 59, 59, 0.22);
     height: 70px;
 }
 
@@ -90,8 +71,8 @@
     text-transform: uppercase;
     letter-spacing: 2px;
     text-shadow:
-        0 0 18px rgba(220, 38, 38, 0.35),
-        0 0 36px rgba(255, 59, 59, 0.18);
+        0 0 18px rgba(255, 59, 59, 0.35),
+        0 0 44px rgba(255, 59, 59, 0.18);
     margin-bottom: 10px;
 }
 
