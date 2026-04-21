@@ -687,6 +687,34 @@
   z-index: 10;
 }
 
+/* Chapter separators between Arena / Hall of Fame / Factions */
+.feature-showcase-section + .feature-showcase-section {
+  padding-top: 92px; /* breathing room for transitions */
+}
+
+.feature-showcase-section + .feature-showcase-section::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 46px;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 255, 255, 0.06) 35%,
+      rgba(255, 255, 255, 0.00) 100%
+    );
+  opacity: 0.85;
+}
+
+.feature-showcase-section + .feature-showcase-section::before {
+  /* Keep existing chapter glows (already on ::before) but add a thin divider line */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
 .showcase-container {
   max-width: 1240px;
   width: 90%;
@@ -706,6 +734,19 @@
 
 .showcase-content.reverse>* {
   direction: ltr;
+}
+
+/* When layout is reversed, right-align the text block */
+.showcase-content.reverse .showcase-text {
+  text-align: right;
+}
+
+.showcase-content.reverse .showcase-badge,
+.showcase-content.reverse .showcase-title,
+.showcase-content.reverse .showcase-description,
+.showcase-content.reverse .showcase-features,
+.showcase-content.reverse .showcase-cta-btn {
+  margin-left: auto;
 }
 
 .showcase-badge {
@@ -1078,15 +1119,241 @@
 
 /* Section separators */
 .arena-section {
-  border-top: 1px solid var(--border-sub);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+  isolation: isolate;
 }
 
 .leaderboard-section {
-  border-top: 1px solid var(--border-sub);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+  isolation: isolate;
 }
 
 .factions-section {
-  border-top: 1px solid var(--border-sub);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+  isolation: isolate;
+}
+
+/* ── Section differentiation (Home) ─────────────────────────────── */
+.arena-section::before,
+.leaderboard-section::before,
+.factions-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 1;
+}
+
+/* ── Sticky chapter scroll (Arena → Hall of Fame → Factions) ────── */
+.arena-section,
+.leaderboard-section,
+.factions-section {
+  position: sticky;
+  top: 64px; /* below fixed navbar */
+  min-height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
+  padding: 70px 0; /* internal breathing room */
+  margin: 0; /* remove inter-section layout gaps */
+}
+
+/* Layering: next section comes "on top" */
+.arena-section { z-index: 10; }
+.leaderboard-section { z-index: 20; }
+.factions-section { z-index: 30; }
+
+/* Ensure chapter backgrounds feel solid when pinned */
+.arena-section,
+.leaderboard-section,
+.factions-section {
+  background: rgba(0, 0, 0, 0.92);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  transition: filter 0.25s ease, transform 0.25s ease;
+}
+
+/* Avoid extra top fade divider for sticky chapters */
+.feature-showcase-section + .feature-showcase-section::after {
+  height: 30px;
+}
+
+/* Cinematic scroll transitions (progressive enhancement) */
+@supports (animation-timeline: view()) {
+  .arena-section,
+  .leaderboard-section,
+  .factions-section {
+    transform-origin: center center;
+    will-change: transform, filter, opacity;
+  }
+
+  /* Each section subtly shrinks + blurs as it scrolls out */
+  .arena-section {
+    animation: chapterExit both linear;
+    animation-timeline: view();
+    animation-range: exit 0% exit 70%;
+  }
+
+  .leaderboard-section {
+    animation: chapterExit both linear;
+    animation-timeline: view();
+    animation-range: exit 0% exit 70%;
+  }
+
+  .factions-section {
+    animation: chapterExit both linear;
+    animation-timeline: view();
+    animation-range: exit 0% exit 70%;
+  }
+
+  @keyframes chapterExit {
+    0% {
+      transform: scale(1);
+      filter: blur(0px) brightness(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(0.965);
+      filter: blur(2.2px) brightness(0.92);
+      opacity: 0.92;
+    }
+  }
+}
+
+/* Blood Bath arena chapter */
+.arena-section::before {
+  background:
+    radial-gradient(circle at 15% 20%, rgba(220, 38, 38, 0.18) 0%, transparent 48%),
+    radial-gradient(circle at 80% 60%, rgba(127, 29, 29, 0.16) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(0,0,0,0.0), rgba(0,0,0,0.6));
+}
+
+.arena-section .showcase-badge {
+  background: rgba(220, 38, 38, 0.10);
+  border-color: rgba(255, 59, 59, 0.28);
+  color: rgba(255, 180, 180, 0.95);
+}
+
+.arena-section .showcase-cta-btn.arena-btn {
+  background: linear-gradient(135deg, #7f1d1d, #ff3b3b);
+  color: #fff;
+  box-shadow: 0 14px 34px rgba(220, 38, 38, 0.28);
+}
+
+.arena-section .showcase-cta-btn.arena-btn:hover {
+  box-shadow: 0 18px 44px rgba(255, 59, 59, 0.34);
+}
+
+/* Hall of Fame chapter (gold) */
+.leaderboard-section::before {
+  background:
+    radial-gradient(circle at 76% 18%, rgba(250, 204, 21, 0.14) 0%, transparent 54%),
+    radial-gradient(circle at 90% 64%, rgba(202, 138, 4, 0.07) 0%, transparent 60%),
+    radial-gradient(circle at 18% 88%, rgba(250, 204, 21, 0.05) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(0,0,0,0.0), rgba(0,0,0,0.55));
+}
+
+.leaderboard-section .showcase-badge {
+  background: rgba(250, 204, 21, 0.08);
+  border-color: rgba(250, 204, 21, 0.22);
+  color: rgba(253, 230, 138, 0.95);
+}
+
+/* Factions chapter (purple) */
+.factions-section::before {
+  background:
+    radial-gradient(circle at 18% 25%, rgba(167, 139, 250, 0.14) 0%, transparent 52%),
+    radial-gradient(circle at 82% 70%, rgba(124, 58, 237, 0.12) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(0,0,0,0.0), rgba(0,0,0,0.55));
+}
+
+.factions-section .showcase-badge {
+  background: rgba(167, 139, 250, 0.08);
+  border-color: rgba(167, 139, 250, 0.22);
+  color: rgba(226, 232, 255, 0.92);
+}
+
+/* ── Arena enter FX overlay ─────────────────────────────────────── */
+.arena-enter-fx {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  pointer-events: none;
+}
+
+.arena-enter-fx__veil {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 59, 59, 0.16) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.92));
+  animation: arenaVeil 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.arena-enter-fx__patches {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 12% 24%, rgba(142, 0, 0, 0.62) 0 11%, transparent 26%),
+    radial-gradient(ellipse at 78% 18%, rgba(166, 10, 14, 0.56) 0 9%, transparent 24%),
+    radial-gradient(ellipse at 63% 42%, rgba(120, 0, 0, 0.58) 0 12%, transparent 30%),
+    radial-gradient(ellipse at 27% 64%, rgba(155, 7, 9, 0.5) 0 10%, transparent 27%),
+    radial-gradient(ellipse at 84% 73%, rgba(170, 20, 20, 0.46) 0 8%, transparent 22%),
+    radial-gradient(ellipse at 42% 84%, rgba(125, 0, 0, 0.5) 0 11%, transparent 26%);
+  filter: blur(6px) saturate(120%);
+  animation: arenaBloodPatches 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.arena-enter-fx__sparks {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.55) 0 1px, transparent 2px),
+    radial-gradient(circle, rgba(255, 153, 51, 0.45) 0 1px, transparent 2px);
+  background-size: 120px 120px, 160px 160px;
+  opacity: 0;
+  animation: arenaSparks 1.2s linear forwards;
+}
+
+.arena-enter-fx__text {
+  position: absolute;
+  top: 34%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-weight: 900;
+  letter-spacing: 4px;
+  font-size: clamp(1rem, 2.2vw, 1.4rem);
+  color: rgba(255, 235, 235, 0.96);
+  text-shadow: 0 0 18px rgba(255, 59, 59, 0.35);
+  opacity: 0;
+  animation: arenaText 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes arenaVeil {
+  0% { opacity: 0; }
+  18% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes arenaBloodPatches {
+  0% { opacity: 0; transform: scale(1.16); }
+  18% { opacity: 0.82; transform: scale(1.02); }
+  60% { opacity: 0.74; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.98); }
+}
+
+@keyframes arenaSparks {
+  0% { opacity: 0; transform: translateY(10px); }
+  25% { opacity: 0.6; }
+  100% { opacity: 0; transform: translateY(-40px); }
+}
+
+@keyframes arenaText {
+  0% { opacity: 0; transform: translate(-50%, -8px); }
+  25% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -10px); }
 }
 
 /* ═════════════════════════════════
@@ -2130,6 +2397,14 @@
   100% {
     transform: translateX(0);
   }
+}
+
+/* Everything below the live headline strip */
+.below-live-heading-dark {
+  background: #000;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .legend-item {

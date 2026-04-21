@@ -59,6 +59,7 @@ const Home = () => {
   const [workspaceHistory, setWorkspaceHistory] = useState([]);
   const [sessionTotalLive, setSessionTotalLive] = useState(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [arenaEnterFx, setArenaEnterFx] = useState(false);
 
   const xp = Number(user?.xp || 0);
   const createdSessions = Number(user?.createdCount ?? localStorage.getItem('created_count') ?? 0);
@@ -156,6 +157,79 @@ const Home = () => {
     const next = [entry, ...workspaceHistory].slice(0, 10);
     setWorkspaceHistory(next);
     localStorage.setItem(historyStorageKey, JSON.stringify(next));
+  };
+
+  const playArenaEnterSound = async () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      // Fight bell + impact style cue.
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.0001, now);
+      master.gain.exponentialRampToValueAtTime(0.26, now + 0.02);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 1.25);
+      master.connect(ctx.destination);
+
+      // Bell body
+      const bell = ctx.createOscillator();
+      bell.type = 'sine';
+      bell.frequency.setValueAtTime(660, now);
+      bell.frequency.exponentialRampToValueAtTime(520, now + 0.6);
+      const bellGain = ctx.createGain();
+      bellGain.gain.setValueAtTime(0.0001, now);
+      bellGain.gain.exponentialRampToValueAtTime(0.24, now + 0.03);
+      bellGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+      bell.connect(bellGain).connect(master);
+
+      // Metallic overtone
+      const overtone = ctx.createOscillator();
+      overtone.type = 'triangle';
+      overtone.frequency.setValueAtTime(1320, now);
+      overtone.frequency.exponentialRampToValueAtTime(980, now + 0.55);
+      const overGain = ctx.createGain();
+      overGain.gain.setValueAtTime(0.0001, now);
+      overGain.gain.exponentialRampToValueAtTime(0.11, now + 0.02);
+      overGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
+      overtone.connect(overGain).connect(master);
+
+      // Short fight hit noise
+      const noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.20), ctx.sampleRate);
+      const data = noiseBuf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+      const noise = ctx.createBufferSource();
+      noise.buffer = noiseBuf;
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.setValueAtTime(1400, now);
+      noiseFilter.Q.setValueAtTime(0.9, now);
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.0, now);
+      noiseGain.gain.linearRampToValueAtTime(0.09, now + 0.03);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+      noise.connect(noiseFilter).connect(noiseGain).connect(master);
+
+      bell.start(now);
+      overtone.start(now);
+      noise.start(now);
+      bell.stop(now + 1.05);
+      overtone.stop(now + 0.95);
+      noise.stop(now + 0.22);
+
+      setTimeout(() => ctx.close().catch(() => {}), 1500);
+    } catch {
+      // ignore audio failures (autoplay / browser policy)
+    }
+  };
+
+  const handleEnterArena = async () => {
+    if (arenaEnterFx) return;
+    setArenaEnterFx(true);
+    playArenaEnterSound();
+    setTimeout(() => navigate('/arcade'), 700);
+    setTimeout(() => setArenaEnterFx(false), 1400);
   };
 
   const joinRoom = async () => {
@@ -297,6 +371,14 @@ const Home = () => {
       </nav>
 
       <main className="landing-container">
+        {arenaEnterFx && (
+          <div className="arena-enter-fx" aria-hidden="true">
+            <div className="arena-enter-fx__veil" />
+            <div className="arena-enter-fx__patches" />
+            <div className="arena-enter-fx__sparks" />
+            <div className="arena-enter-fx__text">ENTERING THE ARENA</div>
+          </div>
+        )}
         {user ? (
           /* ── USER DASHBOARD: MISSION CONTROL ── */
           <motion.section
@@ -673,23 +755,6 @@ const Home = () => {
                 </div>
               </motion.div>
             </div>
-
-            <div className="news-headline-strip" aria-label="Builder headlines">
-              <div className="news-headline-marquee">
-                <div className="news-headline-track">
-                  <span>Rise. Build. Repeat. Every solved challenge levels you up.</span>
-                  <span>Small wins every day become unstoppable momentum.</span>
-                  <span>Stay consistent: one clean session today beats ten planned tomorrow.</span>
-                  <span>Debug with patience, learn with curiosity, ship with confidence.</span>
-                </div>
-                <div className="news-headline-track" aria-hidden="true">
-                  <span>Rise. Build. Repeat. Every solved challenge levels you up.</span>
-                  <span>Small wins every day become unstoppable momentum.</span>
-                  <span>Stay consistent: one clean session today beats ten planned tomorrow.</span>
-                  <span>Debug with patience, learn with curiosity, ship with confidence.</span>
-                </div>
-              </div>
-            </div>
           </motion.section>
         ) : (
           /* ── LANDING PAGE: GHOST VISITOR ── */
@@ -778,80 +843,98 @@ const Home = () => {
           </section>
         )}
 
-        <section className="stats-ticker glass-ticker">
-          <div className="stat"><strong>Real-Time Workspace</strong> <span>Collaborative coding with live sync</span></div>
-          <div className="stat"><strong>Code Arena Modules</strong> <span>CSS, Logic, and React challenge tracks</span></div>
-          <div className="stat"><strong>XP & Streak Tracking</strong> <span>Progress heatmap, streaks, and levels</span></div>
-          <div className="stat"><strong>Faction & Rankings</strong> <span>Team play and Hall of Fame competition</span></div>
-        </section>
+        <div className="below-live-heading-dark">
+          <section className="stats-ticker glass-ticker">
+            <div className="stat"><strong>Real-Time Workspace</strong> <span>Collaborative coding with live sync</span></div>
+            <div className="stat"><strong>Code Arena Modules</strong> <span>CSS, Logic, and React challenge tracks</span></div>
+            <div className="stat"><strong>XP & Streak Tracking</strong> <span>Progress heatmap, streaks, and levels</span></div>
+            <div className="stat"><strong>Faction & Rankings</strong> <span>Team play and Hall of Fame competition</span></div>
+          </section>
 
-        {/* ═══════════════════════════════════════════════════════════
+          <div className="news-headline-strip" aria-label="Builder headlines">
+            <div className="news-headline-marquee">
+              <div className="news-headline-track">
+                <span>Rise. Build. Repeat. Every solved challenge levels you up.</span>
+                <span>Small wins every day become unstoppable momentum.</span>
+                <span>Stay consistent: one clean session today beats ten planned tomorrow.</span>
+                <span>Debug with patience, learn with curiosity, ship with confidence.</span>
+              </div>
+              <div className="news-headline-track" aria-hidden="true">
+                <span>Rise. Build. Repeat. Every solved challenge levels you up.</span>
+                <span>Small wins every day become unstoppable momentum.</span>
+                <span>Stay consistent: one clean session today beats ten planned tomorrow.</span>
+                <span>Debug with patience, learn with curiosity, ship with confidence.</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════════
             FEATURE SHOWCASE SECTIONS - Arena, Leaderboard, Factions
             ═══════════════════════════════════════════════════════════ */}
 
-        {/* Code Arena Showcase */}
-        <motion.section
-          id="arena"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
-          variants={containerVariants}
-          className="feature-showcase-section arena-section"
-        >
-          <div className="showcase-container">
-            <div className="showcase-content">
-              <motion.div variants={itemVariants} className="showcase-text">
-                <div className="showcase-badge">
-                  <Gamepad2 size={16} /> GAMIFIED LEARNING
-                </div>
-                <h2 className="showcase-title">Code Arena</h2>
-                <p className="showcase-description">
-                  Master core programming concepts through interactive challenges.
-                  Battle through CSS layouts, JavaScript logic puzzles, and React architecture quests.
-                  Earn XP, unlock levels, and climb the global rankings.
-                </p>
-                <div className="showcase-features">
-                  <div className="showcase-feature">
-                    <Code2 size={18} className="feature-check" />
-                    <span>CSS Odyssey - Master layouts & styling</span>
+          {/* Code Arena Showcase */}
+          <motion.section
+            id="arena"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={containerVariants}
+            className="feature-showcase-section arena-section"
+          >
+            <div className="showcase-container">
+              <div className="showcase-content">
+                <motion.div variants={itemVariants} className="showcase-text">
+                  <div className="showcase-badge">
+                    <Gamepad2 size={16} /> GAMIFIED LEARNING
                   </div>
-                  <div className="showcase-feature">
-                    <Terminal size={18} className="feature-check" />
-                    <span>Logic Lab - Algorithm challenges</span>
+                  <h2 className="showcase-title">Code Arena</h2>
+                  <p className="showcase-description">
+                    Master core programming concepts through interactive challenges.
+                    Battle through CSS layouts, JavaScript logic puzzles, and React architecture quests.
+                    Earn XP, unlock levels, and climb the global rankings.
+                  </p>
+                  <div className="showcase-features">
+                    <div className="showcase-feature">
+                      <Code2 size={18} className="feature-check" />
+                      <span>CSS Odyssey - Master layouts & styling</span>
+                    </div>
+                    <div className="showcase-feature">
+                      <Terminal size={18} className="feature-check" />
+                      <span>Logic Lab - Algorithm challenges</span>
+                    </div>
+                    <div className="showcase-feature">
+                      <Cpu size={18} className="feature-check" />
+                      <span>React Quest - Component architecture</span>
+                    </div>
                   </div>
-                  <div className="showcase-feature">
-                    <Cpu size={18} className="feature-check" />
-                    <span>React Quest - Component architecture</span>
-                  </div>
-                </div>
-                <button className="showcase-cta-btn arena-btn" onClick={() => navigate('/arcade')}>
-                  Enter the Arena <ChevronRight size={18} />
-                </button>
-              </motion.div>
+                <button className="showcase-cta-btn arena-btn" onClick={handleEnterArena}>
+                    Enter the Arena <ChevronRight size={18} />
+                  </button>
+                </motion.div>
 
-              <motion.div variants={itemVariants} className="showcase-visual">
-                <div className="visual-card glass-morphism">
-                  <div className="arena-preview">
-                    <div className="preview-header">
-                      <div className="preview-dots">
-                        <span className="dot red"></span>
-                        <span className="dot yellow"></span>
-                        <span className="dot green"></span>
+                <motion.div variants={itemVariants} className="showcase-visual">
+                  <div className="visual-card glass-morphism">
+                    <div className="arena-preview">
+                      <div className="preview-header">
+                        <div className="preview-dots">
+                          <span className="dot red"></span>
+                          <span className="dot yellow"></span>
+                          <span className="dot green"></span>
+                        </div>
+                        <span className="preview-title">CSS Challenge - Level 5</span>
                       </div>
-                      <span className="preview-title">CSS Challenge - Level 5</span>
+                      <div className="preview-content">
+                        <div className="code-line"><span className="keyword">display</span>: <span className="value">flex</span>;</div>
+                        <div className="code-line"><span className="keyword">justify-content</span>: <span className="value">center</span>;</div>
+                        <div className="code-line"><span className="keyword">align-items</span>: <span className="value">center</span>;</div>
+                      </div>
+                      <div className="preview-xp-badge">+50 XP</div>
                     </div>
-                    <div className="preview-content">
-                      <div className="code-line"><span className="keyword">display</span>: <span className="value">flex</span>;</div>
-                      <div className="code-line"><span className="keyword">justify-content</span>: <span className="value">center</span>;</div>
-                      <div className="code-line"><span className="keyword">align-items</span>: <span className="value">center</span>;</div>
-                    </div>
-                    <div className="preview-xp-badge">+50 XP</div>
                   </div>
-                </div>
-              </motion.div>
+                </motion.div>
+              </div>
             </div>
-          </div>
-        </motion.section>
+          </motion.section>
 
         {/* Hall of Fame Showcase */}
         <motion.section
@@ -863,7 +946,7 @@ const Home = () => {
           className="feature-showcase-section leaderboard-section"
         >
           <div className="showcase-container">
-            <div className="showcase-content reverse">
+            <div className="showcase-content">
               <motion.div variants={itemVariants} className="showcase-visual">
                 <div className="visual-card glass-morphism">
                   <div className="leaderboard-preview">
@@ -1005,6 +1088,7 @@ const Home = () => {
             </div>
           </div>
         </section>
+        </div>
       </main>
 
       {/* Simple One-line Footer */}
