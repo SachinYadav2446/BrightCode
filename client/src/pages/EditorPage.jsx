@@ -297,7 +297,7 @@ const EditorPage = () => {
             };
             const lang = pistonLangMap[currentFile.language] || currentFile.language;
             
-            const response = await axios.post('http://localhost:5000/execute', {
+            const response = await axios.post('http://localhost:5050/execute', {
                 language: lang,
                 files: [{ name: currentFile.language === 'java' ? 'Main.java' : activeFile, content: currentFile.content }]
             });
@@ -307,11 +307,12 @@ const EditorPage = () => {
                 try {
                     const token = localStorage.getItem('token');
                     const xpAmount = 5;
-                    const xpRes = await axios.post('http://localhost:5000/add-xp', { amount: xpAmount },
+                    const xpRes = await axios.post('http://localhost:5050/add-xp', { amount: xpAmount },
                         { headers: { Authorization: `Bearer ${token}` } }
                     );
                     if (xpRes.data.success) {
-                        updateXP(xpRes.data.xp);
+                        const { xp, ...stats } = xpRes.data;
+                        updateXP(xp, stats);
                     }
                 } catch { console.error('XP Sync Error'); }
             }
