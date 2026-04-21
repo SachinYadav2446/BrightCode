@@ -25,9 +25,49 @@ const JWT_SECRET = 'codesight_secret_key_123';
 // Memory Fallback (for when PostgreSQL is offline)
 let memoryStore = { users: [] };
 let useMemoryDB = false;
+const DB_FILE = path.join(__dirname, 'users_db.json');
 
-// ── In-Memory Factions Store ──────────────────────────────────
+const loadStore = () => {
+    if (fs.existsSync(DB_FILE)) {
+        try {
+            memoryStore = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+            console.log(`[PERSISTENCE] Loaded ${memoryStore.users.length} users from users_db.json`);
+        } catch (e) {
+            console.error('[PERSISTENCE] Error loading memory DB file:', e);
+        }
+    }
+};
+
+const saveStore = () => {
+    if (!useMemoryDB) return;
+    try {
+        fs.writeFileSync(DB_FILE, JSON.stringify(memoryStore, null, 2));
+    } catch (e) {
+        console.error('[PERSISTENCE] Error saving memory DB file:', e);
+    }
+};
+
+// ── Persistent Factions Store ────────────────────────────────
+const FACTIONS_FILE = path.join(__dirname, 'factions_db.json');
 const factions = new Map();
+
+const loadFactions = () => {
+    if (fs.existsSync(FACTIONS_FILE)) {
+        try {
+            const data = JSON.parse(fs.readFileSync(FACTIONS_FILE, 'utf8'));
+            (data || []).forEach(f => factions.set(f.id, f));
+            console.log(`[FACTIONS] Loaded ${factions.size} factions from factions_db.json`);
+        } catch (e) { console.error('[FACTIONS] Load error:', e); }
+    }
+};
+
+const saveFactions = () => {
+    try {
+        fs.writeFileSync(FACTIONS_FILE, JSON.stringify(Array.from(factions.values()), null, 2));
+    } catch (e) { console.error('[FACTIONS] Save error:', e); }
+};
+
+loadFactions();
 
 // ── XP → Level computation (matches client-side) ─────────────
 const computeLevel = (xp) => {
@@ -35,7 +75,42 @@ const computeLevel = (xp) => {
     if (xp >= 5000)  return 'Expert';
     if (xp >= 2000)  return 'Advanced';
     if (xp >= 500)   return 'Apprentice';
-    return 'Initiate';
+    return 'Novice';
+};
+
+const getLocalDateKey = () => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+};
+
+const computeStreakFromActivity = (activity = {}) => {
+    if (!activity || typeof activity !== 'object') return 0;
+
+    const activeDates = new Set(
+        Object.entries(activity)
+            .filter(([, value]) => Number(value || 0) > 0)
+            .map(([date]) => date)
+    );
+    if (activeDates.size === 0) return 0;
+
+    const today = new Date();
+    const cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    let streak = 0;
+
+    while (true) {
+        const y = cursor.getFullYear();
+        const m = String(cursor.getMonth() + 1).padStart(2, '0');
+        const d = String(cursor.getDate()).padStart(2, '0');
+        const key = `${y}-${m}-${d}`;
+        if (!activeDates.has(key)) break;
+        streak += 1;
+        cursor.setDate(cursor.getDate() - 1);
+    }
+
+    return streak;
 };
 
 // PostgreSQL Configuration
@@ -64,14 +139,32 @@ const initDB = async () => {
                 logic_level INTEGER DEFAULT 0,
                 react_level INTEGER DEFAULT 0,
                 level TEXT DEFAULT 'Apprentice',
+                activity JSONB DEFAULT '{}',
+                created_count INTEGER DEFAULT 0,
+                joined_count INTEGER DEFAULT 0,
                 avatar TEXT
             );
+            
+            -- Safe migration for existing tables missing the activity column
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='activity') THEN
+                    ALTER TABLE users ADD COLUMN activity JSONB DEFAULT '{}';
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='created_count') THEN
+                    ALTER TABLE users ADD COLUMN created_count INTEGER DEFAULT 0;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='joined_count') THEN
+                    ALTER TABLE users ADD COLUMN joined_count INTEGER DEFAULT 0;
+                END IF;
+            END $$;
         `);
-        console.log('PostgreSQL Tables Initialized (Safe Mode)');
+        console.log('PostgreSQL Tables Initialized & Migrated');
     } catch (err) {
         console.error('DATABASE INIT ERROR:', err.message);
-        console.log('--- SWAPPING TO MEMORY FALLBACK MODE (PROGRESS WILL NOT BE PERSISTENT) ---');
+        console.log('--- SWAPPING TO MEMORY FALLBACK MODE (USING PERSISTENT users_db.json) ---');
         useMemoryDB = true;
+        loadStore();
     }
 };
 initDB();
@@ -101,10 +194,13 @@ app.post('/register', async (req, res) => {
             
             memoryStore.users.push({ 
                 id, username, email, password: hashedPassword, 
-                xp: 0, css_level: 0, logic_level: 0, react_level: 0 
+                xp: 0, css_level: 0, logic_level: 0, react_level: 0,
+                activity: {},
+                joinedAt: new Date().toISOString()
             });
+            saveStore();
             return res.status(201).json({ 
-                message: "Registered in Memory Mode", 
+                message: "Registered in Persistent Memory Mode", 
                 mode: 'memory',
                 xp: 0, css_level: 0, logic_level: 0, react_level: 0
             });
@@ -149,6 +245,7 @@ app.post('/login', async (req, res) => {
         }
 
         const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1d' });
+        const activity = user.activity || {};
         res.json({ 
             token, 
             username: user.username, 
@@ -156,7 +253,11 @@ app.post('/login', async (req, res) => {
             xp: user.xp || 0,
             css_level: user.css_level || 0,
             logic_level: user.logic_level || 0,
-            react_level: user.react_level || 0
+            react_level: user.react_level || 0,
+            activity,
+            streak: computeStreakFromActivity(activity),
+            createdCount: user.created_count || 0,
+            joinedCount: user.joined_count || 0
         });
     } catch (err) {
         console.error('SERVER LOGIN ERROR:', err);
@@ -238,16 +339,29 @@ app.get('/me', authenticateToken, async (req, res) => {
                 level: computeLevel(u.xp || 0),
                 css_level: u.css_level || 0,
                 logic_level: u.logic_level || 0,
-                react_level: u.react_level || 0
+                react_level: u.react_level || 0,
+                joinedAt: u.joinedAt || null,
+                activity: u.activity || {},
+                streak: computeStreakFromActivity(u.activity || {}),
+                createdCount: u.created_count || 0,
+                joinedCount: u.joined_count || 0
             });
         }
         const result = await pool.query(
-            'SELECT id, username, email, xp, css_level, logic_level, react_level FROM users WHERE id = $1',
+            'SELECT id, username, email, xp, css_level, logic_level, react_level, activity, created_count, joined_count FROM users WHERE id = $1',
             [req.user.id]
         );
         if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
         const u = result.rows[0];
-        res.json({ ...u, xp: u.xp || 0, level: computeLevel(u.xp || 0) });
+        res.json({ 
+            ...u, 
+            xp: u.xp || 0, 
+            level: computeLevel(u.xp || 0), 
+            activity: u.activity || {},
+            streak: computeStreakFromActivity(u.activity || {}),
+            createdCount: u.created_count || 0,
+            joinedCount: u.joined_count || 0
+        });
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch user data' });
     }
@@ -280,72 +394,148 @@ app.get('/leaderboard', async (req, res) => {
     }
 });
 
-// ── Factions API ───────────────────────────────────────────────
-app.get('/factions', (req, res) => {
-    const list = Array.from(factions.values())
-        .map(f => ({
-            ...f,
-            totalXp: (f.members || []).reduce((sum, m) => sum + (m.xp || 0), 0)
-        }))
-        .sort((a, b) => b.totalXp - a.totalXp);
-    res.json(list);
+// ── Factions API ─────────────────────────────────────────────────────────────
+
+// Helper: Sync member XP from the latest user data
+const syncFactionMemberXP = async (faction) => {
+    if (!faction) return;
+    for (const member of faction.members) {
+        try {
+            if (useMemoryDB) {
+                const u = memoryStore.users.find(u => u.id === member.id);
+                if (u) member.xp = u.xp || 0;
+            } else {
+                const r = await pool.query('SELECT xp FROM users WHERE id = $1', [member.id]);
+                if (r.rows[0]) member.xp = r.rows[0].xp || 0;
+            }
+        } catch {}
+    }
+};
+
+// GET all factions (with live XP sync)
+app.get('/factions', async (req, res) => {
+    try {
+        const allFactions = Array.from(factions.values());
+        // Sync XP for all members from live user data
+        await Promise.all(allFactions.map(f => syncFactionMemberXP(f)));
+        saveFactions();
+        const list = allFactions
+            .map(f => ({ ...f, totalXp: (f.members || []).reduce((sum, m) => sum + (m.xp || 0), 0) }))
+            .sort((a, b) => b.totalXp - a.totalXp);
+        res.json(list);
+    } catch (err) {
+        console.error('[FACTIONS GET]', err);
+        res.status(500).json({ error: 'Failed to fetch factions' });
+    }
 });
 
-app.get('/factions/:id', (req, res) => {
+// GET single faction
+app.get('/factions/:id', async (req, res) => {
     const faction = factions.get(req.params.id);
     if (!faction) return res.status(404).json({ error: 'Faction not found' });
+    await syncFactionMemberXP(faction);
     res.json({ ...faction, totalXp: (faction.members || []).reduce((s, m) => s + (m.xp || 0), 0) });
 });
 
-app.post('/factions/create', authenticateToken, (req, res) => {
+// POST create a faction
+const FACTION_CREATE_MIN_XP = 500; // 🛡️ Apprentice badge required
+app.post('/factions/create', authenticateToken, async (req, res) => {
     const { name, description, emblem } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: 'Faction name is required' });
-    // Check if user already owns a faction
+    // Check duplicate name
     for (const f of factions.values()) {
-        if (f.ownerId === req.user.id) return res.status(400).json({ error: 'You already lead a faction' });
+        if (f.name.toLowerCase() === name.trim().toLowerCase())
+            return res.status(400).json({ error: 'A faction with this name already exists.' });
+    }
+    // Check if user already IN any faction
+    for (const f of factions.values()) {
+        if (f.members.find(m => m.id === req.user.id))
+            return res.status(400).json({ error: 'Leave your current faction before founding a new one.' });
+    }
+    // Get current XP of founder
+    let founderXP = 0;
+    try {
+        if (useMemoryDB) {
+            const u = memoryStore.users.find(u => u.id === req.user.id);
+            founderXP = u?.xp || 0;
+        } else {
+            const r = await pool.query('SELECT xp FROM users WHERE id = $1', [req.user.id]);
+            founderXP = r.rows[0]?.xp || 0;
+        }
+    } catch {}
+    // ── XP Gate: Apprentice badge (500 XP) required ───────────────
+    if (founderXP < FACTION_CREATE_MIN_XP) {
+        const needed = FACTION_CREATE_MIN_XP - founderXP;
+        return res.status(403).json({
+            error: `🛡️ You need ${needed} more XP to found a faction. Reach the Apprentice badge (500 XP) first!`
+        });
     }
     const id = uuidV4();
-    factions.set(id, {
+    const newFaction = {
         id, name: name.trim(),
         description: description || '',
         emblem: emblem || '⚔️',
         ownerId: req.user.id,
         ownerName: req.user.username,
-        members: [{ id: req.user.id, username: req.user.username, xp: 0, role: 'leader' }],
+        members: [{ id: req.user.id, username: req.user.username, xp: founderXP, role: 'leader' }],
         createdAt: new Date().toISOString()
-    });
-    res.status(201).json({ id, name, message: `Faction "${name}" established` });
+    };
+    factions.set(id, newFaction);
+    saveFactions();
+    res.status(201).json({ id, name: newFaction.name, message: `Faction "${name}" established!` });
 });
 
+
+// POST join a faction
 app.post('/factions/join/:id', authenticateToken, async (req, res) => {
     const faction = factions.get(req.params.id);
     if (!faction) return res.status(404).json({ error: 'Faction not found' });
     // Check already in any faction
     for (const f of factions.values()) {
-        if (f.members.find(m => m.id === req.user.id)) {
-            return res.status(400).json({ error: 'Already in a faction. Leave current faction first.' });
-        }
+        if (f.members.find(m => m.id === req.user.id))
+            return res.status(400).json({ error: 'Already in a faction. Leave your current faction first.' });
     }
+    // Get current XP
     let xp = 0;
-    if (!useMemoryDB) {
-        try {
+    try {
+        if (useMemoryDB) {
+            const u = memoryStore.users.find(u => u.id === req.user.id);
+            xp = u?.xp || 0;
+        } else {
             const r = await pool.query('SELECT xp FROM users WHERE id = $1', [req.user.id]);
             xp = r.rows[0]?.xp || 0;
-        } catch {}
-    }
+        }
+    } catch {}
     faction.members.push({ id: req.user.id, username: req.user.username, xp, role: 'member' });
+    saveFactions();
     res.json({ message: `Joined "${faction.name}"`, factionName: faction.name });
 });
 
+// POST leave a faction
 app.post('/factions/leave/:id', authenticateToken, (req, res) => {
     const faction = factions.get(req.params.id);
     if (!faction) return res.status(404).json({ error: 'Faction not found' });
-    if (faction.ownerId === req.user.id && faction.members.length > 1) {
-        return res.status(400).json({ error: 'Transfer leadership before leaving, or disband the faction.' });
+    const isOwner = faction.ownerId === req.user.id;
+    const memberCount = faction.members.length;
+    if (isOwner && memberCount > 1) {
+        return res.status(400).json({ error: 'You are the leader. Disband the faction or transfer leadership first.' });
     }
     faction.members = faction.members.filter(m => m.id !== req.user.id);
-    if (faction.members.length === 0) factions.delete(req.params.id);
-    res.json({ message: 'Left faction' });
+    if (faction.members.length === 0 || isOwner) {
+        factions.delete(req.params.id);
+    }
+    saveFactions();
+    res.json({ message: 'You have left the faction.' });
+});
+
+// POST disband (leader only)
+app.post('/factions/disband/:id', authenticateToken, (req, res) => {
+    const faction = factions.get(req.params.id);
+    if (!faction) return res.status(404).json({ error: 'Faction not found' });
+    if (faction.ownerId !== req.user.id) return res.status(403).json({ error: 'Only the faction leader can disband.' });
+    factions.delete(req.params.id);
+    saveFactions();
+    res.json({ message: `Faction "${faction.name}" has been disbanded.` });
 });
 
 app.post('/add-xp', authenticateToken, async (req, res) => {
@@ -377,16 +567,24 @@ app.post('/add-xp', authenticateToken, async (req, res) => {
                 if (key) user[key] = Math.max(user[key] || 0, level);
             }
 
+            // ── Track daily activity ─────────────────────────────────
+            const today = getLocalDateKey();
+            if (!user.activity) user.activity = {};
+            user.activity[today] = (user.activity[today] || 0) + amount;
+
             // ── Broadcast live leaderboard update (memory mode) ──────
             const memLb = [...memoryStore.users]
                 .sort((a, b) => (b.xp || 0) - (a.xp || 0))
                 .slice(0, 25)
                 .map(u => ({ username: u.username, xp: u.xp || 0, level: computeLevel(u.xp || 0) }));
             io.emit('leaderboard-update', memLb);
+            saveStore();
             
             return res.json({ 
                 success: true, 
                 xp: user.xp,
+                activity: user.activity || {},
+                streak: computeStreakFromActivity(user.activity || {}),
                 css_level: user.css_level || 0,
                 logic_level: user.logic_level || 0,
                 react_level: user.react_level || 0
@@ -394,28 +592,39 @@ app.post('/add-xp', authenticateToken, async (req, res) => {
         }
 
         // 2. PostgreSQL Mode
-        let query = 'UPDATE users SET xp = xp + $1 ';
-        let params = [amount, req.user.id];
+        const today = getLocalDateKey();
+        let query = `
+            UPDATE users SET 
+                xp = xp + $1,
+                activity = jsonb_set(
+                    COALESCE(activity, '{}'::jsonb), 
+                    path := array[$3], 
+                    replacement := (COALESCE((activity->>$3)::int, 0) + $1)::text::jsonb, 
+                    create_if_missing := true
+                )
+        `;
+        let params = [amount, req.user.id, today];
         
         if (module && level !== undefined) {
            const col = module === 'css-odyssey' ? 'css_level' : 
                        module === 'logic-lab' ? 'logic_level' : 
                        module === 'react-quest' ? 'react_level' : null;
            if (col) {
-               query += `, ${col} = GREATEST(${col}, $3) `;
+               query += `, ${col} = GREATEST(${col}, $4) `;
                params.push(level);
            }
         }
         
-        query += 'WHERE id = $2 RETURNING xp, css_level, logic_level, react_level';
+        query += 'WHERE id = $2 RETURNING xp, css_level, logic_level, react_level, activity';
         
         const result = await pool.query(query, params);
         
         if (result.rows.length === 0) {
             // Self-healing: Create user in SQL with full stats if they exist in JWT but not in DB
-            await pool.query(
-                `INSERT INTO users (id, username, email, password, xp, css_level, logic_level, react_level) 
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            const selfHealRes = await pool.query(
+                `INSERT INTO users (id, username, email, password, xp, activity, css_level, logic_level, react_level) 
+                 VALUES ($1, $2, $3, $4, $5, jsonb_build_object($9::text, $5), $6, $7, $8)
+                 RETURNING xp, activity, css_level, logic_level, react_level`,
                 [
                     req.user.id, 
                     req.user.username, 
@@ -424,26 +633,21 @@ app.post('/add-xp', authenticateToken, async (req, res) => {
                     amount,
                     module === 'css-odyssey' ? level : 0,
                     module === 'logic-lab' ? level : 0,
-                    module === 'react-quest' ? level : 0
+                    module === 'react-quest' ? level : 0,
+                    today
                 ]
             );
             return res.json({ 
                 success: true, 
-                xp: amount,
-                css_level: module === 'css-odyssey' ? level : 0,
-                logic_level: module === 'logic-lab' ? level : 0,
-                react_level: module === 'react-quest' ? level : 0
+                xp: selfHealRes.rows[0].xp,
+                activity: selfHealRes.rows[0].activity,
+                streak: computeStreakFromActivity(selfHealRes.rows[0].activity || {}),
+                css_level: selfHealRes.rows[0].css_level,
+                logic_level: selfHealRes.rows[0].logic_level,
+                react_level: selfHealRes.rows[0].react_level
             });
         }
         
-        res.json({ 
-            success: true, 
-            xp: result.rows[0].xp,
-            css_level: result.rows[0].css_level,
-            logic_level: result.rows[0].logic_level,
-            react_level: result.rows[0].react_level
-        });
-
         // ── Broadcast leaderboard update so Hall of Fame refreshes live
         try {
             const lb = await pool.query(
@@ -453,10 +657,65 @@ app.post('/add-xp', authenticateToken, async (req, res) => {
                 username: u.username, xp: u.xp || 0, level: computeLevel(u.xp || 0) 
             })));
         } catch {}
+        
+        res.json({ 
+            success: true, 
+            xp: result.rows[0].xp,
+            activity: result.rows[0].activity,
+            streak: computeStreakFromActivity(result.rows[0].activity || {}),
+            css_level: result.rows[0].css_level,
+            logic_level: result.rows[0].logic_level,
+            react_level: result.rows[0].react_level
+        });
 
     } catch (err) {
         console.error('XP Sync Error:', err);
         res.status(500).json({ error: 'Failed to update XP' });
+    }
+});
+
+app.post('/increment-session', authenticateToken, async (req, res) => {
+    const { type } = req.body; // 'created' or 'joined'
+    if (!['created', 'joined'].includes(type)) return res.status(400).json({ error: 'Invalid session type' });
+    
+    try {
+        const column = type === 'created' ? 'created_count' : 'joined_count';
+        
+        if (useMemoryDB) {
+            const user = memoryStore.users.find(u => u.id === req.user.id);
+            if (user) {
+                user[column] = (user[column] || 0) + 1;
+                saveStore();
+            }
+            return res.json({ success: true, [type === 'created' ? 'createdCount' : 'joinedCount']: user[column] });
+        }
+        
+        const result = await pool.query(
+            `UPDATE users SET ${column} = ${column} + 1 WHERE id = $1 RETURNING created_count, joined_count`,
+            [req.user.id]
+        );
+        
+        res.json({ 
+            success: true, 
+            createdCount: result.rows[0].created_count,
+            joinedCount: result.rows[0].joined_count
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update session telemetry' });
+    }
+});
+
+// ── GET /activity — user's 52-week contribution heatmap ─────────
+app.get('/activity', authenticateToken, async (req, res) => {
+    try {
+        if (useMemoryDB) {
+            const u = memoryStore.users.find(u => u.id === req.user.id);
+            return res.json({ activity: u?.activity || {}, joinedAt: u?.joinedAt || null });
+        }
+        // PostgreSQL mode: activity column not yet added; return empty
+        return res.json({ activity: {}, joinedAt: null });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch activity' });
     }
 });
 
@@ -486,10 +745,13 @@ io.on('connection', (socket) => {
     if (!room.permissions) room.permissions = {};
     if (!room.adminId) room.adminId = socket.id;
 
-    const role = room.adminId === socket.id ? 'admin' : 'collaborator';
-    room.permissions[socket.id] = 'write';
+    // ── 3-Tier Role System: admin | writer | reviewer ──────────────
+    const isCreator = room.adminId === socket.id;
+    const role = isCreator ? 'admin' : 'reviewer';  // New joiners are reviewers by default
+    const permission = isCreator ? 'admin' : 'read'; // Reviewers start read-only
+    room.permissions[socket.id] = permission;
     
-    const userData = { id: socket.id, username, role, permission: 'write' };
+    const userData = { id: socket.id, username, role, permission };
     room.users.push(userData);
     
     socket.emit('initial-data', { 
@@ -500,12 +762,41 @@ io.on('connection', (socket) => {
         snapshots: room.snapshots
     });
     
-    socket.to(roomId).emit('user-joined', { socketId: socket.id, username, role, permission: 'write' });
+    socket.to(roomId).emit('user-joined', { socketId: socket.id, username, role, permission });
 
-    // --- ADMIN ACTIONS ---
+    // --- ADMIN ACTIONS: Role Management ---
+    socket.on('set-role', ({ targetId, newRole }) => {
+        if (socket.id !== room.adminId) return; // Only admin can change roles
+        if (targetId === room.adminId) return;   // Can't change own admin role
+        
+        // Map role to permission
+        const permMap = { 'writer': 'write', 'reviewer': 'read', 'admin': 'admin' };
+        const newPermission = permMap[newRole] || 'read';
+        
+        room.permissions[targetId] = newPermission;
+        
+        // Update user in room list
+        const userInRoom = room.users.find(u => u.id === targetId);
+        if (userInRoom) {
+            userInRoom.role = newRole;
+            userInRoom.permission = newPermission;
+        }
+        
+        // Notify the target user of their new role
+        io.to(targetId).emit('role-changed', { role: newRole, permission: newPermission });
+        // Notify everyone in room to refresh user list
+        io.in(roomId).emit('user-role-updated', { targetId, role: newRole, permission: newPermission });
+    });
+
+    // Legacy support — still works for toggle
     socket.on('update-permissions', ({ targetId, permission }) => {
-        if (socket.id !== room.adminId) return; // Non-admins can't change permissions
+        if (socket.id !== room.adminId) return;
         room.permissions[targetId] = permission;
+        const userInRoom = room.users.find(u => u.id === targetId);
+        if (userInRoom) {
+            userInRoom.role = permission === 'write' ? 'writer' : 'reviewer';
+            userInRoom.permission = permission;
+        }
         io.to(targetId).emit('permission-changed', { permission });
         io.in(roomId).emit('user-status-updated', { targetId, permission });
     });
@@ -579,6 +870,18 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('cursor-change', ({ roomId, fileName, cursor, username }) => {
+    socket.to(roomId).emit('cursor-update', { socketId: socket.id, fileName, cursor, username });
+  });
+
+  socket.on('typing-start', ({ roomId, username }) => {
+    socket.to(roomId).emit('typing-start', { username });
+  });
+
+  socket.on('typing-stop', ({ roomId }) => {
+    socket.to(roomId).emit('typing-stop');
+  });
+
   socket.on('file-create', ({ roomId, fileName, language }) => {
     const room = rooms.get(roomId);
     if (room) {
@@ -641,50 +944,69 @@ io.on('connection', (socket) => {
   });
 });
 
-// Compiler (Using Piston API for multi-language support)
+// ── Local Code Execution Engine ─────────────────────────────────────────────
 app.post('/execute', async (req, res) => {
   const { language, files } = req.body;
   if (!files || files.length === 0) return res.status(400).json({ error: 'No files provided' });
-  
+
+  const code = files[0]?.content || '';
+  const os = require('os');
+  const tmpDir = os.tmpdir();
+  const timestamp = Date.now();
+
   try {
-    const langMap = {
-      'javascript': 'js',
-      'js': 'js',
-      'python': 'python3',
-      'python3': 'python3',
-      'py': 'python3',
-      'cpp': 'cpp',
-      'java': 'java'
-    };
+    let cmd = '';
+    let tmpFile = '';
 
-    const pistonLang = langMap[language.toLowerCase()] || language.toLowerCase();
-    
-    // Piston API allowed running code in high-fidelity environments
-    const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
-        language: pistonLang,
-        version: '*', 
-        files: files.map(f => ({
-            name: f.name,
-            content: f.content
-        }))
-    }, { timeout: 15000 }); 
+    if (language === 'javascript' || language === 'js') {
+      tmpFile = path.join(tmpDir, `cs_${timestamp}.js`);
+      fs.writeFileSync(tmpFile, code);
+      cmd = `node "${tmpFile}"`;
 
-    if (response.data.message) {
-        throw new Error(response.data.message);
+    } else if (language === 'python' || language === 'py' || language === 'python3') {
+      tmpFile = path.join(tmpDir, `cs_${timestamp}.py`);
+      fs.writeFileSync(tmpFile, code);
+      cmd = `python "${tmpFile}"`;
+
+    } else if (language === 'cpp' || language === 'c++') {
+      const srcFile = path.join(tmpDir, `cs_${timestamp}.cpp`);
+      const outFile = path.join(tmpDir, `cs_${timestamp}.exe`);
+      fs.writeFileSync(srcFile, code);
+      // Compile then run
+      cmd = `g++ "${srcFile}" -o "${outFile}" && "${outFile}"`;
+      tmpFile = srcFile;
+
+    } else if (language === 'java') {
+      return res.json({ run: { stdout: '', stderr: 'Java is not installed on this server. Please install JDK to enable Java execution.', code: 1 } });
+
+    } else {
+      return res.status(400).json({ run: { stdout: '', stderr: `Unsupported language: ${language}`, code: 1 } });
     }
 
-    res.json(response.data);
+    console.log(`[COMPILER] Running ${language}: ${cmd}`);
+
+    exec(cmd, { timeout: 10000, maxBuffer: 1024 * 512 }, (err, stdout, stderr) => {
+      // Cleanup temp files
+      try { if (tmpFile) fs.unlinkSync(tmpFile); } catch (_) {}
+
+      if (err && !stdout && !stderr) {
+        return res.json({ run: { stdout: '', stderr: err.message, code: err.code || 1 } });
+      }
+      
+      res.json({ 
+        run: { 
+          stdout: stdout || '', 
+          stderr: stderr || (err?.message || ''), 
+          code: err ? (err.code || 1) : 0 
+        } 
+      });
+    });
+
   } catch (err) {
     console.error('EXECUTION ERROR:', err.message);
-    res.status(500).json({ 
-        run: { 
-            stdout: '', 
-            stderr: `Execution System Error: ${err.message}`, 
-            code: 1 
-        } 
-    });
+    res.status(500).json({ run: { stdout: '', stderr: `Server error: ${err.message}`, code: 1 } });
   }
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5050;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
