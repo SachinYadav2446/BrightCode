@@ -24,7 +24,7 @@ const Factions = () => {
     const fetchFactions = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('http://localhost:5000/factions', { timeout: 6000 });
+            const res = await axios.get('http://localhost:5050/factions', { timeout: 6000 });
             const list = res.data || [];
             setFactions(list);
             if (user) {
@@ -44,7 +44,7 @@ const Factions = () => {
         setIsSubmitting(true);
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5000/factions/create', newFaction, {
+            await axios.post('http://localhost:5050/factions/create', newFaction, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success(`Faction "${newFaction.name}" established!`, {
@@ -65,7 +65,7 @@ const Factions = () => {
         if (myFactionId) return toast.error('Leave your current faction before joining another.');
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post(`http://localhost:5000/factions/join/${factionId}`, {}, {
+            const res = await axios.post(`http://localhost:5050/factions/join/${factionId}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success(res.data.message);
@@ -80,7 +80,7 @@ const Factions = () => {
         if (!myFactionId) return;
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`http://localhost:5000/factions/leave/${myFactionId}`, {}, {
+            await axios.post(`http://localhost:5050/factions/leave/${myFactionId}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success('Left faction.');

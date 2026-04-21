@@ -32,14 +32,23 @@ const Leaderboard = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [lastUpdated, setLastUpdated] = useState(null);
+    const [userRank, setUserRank] = useState(null);
     const socketRef = useRef(null);
 
     const fetchRankings = async (silent = false) => {
         if (!silent) setLoading(true);
         else setIsRefreshing(true);
         try {
-            const response = await axios.get('http://localhost:5000/leaderboard', { timeout: 8000 });
-            setRankers(response.data || []);
+            const response = await axios.get('http://localhost:5050/leaderboard', { timeout: 8000 });
+            const data = response.data || [];
+            setRankers(data);
+            
+            // Calculate user's rank
+            if (user?.username) {
+                const rankIndex = data.findIndex(r => r.username === user.username);
+                setUserRank(rankIndex !== -1 ? rankIndex + 1 : null);
+            }
+            
             setDbError(null);
             setLastUpdated(new Date());
         } catch (err) {
@@ -56,7 +65,7 @@ const Leaderboard = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
         try {
-            const res = await axios.get('http://localhost:5000/me', {
+            const res = await axios.get('http://localhost:5050/me', {
                 headers: { Authorization: `Bearer ${token}` },
                 timeout: 4000
             });
@@ -75,11 +84,18 @@ const Leaderboard = () => {
         syncMyXP();
 
         // ── Live socket subscription for instant leaderboard updates ──
-        const socket = io('http://localhost:5000', { transports: ['websocket'] });
+        const socket = io('http://localhost:5050', { transports: ['websocket'] });
         socketRef.current = socket;
 
         socket.on('leaderboard-update', (freshData) => {
             setRankers(freshData || []);
+            
+            // Update user rank on live update
+            if (user?.username && freshData) {
+                const rankIndex = freshData.findIndex(r => r.username === user.username);
+                setUserRank(rankIndex !== -1 ? rankIndex + 1 : null);
+            }
+            
             setLastUpdated(new Date());
         });
 
@@ -127,6 +143,7 @@ const Leaderboard = () => {
                                 <span className="your-rank-name">{user.username}</span>
                                 <span className="your-rank-xp">
                                     <Zap size={10} fill="#fbbf24" /> {(user.xp || 0).toLocaleString()} XP
+                                    {userRank && <span style={{ marginLeft: '8px', opacity: 0.7 }}>• Rank #{userRank}</span>}
                                 </span>
                             </div>
                         </div>

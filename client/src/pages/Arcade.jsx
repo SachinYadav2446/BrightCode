@@ -76,13 +76,48 @@ const Arcade = () => {
         setWrongSelection(null);
     }, [currentLvlIdx, activeGame]);
 
-    const isPhaseUnlocked = (phaseIdx) => true;
+    useEffect(() => {
+        // Keep solved React MCQs locked with the correct answer on revisit.
+        if (activeGame !== 'react-quest' || currentLvlIdx === 'WIN' || !levelData) return;
+        if (savedSolutions[currentLvlIdx]) {
+            setSelectedOption(levelData.answer);
+            setAnswerRevealed(true);
+        }
+    }, [activeGame, currentLvlIdx, savedSolutions, levelData]);
+
+    const isLevelSolved = (levelIdx) => {
+        return Boolean(savedSolutions[levelIdx]) || levelIdx < highestLevel;
+    };
+
+    const isPhaseUnlocked = (phaseIdx) => {
+        if (phaseIdx <= 0) return true;
+        const phases = SUBJECT_PHASES[activeGame] || [];
+        if (!phases.length) return true;
+
+        // Strict progression: every previous section must be fully solved.
+        for (let i = 0; i < phaseIdx; i++) {
+            const phase = phases[i];
+            for (let levelIdx = phase.start; levelIdx <= phase.end; levelIdx++) {
+                if (!isLevelSolved(levelIdx)) return false;
+            }
+        }
+        return true;
+    };
 
     const startPhase = (phase) => {
         const phases = SUBJECT_PHASES[activeGame] || [];
         const pIdx = phases.findIndex(p => p.name === phase.name);
         if (isPhaseUnlocked(pIdx)) {
-            setCurrentLvlIdx(phase.start);
+            // Prefer real solved entries in this phase; fallback to highestLevel.
+            const solvedIdxInPhase = Object.keys(savedSolutions)
+                .map((k) => Number(k))
+                .filter((idx) => Number.isInteger(idx) && idx >= phase.start && idx <= phase.end)
+                .sort((a, b) => b - a)[0];
+
+            const fallbackIdx = highestLevel > 0 ? highestLevel - 1 : phase.start;
+            const resumeBase = solvedIdxInPhase !== undefined ? solvedIdxInPhase : fallbackIdx;
+            const resumeIdx = Math.min(Math.max(resumeBase, phase.start), phase.end);
+            setCurrentLvlIdx(resumeIdx);
             setViewingSections(false);
             setSelectedOption(null);
             setAnswerRevealed(false);
@@ -160,10 +195,6 @@ const Arcade = () => {
                 icon: '✅',
                 style: { background: '#0a0a0a', color: '#10b981', border: '1px solid #10b981' }
             });
-            // Auto trigger victory for MCQ after a brief delay
-            setTimeout(() => {
-                handleVictory(null, true);
-            }, 800);
         } else {
             setWrongSelection(idx);
             setTimeout(() => {
@@ -173,25 +204,30 @@ const Arcade = () => {
     };
 
     const handleVictory = (code, skipSolution = false) => {
+        const alreadySolved = Boolean(savedSolutions[currentLvlIdx]);
         const newHighest = Math.max(highestLevel, currentLvlIdx + 1);
         setHighestLevel(newHighest);
         const storageKey = `highest_${activeGame.replace(/-/g, '_')}_level`;
         localStorage.setItem(storageKey, newHighest);
 
         // --- XP REWARD SYSTEM (Synced to DB) ---
-        console.log(`[ARCADE DEBUG] Clearing Level: ${currentLvlIdx}, Highest: ${highestLevel}, User XP: ${user?.xp}`);
+        // Get the actual current highest level for this specific game from user object
+        const dbHighest = activeGame === 'css-odyssey' ? (user?.css_level || 0) :
+                         activeGame === 'logic-lab' ? (user?.logic_level || 0) :
+                         activeGame === 'react-quest' ? (user?.react_level || 0) : 0;
+
+        console.log(`[ARCADE] Validating Level: ${currentLvlIdx + 1} vs DB Highest: ${dbHighest}`);
         
-        // CATCH-UP LOGIC: Award XP if new level OR if user currently has 0 XP (recovering)
-        if (currentLvlIdx >= highestLevel || !user?.xp || user?.xp === 0 || user?.xp === '0') {
-            console.log('[ARCADE DEBUG] Awarding XP...');
-            let reward = 50; 
-            if (activeGame === 'logic-lab') reward = 100;
-            else if (activeGame === 'react-quest') reward = 75;
+        // Award XP on every successful challenge completion (Neural Pulse Reward)
+        console.log('[ARCADE DEBUG] Awarding Neural Pulse XP...');
+        let reward = alreadySolved ? 0 : 10; 
+            // Standardized to 10 XP for all arcade types as per recent instruction
 
             const syncXp = async () => {
                 try {
+                    if (reward <= 0) return;
                     const token = localStorage.getItem('token');
-                    const response = await axios.post('http://localhost:5000/add-xp', { 
+                    const response = await axios.post('http://localhost:5050/add-xp', { 
                         amount: reward,
                         module: activeGame,
                         level: currentLvlIdx + 1
@@ -200,13 +236,9 @@ const Arcade = () => {
                     });
                     
                     if (response.data.success) {
-                        setXP(response.data.xp);
-                        // Sync multiple levels back to global context
-                        updateXP(response.data.xp, {
-                            css_level: response.data.css_level,
-                            logic_level: response.data.logic_level,
-                            react_level: response.data.react_level
-                        });
+                        const { xp, ...stats } = response.data;
+                        updateXP(xp, stats);
+                        localStorage.setItem('user_xp', xp);
                         
                         toast.success(`+${reward} XP EARNED (Synced)!`, {
                             icon: '⚡',
@@ -216,6 +248,7 @@ const Arcade = () => {
                 } catch (err) {
                     console.error('XP Sync failed');
                     // Fallback to local
+                    if (reward <= 0) return;
                     const newXP = xp + reward;
                     setXP(newXP);
                     localStorage.setItem('user_xp', newXP);
@@ -223,7 +256,6 @@ const Arcade = () => {
                 }
             };
             syncXp();
-        }
 
         const updatedSolutions = { ...savedSolutions, [currentLvlIdx]: skipSolution ? 'correct' : code };
         setSavedSolutions(updatedSolutions);
@@ -454,7 +486,15 @@ const Arcade = () => {
                         {(SUBJECT_PHASES[activeGame] || []).map((phase, idx) => {
                             const unlocked = isPhaseUnlocked(idx);
                             const phaseLevels = levels.filter(l => l.phase === phase.name);
-                            const completedInPhase = phaseLevels.filter(l => (savedSolutions[levels.indexOf(l)] || levels.indexOf(l) < highestLevel)).length;
+                            const completedInPhase = phaseLevels.filter(l => isLevelSolved(levels.indexOf(l))).length;
+                            const prevPhase = idx > 0 ? (SUBJECT_PHASES[activeGame] || [])[idx - 1] : null;
+                            const prevTotal = prevPhase ? (prevPhase.end - prevPhase.start + 1) : 0;
+                            const prevCompleted = prevPhase
+                                ? Array.from({ length: prevTotal }, (_, i) => prevPhase.start + i).filter(isLevelSolved).length
+                                : 0;
+                            const lockHint = !unlocked && prevPhase
+                                ? `Complete ${prevPhase.label} first (${prevCompleted}/${prevTotal} solved)`
+                                : '';
                             
                             return (
                                 <motion.div 
@@ -473,6 +513,7 @@ const Arcade = () => {
                                         transition: 'all 0.3s ease'
                                     }}
                                     onClick={() => unlocked && startPhase(phase)}
+                                    title={lockHint || undefined}
                                 >
                                     {!unlocked && <Lock size={20} style={{ position: 'absolute', top: '20px', right: '20px', color: '#666' }} />}
                                     <div style={{ marginBottom: '20px', opacity: unlocked ? 1 : 0.5, display: 'flex', justifyContent: 'center' }}>
@@ -492,6 +533,17 @@ const Arcade = () => {
                                     }}>
                                         {completedInPhase} / {phaseLevels.length} MODULES
                                     </div>
+                                    {!unlocked && lockHint && (
+                                        <div style={{
+                                            marginTop: '12px',
+                                            fontSize: '0.68rem',
+                                            color: '#a8a29e',
+                                            lineHeight: 1.4,
+                                            fontWeight: 600
+                                        }}>
+                                            {lockHint}
+                                        </div>
+                                    )}
                                 </motion.div>
                             );
                         })}
