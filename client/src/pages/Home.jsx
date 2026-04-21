@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useEffect, useMemo, useState } from 'react';
 import { v4 as uuidV4 } from 'uuid';
 import toast from 'react-hot-toast';
 import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import {
   Code2,
@@ -20,7 +20,11 @@ import {
   Globe,
   Rocket,
   Gamepad2,
-  Trophy
+  Trophy,
+  CalendarDays,
+  Flame,
+  Target,
+  Activity
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './Home.css';
@@ -49,7 +53,94 @@ const Home = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [roomId, setRoomId] = useState('');
+  const [workspaceName, setWorkspaceName] = useState('');
+  const [isCreateMode, setIsCreateMode] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [workspaceHistory, setWorkspaceHistory] = useState([]);
+  const [sessionTotalLive, setSessionTotalLive] = useState(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const xp = Number(user?.xp || 0);
+  const createdSessions = Number(user?.createdCount ?? localStorage.getItem('created_count') ?? 0);
+  const joinedSessions = Number(user?.joinedCount ?? localStorage.getItem('joined_count') ?? 0);
+  const sessionTotal = sessionTotalLive || (createdSessions + joinedSessions);
+  const historyStorageKey = `workspace_history_${user?.username || 'guest'}`;
+  const nextXpMilestone = Math.max(1000, Math.ceil((xp + 1) / 1000) * 1000);
+  const xpProgressPercent = Math.min(100, (xp / 10000) * 100);
+
+  const playerTier =
+    xp >= 10000 ? 'Grandmaster' :
+      xp >= 5000 ? 'Expert' :
+        xp >= 2000 ? 'Advanced' :
+          xp >= 500 ? 'Apprentice' : 'Initiate';
+
+  useEffect(() => {
+    if (!user?.username) return;
+    try {
+      const raw = localStorage.getItem(historyStorageKey);
+      const parsed = raw ? JSON.parse(raw) : [];
+      setWorkspaceHistory(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      setWorkspaceHistory([]);
+    }
+    setSessionTotalLive(Number(localStorage.getItem('created_count') || 0) + Number(localStorage.getItem('joined_count') || 0));
+  }, [user?.username, historyStorageKey]);
+
+  const heatmapData = useMemo(() => {
+    if (!user) return { days: [], weeks: [], maxActivity: 0, activeDays: 0, totalActivity: 0, bestDay: null };
+
+    const rawActivity = (user && typeof user.activity === 'object' && user.activity !== null)
+      ? user.activity
+      : {};
+    const WEEKS = 53;
+    const totalDays = WEEKS * 7;
+
+    // Anchor to Jan 1, 2026, then align to preceding Sunday
+    const weekAlignedStart = new Date(2026, 0, 1);
+    weekAlignedStart.setDate(weekAlignedStart.getDate() - weekAlignedStart.getDay());
+
+    // Build day array for the whole year
+    const days = [];
+    for (let i = 0; i < totalDays; i++) {
+      const current = new Date(weekAlignedStart);
+      current.setDate(weekAlignedStart.getDate() + i);
+      days.push({ date: current, activity: 0 });
+    }
+
+    // Map activity object keyed by YYYY-MM-DD into the day grid.
+    Object.entries(rawActivity).forEach(([dateStr, value]) => {
+      const numeric = Number(value || 0);
+      if (!Number.isFinite(numeric) || numeric <= 0) return;
+      const date = new Date(`${dateStr}T00:00:00`);
+      const dayIndex = Math.floor((date - weekAlignedStart) / (24 * 60 * 60 * 1000));
+      if (dayIndex >= 0 && dayIndex < totalDays && days[dayIndex]) {
+        days[dayIndex].activity = Math.max(0, numeric);
+      }
+    });
+
+    // Build weeks array for month-label strip
+    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const weeks = [];
+    for (let w = 0; w < WEEKS; w++) {
+      const firstDay = days[w * 7];
+      const month = firstDay ? MONTH_NAMES[firstDay.date.getMonth()] : '';
+      // Only label first week of each month
+      const isFirstOfMonth = firstDay && firstDay.date.getDate() <= 7;
+      weeks.push({ label: isFirstOfMonth ? month : '', weekIdx: w });
+    }
+
+    const maxActivity = days.reduce((max, day) => Math.max(max, day.activity), 0);
+    const totalActivity = days.reduce((sum, day) => sum + day.activity, 0);
+    const activeDays = days.filter((day) => day.activity > 0).length;
+    const bestDay = days.reduce((best, day) => (day.activity > (best?.activity || 0) ? day : best), null);
+
+    return { days, weeks, maxActivity, activeDays, totalActivity, bestDay };
+  }, [user]);
+
+  const getActivityLevel = (value) => {
+    // Any activity should render as green.
+    return value > 0 ? 4 : 0;
+  };
 
 
 
@@ -57,10 +148,17 @@ const Home = () => {
     e.preventDefault();
     const id = uuidV4();
     setRoomId(id);
+    setIsCreateMode(true);
     toast.success('Generated a new room ID', { style: { background: '#1e293b', color: '#fff' } });
   };
 
-  const joinRoom = () => {
+  const saveWorkspaceHistory = (entry) => {
+    const next = [entry, ...workspaceHistory].slice(0, 10);
+    setWorkspaceHistory(next);
+    localStorage.setItem(historyStorageKey, JSON.stringify(next));
+  };
+
+  const joinRoom = async () => {
     if (!user) {
       toast.error('Please login first', { style: { background: '#1e293b', color: '#fff' } });
       navigate('/auth');
@@ -70,8 +168,36 @@ const Home = () => {
       toast.error('Room ID is required', { style: { background: '#1e293b', color: '#fff' } });
       return;
     }
+
+    if (isCreateMode && !workspaceName.trim()) {
+      toast.error('Workspace name is required when creating', { style: { background: '#1e293b', color: '#fff' } });
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      const sessionType = isCreateMode ? 'created' : 'joined';
+      const res = await axios.post(
+        'http://localhost:5050/increment-session',
+        { type: sessionType },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data?.joinedCount !== undefined) localStorage.setItem('joined_count', String(res.data.joinedCount || 0));
+      if (res.data?.createdCount !== undefined) localStorage.setItem('created_count', String(res.data.createdCount || 0));
+      setSessionTotalLive(Number(res.data?.createdCount || localStorage.getItem('created_count') || 0) + Number(res.data?.joinedCount || localStorage.getItem('joined_count') || 0));
+    } catch {
+      // Keep UX smooth even if telemetry fails.
+      setSessionTotalLive((prev) => prev + 1);
+    }
+
+    saveWorkspaceHistory({
+      id: roomId,
+      name: (isCreateMode ? workspaceName : '').trim() || `Workspace ${roomId.slice(0, 8)}`,
+      action: isCreateMode ? 'Created' : 'Joined',
+      timestamp: new Date().toISOString()
+    });
+
     navigate(`/editor/${roomId}`, {
-      state: { username: user.username },
+      state: { username: user.username, workspaceName: isCreateMode ? workspaceName.trim() : '' },
     });
   };
 
@@ -105,11 +231,9 @@ const Home = () => {
           </motion.div>
 
           <div className="nav-links">
-            <Link to="/arcade" className="nav-link-hover" style={{ color: '#fbbf24', fontWeight: 600 }}>Code Arena</Link>
-            <Link to="/leaderboard" className="nav-link-hover">Hall of Fame</Link>
-            <Link to="/factions" className="nav-link-hover" style={{ color: '#818cf8' }}>Factions</Link>
-            <a href="#toolkit" className="nav-link-hover">Toolkit</a>
-            <a href="#features" className="nav-link-hover">Features</a>
+            <a href="#arena" className="nav-link-hover">Code Arena</a>
+            <a href="#leaderboard" className="nav-link-hover">Hall of Fame</a>
+            <a href="#factions" className="nav-link-hover">Factions</a>
             <a href="#solutions" className="nav-link-hover">Solutions</a>
 
             {user ? (
@@ -129,7 +253,7 @@ const Home = () => {
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                     <span className="username-display" style={{ fontSize: '0.85rem', fontWeight: 600 }}>{user.username}</span>
                     <span style={{ fontSize: '0.65rem', color: '#fbbf24', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Zap size={10} fill="#fbbf24" /> {localStorage.getItem('user_xp') || 0} XP
+                      <Zap size={10} fill="#fbbf24" /> {xp} XP
                     </span>
                   </div>
                   <button
@@ -175,11 +299,12 @@ const Home = () => {
       <main className="landing-container">
         {user ? (
           /* ── USER DASHBOARD: MISSION CONTROL ── */
-          <motion.section 
+          <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="mission-control-section"
           >
+            {/* Welcome bar */}
             <div className="mission-dashboard-grid">
               {/* Profile Showcase Card */}
               <div className="psc-card glass-morphism">
@@ -196,19 +321,16 @@ const Home = () => {
                       <span>Online</span>
                     </div>
                   </div>
-                  
+
                   <div className="psc-user-details">
                     <div className="psc-username-block">
                       <h1>{user.username}</h1>
                       <div className="psc-badges">
                         <span className="psc-rank-chip premium">
-                          <Zap size={12} fill="#fbbf24" /> {user.xp || 0} XP
+                          <Zap size={12} fill="#fbbf24" /> {xp} XP
                         </span>
                         <span className="psc-level-chip">
-                          {(user.xp || 0) >= 10000 ? 'Grandmaster' :
-                           (user.xp || 0) >= 5000 ? 'Expert' :
-                           (user.xp || 0) >= 2000 ? 'Advanced' :
-                           (user.xp || 0) >= 500 ? 'Apprentice' : 'Initiate'}
+                          {playerTier}
                         </span>
                       </div>
                     </div>
@@ -244,147 +366,327 @@ const Home = () => {
                   </div>
                 </div>
 
+                <div className="psc-highlights-row">
+                  <div className="psc-highlight-card">
+                    <Flame size={16} />
+                    <div>
+                      <span>Current Streak</span>
+                      <strong>{user.streak || 0} days</strong>
+                    </div>
+                  </div>
+                  <div className="psc-highlight-card">
+                    <CalendarDays size={16} />
+                    <div>
+                      <span>Active Days</span>
+                      <strong>{heatmapData.activeDays || (xp > 0 ? 1 : 0)}</strong>
+                    </div>
+                  </div>
+                  <div className="psc-highlight-card">
+                    <Target size={16} />
+                    <div>
+                      <span>Total Activity</span>
+                      <strong>{(heatmapData.totalActivity || xp).toLocaleString()} XP</strong>
+                    </div>
+                  </div>
+                </div>
+
                 {/* XP Progress Section */}
                 <div className="psc-xp-section">
                   <div className="xp-header">
                     <span className="xp-label">Experience Progress</span>
-                    <span className="xp-progress-text">{user.xp || 0} / {Math.ceil((user.xp + 1) / 1000) * 1000} XP</span>
+                    <span className="xp-progress-text">{xp.toLocaleString()} / {nextXpMilestone.toLocaleString()} XP</span>
                   </div>
-                  <div className="psc-prog-bar">
-                    <div className="psc-prog-fill" style={{ width: `${((user.xp || 0) % 1000) / 10}%` }}></div>
+                  <div className="psc-prog-bar-wrapper">
+                    <div className="psc-prog-bar">
+                      <div className="psc-prog-fill" style={{ width: `${xpProgressPercent}%` }}></div>
+                    </div>
                   </div>
                   <div className="xp-milestones">
-                    <span className="milestone">500</span>
-                    <span className="milestone">2K</span>
-                    <span className="milestone">5K</span>
-                    <span className="milestone">10K</span>
+                    <span className="milestone" style={{ left: '5%' }}>500</span>
+                    <span className="milestone" style={{ left: '20%' }}>2K</span>
+                    <span className="milestone" style={{ left: '50%' }}>5K</span>
+                    <span className="milestone" style={{ left: '100%' }}>10K+</span>
                   </div>
                 </div>
 
                 <div className="psc-divider"></div>
-
-                {/* Activity Heatmap */}
-                <div className="psc-bottom">
-                  <div className="psc-heatmap-section">
-                    <div className="heatmap-header">
-                      <h4><Zap size={16} fill="#fbbf24" /> Activity Heatmap</h4>
-                      <div className="heatmap-streak">🔥 {user.streak || 0} day streak</div>
-                    </div>
-                    
-                    <div className="heatmap-container">
-                      <div className="heatmap-grid">
-                        {[...Array(266)].map((_, i) => {
-                          const level = (user.activity && user.activity[i]) ? Math.min(Math.floor(user.activity[i] / 50), 4) : 0;
-                          return (
-                            <div key={i} className={`heatmap-cell level-${level}`} title={`XP Gained: ${user.activity?.[i] || 0}`}></div>
-                          );
-                        })}
-                      </div>
-                      <div className="heatmap-legend">
-                        <span>Less</span>
-                        <div className="heatmap-cell level-0"></div>
-                        <div className="heatmap-cell level-1"></div>
-                        <div className="heatmap-cell level-2"></div>
-                        <div className="heatmap-cell level-3"></div>
-                        <div className="heatmap-cell level-4"></div>
-                        <span>More</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
-          
-              {/* Workspace Section */}
+
+              {/* Workspace Section — right column */}
               <div className="workspace-section-wrapper">
                 <div className="workspace-main-card glass-morphism">
                   <div className="workspace-header">
                     <div className="workspace-title-block">
-                      <Rocket size={24} className="workspace-icon" />
+                      <Terminal className="workspace-icon" size={24} />
                       <h2>Quick Launch Workspace</h2>
                     </div>
-                    <span className="workspace-badge">LIVE</span>
                   </div>
-          
+
                   <div className="workspace-content-grid">
+                    {isHistoryOpen ? (
+                      <div className="workspace-form-section" style={{ height: '100%', minHeight: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                          <div style={{ fontSize: '0.78rem', color: '#a8a29e', fontWeight: 700, letterSpacing: '0.8px' }}>
+                            LAST 10 WORKSPACES
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsHistoryOpen(false)}
+                            style={{
+                              background: 'rgba(255,255,255,0.04)',
+                              border: '1px solid rgba(255,255,255,0.12)',
+                              color: '#fff',
+                              borderRadius: '8px',
+                              padding: '6px 10px',
+                              cursor: 'pointer',
+                              fontSize: '0.75rem',
+                              fontWeight: 700
+                            }}
+                          >
+                            Back
+                          </button>
+                        </div>
+                        <div style={{
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: '12px',
+                          padding: '12px',
+                          height: '100%',
+                          minHeight: '260px',
+                          overflowY: 'auto',
+                          background: 'rgba(0,0,0,0.2)'
+                        }}>
+                          {workspaceHistory.length === 0 ? (
+                            <div style={{ fontSize: '0.78rem', color: '#78716c' }}>No workspace history yet.</div>
+                          ) : workspaceHistory.map((item, idx) => (
+                            <div key={`${item.id}-${idx}`} style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              gap: '10px',
+                              padding: '10px 0',
+                              borderBottom: idx < workspaceHistory.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none'
+                            }}>
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ color: '#fff', fontSize: '0.82rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {item.name}
+                                </div>
+                                <div style={{ color: '#a8a29e', fontSize: '0.7rem', fontFamily: 'var(--font-mono)' }}>
+                                  {item.id}
+                                </div>
+                              </div>
+                              <div style={{ fontSize: '0.68rem', color: '#fbbf24', fontWeight: 700, flexShrink: 0 }}>
+                                {item.action}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
                     <div className="workspace-form-section">
                       <div className="workspace-input-group">
-                        <label>Workspace Session ID</label>
-                        <div className="workspace-input-wrapper">
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <label>Workspace Session ID</label>
+                          {isCreateMode && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsCreateMode(false);
+                                setWorkspaceName('');
+                                setRoomId('');
+                              }}
+                              style={{
+                                background: 'transparent',
+                                color: '#ef4444',
+                                border: '1px solid rgba(239, 68, 68, 0.35)',
+                                borderRadius: '999px',
+                                width: '24px',
+                                height: '24px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                fontWeight: 700,
+                                lineHeight: 1
+                              }}
+                              title="Cancel create mode"
+                              aria-label="Cancel create mode"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                        <div className="workspace-input-wrapper full-width">
                           <input
                             type="text"
                             className="workspace-premium-input"
-                            placeholder="Enter workspace code..."
-                            onChange={(e) => setRoomId(e.target.value)}
+                            placeholder="Enter or generate a room code..."
+                            onChange={(e) => {
+                              setRoomId(e.target.value);
+                              if (e.target.value) setIsCreateMode(false);
+                            }}
                             value={roomId}
                             onKeyUp={handleInputEnter}
                           />
-                          <button className="copy-btn" onClick={createNewRoom}>
-                            <Plus size={16} />
-                            <span>New</span>
-                          </button>
                         </div>
                       </div>
-          
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="workspace-launch-btn"
-                        onClick={joinRoom}
-                      >
-                        <Rocket size={20} />
-                        <span>Launch Workspace Session</span>
-                        <ChevronRight size={20} />
-                      </motion.button>
-          
+
+                      <div className="workspace-input-group">
+                        <label>Workspace Name</label>
+                        <div className="workspace-input-wrapper full-width">
+                          <input
+                            type="text"
+                            className="workspace-premium-input"
+                            placeholder={isCreateMode ? "Give your workspace a name..." : "Generate workspace ID first to name it"}
+                            value={workspaceName}
+                            onChange={(e) => setWorkspaceName(e.target.value)}
+                            disabled={!isCreateMode}
+                            style={{ cursor: isCreateMode ? 'text' : 'not-allowed' }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="workspace-actions-row">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className="workspace-action-btn create-btn"
+                          onClick={createNewRoom}
+                        >
+                          <Plus size={18} />
+                          <span>Create</span>
+                        </motion.button>
+
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className="workspace-action-btn join-btn"
+                          onClick={joinRoom}
+                        >
+                          <Rocket size={18} />
+                          <span>Join</span>
+                          <ChevronRight size={18} />
+                        </motion.button>
+                      </div>
+
                       <div className="workspace-quick-info">
                         <div className="info-item">
                           <ShieldCheck size={14} />
-                          <span>End-to-end encrypted</span>
+                          <span>E2E Encryption Active</span>
                         </div>
                         <div className="info-item">
                           <Globe size={14} />
-                          <span>Real-time sync enabled</span>
+                          <span>Global Node: US-EAST-1</span>
                         </div>
-                        <div className="info-item">
-                          <Users size={14} />
-                          <span>Unlimited collaborators</span>
+                      </div>
+
+                      <div className="workspace-footer-metrics">
+                        <button
+                          type="button"
+                          className="ws-h-stat"
+                          onClick={() => setIsHistoryOpen(true)}
+                          style={{
+                            background: 'rgba(245, 158, 11, 0.08)',
+                            border: '1px solid rgba(245, 158, 11, 0.28)',
+                            borderRadius: '10px',
+                            padding: '10px 12px',
+                            cursor: 'pointer',
+                            width: '100%',
+                            textAlign: 'left'
+                          }}
+                        >
+                          <span>Sessions Joined</span>
+                          <strong>{sessionTotal}</strong>
+                        </button>
+                      </div>
+                    
+                  </div>
+                    )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+              <div className="activity-heatmap-master-wrapper">
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="full-width-heatmap-container glass-morphism"
+              >
+                <div className="heatmap-header-premium">
+                  <div className="hhp-title">
+                    <Activity size={20} color="var(--amber)" />
+                    <h3>Engineering Activity & Contribution Timeline</h3>
+                  </div>
+                  <div className="hhp-stats">
+                    <div className="hhp-stat">
+                      <span>Current Streak</span>
+                      <strong>{user.streak || 0} Days</strong>
+                    </div>
+                    <div className="hhp-sep"></div>
+                    <div className="hhp-stat">
+                      <span>Rank Weight</span>
+                      <strong>{playerTier}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="heatmap-container-premium">
+                  <div className="heatmap-body-premium">
+                    <div className="heatmap-layout-premium">
+                      <div className="heatmap-month-strip">
+                        {(heatmapData.weeks || []).map((w) => (
+                          <span key={w.weekIdx}>{w.label}</span>
+                        ))}
+                      </div>
+                      <div className="heatmap-layout-inner">
+                        <div className="heatmap-day-labels">
+                          <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                        </div>
+                        <div className="heatmap-grid-premium" role="grid" aria-label="User activity heatmap">
+                          {heatmapData.days.map((day, i) => {
+                            const level = getActivityLevel(day.activity);
+                            const prettyDate = day.date.toLocaleDateString(undefined, {
+                              weekday: 'short', month: 'short', day: 'numeric'
+                            });
+                            return (
+                              <button
+                                key={`${day.date.toISOString()}-${i}`}
+                                type="button"
+                                className={`heatmap-cell level-${level}`}
+                                title={`${prettyDate}: ${day.activity} XP`}
+                              />
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
-          
-                    <div className="workspace-features-panel">
-                      <h3>Workspace Features</h3>
-                      <div className="workspace-feature-list">
-                        <div className="ws-feature-item">
-                          <div className="ws-feature-icon">
-                            <Code2 size={18} />
-                          </div>
-                          <div className="ws-feature-text">
-                            <h4>Multi-Language Support</h4>
-                            <p>JavaScript, Python, Java & more</p>
-                          </div>
-                        </div>
-                        <div className="ws-feature-item">
-                          <div className="ws-feature-icon">
-                            <Share2 size={18} />
-                          </div>
-                          <div className="ws-feature-text">
-                            <h4>Instant Sharing</h4>
-                            <p>Share workspace with one click</p>
-                          </div>
-                        </div>
-                        <div className="ws-feature-item">
-                          <div className="ws-feature-icon">
-                            <Terminal size={18} />
-                          </div>
-                          <div className="ws-feature-text">
-                            <h4>Live Console</h4>
-                            <p>Real-time output & debugging</p>
-                          </div>
+
+                    <div className="heatmap-sidebar-premium">
+                      <div className="heatmap-side-block">
+                        <label>Engagement Legend</label>
+                        <div className="heatmap-legend-v">
+                          <div className="legend-item"><div className="heatmap-cell level-0"></div> <span>Empty</span></div>
+                          <div className="legend-item"><div className="heatmap-cell level-4"></div> <span>Active</span></div>
                         </div>
                       </div>
                     </div>
                   </div>
+                </div>
+              </motion.div>
+            </div>
+
+            <div className="news-headline-strip" aria-label="Builder headlines">
+              <div className="news-headline-marquee">
+                <div className="news-headline-track">
+                  <span>Rise. Build. Repeat. Every solved challenge levels you up.</span>
+                  <span>Small wins every day become unstoppable momentum.</span>
+                  <span>Stay consistent: one clean session today beats ten planned tomorrow.</span>
+                  <span>Debug with patience, learn with curiosity, ship with confidence.</span>
+                </div>
+                <div className="news-headline-track" aria-hidden="true">
+                  <span>Rise. Build. Repeat. Every solved challenge levels you up.</span>
+                  <span>Small wins every day become unstoppable momentum.</span>
+                  <span>Stay consistent: one clean session today beats ten planned tomorrow.</span>
+                  <span>Debug with patience, learn with curiosity, ship with confidence.</span>
                 </div>
               </div>
             </div>
@@ -437,6 +739,7 @@ const Home = () => {
                 <div className="workspace-card-inner">
                   <div className="form-header-premium">
                     <h3>Engineer Workspace</h3>
+                    <p className="form-header-sub">Join or create a real-time coding session</p>
                   </div>
                   <div className="card-divider-h"></div>
                   <div className="input-group">
@@ -476,10 +779,10 @@ const Home = () => {
         )}
 
         <section className="stats-ticker glass-ticker">
-          <div className="stat"><strong>1.2m+</strong> <span>LOC Synced Today</span></div>
-          <div className="stat"><strong>5ms</strong> <span>Global Latency</span></div>
-          <div className="stat"><strong>99.999%</strong> <span>Uptime SLA</span></div>
-          <div className="stat"><strong>256-bit</strong> <span>AES Encryption</span></div>
+          <div className="stat"><strong>Real-Time Workspace</strong> <span>Collaborative coding with live sync</span></div>
+          <div className="stat"><strong>Code Arena Modules</strong> <span>CSS, Logic, and React challenge tracks</span></div>
+          <div className="stat"><strong>XP & Streak Tracking</strong> <span>Progress heatmap, streaks, and levels</span></div>
+          <div className="stat"><strong>Faction & Rankings</strong> <span>Team play and Hall of Fame competition</span></div>
         </section>
 
         {/* ═══════════════════════════════════════════════════════════
@@ -503,8 +806,8 @@ const Home = () => {
                 </div>
                 <h2 className="showcase-title">Code Arena</h2>
                 <p className="showcase-description">
-                  Master core programming concepts through interactive challenges. 
-                  Battle through CSS layouts, JavaScript logic puzzles, and React architecture quests. 
+                  Master core programming concepts through interactive challenges.
+                  Battle through CSS layouts, JavaScript logic puzzles, and React architecture quests.
                   Earn XP, unlock levels, and climb the global rankings.
                 </p>
                 <div className="showcase-features">
@@ -525,7 +828,7 @@ const Home = () => {
                   Enter the Arena <ChevronRight size={18} />
                 </button>
               </motion.div>
-              
+
               <motion.div variants={itemVariants} className="showcase-visual">
                 <div className="visual-card glass-morphism">
                   <div className="arena-preview">
@@ -591,8 +894,8 @@ const Home = () => {
                 </div>
                 <h2 className="showcase-title">Hall of Fame</h2>
                 <p className="showcase-description">
-                  Compete with developers worldwide and claim your spot on the leaderboard. 
-                  Track your progress, showcase your mastery level, and rise through the ranks 
+                  Compete with developers worldwide and claim your spot on the leaderboard.
+                  Track your progress, showcase your mastery level, and rise through the ranks
                   from Initiate to Grandmaster.
                 </p>
                 <div className="showcase-features">
@@ -634,8 +937,8 @@ const Home = () => {
                 </div>
                 <h2 className="showcase-title">Factions</h2>
                 <p className="showcase-description">
-                  Join forces with fellow developers or forge your own faction. 
-                  Collaborate, compete, and dominate the faction leaderboards. 
+                  Join forces with fellow developers or forge your own faction.
+                  Collaborate, compete, and dominate the faction leaderboards.
                   Build your team's reputation and conquer challenges together.
                 </p>
                 <div className="showcase-features">
@@ -656,7 +959,7 @@ const Home = () => {
                   Join a Faction <ChevronRight size={18} />
                 </button>
               </motion.div>
-              
+
               <motion.div variants={itemVariants} className="showcase-visual">
                 <div className="visual-card glass-morphism">
                   <div className="factions-preview">
@@ -719,8 +1022,6 @@ const Home = () => {
 
           <div className="footer-center">
             <nav className="footer-nav">
-              <a href="#features">Features</a>
-              <a href="#toolkit">Toolkit</a>
               <a href="#solutions">Solutions</a>
               <a href="/docs">Docs</a>
             </nav>
