@@ -46,7 +46,7 @@ const Auth = () => {
                 }
             });
             toast.success('System Authenticated. Entering Hub...');
-            navigate('/');
+            navigate('/hub');
           } else {
             toast.error(res.error);
           }
@@ -62,7 +62,7 @@ const Auth = () => {
             toast.success('Account Created! Initializing environment...');
             setTimeout(async () => {
                 const autoLogin = await login(email, password);
-                if (autoLogin.success) navigate('/');
+                if (autoLogin.success) navigate('/hub');
             }, 1000);
           } else {
             toast.error(res.error);
