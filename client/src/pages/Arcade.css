@@ -1,9 +1,9 @@
 .arcade-page {
     min-height: 100vh;
     background:
-        radial-gradient(circle at 18% 18%, rgba(255, 59, 59, 0.14) 0%, transparent 42%),
-        radial-gradient(circle at 86% 68%, rgba(127, 29, 29, 0.12) 0%, transparent 52%),
-        linear-gradient(180deg, #090000, #000);
+        radial-gradient(circle at 18% 18%, rgba(99, 102, 241, 0.12) 0%, transparent 42%),
+        radial-gradient(circle at 86% 68%, rgba(30, 27, 75, 0.1) 0%, transparent 52%),
+        linear-gradient(180deg, #020617, #000);
     display: flex;
     flex-direction: column;
     position: relative;
@@ -41,7 +41,7 @@
     background: rgba(0, 0, 0, 0.82);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1px solid rgba(255, 59, 59, 0.22);
+    border-bottom: 1px solid rgba(99, 102, 241, 0.15);
     height: 70px;
 }
 
@@ -71,8 +71,8 @@
     text-transform: uppercase;
     letter-spacing: 2px;
     text-shadow:
-        0 0 18px rgba(255, 59, 59, 0.35),
-        0 0 44px rgba(255, 59, 59, 0.18);
+        0 0 18px rgba(99, 102, 241, 0.3),
+        0 0 44px rgba(99, 102, 241, 0.15);
     margin-bottom: 10px;
 }
 
@@ -88,20 +88,25 @@
 }
 
 .game-card {
-    background: linear-gradient(180deg, rgba(20, 0, 0, 0.65), rgba(0, 0, 0, 0.7));
-    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 24px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: pointer;
-    transition: all 0.3s ease;
+    backdrop-filter: blur(14px);
+    box-shadow: 
+        0 4px 24px -1px rgba(0, 0, 0, 0.2),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
 .game-card:hover {
-    transform: translateY(-8px);
+    transform: translateY(-8px) scale(1.01);
     box-shadow:
-        0 24px 55px -20px rgba(220, 38, 38, 0.35),
-        0 0 0 1px rgba(255, 59, 59, 0.14);
-    border-color: rgba(255, 59, 59, 0.35);
+        0 30px 60px -12px rgba(99, 102, 241, 0.25),
+        0 0 0 1px rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.4);
+    background: rgba(15, 23, 42, 0.65);
 }
 
 .game-cover {
@@ -112,15 +117,15 @@
 }
 
 .css-cover {
-    background: linear-gradient(135deg, #7f1d1d, #dc2626);
+    background: linear-gradient(135deg, #1e1b4b, #6366f1);
 }
 
 .js-cover {
-    background: linear-gradient(135deg, #450a0a, #ff3b3b);
+    background: linear-gradient(135deg, #0f172a, #4f46e5);
 }
 
 .logic-cover {
-    background: linear-gradient(135deg, #dc2626, #991b1b);
+    background: linear-gradient(135deg, #312e81, #4338ca);
 }
 
 .locked-cover {
@@ -177,7 +182,7 @@
     display: flex;
     flex-direction: column;
     padding: 20px;
-    background: radial-gradient(circle at 30% 10%, rgba(220, 38, 38, 0.08) 0%, transparent 45%), #000;
+    background: radial-gradient(circle at 30% 10%, rgba(99, 102, 241, 0.08) 0%, transparent 45%), #000;
 }
 
 .game-top-bar {
@@ -185,7 +190,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 10px 20px;
-    background: rgba(10, 0, 0, 0.72);
+    background: rgba(15, 23, 42, 0.72);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 12px;
     margin-bottom: 20px;
@@ -199,13 +204,13 @@
 }
 
 .level-badge {
-    background: linear-gradient(135deg, var(--blood-dark), var(--blood));
+    background: linear-gradient(135deg, #1e1b4b, #6366f1);
     color: #fff;
     font-weight: 800;
     padding: 6px 16px;
     border-radius: 20px;
     letter-spacing: 1px;
-    box-shadow: 0 10px 26px rgba(220, 38, 38, 0.25);
+    box-shadow: 0 10px 26px rgba(99, 102, 241, 0.25);
 }
 
 .css-sniper-layout {
@@ -216,7 +221,7 @@
 }
 
 .css-editor-panel {
-    background: rgba(10, 0, 0, 0.6);
+    background: rgba(15, 23, 42, 0.72);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 12px;
     display: flex;
@@ -225,10 +230,10 @@
 }
 
 .instructions {
-    background: rgba(220, 38, 38, 0.08);
-    border-bottom: 1px solid rgba(255, 59, 59, 0.14);
+    background: rgba(99, 102, 241, 0.08);
+    border-bottom: 1px solid rgba(99, 102, 241, 0.14);
     padding: 20px;
-    color: #ffe4e6;
+    color: #e2e8f0;
 }
 
 .code-block {
@@ -245,7 +250,7 @@
     background: rgba(0,0,0,0.2);
     border: 1px solid rgba(255,255,255,0.10);
     border-radius: 8px;
-    color: #fecaca;
+    color: #e2e8f0;
     font-family: inherit;
     font-size: inherit;
     padding: 10px 20px;
@@ -260,8 +265,8 @@
 }
 
 .css-textarea:focus {
-    border-color: rgba(255, 59, 59, 0.65);
-    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25), 0 0 24px rgba(255, 59, 59, 0.12);
+    border-color: rgba(99, 102, 241, 0.65);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25), 0 0 24px rgba(99, 102, 241, 0.12);
 }
 
 .css-preview-panel {
@@ -276,9 +281,9 @@
     position: absolute;
     width: 60px;
     height: 60px;
-    border: 3px dashed rgba(255, 59, 59, 0.38);
+    border: 3px dashed rgba(99, 102, 241, 0.38);
     border-radius: 8px;
-    background: rgba(220, 38, 38, 0.08);
+    background: rgba(99, 102, 241, 0.08);
 }
 
 .ghost-target.level-1 {
@@ -299,9 +304,9 @@
 .player-box {
     width: 60px;
     height: 60px;
-    background: linear-gradient(135deg, var(--blood), var(--blood-hot));
+    background: linear-gradient(135deg, #4f46e5, #818cf8);
     border-radius: 8px;
-    box-shadow: 0 10px 26px rgba(220, 38, 38, 0.35);
+    box-shadow: 0 10px 26px rgba(99, 102, 241, 0.35);
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 10;
 }

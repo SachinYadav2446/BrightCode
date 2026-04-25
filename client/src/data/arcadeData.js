@@ -9,11 +9,11 @@ import {
 // --- 1. CSS ODYSSEY (50 Levels) ---
 // =================================================================
 export const CSS_LEVELS = [
-    { id: 1, phase: 'Basics', title: 'The Blueprint', desc: 'Change the background to "crimson" and give it a "border-radius" of 10px.', reqs: [['background:crimson', 'background-color:crimson'], 'border-radius:10px'], isParent: false, base: { width: '100px', height: '100px', background: '#444' } },
+    { id: 1, phase: 'Basics', title: 'The Blueprint', desc: 'Change the background to "indigo" and give it a "border-radius" of 10px.', reqs: [['background:indigo', 'background-color:indigo'], 'border-radius:10px'], isParent: false, base: { width: '100px', height: '100px', background: '#444' } },
     { id: 2, phase: 'Basics', title: 'Glass Circle', desc: 'Set opacity to "0.5" and border-radius to "50%".', reqs: ['opacity:0.5', 'border-radius:50%'], isParent: false, base: { width: '100px', height: '100px', background: 'white' } },
     { id: 3, phase: 'Basics', title: 'Box Modeling', desc: 'Set width to "200px" and height to "50px".', reqs: ['width:200px', 'height:50px'], isParent: false, base: { background: '#f59e0b' } },
     { id: 4, phase: 'Basics', title: 'Shadow Realm', desc: 'Give the box a box-shadow: "0 10px 20px black".', reqs: ['box-shadow:010px20pxblack'], isParent: false, base: { width: '100px', height: '100px', background: '#3b82f6' } },
-    { id: 5, phase: 'Basics', title: 'Border Patrol', desc: 'Add a "5px solid white" border.', reqs: ['border:5pxsolidwhite'], isParent: false, base: { width: '100px', height: '100px', background: '#ef4444' } },
+    { id: 5, phase: 'Basics', title: 'Border Patrol', desc: 'Add a "5px solid white" border.', reqs: ['border:5pxsolidwhite'], isParent: false, base: { width: '100px', height: '100px', background: '#818cf8' } },
     { id: 6, phase: 'Basics', title: 'The Invisible Box', desc: 'Set the "visibility" to "hidden".', reqs: ['visibility:hidden'], isParent: false, base: { width: '100px', height: '100px', background: '#10b981' } },
     { id: 7, phase: 'Basics', title: 'Tilted', desc: 'Rotate the box by 45 degrees using the transform property.', reqs: ['transform:rotate(45deg)'], isParent: false, base: { width: '100px', height: '100px', background: '#8b5cf6' } },
     { id: 8, phase: 'Basics', title: 'Scaled Up', desc: 'Double the size using transform: "scale(2)".', reqs: ['transform:scale(2)'], isParent: false, base: { width: '50px', height: '50px', background: '#f472b6' } },
@@ -22,7 +22,7 @@ export const CSS_LEVELS = [
     { id: 11, phase: 'Flexbox', title: 'The Connector', desc: 'Set display to "flex" on the parent container.', reqs: ['display:flex'], isParent: true, multiBox: 2, base: { width: '50px', height: '50px', background: '#fbbf24' } },
     { id: 12, phase: 'Flexbox', title: 'Horizontal Center', desc: 'Distribute items to the center horizontally.', reqs: ['justify-content:center'], isParent: true, multiBox: 2, parentBase: { display: 'flex' }, base: { width: '50px', height: '50px', background: '#fbbf24', margin: '5px' } },
     { id: 13, phase: 'Flexbox', title: 'Vertical Alignment', desc: 'Align items to the center vertically.', reqs: ['align-items:center'], isParent: true, multiBox: 1, parentBase: { display: 'flex', height: '100%' }, base: { width: '100px', height: '100px', background: '#10b981' } },
-    { id: 14, phase: 'Flexbox', title: 'Perfect Square Center', desc: 'Center items both ways.', reqs: ['justify-content:center', 'align-items:center'], isParent: true, multiBox: 1, parentBase: { display: 'flex', height: '100%' }, base: { width: '80px', height: '80px', background: '#ef4444' } },
+    { id: 14, phase: 'Flexbox', title: 'Perfect Square Center', desc: 'Center items both ways.', reqs: ['justify-content:center', 'align-items:center'], isParent: true, multiBox: 1, parentBase: { display: 'flex', height: '100%' }, base: { width: '80px', height: '80px', background: '#818cf8' } },
     { id: 15, phase: 'Flexbox', title: 'The Gap', desc: 'Space the items out evenly with "space-between".', reqs: ['justify-content:space-between'], isParent: true, multiBox: 3, parentBase: { display: 'flex', width: '100%' }, base: { width: '50px', height: '50px', background: '#3b82f6' } },
     { id: 16, phase: 'Flexbox', title: 'Column Shift', desc: 'Change the flex direction to "column".', reqs: ['flex-direction:column'], isParent: true, multiBox: 3, parentBase: { display: 'flex' }, base: { width: '50px', height: '50px', background: '#8b5cf6', margin: '5px' } },
     { id: 17, phase: 'Flexbox', title: 'Reverse Column', desc: 'Backwards flow! Use "column-reverse".', reqs: ['flex-direction:column-reverse'], isParent: true, multiBox: 3, parentBase: { display: 'flex' }, base: { width: '50px', height: '50px', background: '#f472b6', margin: '2px' } },
@@ -30,7 +30,7 @@ export const CSS_LEVELS = [
     { id: 19, phase: 'Flexbox', title: 'End Of Line', desc: 'Push items to the "flex-end".', reqs: ['justify-content:flex-end'], isParent: true, multiBox: 2, parentBase: { display: 'flex', width: '100%' }, base: { width: '50px', height: '50px', background: '#06b6d4' } },
     { id: 20, phase: 'Flexbox', title: 'Baseline', desc: 'Align items to the "baseline".', reqs: ['align-items:baseline'], isParent: true, multiBox: 3, parentBase: { display: 'flex', height: '100%' }, base: { width: '50px', height: '30px', background: '#fbbf24' } },
     { id: 21, phase: 'Flexbox', title: 'Evenly Spaced', desc: 'Use "space-evenly" for perfect spacing.', reqs: ['justify-content:space-evenly'], isParent: true, multiBox: 3, parentBase: { display: 'flex', width: '100%' }, base: { width: '60px', height: '60px', background: '#10b981' } },
-    { id: 22, phase: 'Flexbox', title: 'Around We Go', desc: 'Use "space-around" distribution.', reqs: ['justify-content:space-around'], isParent: true, multiBox: 3, parentBase: { display: 'flex', width: '100%' }, base: { width: '60px', height: '60px', background: '#ef4444' } },
+    { id: 22, phase: 'Flexbox', title: 'Around We Go', desc: 'Use "space-around" distribution.', reqs: ['justify-content:space-around'], isParent: true, multiBox: 3, parentBase: { display: 'flex', width: '100%' }, base: { width: '60px', height: '60px', background: '#818cf8' } },
     { id: 23, phase: 'Flexbox', title: 'Content Stack', desc: 'Align wrapped content to the "center" using align-content.', reqs: ['align-content:center'], isParent: true, multiBox: 10, parentBase: { display: 'flex', flexWrap: 'wrap', height: '300px', width: '300px' }, base: { width: '50px', height: '50px', background: '#3b82f6', margin: '2px' } },
     { id: 24, phase: 'Flexbox', title: 'The Stretch', desc: 'Make boxes stretch to fill height using "stretch".', reqs: ['align-items:stretch'], isParent: true, multiBox: 3, parentBase: { display: 'flex', height: '200px' }, base: { width: '60px', background: '#8b5cf6' } },
     { id: 25, phase: 'Flexbox', title: 'Flexible Grow', desc: 'Tell the parent to "display: flex" and children to "flex-grow: 1".', reqs: ['display:flex', 'flex-grow:1'], isParent: true, multiBox: 3, parentBase: { width: '100%' }, base: { height: '80px', background: '#f472b6', border: '1px solid white' } },
@@ -38,7 +38,7 @@ export const CSS_LEVELS = [
     { id: 27, phase: 'Grid', title: 'Double Column', desc: 'Create 2 columns of 1fr each.', reqs: ['grid-template-columns:1fr1fr'], isParent: true, multiBox: 4, parentBase: { display: 'grid' }, base: { height: '50px', background: '#06b6d4' } },
     { id: 28, phase: 'Grid', title: 'The Trident', desc: 'Create 3 columns of 100px each.', reqs: ['grid-template-columns:100px100px100px'], isParent: true, multiBox: 3, parentBase: { display: 'grid' }, base: { height: '50px', background: '#fbbf24' } },
     { id: 29, phase: 'Grid', title: 'Responsive Repeat', desc: 'Use "repeat(3, 1fr)" for columns.', reqs: ['grid-template-columns:repeat(3,1fr)'], isParent: true, multiBox: 6, parentBase: { display: 'grid' }, base: { height: '50px', background: '#10b981' } },
-    { id: 30, phase: 'Grid', title: 'The Gutter', desc: 'Add a "20px" gap between grid items.', reqs: ['gap:20px'], isParent: true, multiBox: 4, parentBase: { display: 'grid', gridTemplateColumns: '1fr 1fr' }, base: { height: '80px', background: '#ef4444' } },
+    { id: 30, phase: 'Grid', title: 'The Gutter', desc: 'Add a "20px" gap between grid items.', reqs: ['gap:20px'], isParent: true, multiBox: 4, parentBase: { display: 'grid', gridTemplateColumns: '1fr 1fr' }, base: { height: '80px', background: '#818cf8' } },
     { id: 31, phase: 'Grid', title: 'Row Definition', desc: 'Set "grid-template-rows" to 100px.', reqs: ['grid-template-rows:100px'], isParent: true, multiBox: 2, parentBase: { display: 'grid', gridTemplateColumns: '1fr' }, base: { background: '#3b82f6' } },
     { id: 32, phase: 'Grid', title: 'Area Alignment', desc: 'Center grid items using "justify-items: center".', reqs: ['justify-items:center'], isParent: true, multiBox: 4, parentBase: { display: 'grid', gridTemplateColumns: '1fr 1fr' }, base: { width: '40px', height: '40px', background: '#8b5cf6' } },
     { id: 33, phase: 'Grid', title: 'Vertical Grid Center', desc: 'Use "align-items: center" on grid.', reqs: ['align-items:center'], isParent: true, multiBox: 4, parentBase: { display: 'grid', gridTemplateColumns: '1fr 1fr', height: '200px' }, base: { width: '40px', height: '40px', background: '#f472b6' } },
@@ -46,13 +46,13 @@ export const CSS_LEVELS = [
     { id: 35, phase: 'Grid', title: 'Auto Fill', desc: 'Use "grid-template-columns: repeat(auto-fill, 100px)".', reqs: ['grid-template-columns:repeat(auto-fill,100px)'], isParent: true, multiBox: 5, parentBase: { display: 'grid' }, base: { height: '50px', background: '#06b6d4' } },
     { id: 36, phase: 'Grid', title: 'Max Content', desc: 'Set columns to "max-content".', reqs: ['grid-template-columns:max-content'], isParent: true, multiBox: 1, parentBase: { display: 'grid' }, renderBoxText: 'Hello World Wide Web', base: { background: '#fbbf24', padding: '10px' } },
     { id: 37, phase: 'Grid', title: 'MinMax Logic', desc: 'Use "minmax(100px, 1fr)" for a column.', reqs: ['grid-template-columns:minmax(100px,1fr)'], isParent: true, multiBox: 3, parentBase: { display: 'grid' }, base: { height: '50px', background: '#10b981' } },
-    { id: 38, phase: 'Grid', title: 'Template Areas', desc: 'Define "grid-template-areas" for a header.', reqs: ['grid-template-areas:"headerheader"'], isParent: true, multiBox: 2, parentBase: { display: 'grid', gridTemplateColumns: '1fr 1fr' }, base: { height: '50px', background: '#ef4444' } },
+    { id: 38, phase: 'Grid', title: 'Template Areas', desc: 'Define "grid-template-areas" for a header.', reqs: ['grid-template-areas:"headerheader"'], isParent: true, multiBox: 2, parentBase: { display: 'grid', gridTemplateColumns: '1fr 1fr' }, base: { height: '50px', background: '#818cf8' } },
     { id: 39, phase: 'Grid', title: 'Implicit Rows', desc: 'Set "grid-auto-rows" to 150px.', reqs: ['grid-auto-rows:150px'], isParent: true, multiBox: 4, parentBase: { display: 'grid', gridTemplateColumns: '1fr 1fr' }, base: { background: '#3b82f6' } },
     { id: 40, phase: 'Grid', title: 'Dense Flow', desc: 'Set "grid-auto-flow" to "dense".', reqs: ['grid-auto-flow:dense'], isParent: true, multiBox: 5, parentBase: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }, base: { height: '50px', background: '#8b5cf6' } },
     { id: 41, phase: 'Advanced', title: 'Hero Section', desc: 'Create a centered "Hero" box using flex with "column" direction.', reqs: ['display:flex', 'flex-direction:column', 'justify-content:center', 'align-items:center'], isParent: true, multiBox: 2, parentBase: { height: '100%', background: '#111' }, base: { padding: '20px', background: '#fbbf24', margin: '5px' } },
     { id: 42, phase: 'Advanced', title: 'Card Layout', desc: 'Use "display: grid" with "gap: 20px" and "grid-template-columns: repeat(3, 1fr)".', reqs: ['display:grid', 'gap:20px', 'grid-template-columns:repeat(3,1fr)'], isParent: true, multiBox: 6, parentBase: { padding: '20px' }, base: { height: '100px', background: '#06b6d4', borderRadius: '12px' } },
     { id: 43, phase: 'Advanced', title: 'Sticky Bar', desc: 'Set "position: sticky" and "top: 0".', reqs: ['position:sticky', 'top:0'], isParent: false, base: { width: '100%', height: '50px', background: '#f59e0b', zIndex: '100' } },
-    { id: 44, phase: 'Advanced', title: 'Circle Avatar Grid', desc: 'Grid with 4 columns, items must be "border-radius: 50%".', reqs: ['display:grid', 'grid-template-columns:repeat(4,1fr)', 'border-radius:50%'], isParent: true, multiBox: 4, base: { width: '60px', height: '60px', background: '#ef4444' } },
+    { id: 44, phase: 'Advanced', title: 'Circle Avatar Grid', desc: 'Grid with 4 columns, items must be "border-radius: 50%".', reqs: ['display:grid', 'grid-template-columns:repeat(4,1fr)', 'border-radius:50%'], isParent: true, multiBox: 4, base: { width: '60px', height: '60px', background: '#818cf8' } },
     { id: 45, phase: 'Advanced', title: 'Holy Grail Grid', desc: 'Setup columns: "150px 1fr 150px".', reqs: ['grid-template-columns:150px1fr150px'], isParent: true, multiBox: 3, parentBase: { display: 'grid', height: '100%' }, base: { background: '#3b82f6', border: '1px solid white' } },
     { id: 46, phase: 'Advanced', title: 'Profile Header', desc: 'Use flex with "align-items: center" and "gap: 15px".', reqs: ['display:flex', 'align-items:center', 'gap:15px'], isParent: true, multiBox: 2, base: { background: '#8b5cf6', padding: '10px' } },
     { id: 47, phase: 'Advanced', title: 'Modern Button', desc: 'Add "padding: 12px 24px", "cursor: pointer", and "transition: 0.3s".', reqs: ['padding:12px24px', 'cursor:pointer', 'transition:0.3s'], isParent: false, base: { background: '#fbbf24', border: 'none', borderRadius: '8px' } },
@@ -210,15 +210,15 @@ export const SUBJECT_PHASES = {
     'css-odyssey': [
         { name: 'Basics', start: 0, end: 9, label: 'Section 1: Foundations' },
         { name: 'Flexbox', start: 10, end: 24, label: 'Section 2: Flexbox Mastery' },
-        { name: 'Grid', start: 25, end: 39, label: 'Section 3: Grid Dominance' },
-        { name: 'Advanced', start: 40, end: 49, label: 'Section 4: The Final Gauntlet' }
+        { name: 'Grid', start: 25, end: 39, label: 'Section 3: Grid Architecture' },
+        { name: 'Advanced', start: 40, end: 49, label: 'Section 4: Advanced Systems' }
     ],
     'logic-lab': [
         { name: 'LogicBasics', start: 0, end: 9, label: 'Section 1: Foundations' },
         { name: 'ControlFlow', start: 10, end: 24, label: 'Section 2: Decision Matrix' },
-        { name: 'Loops', start: 25, end: 44, label: 'Section 3: Cycle Supremacy' },
+        { name: 'Loops', start: 25, end: 44, label: 'Section 3: Iterative Logic' },
         { name: 'Data', start: 45, end: 69, label: 'Section 4: Data Architect' },
-        { name: 'Functional', start: 70, end: 99, label: 'Section 5: Final Logic Forge' }
+        { name: 'Functional', start: 70, end: 99, label: 'Section 5: Final Logic Suite' }
     ],
     'react-quest': [
         { name: 'Fundamentals', start: 0, end: 9, label: 'Section 1: Basic Patterns' },
@@ -245,9 +245,9 @@ export const PHASE_THEORIES = {
     'Functional': { title: 'Functional Forge', icon: React.createElement(Zap, { size: 40, color: "#fbbf24" }), content: ['Higher-order functions like map/filter.', 'Closures and private scope logic.', 'Asynchronous promises and callbacks.'] },
 
     // --- React ---
-    'Fundamentals': { title: 'React Core', icon: React.createElement(Code2, { size: 40, color: "#61dbfb" }), content: ['JSX syntax and Component logic.', 'Props for one-way data flow.', 'The Virtual DOM reconciliation process.'] },
-    'Hooks': { title: 'Hooks Engine', icon: React.createElement(Zap, { size: 40, color: "#61dbfb" }), content: ['useState for local state management.', 'useEffect for side-effect handling.', 'useMemo and useCallback for efficiency.'] },
-    'Advanced': { title: 'Architect Patterns', icon: React.createElement(Layers, { size: 40, color: "#61dbfb" }), content: ['Context API for global state.', 'Lazy loading and Code splitting.', 'Error Boundaries and Suspense.'] }
+    'Fundamentals': { title: 'React Core', icon: React.createElement(Code2, { size: 40, color: "#818cf8" }), content: ['JSX syntax and Component logic.', 'Props for one-way data flow.', 'The Virtual DOM reconciliation process.'] },
+    'Hooks': { title: 'Hooks Engine', icon: React.createElement(Zap, { size: 40, color: "#818cf8" }), content: ['useState for local state management.', 'useEffect for side-effect handling.', 'useMemo and useCallback for efficiency.'] },
+    'Advanced': { title: 'Architect Patterns', icon: React.createElement(Layers, { size: 40, color: "#818cf8" }), content: ['Context API for global state.', 'Lazy loading and Code splitting.', 'Error Boundaries and Suspense.'] }
 };
 
 // =================================================================

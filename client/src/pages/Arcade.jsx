@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Gamepad2, ArrowLeft, Code2, Trophy, Zap, ArrowRight, Lock, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { Gamepad2, ArrowLeft, Code2, Trophy, Zap, ArrowRight, Lock, ChevronLeft, ChevronRight, RefreshCw, Activity, BookOpen } from 'lucide-react';
 import './Arcade.css';
 import toast from 'react-hot-toast';
 import axios from 'axios';
@@ -17,7 +17,7 @@ const Arcade = () => {
     const navigate = useNavigate();
     const goBackPreserveScroll = () => {
         if (window.history.length > 1) navigate(-1);
-        else navigate('/');
+        else navigate('/hub');
     };
     const [activeGame, setActiveGame] = useState(null);
     const [gameSliderIdx, setGameSliderIdx] = useState(0);
@@ -198,9 +198,9 @@ const Arcade = () => {
         if (idx === levelData.answer) {
             setSelectedOption(idx);
             setAnswerRevealed(true);
-            toast.success('Correct! Neural link established.', {
+            toast.success('Success! Logic forged.', {
                 icon: '✅',
-                style: { background: '#0a0a0a', color: '#10b981', border: '1px solid #10b981' }
+                style: { background: '#0a0a0a', color: '#fff', border: '1px solid #fff' }
             });
         } else {
             setWrongSelection(idx);
@@ -292,10 +292,10 @@ const Arcade = () => {
                         updateXP(xp, stats);
                         localStorage.setItem('user_xp', xp);
                         
-                        toast.success(`+${reward} XP EARNED (Synced)!`, {
-                            icon: '⚡',
-                            style: { background: '#1c1917', color: '#fbbf24', border: '1px solid #fbbf24' }
-                        });
+                        toast.success(`+${reward} XP EARNED!`, {
+                        icon: '⚡',
+                        style: { background: '#1c1917', color: '#fff', border: '1px solid #fff' }
+                    });
                     }
                 } catch (err) {
                     console.error('XP Sync failed');
@@ -323,8 +323,8 @@ const Arcade = () => {
             const phaseNumber = phases.findIndex(p => p.name === currentPhase.name) + 1;
             const nextPhase = phases[phaseNumber];
             const msg = nextPhase
-                ? `🔥 Phase ${phaseNumber} complete, fighter.\nWhen you entered this phase, you were just getting started.\nNow you have mastered its core topics and proved your grit.\n⚔️ Ahead, things get crazier — but you are a fighter.\nNext unlocked: ${nextPhase.label} 🔓`
-                : `👑 Final phase complete, champion.\nYou were a learner when this journey began.\nNow you stand as a true arena warrior. 🩸`;
+                ? `� Phase ${phaseNumber} complete, developer.\nWhen you started this phase, you were learning the basics.\nNow you have mastered its core topics and demonstrated your skill.\n💻 Ahead, challenges become more advanced — but you are ready.\nNext unlocked: ${nextPhase.label} 🔓`
+                : `✨ Path complete, expert.\nYou were a learner when this journey began.\nNow you stand as a true professional. 🚀`;
             setPhaseCompleteMessage(msg);
             setIsWarping(false);
             return;
@@ -351,7 +351,7 @@ const Arcade = () => {
         setSavedSolutions(updated);
         localStorage.setItem('css_solutions', JSON.stringify(updated));
         setCssInput('');
-        toast.success('Simulation Purged & Reset');
+        toast.success('Challenge Reset Successfully');
     };
 
     return (
@@ -367,7 +367,7 @@ const Arcade = () => {
                 padding: '15px 40px',
                 background: 'rgba(10, 10, 10, 0.8)',
                 backdropFilter: 'blur(15px)',
-                borderBottom: '1px solid rgba(251, 191, 36, 0.1)'
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
             }}>
                 <div style={{ flex: 1 }}>
                     {!activeGame && (
@@ -391,13 +391,13 @@ const Arcade = () => {
                             onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'white'; }}
                             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = '#a8a29e'; }}
                         >
-                            <ArrowLeft size={18} /> Back to Hub
+                            <ArrowLeft size={18} /> Back to Forge
                         </button>
                     )}
                 </div>
                 
                 <div className="arcade-brand" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-                    <Gamepad2 size={24} color="#ff3b3b" /> <span style={{ fontWeight: 800, color: 'white', fontSize: '1.2rem', marginLeft: '10px', letterSpacing: '0.5px' }}>Mega Training Arena</span>
+                    <Code2 size={24} color="#fff" /> <span style={{ fontWeight: 800, color: 'white', fontSize: '1.2rem', marginLeft: '10px', letterSpacing: '0.5px' }}>Skill Forge Engine</span>
                 </div>
 
                 <div style={{ flex: 1 }}></div>
@@ -406,17 +406,17 @@ const Arcade = () => {
             {!activeGame ? (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="arcade-container">
                     <div className="arcade-header">
-                        <h1 style={{ fontSize: '3.5rem' }}>The Knowledge Matrix 🩸</h1>
-                        <p>Progress through gated sections to reach the 100-level Absolute Mastery.</p>
+                        <h1 style={{ fontSize: '3.5rem' }}>The Skill Forge</h1>
+                        <p>Forge your expertise through specialized engineering tracks.</p>
                     </div>
 
                     <div style={{ position: 'relative', maxWidth: '850px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '30px', padding: '0 40px' }}>
                         {/* Navigation Arrows */}
                         <button 
                             onClick={() => setGameSliderIdx(prev => (prev === 0 ? 8 : prev - 1))}
-                            style={{ background: 'rgba(255,59,59,0.06)', border: '1px solid rgba(255,59,59,0.22)', color: 'white', padding: '15px', borderRadius: '50%', cursor: 'pointer', zIndex: 10, transition: 'all 0.3s' }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,59,59,0.14)'; e.currentTarget.style.borderColor = 'rgba(255,59,59,0.35)'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,59,59,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,59,59,0.22)'; }}
+                            style={{ background: 'rgba(99, 102, 241, 0.06)', border: '1px solid rgba(99, 102, 241, 0.22)', color: 'white', padding: '15px', borderRadius: '50%', cursor: 'pointer', zIndex: 10, transition: 'all 0.3s' }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(99, 102, 241, 0.14)'; e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.35)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(99, 102, 241, 0.06)'; e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.22)'; }}
                         >
                             <ChevronLeft size={32} />
                         </button>
@@ -431,9 +431,9 @@ const Arcade = () => {
                             >
                                 {(() => {
                                     const games = [
-                                        { id: 'css-odyssey', title: 'CSS Odyssey', subtitle: 'Gated Masterclass', desc: 'Master layouts, grids, and complex animations in a high-fidelity simulator.', icon: <Code2 size={64} />, gradient: 'linear-gradient(135deg, #1a0000, #0b0000)', progressKey: 'highest_css_level', total: 50, btnColor: '#ef4444', accent: '#fca5a5' },
-                                        { id: 'logic-lab', title: 'Logic Lab', subtitle: 'Algorithmic Forge', desc: 'Conquer 100 levels of JavaScript puzzles, from control flow to advanced patterns.', icon: <Zap size={64} />, gradient: 'linear-gradient(135deg, #240000, #090909)', progressKey: 'highest_logic_lab_level', total: 100, btnColor: '#dc2626', accent: '#f87171' },
-                                        { id: 'react-quest', title: 'React Quest', subtitle: 'Component Crucible', desc: 'Theoretical MCQ challenges designed to push your React knowledge to its limits.', icon: <RefreshCw size={64} />, gradient: 'linear-gradient(135deg, #160000, #050505)', progressKey: 'highest_react_quest_level', total: 30, btnColor: '#b91c1c', accent: '#fca5a5' }
+                                        { id: 'css-odyssey', title: 'CSS Forge', subtitle: 'Advanced Layouts', desc: 'Master layouts, grids, and complex animations in a high-fidelity simulator.', icon: <Code2 size={64} />, gradient: 'rgba(255, 255, 255, 0.05)', progressKey: 'highest_css_level', total: 50, btnColor: '#fff', accent: '#fff' },
+                                        { id: 'logic-lab', title: 'Logic Forge', subtitle: 'Logic Systems', desc: 'Conquer 100 levels of JavaScript puzzles, from control flow to advanced patterns.', icon: <Zap size={64} />, gradient: 'rgba(255, 255, 255, 0.05)', progressKey: 'highest_logic_lab_level', total: 100, btnColor: '#fff', accent: '#fff' },
+                                        { id: 'react-quest', title: 'React Forge', subtitle: 'Architecture Lab', desc: 'Theoretical MCQ challenges designed to push your React knowledge to its limits.', icon: <RefreshCw size={64} />, gradient: 'rgba(255, 255, 255, 0.05)', progressKey: 'highest_react_quest_level', total: 30, btnColor: '#fff', accent: '#fff' }
                                     ];
                                     const g = games[gameSliderIdx];
                                     const progValue = parseInt(localStorage.getItem(g.progressKey)) || 0;
@@ -442,61 +442,79 @@ const Arcade = () => {
                                     return (
                                         <motion.div 
                                             className="game-card featured-game" 
-                                            whileHover={{ y: -5 }}
+                                            whileHover={{ y: -5, boxShadow: '0 30px 60px -12px rgba(255,255,255,0.1)' }}
                                             onClick={() => { setActiveGame(g.id); setViewingSections(true); }}
-                                            style={{ minHeight: '380px', cursor: 'pointer', background: 'linear-gradient(180deg, rgba(24,0,0,0.7), rgba(8,0,0,0.88))', border: '1px solid rgba(255,90,90,0.28)', borderRadius: '32px', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.65)' }}
+                                            style={{ 
+                                                minHeight: '400px', 
+                                                cursor: 'pointer', 
+                                                background: 'rgba(255, 255, 255, 0.04)', 
+                                                border: '1px solid rgba(255, 255, 255, 0.1)', 
+                                                borderRadius: '32px', 
+                                                overflow: 'hidden', 
+                                                display: 'flex', 
+                                                flexDirection: 'column', 
+                                                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', 
+                                                backdropFilter: 'blur(30px)',
+                                                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                                            }}
                                         >
-                                            <div style={{ height: '220px', background: g.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                                            <div style={{ height: '220px', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
                                                 {/* Ambient Background Icon */}
-                                                <div style={{ opacity: 0.05, position: 'absolute', top: '-10px', right: '-10px', scale: 2.5 }}>{g.icon}</div>
+                                                <div style={{ opacity: 0.03, position: 'absolute', top: '-10px', right: '-10px', scale: 2.5, filter: 'blur(2px)' }}>{g.icon}</div>
                                                 
                                                 <div style={{ textAlign: 'center' }}>
                                                     <motion.div 
                                                         animate={{ y: [0, -10, 0] }}
                                                         transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                                                        style={{ marginBottom: '15px', background: 'rgba(255,255,255,0.05)', width: '100px', height: '100px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}
+                                                        style={{ marginBottom: '15px', background: 'rgba(255,255,255,0.05)', width: '100px', height: '100px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)', boxShadow: '0 0 30px rgba(255,255,255,0.05)' }}
                                                     >
-                                                        {React.cloneElement(g.icon, { size: 48, color: g.accent })}
+                                                        {React.cloneElement(g.icon, { size: 48, color: '#fff' })}
                                                     </motion.div>
                                                     <h2 style={{ color: 'white', fontSize: '2.2rem', fontWeight: 900, margin: 0, letterSpacing: '-1px' }}>{g.title}</h2>
-                                                    <div style={{ color: g.accent, letterSpacing: '3px', textTransform: 'uppercase', fontSize: '0.7rem', fontWeight: 800, marginTop: '5px', opacity: 0.8 }}>{g.subtitle}</div>
+                                                    <div style={{ color: '#fff', letterSpacing: '3px', textTransform: 'uppercase', fontSize: '0.7rem', fontWeight: 800, marginTop: '5px', opacity: 0.5 }}>{g.subtitle}</div>
                                                 </div>
                                             </div>
                                             <div style={{ padding: '30px', flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                                 <p style={{ color: '#a8a29e', fontSize: '1rem', lineHeight: 1.6, margin: 0, maxWidth: '95%' }}>{g.desc}</p>
                                                 
-                                                <div className="game-footer" style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '16px', borderTop: '1px solid rgba(255,90,90,0.18)', paddingTop: '25px' }}>
+                                                <div className="game-footer" style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '16px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '25px' }}>
                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: '1 1 0', minWidth: 0 }}>
                                                         <div style={{ display: 'flex', gap: '10px', alignItems: 'baseline' }}>
                                                             <span style={{ fontSize: '2rem', fontWeight: 900, color: 'white' }}>{pct}%</span>
-                                                            <span style={{ color: '#666', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '1px' }}>MASTERY</span>
+                                                            <span style={{ color: '#888', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '1px' }}>MASTERY</span>
                                                         </div>
-                                                        <div style={{ width: '100%', maxWidth: '240px', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+                                                        <div style={{ width: '100%', maxWidth: '240px', height: '6px', background: 'rgba(255,255,255,0.03)', borderRadius: '3px', overflow: 'hidden' }}>
                                                             <motion.div 
                                                                 initial={{ width: 0 }}
                                                                 animate={{ width: `${pct}%` }}
-                                                                style={{ height: '100%', background: g.btnColor, borderRadius: '2px' }} 
+                                                                style={{ height: '100%', background: 'linear-gradient(90deg, #fff, #444)', borderRadius: '3px', boxShadow: '0 0 15px rgba(255, 255, 255, 0.1)' }} 
                                                             />
                                                         </div>
                                                     </div>
                                                     <button
                                                         className="primary-btn glow-btn"
                                                         style={{
-                                                            background: g.btnColor,
+                                                            background: 'rgba(255, 255, 255, 0.08)',
                                                             padding: '12px 16px',
                                                             fontSize: '0.95rem',
                                                             borderRadius: '12px',
                                                             fontWeight: 800,
-                                                            flex: '0 0 30%',
+                                                            flex: '0 0 35%',
                                                             maxWidth: '220px',
                                                             width: '100%',
                                                             justifyContent: 'center',
                                                             boxShadow: 'none',
                                                             transform: 'none',
-                                                            whiteSpace: 'nowrap'
+                                                            whiteSpace: 'nowrap',
+                                                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                            color: '#fff',
+                                                            backdropFilter: 'blur(10px)',
+                                                            transition: 'all 0.3s'
                                                         }}
+                                                        onMouseEnter={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#000'; }}
+                                                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'; e.currentTarget.style.color = '#fff'; }}
                                                     >
-                                                        Enter Arena <ArrowRight size={18} style={{ marginLeft: '10px' }} />
+                                                        Enter Challenge <ArrowRight size={18} style={{ marginLeft: '10px' }} />
                                                     </button>
                                                 </div>
                                             </div>
@@ -508,9 +526,9 @@ const Arcade = () => {
 
                         <button 
                             onClick={() => setGameSliderIdx(prev => (prev === 2 ? 0 : prev + 1))}
-                            style={{ background: 'rgba(255,59,59,0.06)', border: '1px solid rgba(255,59,59,0.22)', color: 'white', padding: '15px', borderRadius: '50%', cursor: 'pointer', zIndex: 10, transition: 'all 0.3s' }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,59,59,0.14)'; e.currentTarget.style.borderColor = 'rgba(255,59,59,0.35)'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,59,59,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,59,59,0.22)'; }}
+                            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '15px', borderRadius: '50%', cursor: 'pointer', zIndex: 10, transition: 'all 0.3s' }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.14)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
                         >
                             <ChevronRight size={32} />
                         </button>
@@ -527,7 +545,7 @@ const Arcade = () => {
                                 }}
                                 style={{ 
                                     height: '12px', 
-                                    background: gameSliderIdx === idx ? '#ff3b3b' : 'rgba(255,255,255,0.35)', 
+                                    background: gameSliderIdx === idx ? '#fff' : 'rgba(255,255,255,0.15)', 
                                     borderRadius: '6px',
                                     cursor: 'pointer'
                                 }} 
@@ -548,8 +566,8 @@ const Arcade = () => {
                                 alignItems: 'center', 
                                 gap: '8px', 
                                 padding: '10px 20px',
-                                background: 'rgba(220,38,38,0.08)',
-                                border: '1px solid rgba(255,59,59,0.25)',
+                                background: 'rgba(255,255,255,0.03)',
+                                border: '1px solid rgba(255,255,255,0.1)',
                                 borderRadius: '12px',
                                 color: '#a8a29e',
                                 fontSize: '0.8rem',
@@ -558,8 +576,8 @@ const Arcade = () => {
                                 transition: 'all 0.3s ease'
                             }}
                             onClick={() => { setActiveGame(null); setViewingSections(false); }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,59,59,0.18)'; e.currentTarget.style.color = 'white'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(220,38,38,0.08)'; e.currentTarget.style.color = '#a8a29e'; }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'white'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = '#a8a29e'; }}
                         >
                             <ChevronLeft size={18} /> Back to Selection
                         </button>
@@ -581,19 +599,19 @@ const Arcade = () => {
                                 ? `Complete ${prevPhase.label} first (${prevCompleted}/${prevTotal} solved)`
                                 : '';
                             const tauntMessages = [
-                                "You're not my level yet. Earn your scars first.",
-                                "Come back stronger. Defeat the previous phase to face me.",
-                                "This gate opens only for warriors, not spectators.",
-                                "Train harder. I don't fight unfinished fighters."
+                                "You're not ready for this challenge yet. Gain more experience first.",
+                                 "Come back when you've mastered the previous skills.",
+                                "This gate opens only for experienced developers, not beginners.",
+                                "Keep learning. I recommend completing earlier challenges first."
                             ];
                             const taunt = tauntMessages[idx % tauntMessages.length];
                             const showTaunt = !unlocked && hoveredLockedPhase === idx;
                             const rawPhaseIcon = PHASE_THEORIES[phase.name]?.icon;
                             const themedPhaseIcon = React.isValidElement(rawPhaseIcon)
                                 ? React.cloneElement(rawPhaseIcon, {
-                                    color: unlocked ? '#f87171' : '#7f1d1d'
+                                    color: unlocked ? '#fff' : '#444'
                                 })
-                                : <Activity size={40} color={unlocked ? '#f87171' : '#7f1d1d'} />;
+                                : <Activity size={40} color={unlocked ? '#fff' : '#444'} />;
                             
                             return (
                                 <motion.div 
@@ -605,13 +623,14 @@ const Arcade = () => {
                                         borderRadius: '24px', 
                                         cursor: unlocked ? 'pointer' : 'not-allowed', 
                                         textAlign: 'center',
-                                        border: unlocked ? '1px solid rgba(255,59,59,0.28)' : '1px solid rgba(255,255,255,0.05)',
-                                        background: unlocked ? 'rgba(255,59,59,0.06)' : 'rgba(255,255,255,0.01)',
+                                        border: unlocked ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(255,255,255,0.05)',
+                                        background: unlocked ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.01)',
                                         opacity: unlocked ? 1 : 0.4,
                                         position: 'relative',
                                         transition: 'all 0.3s ease',
                                         transform: showTaunt ? 'perspective(900px) rotateY(7deg) scale(1.02)' : 'none',
-                                        boxShadow: showTaunt ? '0 18px 36px -20px rgba(239,68,68,0.55)' : 'none'
+                                        boxShadow: showTaunt ? '0 18px 36px -20px rgba(99,102,241,0.3)' : 'none',
+                                        backdropFilter: 'blur(10px)'
                                     }}
                                     onClick={() => unlocked && startPhase(phase)}
                                     onMouseEnter={() => { if (!unlocked) setHoveredLockedPhase(idx); }}
@@ -621,12 +640,12 @@ const Arcade = () => {
                                     {!unlocked && <Lock size={20} style={{ position: 'absolute', top: '20px', right: '20px', color: '#666' }} />}
                                     {showTaunt ? (
                                         <div style={{ minHeight: '150px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                                            <div style={{ fontSize: '1.6rem' }}>💀</div>
-                                            <div style={{ color: '#fecaca', fontSize: '0.92rem', fontWeight: 700, lineHeight: 1.45, maxWidth: '220px' }}>
+                                            <div style={{ fontSize: '1.6rem' }}>�</div>
+                                            <div style={{ color: '#94a3b8', fontSize: '0.92rem', fontWeight: 700, lineHeight: 1.45, maxWidth: '220px' }}>
                                                 {taunt}
                                             </div>
-                                            <div style={{ fontSize: '0.68rem', color: '#fca5a5', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
-                                                Beat previous phase to challenge me
+                                            <div style={{ fontSize: '0.68rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
+                                                Complete previous phase to unlock
                                             </div>
                                         </div>
                                     ) : (
@@ -638,13 +657,13 @@ const Arcade = () => {
                                             <div style={{ 
                                                 display: 'inline-block', 
                                                 padding: '5px 15px', 
-                                                background: unlocked ? 'rgba(255,59,59,0.12)' : 'rgba(255,255,255,0.03)', 
+                                                background: unlocked ? 'rgba(99, 102, 241, 0.12)' : 'rgba(255,255,255,0.03)', 
                                                 borderRadius: '10px', 
                                                 fontSize: '0.75rem', 
-                                                color: unlocked ? '#fecaca' : '#666',
+                                                color: unlocked ? '#818cf8' : '#666',
                                                 fontWeight: 800,
                                                 marginTop: '10px',
-                                                border: unlocked ? '1px solid rgba(255,59,59,0.22)' : 'none'
+                                                border: unlocked ? '1px solid rgba(99, 102, 241, 0.22)' : 'none'
                                             }}>
                                                 {completedInPhase} / {phaseLevels.length} MODULES
                                             </div>
@@ -684,8 +703,8 @@ const Arcade = () => {
                     />
                     
                     <motion.div initial={{ y: 20 }} animate={{ y: 0 }}>
-                        <div style={{ color: activeGame === 'css-odyssey' ? '#fbbf24' : activeGame === 'logic-lab' ? '#8b5cf6' : '#f87171', fontSize: '0.8rem', fontWeight: 800, letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '10px' }}>Mission Success</div>
-                        <h1 style={{ fontSize: '4rem', color: 'white', marginBottom: '30px' }}>Level {levelData.id} Cleared</h1>
+                        <div style={{ color: activeGame === 'css-odyssey' ? '#fbbf24' : activeGame === 'logic-lab' ? '#8b5cf6' : '#818cf8', fontSize: '0.8rem', fontWeight: 800, letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '10px' }}>Challenge Mastered</div>
+                        <h1 style={{ fontSize: '4rem', color: 'white', marginBottom: '30px' }}>Level {levelData.id} Complete</h1>
                         
                         <div className="quote-container" style={{ maxWidth: '600px', margin: '0 auto', padding: '0 20px' }}>
                             <p style={{ color: '#a8a29e', fontSize: '1.25rem', fontStyle: 'italic', lineHeight: 1.6, position: 'relative' }}>
@@ -700,10 +719,10 @@ const Arcade = () => {
                                 initial={{ width: 0 }}
                                 animate={{ width: '100%' }}
                                 transition={{ duration: 3.5 }}
-                                style={{ height: '100%', background: activeGame === 'css-odyssey' ? '#fbbf24' : activeGame === 'logic-lab' ? '#8b5cf6' : '#ef4444' }}
+                                style={{ height: '100%', background: activeGame === 'css-odyssey' ? '#fbbf24' : activeGame === 'logic-lab' ? '#8b5cf6' : '#6366f1' }}
                             />
                         </div>
-                        <p style={{ color: '#666', fontSize: '0.7rem', marginTop: '10px', textTransform: 'uppercase', letterSpacing: '2px' }}>Warping to Next Challenge...</p>
+                        <p style={{ color: '#666', fontSize: '0.7rem', marginTop: '10px', textTransform: 'uppercase', letterSpacing: '2px' }}>Navigating to Next Challenge...</p>
                     </motion.div>
                 </motion.div>
             ) : showTheory && currentLvlIdx !== 'WIN' ? (
@@ -711,7 +730,7 @@ const Arcade = () => {
                     initial={{ opacity: 0, scale: 0.9 }} 
                     animate={{ opacity: 1, scale: 1 }} 
                     className="theory-overlay active-game-container"
-                    style={{ justifyContent: 'center', alignItems: 'center', background: 'radial-gradient(circle at center, #1a0000 0%, #050505 100%)' }}
+                    style={{ justifyContent: 'center', alignItems: 'center', background: 'radial-gradient(circle at center, #0f172a 0%, #020617 100%)' }}
                 >
                     <button
                         className="back-to-sections-btn"
@@ -725,31 +744,31 @@ const Arcade = () => {
                             alignItems: 'center',
                             gap: '8px',
                             padding: '10px 16px',
-                            background: 'rgba(255,59,59,0.08)',
-                            border: '1px solid rgba(255,59,59,0.25)',
+                            background: 'rgba(99, 102, 241, 0.08)',
+                            border: '1px solid rgba(99, 102, 241, 0.25)',
                             borderRadius: '12px',
-                            color: '#fecaca',
+                            color: '#c7d2fe',
                             fontSize: '0.8rem',
                             fontWeight: 700,
                             cursor: 'pointer',
                             transition: 'all 0.25s ease'
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,59,59,0.18)'; e.currentTarget.style.color = '#fff'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,59,59,0.08)'; e.currentTarget.style.color = '#fecaca'; }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(99, 102, 241, 0.18)'; e.currentTarget.style.color = '#fff'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(99, 102, 241, 0.08)'; e.currentTarget.style.color = '#c7d2fe'; }}
                     >
                         <ChevronLeft size={16} /> Back to Sections
                     </button>
-                    <div className="theory-card glass-morphism" style={{ maxWidth: '600px', padding: '40px', borderRadius: '24px', textAlign: 'center', background: 'linear-gradient(180deg, rgba(20,0,0,0.72), rgba(0,0,0,0.88))', border: '1px solid rgba(255,59,59,0.26)', boxShadow: '0 22px 52px -34px rgba(255,59,59,0.2)' }}>
-                        <div className="theory-icon-circle" style={{ margin: '0 auto 20px', width: '80px', height: '80px', background: 'rgba(255,59,59,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', border: '1px solid rgba(255,59,59,0.24)' }}>
-                            {PHASE_THEORIES[levelData.phase]?.icon || <BookOpen size={40} color="#ff6b6b" />}
+                    <div className="theory-card glass-morphism" style={{ maxWidth: '600px', padding: '40px', borderRadius: '24px', textAlign: 'center', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', backdropFilter: 'blur(20px)' }}>
+                        <div className="theory-icon-circle" style={{ margin: '0 auto 20px', width: '80px', height: '80px', background: 'rgba(255, 255, 255, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                            {PHASE_THEORIES[levelData.phase]?.icon || <BookOpen size={40} color="#fff" />}
                         </div>
                         <h1 style={{ color: 'white', marginBottom: '10px' }}>{PHASE_THEORIES[levelData.phase]?.title || 'Module Insight'}</h1>
-                        <p style={{ color: '#fecaca', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', fontSize: '0.8rem', marginBottom: '30px' }}>Knowledge Drop Initiated</p>
+                        <p style={{ color: '#c7d2fe', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', fontSize: '0.8rem', marginBottom: '30px' }}>Phase Insights</p>
                         
                         <div className="theory-list" style={{ textAlign: 'left', marginBottom: '40px' }}>
                             {(PHASE_THEORIES[levelData.phase]?.content || []).map((point, idx) => (
                                 <div key={idx} style={{ display: 'flex', gap: '15px', color: '#a8a29e', marginBottom: '15px', lineHeight: 1.5 }}>
-                                    <div style={{ color: '#ff6b6b', fontWeight: 900 }}>•</div>
+                                    <div style={{ color: '#818cf8', fontWeight: 900 }}>•</div>
                                     <div>{point}</div>
                                 </div>
                             ))}
@@ -760,9 +779,9 @@ const Arcade = () => {
                                 width: '100%', 
                                 justifyContent: 'center', 
                                 padding: '16px',
-                                background: activeGame === 'css-odyssey' ? '#dc2626' : activeGame === 'logic-lab' ? '#b91c1c' : '#991b1b',
+                                background: activeGame === 'css-odyssey' ? '#4f46e5' : activeGame === 'logic-lab' ? '#4338ca' : '#3730a3',
                                 color: '#fff',
-                                border: '1px solid rgba(255,120,120,0.22)',
+                                border: '1px solid rgba(129, 140, 248, 0.22)',
                                 boxShadow: 'none'
                             }} 
                             onClick={() => setShowTheory(false)}>
@@ -781,7 +800,7 @@ const Arcade = () => {
                                 style={{
                                     position: 'fixed',
                                     inset: 0,
-                                    background: 'radial-gradient(circle at center, rgba(40,0,0,0.95) 0%, rgba(0,0,0,0.98) 68%)',
+                                    background: 'radial-gradient(circle at center, rgba(15, 23, 42, 0.95) 0%, rgba(2, 6, 23, 0.98) 68%)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -796,11 +815,11 @@ const Arcade = () => {
                                     style={{
                                         width: 'min(980px, 100%)',
                                         minHeight: '56vh',
-                                        background: 'linear-gradient(180deg, rgba(20,0,0,0.72), rgba(0,0,0,0.92))',
-                                        border: '1px solid rgba(248,113,113,0.34)',
+                                        background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.72), rgba(15, 23, 42, 0.92))',
+                                        border: '1px solid rgba(99, 102, 241, 0.34)',
                                         borderRadius: '22px',
                                         padding: '42px 36px',
-                                        boxShadow: '0 36px 90px -35px rgba(255,59,59,0.5)',
+                                        boxShadow: '0 36px 90px -35px rgba(99, 102, 241, 0.5)',
                                         textAlign: 'center',
                                         display: 'flex',
                                         flexDirection: 'column',
@@ -809,7 +828,7 @@ const Arcade = () => {
                                         gap: '18px'
                                     }}
                                 >
-                                    <div style={{ fontSize: '1rem', color: '#fca5a5', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 900 }}>
+                                    <div style={{ fontSize: '1rem', color: '#c7d2fe', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 900 }}>
                                         Journey Milestone ✅
                                     </div>
                                     <div style={{ color: '#fff', fontSize: '1.32rem', lineHeight: 1.7, fontWeight: 500, fontFamily: "'Poppins', sans-serif", whiteSpace: 'pre-line', maxWidth: '820px' }}>
@@ -824,8 +843,8 @@ const Arcade = () => {
                                         }}
                                         style={{
                                             marginTop: '10px',
-                                            background: '#dc2626',
-                                            border: '1px solid rgba(248,113,113,0.34)',
+                                            background: '#4f46e5',
+                                            border: '1px solid rgba(129, 140, 248, 0.34)',
                                             color: '#fff',
                                             fontSize: '1rem',
                                             fontWeight: 800,
@@ -861,17 +880,17 @@ const Arcade = () => {
                                     exit={{ scale: 0.95, y: 8, opacity: 0 }}
                                     style={{
                                         width: 'min(520px, 100%)',
-                                        background: 'linear-gradient(180deg, rgba(20,0,0,0.92), rgba(0,0,0,0.96))',
-                                        border: '1px solid rgba(248,113,113,0.35)',
+                                        background: 'linear-gradient(180deg, rgba(15,23,42,0.92), rgba(0,0,0,0.96))',
+                                        border: '1px solid rgba(99,102,241,0.35)',
                                         borderRadius: '16px',
                                         padding: '24px',
-                                        boxShadow: '0 30px 70px -35px rgba(255,59,59,0.35)'
+                                        boxShadow: '0 30px 70px -35px rgba(99,102,241,0.35)'
                                     }}
                                 >
-                                    <h3 style={{ margin: '0 0 10px', color: '#fff', fontSize: '1.2rem' }}>Hold up, fighter ⚔️</h3>
-                                    <p style={{ margin: 0, color: '#fecaca', lineHeight: 1.6 }}>
-                                        Warriors don&apos;t quit mid-battle. You&apos;ve already come this far — one more push can change everything.
-                                        Still want to retreat?
+                                    <h3 style={{ margin: '0 0 10px', color: '#fff', fontSize: '1.2rem' }}>Pause, developer 💻</h3>
+                                    <p style={{ margin: 0, color: '#e2e8f0', lineHeight: 1.6 }}>
+                                        Great developers stay focused until the end. You&apos;ve already come this far — one more push can change everything.
+                                        Still want to exit?
                                     </p>
                                     <div style={{ display: 'flex', gap: '10px', marginTop: '18px', justifyContent: 'flex-end' }}>
                                         <button
@@ -886,7 +905,7 @@ const Arcade = () => {
                                                 cursor: 'pointer'
                                             }}
                                         >
-                                            Keep Fighting
+                                            Keep Going
                                         </button>
                                         <button
                                             onClick={() => {
@@ -897,14 +916,14 @@ const Arcade = () => {
                                             style={{
                                                 padding: '10px 14px',
                                                 borderRadius: '10px',
-                                                border: '1px solid rgba(248,113,113,0.4)',
-                                                background: '#b91c1c',
+                                                border: '1px solid rgba(99,102,241,0.4)',
+                                                background: '#4f46e5',
                                                 color: '#fff',
                                                 fontWeight: 800,
                                                 cursor: 'pointer'
                                             }}
                                         >
-                                            Retreat Anyway
+                                            Exit Anyway
                                         </button>
                                     </div>
                                 </motion.div>
@@ -930,10 +949,10 @@ const Arcade = () => {
                             }} 
                             onClick={() => setShowRetreatConfirm(true)}
                             onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(220, 38, 38, 0.1)';
-                                e.currentTarget.style.borderColor = 'rgba(220, 38, 38, 0.4)';
+                                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.4)';
                                 e.currentTarget.style.color = 'white';
-                                e.currentTarget.style.boxShadow = '0 0 15px rgba(220, 38, 38, 0.15)';
+                                e.currentTarget.style.boxShadow = '0 0 15px rgba(99, 102, 241, 0.15)';
                             }}
                             onMouseLeave={(e) => {
                                 e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
@@ -942,7 +961,7 @@ const Arcade = () => {
                                 e.currentTarget.style.boxShadow = 'none';
                             }}
                         >
-                            <ArrowLeft size={16} /> Retreat from Campaign
+                            <ArrowLeft size={16} /> Exit Challenge
                         </button>
                         
                         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -974,7 +993,7 @@ const Arcade = () => {
 
                                         <div style={{ textAlign: 'center' }}>
                                             <h2 style={{ margin: 0, fontSize: '1rem' }}>{currentLvlIdx === 'WIN' ? 'Master' : `${levelData.phase} • Level ${levelData.id}`}</h2>
-                                            <div style={{ fontSize: '0.7rem', color: '#f87171', fontWeight: 600 }}>{currentLvlIdx === 'WIN' ? 'MAX' : `${levelData.id} / ${(activeGame === 'css-odyssey' ? CSS_LEVELS : activeGame === 'logic-lab' ? LOGIC_LEVELS : REACT_LEVELS).length}`}</div>
+                                            <div style={{ fontSize: '0.7rem', color: '#818cf8', fontWeight: 600 }}>{currentLvlIdx === 'WIN' ? 'MAX' : `${levelData.id} / ${(activeGame === 'css-odyssey' ? CSS_LEVELS : activeGame === 'logic-lab' ? LOGIC_LEVELS : REACT_LEVELS).length}`}</div>
                                         </div>
 
                                         <button 
@@ -1003,19 +1022,19 @@ const Arcade = () => {
 
                         <div className="empty-spacer" style={{ width: '160px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '15px' }}>
                             <div className="xp-badge" style={{ 
-                                background: 'rgba(239, 68, 68, 0.12)', 
-                                border: '1px solid rgba(248, 113, 113, 0.32)',
+                                background: 'rgba(255, 255, 255, 0.05)', 
+                                border: '1px solid rgba(255, 255, 255, 0.12)',
                                 padding: '6px 12px',
                                 borderRadius: '20px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '8px',
-                                color: '#fca5a5',
+                                color: '#fff',
                                 fontWeight: 700,
                                 fontSize: '0.8rem',
-                                boxShadow: '0 0 14px rgba(239, 68, 68, 0.12)'
+                                backdropFilter: 'blur(10px)'
                             }}>
-                                <Zap size={14} fill="#f87171" />
+                                <Zap size={14} fill="#fff" />
                                 {xp} XP
                             </div>
                         </div>
@@ -1026,9 +1045,9 @@ const Arcade = () => {
                         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
                             {currentLvlIdx === 'WIN' ? (
                                 <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ textAlign: 'center' }}>
-                                    <Trophy size={100} color="#ef4444" />
+                                    <Trophy size={100} color="#818cf8" />
                                     <h2 style={{ color: 'white', marginTop: '20px', fontSize: '2.5rem' }}>React Master!</h2>
-                                    <p style={{ color: '#a8a29e' }}>You conquered all 30 React challenges.</p>
+                                    <p style={{ color: '#a8a29e' }}>You completed all 30 React challenges.</p>
                                 </motion.div>
                             ) : (
                                 <motion.div
@@ -1041,19 +1060,19 @@ const Arcade = () => {
                                     {/* Progress bar */}
                                     <div style={{ width: '100%' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                            <span style={{ color: '#f87171', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>{levelData.phase}</span>
+                                            <span style={{ color: '#818cf8', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>{levelData.phase}</span>
                                             <span style={{ color: '#666', fontSize: '0.75rem', fontWeight: 600 }}>{levelData.id} / {REACT_LEVELS.length}</span>
                                         </div>
                                         <div style={{ height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
-                                            <div style={{ height: '100%', width: `${(levelData.id / REACT_LEVELS.length) * 100}%`, background: 'linear-gradient(90deg, #dc2626, #f87171)', borderRadius: '99px', transition: 'width 0.5s ease' }} />
+                                            <div style={{ height: '100%', width: `${(levelData.id / REACT_LEVELS.length) * 100}%`, background: 'linear-gradient(90deg, #6366f1, #818cf8)', borderRadius: '99px', transition: 'width 0.5s ease' }} />
                                         </div>
                                     </div>
 
                                     {/* Question card */}
-                                    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '36px', position: 'relative', overflow: 'hidden' }}>
-                                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, #dc2626, #f87171)' }} />
+                                    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '36px', position: 'relative', overflow: 'hidden', backdropFilter: 'blur(10px)' }}>
+                                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, #6366f1, #818cf8)' }} />
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                                            <span style={{ background: 'linear-gradient(135deg, #dc2626, #f87171)', borderRadius: '8px', padding: '4px 12px', fontSize: '0.7rem', fontWeight: 800, color: 'white', letterSpacing: '1px', textTransform: 'uppercase' }}>Question {levelData.id}</span>
+                                            <span style={{ background: 'linear-gradient(135deg, #6366f1, #818cf8)', borderRadius: '8px', padding: '4px 12px', fontSize: '0.7rem', fontWeight: 800, color: 'white', letterSpacing: '1px', textTransform: 'uppercase' }}>Question {levelData.id}</span>
                                             <span style={{ color: '#a8a29e', fontSize: '0.8rem' }}>{levelData.title}</span>
                                         </div>
                                         <p style={{ color: '#fff', fontSize: '1.25rem', fontWeight: 600, lineHeight: 1.55, margin: 0 }}>{levelData.question}</p>
@@ -1079,17 +1098,17 @@ const Arcade = () => {
                                                 labelBg = '#10b981';
                                                 labelColor = 'white';
                                             } else if (isWrong) {
-                                                bg = 'rgba(239, 68, 68, 0.1)';
-                                                border = '1px solid rgba(239, 68, 68, 0.4)';
-                                                color = '#ef4444';
-                                                labelBg = '#ef4444';
+                                                bg = 'rgba(255, 255, 255, 0.05)';
+                                                border = '1px solid rgba(255, 255, 255, 0.2)';
+                                                color = '#fff';
+                                                labelBg = '#444';
                                                 labelColor = 'white';
                                             } else if (isSelected && !answerRevealed) {
-                                                bg = 'rgba(239, 68, 68, 0.12)';
-                                                border = '1px solid rgba(248, 113, 113, 0.4)';
-                                                color = '#f87171';
-                                                labelBg = '#ef4444';
-                                                labelColor = 'white';
+                                                bg = 'rgba(255, 255, 255, 0.1)';
+                                                border = '1px solid rgba(255, 255, 255, 0.3)';
+                                                color = '#fff';
+                                                labelBg = '#fff';
+                                                labelColor = '#000';
                                             }
                                             return (
                                                 <motion.button key={i}
@@ -1115,7 +1134,7 @@ const Arcade = () => {
                                         style={{ 
                                             width: '100%', 
                                             padding: '16px', 
-                                            background: (answerRevealed && selectedOption === levelData.answer) ? 'linear-gradient(135deg, #dc2626, #f87171)' : 'rgba(255,255,255,0.04)', 
+                                            background: (answerRevealed && selectedOption === levelData.answer) ? 'linear-gradient(135deg, #6366f1, #818cf8)' : 'rgba(255,255,255,0.04)', 
                                             border: (answerRevealed && selectedOption === levelData.answer) ? 'none' : '1px solid rgba(255,255,255,0.08)', 
                                             borderRadius: '14px', 
                                             color: (answerRevealed && selectedOption === levelData.answer) ? 'white' : '#444', 
@@ -1123,7 +1142,7 @@ const Arcade = () => {
                                             fontSize: '1rem', 
                                             cursor: (answerRevealed && selectedOption === levelData.answer) ? 'pointer' : 'not-allowed', 
                                             transition: 'all 0.3s', 
-                                            boxShadow: (answerRevealed && selectedOption === levelData.answer) ? '0 10px 30px rgba(239,68,68,0.28)' : 'none',
+                                            boxShadow: (answerRevealed && selectedOption === levelData.answer) ? '0 10px 30px rgba(99,102,241,0.28)' : 'none',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
@@ -1144,14 +1163,14 @@ const Arcade = () => {
                         <div className="css-sniper-layout" style={{ height: '80vh', minHeight: '600px' }}>
                         <div className="css-editor-panel" style={{ display: 'flex', flexDirection: 'column' }}>
                             {/* LEVEL HEADER - FIXED TOP */}
-                            <div className="instructions" style={{ padding: '15px 20px', background: 'rgba(239, 68, 68, 0.10)', borderBottom: '1px solid rgba(248, 113, 113, 0.2)' }}>
+                            <div className="instructions" style={{ padding: '15px 20px', background: 'rgba(99, 102, 241, 0.08)', borderBottom: '1px solid rgba(99, 102, 241, 0.2)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                                     <h3 style={{ margin: 0, color: 'white', fontSize: '1.1rem' }}>{levelData.title}</h3>
-                                    <span style={{ fontSize: '0.65rem', background: '#ef4444', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontWeight: 900 }}>CHALLENGE</span>
+                                    <span style={{ fontSize: '0.65rem', background: '#6366f1', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontWeight: 900 }}>CHALLENGE</span>
                                 </div>
                                 {currentLvlIdx !== 'WIN' && (
                                     <div style={{ padding: '10px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
-                                        <p style={{ color: '#fca5a5', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '4px' }}>Primary Objective:</p>
+                                        <p style={{ color: '#818cf8', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '4px' }}>Primary Objective:</p>
                                         <p style={{ margin: 0, opacity: 0.9, fontSize: '0.85rem', lineHeight: 1.4 }}>{levelData.desc}</p>
                                     </div>
                                 )}
@@ -1163,7 +1182,7 @@ const Arcade = () => {
                                 ) : (
                                     <div style={{ color: '#10b981' }}>function solve({levelData.params}) {'{'}</div>
                                 )}
-                                <textarea className="css-textarea" style={{ height: '140px', width: '100%', background: 'transparent', border: 'none', outline: 'none', color: activeGame === 'css-odyssey' ? '#fbbf24' : '#60a5fa', fontFamily: 'inherit', marginTop: '10px', resize: 'none' }}
+                                <textarea className="css-textarea" style={{ height: '140px', width: '100%', background: 'transparent', border: 'none', outline: 'none', color: activeGame === 'css-odyssey' ? '#fbbf24' : '#fff', fontFamily: 'inherit', marginTop: '10px', resize: 'none' }}
                                     value={cssInput} onChange={(e) => setCssInput(e.target.value)}
                                     placeholder={activeGame === 'css-odyssey' ? "/* Write CSS properties here... */" : "// Write logic implementation here..."}
                                     autoFocus
@@ -1172,7 +1191,7 @@ const Arcade = () => {
                             </div>
 
                             <div style={{ display: 'flex', gap: '10px' }}>
-                                <button className="primary-btn glow-btn" style={{ flex: 1, justifyContent: 'center', padding: '10px', background: '#dc2626', color: '#fff', border: '1px solid rgba(248,113,113,0.28)', boxShadow: 'none' }} onClick={() => checkCSSWin(cssInput)}>
+                                <button className="primary-btn glow-btn" style={{ flex: 1, justifyContent: 'center', padding: '10px', background: '#6366f1', color: '#fff', border: '1px solid rgba(99, 102, 241, 0.28)', boxShadow: 'none' }} onClick={() => checkCSSWin(cssInput)}>
                                     {activeGame === 'css-odyssey' ? 'Evaluate Simulation' : 'Run Logic Suite'}
                                 </button>
                                 <button className="secondary-btn" style={{ padding: '10px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer' }} onClick={resetProblem} title="Reset Problem">
@@ -1196,14 +1215,14 @@ const Arcade = () => {
                                             </ul>
                                         </div>
                                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
-                                            <p style={{ color: '#3b82f6', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '10px' }}>Quick Property Reference:</p>
+                                            <p style={{ color: '#818cf8', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '10px' }}>Quick Property Reference:</p>
                                             <div style={{ fontSize: '0.7rem', color: '#666', background: 'rgba(255,255,255,0.01)', padding: '6px', borderRadius: '4px' }}>
                                                 {activeGame === 'css-odyssey' ? (<><strong>Flex Layout:</strong> justify-content, align-items, flex-direction, gap</>) : (<><strong>Logic Ops:</strong> &&, ||, !, Math.max(), .reverse(), .split()</>)}
                                             </div>
                                         </div>
                                     </>
                                 )}
-                                {currentLvlIdx === 'WIN' && <p><strong>Campaign Completed!</strong> You have officially mastered CSS Architecture.</p>}
+                                {currentLvlIdx === 'WIN' && <p><strong>Path Completed!</strong> You have officially mastered CSS Architecture.</p>}
                             </div>
                         </div>
 
@@ -1226,7 +1245,7 @@ const Arcade = () => {
                                             <span style={{ color: '#666', fontSize: '0.7rem' }}>RUNTIME: STABLE</span>
                                         </div>
                                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                            <div style={{ color: '#60a5fa' }}>// Initializing algorithmic suite...</div>
+                                            <div style={{ color: '#818cf8' }}>// Initializing algorithmic suite...</div>
                                             <div style={{ color: '#fbbf24' }}>// Level {levelData.id}: {levelData.title}</div>
                                             <div style={{ color: '#a8a29e' }}>// Running on 100-level neural forge.</div>
                                             <div style={{ marginTop: 'auto', padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
