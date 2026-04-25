@@ -13,6 +13,9 @@ import {
   Plus,
   Terminal,
   ShieldCheck,
+  Shield,
+  Sword,
+  UserPlus,
   ChevronRight,
   Cpu,
   Sparkles,
@@ -59,7 +62,7 @@ const Home = () => {
   const [workspaceHistory, setWorkspaceHistory] = useState([]);
   const [sessionTotalLive, setSessionTotalLive] = useState(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [arenaEnterFx, setArenaEnterFx] = useState(false);
+  const [forgeEnterFx, setForgeEnterFx] = useState(false);
 
   const xp = Number(user?.xp || 0);
   const createdSessions = Number(user?.createdCount ?? localStorage.getItem('created_count') ?? 0);
@@ -159,77 +162,59 @@ const Home = () => {
     localStorage.setItem(historyStorageKey, JSON.stringify(next));
   };
 
-  const playArenaEnterSound = async () => {
+  const playForgeEnterSound = async () => {
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
       const now = ctx.currentTime;
 
-      // Fight bell + impact style cue.
+      // Premium digital pulse / sweep.
       const master = ctx.createGain();
       master.gain.setValueAtTime(0.0001, now);
-      master.gain.exponentialRampToValueAtTime(0.26, now + 0.02);
-      master.gain.exponentialRampToValueAtTime(0.0001, now + 1.25);
+      master.gain.exponentialRampToValueAtTime(0.2, now + 0.05);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
       master.connect(ctx.destination);
 
-      // Bell body
-      const bell = ctx.createOscillator();
-      bell.type = 'sine';
-      bell.frequency.setValueAtTime(660, now);
-      bell.frequency.exponentialRampToValueAtTime(520, now + 0.6);
-      const bellGain = ctx.createGain();
-      bellGain.gain.setValueAtTime(0.0001, now);
-      bellGain.gain.exponentialRampToValueAtTime(0.24, now + 0.03);
-      bellGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
-      bell.connect(bellGain).connect(master);
+      // Main pulse
+      const pulse = ctx.createOscillator();
+      pulse.type = 'sine';
+      pulse.frequency.setValueAtTime(440, now);
+      pulse.frequency.exponentialRampToValueAtTime(880, now + 0.4);
+      const pulseGain = ctx.createGain();
+      pulseGain.gain.setValueAtTime(0.0001, now);
+      pulseGain.gain.exponentialRampToValueAtTime(0.15, now + 0.05);
+      pulseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+      pulse.connect(pulseGain).connect(master);
 
-      // Metallic overtone
-      const overtone = ctx.createOscillator();
-      overtone.type = 'triangle';
-      overtone.frequency.setValueAtTime(1320, now);
-      overtone.frequency.exponentialRampToValueAtTime(980, now + 0.55);
-      const overGain = ctx.createGain();
-      overGain.gain.setValueAtTime(0.0001, now);
-      overGain.gain.exponentialRampToValueAtTime(0.11, now + 0.02);
-      overGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
-      overtone.connect(overGain).connect(master);
+      // Subtle resonance
+      const res = ctx.createOscillator();
+      res.type = 'triangle';
+      res.frequency.setValueAtTime(220, now);
+      res.frequency.exponentialRampToValueAtTime(440, now + 0.5);
+      const resGain = ctx.createGain();
+      resGain.gain.setValueAtTime(0.0001, now);
+      resGain.gain.exponentialRampToValueAtTime(0.05, now + 0.1);
+      resGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+      res.connect(resGain).connect(master);
 
-      // Short fight hit noise
-      const noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.20), ctx.sampleRate);
-      const data = noiseBuf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
-      const noise = ctx.createBufferSource();
-      noise.buffer = noiseBuf;
-      const noiseFilter = ctx.createBiquadFilter();
-      noiseFilter.type = 'bandpass';
-      noiseFilter.frequency.setValueAtTime(1400, now);
-      noiseFilter.Q.setValueAtTime(0.9, now);
-      const noiseGain = ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.0, now);
-      noiseGain.gain.linearRampToValueAtTime(0.09, now + 0.03);
-      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
-      noise.connect(noiseFilter).connect(noiseGain).connect(master);
-
-      bell.start(now);
-      overtone.start(now);
-      noise.start(now);
-      bell.stop(now + 1.05);
-      overtone.stop(now + 0.95);
-      noise.stop(now + 0.22);
+      pulse.start(now);
+      res.start(now);
+      pulse.stop(now + 1.0);
+      res.stop(now + 1.0);
 
       setTimeout(() => ctx.close().catch(() => {}), 1500);
     } catch {
-      // ignore audio failures (autoplay / browser policy)
+      // ignore audio failures
     }
   };
 
-  const handleEnterArena = async () => {
-    if (arenaEnterFx) return;
-    setArenaEnterFx(true);
-    playArenaEnterSound();
+  const handleEnterForge = async () => {
+    if (forgeEnterFx) return;
+    setForgeEnterFx(true);
+    playForgeEnterSound();
     setTimeout(() => navigate('/arcade'), 700);
-    setTimeout(() => setArenaEnterFx(false), 1400);
+    setTimeout(() => setForgeEnterFx(false), 1400);
   };
 
   const joinRoom = async () => {
@@ -299,15 +284,15 @@ const Home = () => {
             className="logo-section"
           >
             <div className="logo-icon-wrapper">
-              <Code2 size={24} color="#fff" />
+              <Code2 size={24} color="#ef4444" />
             </div>
             <span className="logo-text">Code Sight</span>
           </motion.div>
 
           <div className="nav-links">
-            <a href="#arena" className="nav-link-hover">Code Arena</a>
+            <a href="#forge" className="nav-link-hover">Skill Forge</a>
             <a href="#leaderboard" className="nav-link-hover">Hall of Fame</a>
-            <a href="#factions" className="nav-link-hover">Factions</a>
+            <a href="#factions" className="nav-link-hover">Forge Alliances</a>
             <a href="#solutions" className="nav-link-hover">Solutions</a>
 
             {user ? (
@@ -316,22 +301,22 @@ const Home = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '12px',
-                  background: 'rgba(251, 191, 36, 0.05)',
+                  background: 'rgba(255, 255, 255, 0.05)',
                   padding: '4px 12px 4px 4px',
                   borderRadius: '30px',
-                  border: '1px solid rgba(251, 191, 36, 0.2)'
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
                 }}>
-                  <div className="avatar-gradient" style={{ border: '2px solid rgba(251, 191, 36, 0.4)' }}>
+                  <div className="avatar-gradient" style={{ border: '2px solid rgba(255, 255, 255, 0.2)', background: '#fff', color: '#000' }}>
                     {user.username?.charAt(0).toUpperCase() || '?'}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                    <span className="username-display" style={{ fontSize: '0.85rem', fontWeight: 600 }}>{user.username}</span>
-                    <span style={{ fontSize: '0.65rem', color: '#fbbf24', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Zap size={10} fill="#fbbf24" /> {xp} XP
+                    <span className="username-display" style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>{user.username}</span>
+                    <span style={{ fontSize: '0.65rem', color: '#fff', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.8 }}>
+                      <Zap size={10} fill="#fff" /> {xp} XP
                     </span>
                   </div>
                   <button
-                    style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', padding: '4px' }}
+                    style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', padding: '4px' }}
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                   >
                     <SettingsIcon size={14} />
@@ -371,12 +356,12 @@ const Home = () => {
       </nav>
 
       <main className="landing-container">
-        {arenaEnterFx && (
-          <div className="arena-enter-fx" aria-hidden="true">
-            <div className="arena-enter-fx__veil" />
-            <div className="arena-enter-fx__patches" />
-            <div className="arena-enter-fx__sparks" />
-            <div className="arena-enter-fx__text">ENTERING THE ARENA</div>
+        {forgeEnterFx && (
+          <div className="forge-enter-fx" aria-hidden="true">
+            <div className="forge-enter-fx__veil" />
+            <div className="forge-enter-fx__patches" />
+            <div className="forge-enter-fx__sparks" />
+            <div className="forge-enter-fx__text">ACCESSING FORGE</div>
           </div>
         )}
         {user ? (
@@ -387,114 +372,8 @@ const Home = () => {
             className="mission-control-section"
           >
             {/* Welcome bar */}
-            <div className="mission-dashboard-grid">
-              {/* Profile Showcase Card */}
-              <div className="psc-card glass-morphism">
-                {/* Header Section with Avatar and Basic Info */}
-                <div className="psc-header">
-                  <div className="psc-avatar-section">
-                    <div className="psc-avatar-ring">
-                      <div className="psc-avatar">
-                        {user.username?.charAt(0).toUpperCase()}
-                      </div>
-                    </div>
-                    <div className="psc-status-badge">
-                      <div className="status-dot"></div>
-                      <span>Online</span>
-                    </div>
-                  </div>
-
-                  <div className="psc-user-details">
-                    <div className="psc-username-block">
-                      <h1>{user.username}</h1>
-                      <div className="psc-badges">
-                        <span className="psc-rank-chip premium">
-                          <Zap size={12} fill="#fbbf24" /> {xp} XP
-                        </span>
-                        <span className="psc-level-chip">
-                          {playerTier}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="psc-meta">
-                      <span><ShieldCheck size={14} /> Verified Developer</span>
-                      <span><Rocket size={14} /> Joined {new Date(user.joinedAt || Date.now()).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stats Grid */}
-                <div className="psc-stats-grid">
-                  <div className="stat-card">
-                    <div className="stat-icon css-icon"><Code2 size={20} /></div>
-                    <div className="stat-info">
-                      <span className="stat-value">{user.css_level || 0}</span>
-                      <span className="stat-label">CSS Level</span>
-                    </div>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-icon logic-icon"><Terminal size={20} /></div>
-                    <div className="stat-info">
-                      <span className="stat-value">{user.logic_level || 0}</span>
-                      <span className="stat-label">Logic Level</span>
-                    </div>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-icon react-icon"><Cpu size={20} /></div>
-                    <div className="stat-info">
-                      <span className="stat-value">{user.react_level || 0}</span>
-                      <span className="stat-label">React Level</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="psc-highlights-row">
-                  <div className="psc-highlight-card">
-                    <Flame size={16} />
-                    <div>
-                      <span>Current Streak</span>
-                      <strong>{user.streak || 0} days</strong>
-                    </div>
-                  </div>
-                  <div className="psc-highlight-card">
-                    <CalendarDays size={16} />
-                    <div>
-                      <span>Active Days</span>
-                      <strong>{heatmapData.activeDays || (xp > 0 ? 1 : 0)}</strong>
-                    </div>
-                  </div>
-                  <div className="psc-highlight-card">
-                    <Target size={16} />
-                    <div>
-                      <span>Total Activity</span>
-                      <strong>{(heatmapData.totalActivity || xp).toLocaleString()} XP</strong>
-                    </div>
-                  </div>
-                </div>
-
-                {/* XP Progress Section */}
-                <div className="psc-xp-section">
-                  <div className="xp-header">
-                    <span className="xp-label">Experience Progress</span>
-                    <span className="xp-progress-text">{xp.toLocaleString()} / {nextXpMilestone.toLocaleString()} XP</span>
-                  </div>
-                  <div className="psc-prog-bar-wrapper">
-                    <div className="psc-prog-bar">
-                      <div className="psc-prog-fill" style={{ width: `${xpProgressPercent}%` }}></div>
-                    </div>
-                  </div>
-                  <div className="xp-milestones">
-                    <span className="milestone" style={{ left: '5%' }}>500</span>
-                    <span className="milestone" style={{ left: '20%' }}>2K</span>
-                    <span className="milestone" style={{ left: '50%' }}>5K</span>
-                    <span className="milestone" style={{ left: '100%' }}>10K+</span>
-                  </div>
-                </div>
-
-                <div className="psc-divider"></div>
-              </div>
-
-              {/* Workspace Section — right column */}
+            <div className="mission-dashboard-grid single-column">
+              {/* Workspace Section */}
               <div className="workspace-section-wrapper">
                 <div className="workspace-main-card glass-morphism">
                   <div className="workspace-header">
@@ -555,7 +434,7 @@ const Home = () => {
                                   {item.id}
                                 </div>
                               </div>
-                              <div style={{ fontSize: '0.68rem', color: '#fbbf24', fontWeight: 700, flexShrink: 0 }}>
+                              <div style={{ fontSize: '0.68rem', color: '#fff', fontWeight: 700, flexShrink: 0, opacity: 0.8 }}>
                                 {item.action}
                               </div>
                             </div>
@@ -577,8 +456,8 @@ const Home = () => {
                               }}
                               style={{
                                 background: 'transparent',
-                                color: '#ef4444',
-                                border: '1px solid rgba(239, 68, 68, 0.35)',
+                                color: '#fff',
+                                border: '1px solid rgba(255, 255, 255, 0.35)',
                                 borderRadius: '999px',
                                 width: '24px',
                                 height: '24px',
@@ -666,8 +545,8 @@ const Home = () => {
                           className="ws-h-stat"
                           onClick={() => setIsHistoryOpen(true)}
                           style={{
-                            background: 'rgba(245, 158, 11, 0.08)',
-                            border: '1px solid rgba(245, 158, 11, 0.28)',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
                             borderRadius: '10px',
                             padding: '10px 12px',
                             cursor: 'pointer',
@@ -675,8 +554,8 @@ const Home = () => {
                             textAlign: 'left'
                           }}
                         >
-                          <span>Sessions Joined</span>
-                          <strong>{sessionTotal}</strong>
+                          <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem' }}>Sessions Joined</span>
+                          <strong style={{ color: '#fff', fontSize: '1.1rem', display: 'block' }}>{sessionTotal}</strong>
                         </button>
                       </div>
                     
@@ -686,157 +565,41 @@ const Home = () => {
               </div>
             </div>
           </div>
-
-              <div className="activity-heatmap-master-wrapper">
-              <motion.div
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="full-width-heatmap-container glass-morphism"
-              >
-                <div className="heatmap-header-premium">
-                  <div className="hhp-title">
-                    <Activity size={20} color="var(--amber)" />
-                    <h3>Engineering Activity & Contribution Timeline</h3>
-                  </div>
-                  <div className="hhp-stats">
-                    <div className="hhp-stat">
-                      <span>Current Streak</span>
-                      <strong>{user.streak || 0} Days</strong>
-                    </div>
-                    <div className="hhp-sep"></div>
-                    <div className="hhp-stat">
-                      <span>Rank Weight</span>
-                      <strong>{playerTier}</strong>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="heatmap-container-premium">
-                  <div className="heatmap-body-premium">
-                    <div className="heatmap-layout-premium">
-                      <div className="heatmap-month-strip">
-                        {(heatmapData.weeks || []).map((w) => (
-                          <span key={w.weekIdx}>{w.label}</span>
-                        ))}
-                      </div>
-                      <div className="heatmap-layout-inner">
-                        <div className="heatmap-day-labels">
-                          <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-                        </div>
-                        <div className="heatmap-grid-premium" role="grid" aria-label="User activity heatmap">
-                          {heatmapData.days.map((day, i) => {
-                            const level = getActivityLevel(day.activity);
-                            const prettyDate = day.date.toLocaleDateString(undefined, {
-                              weekday: 'short', month: 'short', day: 'numeric'
-                            });
-                            return (
-                              <button
-                                key={`${day.date.toISOString()}-${i}`}
-                                type="button"
-                                className={`heatmap-cell level-${level}`}
-                                title={`${prettyDate}: ${day.activity} XP`}
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="heatmap-sidebar-premium">
-                      <div className="heatmap-side-block">
-                        <label>Engagement Legend</label>
-                        <div className="heatmap-legend-v">
-                          <div className="legend-item"><div className="heatmap-cell level-0"></div> <span>Empty</span></div>
-                          <div className="legend-item"><div className="heatmap-cell level-4"></div> <span>Active</span></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </motion.section>
+        </motion.section>
         ) : (
           /* ── LANDING PAGE: GHOST VISITOR ── */
-          <section className="hero-grid">
+          <section className="hero-minimal">
             <motion.div
-              initial={{ opacity: 0, filter: 'blur(10px)', y: 40 }}
-              animate={{ opacity: 1, filter: 'blur(0px)', y: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="hero-content"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="hero-content-center"
             >
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="tag-badge shiny-border"
-              >
-                <Sparkles size={14} className="sparkle-icon" />
-                <span>Introducing Architecture V3.1</span>
-              </motion.div>
-
-              <h1 className="hero-title">
-                Engineering <br />
-                <span className="gradient-text animated-gradient">Reimagined.</span>
+              <h1 className="hero-title-large">
+                Crafting The Future.
               </h1>
-
-              <p className="hero-subtitle">
-                The world's most performant real-time IDE. Instantly deploy secure, synchronized environments for technical interviews, pair programming, and massive team sprints.
+              <p className="hero-subtitle-clean">
+                High-performance environment for modern engineering teams.
               </p>
 
-              <div className="cta-group">
-                <button className="primary-btn pulse-glow" onClick={() => navigate('/auth')}>
-                  Start Building Free <ChevronRight size={18} />
-                </button>
-                <button className="secondary-btn glass-btn">
-                  Read the Docs
-                </button>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, rotateX: 10, rotateY: -10 }}
-              animate={{ opacity: 1, scale: 1, rotateX: 0, rotateY: 0 }}
-              transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="room-card-container perspective-wrapper"
-            >
-              <div className="form-container premium-glass ultra-glass">
-                <div className="workspace-card-inner">
-                  <div className="form-header-premium">
-                    <h3>Engineer Workspace</h3>
-                    <p className="form-header-sub">Join or create a real-time coding session</p>
-                  </div>
-                  <div className="card-divider-h"></div>
-                  <div className="input-group">
-                    <label>Workspace Identifier</label>
-                    <div className="input-with-icon">
-                      <input
-                        type="text"
-                        className="premium-input no-icon"
-                        placeholder="code-sight::v3_sync_8f91"
-                        onChange={(e) => setRoomId(e.target.value)}
-                        value={roomId}
-                        onKeyUp={handleInputEnter}
-                      />
-                    </div>
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="primary-btn glow-btn"
-                    onClick={joinRoom}
-                  >
-                    <span className="btn-content">
-                      <Globe size={18} /> Join Workspace Session
-                    </span>
-                  </motion.button>
-                  <div className="room-info-box">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span className="info-text">Starting a new codebase?</span>
-                      <span style={{ fontSize: '0.75rem', color: '#a8a29e' }}>Generate a unique ID to invite collaborators.</span>
-                    </div>
-                    <button onClick={createNewRoom} className="text-link glow-text">New Workspace</button>
-                  </div>
+              <div className="cta-minimal">
+                <div className="workspace-join-bar">
+                  <input
+                    type="text"
+                    className="minimal-input"
+                    placeholder="Enter Workspace ID"
+                    onChange={(e) => setRoomId(e.target.value)}
+                    value={roomId}
+                    onKeyUp={handleInputEnter}
+                  />
+                  <button className="minimal-btn" onClick={joinRoom}>
+                    Join Session
+                  </button>
+                </div>
+                <div className="secondary-actions">
+                  <button onClick={createNewRoom} className="minimal-text-btn">Create New Workspace</button>
+                  <span className="divider">|</span>
+                  <button onClick={() => navigate('/auth')} className="minimal-text-btn">Sign In</button>
                 </div>
               </div>
             </motion.div>
@@ -845,10 +608,10 @@ const Home = () => {
 
         <div className="below-live-heading-dark">
           <section className="stats-ticker glass-ticker">
-            <div className="stat"><strong>Real-Time Workspace</strong> <span>Collaborative coding with live sync</span></div>
-            <div className="stat"><strong>Code Arena Modules</strong> <span>CSS, Logic, and React challenge tracks</span></div>
-            <div className="stat"><strong>XP & Streak Tracking</strong> <span>Progress heatmap, streaks, and levels</span></div>
-            <div className="stat"><strong>Faction & Rankings</strong> <span>Team play and Hall of Fame competition</span></div>
+            <div className="stat"><strong>Forge Workspace</strong> <span>Collaborative coding with live sync</span></div>
+            <div className="stat"><strong>Skill Forge Modules</strong> <span>CSS, Logic, and React challenge tracks</span></div>
+            <div className="stat"><strong>XP Tracking</strong> <span>Progress tracking and levels</span></div>
+            <div className="stat"><strong>Forge Alliances</strong> <span>Team play and rankings</span></div>
           </section>
 
           <div className="news-headline-strip" aria-label="Builder headlines">
@@ -869,66 +632,71 @@ const Home = () => {
           </div>
 
           {/* ═══════════════════════════════════════════════════════════
-            FEATURE SHOWCASE SECTIONS - Arena, Leaderboard, Factions
+            FEATURE SHOWCASE SECTIONS - Forge, Leaderboard, Factions
             ═══════════════════════════════════════════════════════════ */}
 
-          {/* Code Arena Showcase */}
+          {/* Skill Forge Showcase */}
           <motion.section
-            id="arena"
+            id="forge"
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
+            viewport={{ once: true, margin: "-100px" }}
             variants={containerVariants}
-            className="feature-showcase-section arena-section"
+            className="feature-showcase-section forge-section"
           >
             <div className="showcase-container">
               <div className="showcase-content">
                 <motion.div variants={itemVariants} className="showcase-text">
                   <div className="showcase-badge">
-                    <Gamepad2 size={16} /> GAMIFIED LEARNING
+                    <Zap size={16} /> SKILL DEVELOPMENT
                   </div>
-                  <h2 className="showcase-title">Code Arena</h2>
+                  <h2 className="showcase-title">Elite Skill Forge</h2>
                   <p className="showcase-description">
-                    Master core programming concepts through interactive challenges.
-                    Battle through CSS layouts, JavaScript logic puzzles, and React architecture quests.
-                    Earn XP, unlock levels, and climb the global rankings.
+                    Ascend to mastery through our specialized engineering tracks. 
+                    From high-performance CSS architectures to complex algorithmic logic, 
+                    the Forge is where the world's best developers refine their craft.
                   </p>
                   <div className="showcase-features">
                     <div className="showcase-feature">
                       <Code2 size={18} className="feature-check" />
-                      <span>CSS Odyssey - Master layouts & styling</span>
+                      <span>CSS Architecture - Master high-scale styling</span>
                     </div>
                     <div className="showcase-feature">
                       <Terminal size={18} className="feature-check" />
-                      <span>Logic Lab - Algorithm challenges</span>
+                      <span>Logic Core - Advanced algorithmic patterns</span>
                     </div>
                     <div className="showcase-feature">
                       <Cpu size={18} className="feature-check" />
-                      <span>React Quest - Component architecture</span>
+                      <span>System Design - Scalable component architecture</span>
                     </div>
                   </div>
-                <button className="showcase-cta-btn arena-btn" onClick={handleEnterArena}>
-                    Enter the Arena <ChevronRight size={18} />
-                  </button>
+                <motion.button 
+                  whileHover={{ scale: 1.05, x: 10 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="showcase-cta-btn forge-btn" 
+                  onClick={handleEnterForge}
+                >
+                    Enter the Forge <ChevronRight size={18} />
+                  </motion.button>
                 </motion.div>
 
                 <motion.div variants={itemVariants} className="showcase-visual">
-                  <div className="visual-card glass-morphism">
-                    <div className="arena-preview">
+                  <div className="visual-card glass-morphism premium-border">
+                    <div className="forge-preview">
                       <div className="preview-header">
                         <div className="preview-dots">
                           <span className="dot red"></span>
                           <span className="dot yellow"></span>
                           <span className="dot green"></span>
                         </div>
-                        <span className="preview-title">CSS Challenge - Level 5</span>
+                        <span className="preview-title">Forge Engine v4.0</span>
                       </div>
                       <div className="preview-content">
-                        <div className="code-line"><span className="keyword">display</span>: <span className="value">flex</span>;</div>
-                        <div className="code-line"><span className="keyword">justify-content</span>: <span className="value">center</span>;</div>
-                        <div className="code-line"><span className="keyword">align-items</span>: <span className="value">center</span>;</div>
+                        <div className="code-line"><span className="keyword">const</span> <span className="variable">forge</span> = <span className="keyword">new</span> <span className="class">ForgeEngine</span>();</div>
+                        <div className="code-line"><span className="variable">forge</span>.<span className="function">optimize</span>({"{"} <span className="property">performance</span>: <span className="value">'max'</span> {"}"});</div>
+                        <div className="code-line"><span className="variable">forge</span>.<span className="function">deploy</span>(<span className="value">'production'</span>);</div>
                       </div>
-                      <div className="preview-xp-badge">+50 XP</div>
+                      <div className="preview-xp-badge">+500 XP</div>
                     </div>
                   </div>
                 </motion.div>
@@ -941,30 +709,30 @@ const Home = () => {
           id="leaderboard"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true, margin: "-100px" }}
           variants={containerVariants}
           className="feature-showcase-section leaderboard-section"
         >
           <div className="showcase-container">
-            <div className="showcase-content">
+            <div className="showcase-content reverse">
               <motion.div variants={itemVariants} className="showcase-visual">
-                <div className="visual-card glass-morphism">
+                <div className="visual-card glass-morphism premium-border">
                   <div className="leaderboard-preview">
                     <div className="podium-mini">
                       <div className="podium-rank silver">
-                        <div className="podium-avatar">A</div>
-                        <span className="podium-name">Alice</span>
-                        <span className="podium-xp">8,450 XP</span>
+                        <div className="podium-avatar">JD</div>
+                        <span className="podium-name">Dev_Elite</span>
+                        <span className="podium-xp">18,450 XP</span>
                       </div>
                       <div className="podium-rank gold">
-                        <div className="podium-avatar crowned">B</div>
-                        <span className="podium-name">Bob</span>
-                        <span className="podium-xp">12,320 XP</span>
+                        <div className="podium-avatar crowned">SM</div>
+                        <span className="podium-name">System_Master</span>
+                        <span className="podium-xp">24,320 XP</span>
                       </div>
                       <div className="podium-rank bronze">
-                        <div className="podium-avatar">C</div>
-                        <span className="podium-name">Carol</span>
-                        <span className="podium-xp">6,890 XP</span>
+                        <div className="podium-avatar">AX</div>
+                        <span className="podium-name">Alex_Code</span>
+                        <span className="podium-xp">15,890 XP</span>
                       </div>
                     </div>
                   </div>
@@ -972,32 +740,37 @@ const Home = () => {
               </motion.div>
 
               <motion.div variants={itemVariants} className="showcase-text">
-                <div className="showcase-badge gold-badge">
-                  <Zap size={16} /> GLOBAL RANKINGS
+                <div className="showcase-badge">
+                  <Trophy size={16} /> FORGE MASTERS
                 </div>
-                <h2 className="showcase-title">Hall of Fame</h2>
+                <h2 className="showcase-title">The Hall of Forge</h2>
                 <p className="showcase-description">
-                  Compete with developers worldwide and claim your spot on the leaderboard.
-                  Track your progress, showcase your mastery level, and rise through the ranks
-                  from Initiate to Grandmaster.
+                  Immortalize your legacy among the top 1% of engineers. 
+                  Compete for dominance, earn master titles, and showcase your 
+                  prowess to the entire community.
                 </p>
                 <div className="showcase-features">
                   <div className="showcase-feature">
                     <Trophy size={18} className="feature-check" />
-                    <span>Live global rankings</span>
+                    <span>Real-time Global Rankings</span>
                   </div>
                   <div className="showcase-feature">
                     <ShieldCheck size={18} className="feature-check" />
-                    <span>Mastery badges & levels</span>
+                    <span>Legendary Mastery Titles</span>
                   </div>
                   <div className="showcase-feature">
                     <Users size={18} className="feature-check" />
-                    <span>Real-time XP tracking</span>
+                    <span>Competitive Alliance Wars</span>
                   </div>
                 </div>
-                <button className="showcase-cta-btn leaderboard-btn" onClick={() => navigate('/leaderboard')}>
-                  View Rankings <ChevronRight size={18} />
-                </button>
+                <motion.button 
+                  whileHover={{ scale: 1.05, x: 10 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="showcase-cta-btn leaderboard-btn" 
+                  onClick={() => navigate('/leaderboard')}
+                >
+                  View the Hall <ChevronRight size={18} />
+                </motion.button>
               </motion.div>
             </div>
           </div>
@@ -1008,56 +781,56 @@ const Home = () => {
           id="factions"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true, margin: "-100px" }}
           variants={containerVariants}
           className="feature-showcase-section factions-section"
         >
           <div className="showcase-container">
             <div className="showcase-content">
               <motion.div variants={itemVariants} className="showcase-text">
-                <div className="showcase-badge faction-badge">
-                  <Users size={16} /> TEAM COMPETITION
+                <div className="showcase-badge">
+                  <Shield size={16} /> FORGE ALLIANCES
                 </div>
-                <h2 className="showcase-title">Factions</h2>
+                <h2 className="showcase-title">Forge Alliances</h2>
                 <p className="showcase-description">
-                  Join forces with fellow developers or forge your own faction.
-                  Collaborate, compete, and dominate the faction leaderboards.
-                  Build your team's reputation and conquer challenges together.
+                  Join a global alliance and dominate the forge together. 
+                  Coordinate team sprints, share knowledge, 
+                  and claim your spot in the ecosystem.
                 </p>
                 <div className="showcase-features">
                   <div className="showcase-feature">
-                    <Users size={18} className="feature-check" />
-                    <span>Create or join factions</span>
+                    <Sword size={18} className="feature-check" />
+                    <span>Alliance Territory Wars</span>
                   </div>
                   <div className="showcase-feature">
-                    <Zap size={18} className="feature-check" />
-                    <span>Combined team XP pools</span>
+                    <UserPlus size={18} className="feature-check" />
+                    <span>Exclusive Alliance Workspaces</span>
                   </div>
                   <div className="showcase-feature">
-                    <Trophy size={18} className="feature-check" />
-                    <span>Faction vs faction battles</span>
+                    <Sparkles size={18} className="feature-check" />
+                    <span>Legendary Alliance Rewards</span>
                   </div>
                 </div>
-                <button className="showcase-cta-btn factions-btn" onClick={() => navigate('/factions')}>
-                  Join a Faction <ChevronRight size={18} />
-                </button>
+                <motion.button 
+                  whileHover={{ scale: 1.05, x: 10 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="showcase-cta-btn factions-btn" 
+                  onClick={() => navigate('/factions')}
+                >
+                  Join an Alliance <ChevronRight size={18} />
+                </motion.button>
               </motion.div>
 
               <motion.div variants={itemVariants} className="showcase-visual">
-                <div className="visual-card glass-morphism">
+                <div className="visual-card glass-morphism premium-border">
                   <div className="factions-preview">
-                    <div className="faction-card-preview">
-                      <div className="faction-emblem">⚔️</div>
-                      <h4>Code Warriors</h4>
-                      <div className="faction-stats">
-                        <span>12 Members</span>
-                        <span>45,680 Total XP</span>
+                    <div className="faction-card-mini">
+                      <div className="faction-icon-box">
+                        <Shield className="faction-shield" size={32} style={{ color: '#fff' }} />
                       </div>
-                      <div className="faction-members-preview">
-                        <div className="member-avatar">A</div>
-                        <div className="member-avatar">B</div>
-                        <div className="member-avatar">C</div>
-                        <div className="member-avatar more">+9</div>
+                      <div className="faction-info">
+                        <span className="faction-name">Apex Forge</span>
+                        <span className="faction-rank">Rank #1 Global</span>
                       </div>
                     </div>
                   </div>
@@ -1070,19 +843,19 @@ const Home = () => {
         {/* Use Cases Section */}
         <section id="solutions" className="use-cases-section">
           <div className="section-header center">
-            <h2>Engineered for Teams</h2>
+            <h2 style={{ color: '#fff' }}>Engineered for Teams</h2>
             <p>Trusted by engineering cohorts worldwide for critical, high-stakes development sessions.</p>
           </div>
           <div className="use-cases-flex">
-            <div className="use-case-card">
+            <div className="use-case-card glass-morphism">
               <h3>Technical Interviews</h3>
               <p>Evaluate candidates live on platform. Watch their logic evolve without screen-sharing artifacts.</p>
             </div>
-            <div className="use-case-card">
+            <div className="use-case-card glass-morphism">
               <h3>Pair Programming</h3>
               <p>Break through complex algorithms side-by-side. Follow cursor trajectories and execute together.</p>
             </div>
-            <div className="use-case-card">
+            <div className="use-case-card glass-morphism">
               <h3>Hackathons & Jams</h3>
               <p>Eliminate local 'works on my machine' environments. Standardize your hackathon team instantly.</p>
             </div>
@@ -1097,7 +870,7 @@ const Home = () => {
         <div className="footer-content-wrapper">
           <div className="footer-left">
             <div className="footer-logo">
-              <Code2 size={20} className="text-gradient" />
+              <Code2 size={20} style={{ color: '#fff' }} />
               <span className="footer-logo-text">Code Sight</span>
             </div>
             <div className="footer-divider-v"></div>
@@ -1113,14 +886,14 @@ const Home = () => {
 
           <div className="footer-right">
             <div className="system-status-indicator">
-              <div className="status-pulse"></div>
+              <div className="status-pulse" style={{ background: '#fff' }}></div>
               <span>Network Stable</span>
             </div>
             <div className="footer-divider-v"></div>
             <div className="footer-socials">
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer">GH</a>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">LI</a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">TW</a>
+              <a href="https://github.com" target="_blank" rel="noopener noreferrer" style={{ color: '#a0a0a0' }}>GH</a>
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" style={{ color: '#a0a0a0' }}>LI</a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" style={{ color: '#a0a0a0' }}>TW</a>
             </div>
           </div>
         </div>
