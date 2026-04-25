@@ -1549,7 +1549,7 @@ color: #fff;
     background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
     border: 1px solid rgba(251, 191, 36, 0.3);
     color: #fde68a;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Poppins', sans-serif;
     letter-spacing: 0.5px;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(251, 191, 36, 0.05);
@@ -1568,7 +1568,7 @@ color: #fff;
     border: 1px solid rgba(220, 38, 38, 0.2);
     color: #ef4444;
     transition: all 0.3s ease;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Poppins', sans-serif;
     letter-spacing: 0.5px;
 }
 
