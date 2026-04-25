@@ -1,16 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg-dark: #120e0b;
-  --bg-surface: #292524;
-  --bg-surface-lighter: #44403c;
-  --primary: #d97706;
-  --primary-glow: rgba(217, 119, 6, 0.5);
-  --secondary: #fbbf24;
-  --text-main: #fef3c7;
-  --text-muted: #d6d3d1;
-  --border: rgba(251, 191, 36, 0.1);
-  --glass: rgba(28, 25, 23, 0.7);
+  --bg-dark: #0f0f0f;
+  --bg-surface: #1a1a1a;
+  --bg-surface-lighter: #2a2a2a;
+  --primary: #ef4444;
+  --primary-glow: rgba(239, 68, 68, 0.5);
+  --secondary: #dc2626;
+  --text-main: #ffffff;
+  --text-muted: #a0a0a0;
+  --border: rgba(239, 68, 68, 0.1);
+  --glass: rgba(15, 15, 15, 0.7);
   --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
