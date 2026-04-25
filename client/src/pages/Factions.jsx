@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Users, Zap, Plus, Crown, Shield, Swords } from 'lucide-react';
+import { ArrowLeft, Users, Zap, Plus, Crown, Shield, Code, Terminal, Cpu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
@@ -113,8 +113,8 @@ const Factions = () => {
                     <ArrowLeft size={20} /> Back to Hub
                 </button>
                 <div className="nav-title">
-                    <Swords size={24} color="#818cf8" />
-                    <span>Faction Syndicate</span>
+                    <Terminal size={24} color="#818cf8" />
+                    <span>Developer Guilds</span>
                 </div>
                 <div className="factions-nav-actions">
                     {myFactionId && (
@@ -137,9 +137,9 @@ const Factions = () => {
                         onClick={(e) => { if (e.target === e.currentTarget) setShowCreateModal(false); }}>
                         <motion.div className="faction-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
                             <div className="faction-modal-header">
-                                <Swords size={22} color="#818cf8" />
-                                <h3>Found a New Faction</h3>
-                                <p>Unite engineers under your banner and battle for global supremacy.</p>
+                                <Code size={22} color="#818cf8" />
+                                <h3>Found a New Guild</h3>
+                                <p>Unite engineers under your banner and collaborate for global ranking.</p>
                             </div>
 
                             <div className="emblem-picker">
@@ -182,9 +182,9 @@ const Factions = () => {
             <main className="factions-container">
                 {/* Stats Banner */}
                 <div className="factions-stats-banner">
-                    <div className="faction-stat"><Swords size={18} color="#818cf8" /><span><strong>{factions.length}</strong> Active Factions</span></div>
+                    <div className="faction-stat"><Terminal size={18} color="#818cf8" /><span><strong>{factions.length}</strong> Active Guilds</span></div>
                     <div className="faction-stat-divider"></div>
-                    <div className="faction-stat"><Users size={18} color="#818cf8" /><span><strong>{totalEngineers}</strong> Engineers Enlisted</span></div>
+                    <div className="faction-stat"><Users size={18} color="#818cf8" /><span><strong>{totalEngineers}</strong> Engineers Joined</span></div>
                     <div className="faction-stat-divider"></div>
                     <div className="faction-stat"><Zap size={18} color="#fbbf24" /><span><strong>{totalXP.toLocaleString()}</strong> Combined XP</span></div>
                 </div>
@@ -196,12 +196,12 @@ const Factions = () => {
                     </div>
                 ) : factions.length === 0 ? (
                     <motion.div className="factions-empty" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
-                        <div className="empty-emblem">⚔️</div>
-                        <h3>No Factions Exist Yet</h3>
-                        <p>Be the first engineer to establish a faction and begin the battle for dominance.</p>
+                        <div className="empty-emblem">💻</div>
+                        <h3>No Guilds Exist Yet</h3>
+                        <p>Be the first engineer to establish a guild and begin the journey for excellence.</p>
                         {user && (
                             <button className="primary-btn glow-btn" style={{ marginTop: '20px' }} onClick={() => setShowCreateModal(true)}>
-                                <Plus size={16} /> Found the First Faction
+                                <Plus size={16} /> Found the First Guild
                             </button>
                         )}
                     </motion.div>
@@ -263,7 +263,7 @@ const Factions = () => {
                                             {isMine && <div className="my-faction-badge"><Shield size={13} /> My Faction</div>}
                                             {canJoin && (
                                                 <button className="enlist-btn" onClick={() => joinFaction(faction.id)}>
-                                                    Enlist
+                                                    Join Guild
                                                 </button>
                                             )}
                                         </div>
