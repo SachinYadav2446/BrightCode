@@ -1,35 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Code2, Mail, Lock, User, ArrowRight, Sparkles, 
-  ShieldCheck, Cpu, Database, Activity, Terminal 
+  Code2, Mail, Lock, User, ArrowRight, Trophy, 
+  Users, Zap, Shield, ChevronLeft
 } from 'lucide-react';
 import './Auth.css';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [step, setStep] = useState(1); // 1: Details, 2: OTP
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [otp, setOtp] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   
-  const { login, register } = useAuth();
+  const { login, register, sendOTP } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePos({
-        x: (e.clientX / window.innerWidth - 0.5) * 20,
-        y: (e.clientY / window.innerHeight - 0.5) * 20
-      });
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+    if (location.state?.mode === 'register') {
+      setIsLogin(false);
+    }
+  }, [location.state]);
+
+  const handleSendOTP = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    const res = await sendOTP(email, username, 'register');
+    if (res.success) {
+      toast.success('Verification code sent to your email');
+      setStep(2);
+    } else {
+      toast.error(res.error);
+    }
+    setIsSubmitting(false);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,27 +50,25 @@ const Auth = () => {
         if (isLogin) {
           const res = await login(email, password);
           if (res.success) {
-            // DEEP CLEAN: Ensure no progress leaks from previous users
             Object.keys(localStorage).forEach(key => {
                 if (key.includes('highest_') || key.includes('_solutions') || key.includes('user_xp')) {
                     localStorage.removeItem(key);
                 }
             });
-            toast.success('System Authenticated. Entering Hub...');
+            toast.success('System Authenticated.');
             navigate('/hub');
           } else {
             toast.error(res.error);
           }
         } else {
-          const res = await register(username, email, password);
+          const res = await register(username, email, password, otp);
           if (res.success) {
-            // DEEP CLEAN: Prepare fresh workspace
             Object.keys(localStorage).forEach(key => {
                 if (key.includes('highest_') || key.includes('_solutions') || key.includes('user_xp')) {
                     localStorage.removeItem(key);
                 }
             });
-            toast.success('Account Created! Initializing environment...');
+            toast.success('Account Created!');
             setTimeout(async () => {
                 const autoLogin = await login(email, password);
                 if (autoLogin.success) navigate('/hub');
@@ -69,7 +78,7 @@ const Auth = () => {
           }
         }
     } catch (err) {
-        toast.error("Bridge Link Failure");
+        toast.error("Authentication failed");
     } finally {
         setIsSubmitting(false);
     }
@@ -77,152 +86,201 @@ const Auth = () => {
 
   return (
     <div className="auth-page">
-      <div className="auth-background">
-        <motion.div 
-            className="gradient-blob g1"
-            animate={{ x: mousePos.x, y: mousePos.y }}
-        />
-        <motion.div 
-            className="gradient-blob g2"
-            animate={{ x: -mousePos.x, y: -mousePos.y }}
-        />
-        <div className="grid-overlay"></div>
-        <div className="noise-texture"></div>
+      <div className="back-to-home-global" onClick={() => navigate('/')}>
+        <ChevronLeft size={20} />
+        <span>Back to Home</span>
       </div>
 
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, ease: "circOut" }}
+        layout 
         className="auth-container"
+        transition={{ 
+          layout: { duration: 0.4, ease: [0.4, 0, 0.2, 1] } 
+        }}
       >
-        <div className="auth-side-branding">
-           <div className="brand-header">
-              <div className="brand-logo">
-                <Code2 size={24} />
-              </div>
-              <span className="brand-name">Code Sight</span>
-           </div>
-
-           <div className="tech-visual-stack">
-              <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="visual-item">
-                 <div className="v-icon"><Cpu size={18} /></div>
-                 <div className="v-info">
-                    <h4>Neural Engine</h4>
-                    <p>Processing Active...</p>
-                 </div>
-              </motion.div>
-              <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="visual-item">
-                 <div className="v-icon"><Database size={18} /></div>
-                 <div className="v-info">
-                    <h4>Data Sync</h4>
-                    <p>PostgreSQL Secure</p>
-                 </div>
-              </motion.div>
-              <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.4 }} className="visual-item">
-                 <div className="v-icon"><Activity size={18} /></div>
-                 <div className="v-info">
-                    <h4>Core Status</h4>
-                    <p>Optimal Performance</p>
-                 </div>
-              </motion.div>
-           </div>
-
-           <div className="brand-footer">
-              <p>v2.4.0 High-Availability Node</p>
-           </div>
-        </div>
-
-        <div className="auth-content">
-          <div className="auth-header">
-            <motion.div 
-                key={isLogin ? 'login-icon' : 'signup-icon'}
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                className="header-icon"
-            >
-                {isLogin ? <ShieldCheck size={40} color="#fbbf24" opacity={0.8} /> : <Terminal size={40} color="#fbbf24" opacity={0.8} />}
-            </motion.div>
-            <h2>{isLogin ? 'Welcome Back' : 'Create Identity'}</h2>
-            <p className="subtitle">{isLogin ? 'Resume your engineering workflow.' : 'Register your cryptographic profile.'}</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="auth-form-v2">
-            <AnimatePresence mode="wait">
-              {!isLogin && (
-                <motion.div 
-                  key="user-grp"
-                  initial={{ opacity: 0, y: -20, height: 0 }}
-                  animate={{ opacity: 1, y: 0, height: 'auto' }}
-                  exit={{ opacity: 0, y: -20, height: 0 }}
-                  style={{ overflow: 'hidden' }}
-                  className="input-group"
-                >
-                  <label>CODENAME</label>
-                  <div className="input-container">
-                    <User className="input-icon" size={20} />
-                    <input 
-                        type="text" 
-                        value={username} 
-                        onChange={(e) => setUsername(e.target.value)} 
-                        placeholder="architect_null"
-                        required
-                    />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <div className="input-group">
-              <label>CREDENTIAL HUB</label>
-              <div className="input-container">
-                <Mail className="input-icon" size={20} />
-                <input 
-                    type="email" 
-                    value={email} 
-                    onChange={(e) => setEmail(e.target.value)} 
-                    placeholder="engineer@codesight.io"
-                    required
-                />
-              </div>
+        <div className="auth-form-side">
+          <motion.div layout className="form-content">
+            <div className="form-header">
+              <motion.h2
+                key={isLogin ? 'signin' : 'signup'}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                {isLogin ? "Sign In" : (step === 1 ? "Create Account" : "Verify Email")}
+              </motion.h2>
+              <motion.p
+                key={isLogin ? 'signin-p' : 'signup-p'}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                {isLogin 
+                  ? "Enter your credentials to continue" 
+                  : (step === 1 ? "Fill in the details to register" : `We've sent a code to ${email}`)}
+              </motion.p>
             </div>
 
-            <div className="input-group">
-              <label>SECURITY KEY</label>
-              <div className="input-container">
-                <Lock className="input-icon" size={20} />
-                <input 
-                    type="password" 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
-                    placeholder="••••••••••••"
-                    required
-                />
-              </div>
-            </div>
+            <form onSubmit={isLogin ? handleSubmit : (step === 1 ? handleSendOTP : handleSubmit)} className="auth-form">
+              <AnimatePresence mode="wait">
+                {isLogin ? (
+                  <motion.div
+                    key="login-fields"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="form-step"
+                  >
+                    <div className="input-group">
+                      <label>Email Address</label>
+                      <div className="input-wrapper">
+                        <Mail className="input-icon" size={18} />
+                        <input 
+                          type="email" 
+                          value={email} 
+                          onChange={(e) => setEmail(e.target.value)} 
+                          placeholder="engineer@codebright.io"
+                          required
+                        />
+                      </div>
+                    </div>
 
-            <button 
+                    <div className="input-group">
+                      <label>Password</label>
+                      <div className="input-wrapper">
+                        <Lock className="input-icon" size={18} />
+                        <input 
+                          type="password" 
+                          value={password} 
+                          onChange={(e) => setPassword(e.target.value)} 
+                          placeholder="••••••••••••"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : (
+                  step === 1 ? (
+                    <motion.div
+                      key="register-step-1"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="form-step"
+                    >
+                      <div className="input-group">
+                        <label>Username</label>
+                        <div className="input-wrapper">
+                          <User className="input-icon" size={18} />
+                          <input 
+                            type="text" 
+                            value={username} 
+                            onChange={(e) => setUsername(e.target.value)} 
+                            placeholder="architect_null"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="input-group">
+                        <label>Email Address</label>
+                        <div className="input-wrapper">
+                          <Mail className="input-icon" size={18} />
+                          <input 
+                            type="email" 
+                            value={email} 
+                            onChange={(e) => setEmail(e.target.value)} 
+                            placeholder="engineer@codebright.io"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="input-group">
+                        <label>Password</label>
+                        <div className="input-wrapper">
+                          <Lock className="input-icon" size={18} />
+                          <input 
+                            type="password" 
+                            value={password} 
+                            onChange={(e) => setPassword(e.target.value)} 
+                            placeholder="••••••••••••"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="register-step-2"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="form-step"
+                    >
+                      <div className="otp-container">
+                        <div className="input-group">
+                          <label>Verification Code</label>
+                          <div className="input-wrapper">
+                            <Shield className="input-icon" size={18} />
+                            <input 
+                              type="text" 
+                              value={otp} 
+                              onChange={(e) => setOtp(e.target.value.trim())} 
+                              placeholder="000000"
+                              maxLength={6}
+                              className="otp-input"
+                              required
+                            />
+                          </div>
+                          <p className="resend-text">
+                            Didn't receive code? <span onClick={handleSendOTP}>Resend OTP</span>
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )
+                )}
+              </AnimatePresence>
+
+              <button 
                 type="submit" 
-                className={`auth-btn-v2 ${isSubmitting ? 'loading' : ''}`}
+                className={`auth-submit-btn ${isSubmitting ? 'loading' : ''}`}
                 disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Authorizing...' : (
-                <>
-                  {isLogin ? 'Launch Environment' : 'Confirm Identity'}
-                  <ArrowRight size={20} />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="auth-footer">
-            <p>
-              {isLogin ? "Need a new profile?" : "Already verified?"}
-              <button type="button" onClick={() => setIsLogin(!isLogin)} className="toggle-btn">
-                {isLogin ? 'Initiate Registration' : 'Return to Login'}
+              >
+                {isSubmitting ? 'Processing...' : (
+                  <>
+                    <span>{isLogin ? 'Sign In' : (step === 1 ? 'Get Verification Code' : 'Complete Registration')}</span>
+                    <ArrowRight size={18} />
+                  </>
+                )}
               </button>
-            </p>
-          </div>
+
+              {!isLogin && step === 2 && (
+                <button 
+                  type="button" 
+                  className="back-btn" 
+                  onClick={() => setStep(1)}
+                  disabled={isSubmitting}
+                >
+                  Edit Details
+                </button>
+              )}
+            </form>
+
+            {isLogin || step === 1 ? (
+              <div className="auth-switch">
+                <p>
+                  {isLogin ? "Don't have an account?" : "Already have an account?"}
+                  <button type="button" onClick={() => {
+                    setIsLogin(!isLogin);
+                    setStep(1);
+                    setOtp('');
+                  }}>
+                    {isLogin ? 'Create one' : 'Sign in'}
+                  </button>
+                </p>
+              </div>
+            ) : null}
+          </motion.div>
         </div>
       </motion.div>
     </div>

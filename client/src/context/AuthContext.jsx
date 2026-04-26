@@ -3,9 +3,12 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
+const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 1 week in milliseconds
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sessionValid, setSessionValid] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -19,8 +22,16 @@ export const AuthProvider = ({ children }) => {
     const streak = localStorage.getItem('user_streak');
     const joinedCount = localStorage.getItem('joined_count');
     const createdCount = localStorage.getItem('created_count');
+    const bio = localStorage.getItem('user_bio');
+    const stack = localStorage.getItem('user_stack');
+    const createdAt = localStorage.getItem('user_joined');
+    const sessionStart = localStorage.getItem('session_start');
 
     if (token) {
+      // Check if session is still valid (within 1 week)
+      const isSessionValid = sessionStart && (Date.now() - parseInt(sessionStart)) < SESSION_DURATION;
+      setSessionValid(isSessionValid);
+
       // Set from localStorage immediately (avoids flash of unauthenticated UI)
       setUser({ 
         token, username, email, 
@@ -31,7 +42,10 @@ export const AuthProvider = ({ children }) => {
         activity: activity ? JSON.parse(activity) : {},
         streak: parseInt(streak || '0'),
         joinedCount: parseInt(joinedCount || '0'),
-        createdCount: parseInt(createdCount || '0')
+        createdCount: parseInt(createdCount || '0'),
+        bio: bio || '',
+        stack: stack ? JSON.parse(stack) : [],
+        createdAt: createdAt || null
       });
 
       // Then sync fresh XP from server (non-blocking)
@@ -49,9 +63,28 @@ export const AuthProvider = ({ children }) => {
           if (d.streak !== undefined) localStorage.setItem('user_streak', String(d.streak || 0));
           if (d.joinedCount !== undefined) localStorage.setItem('joined_count', String(d.joinedCount || 0));
           if (d.createdCount !== undefined) localStorage.setItem('created_count', String(d.createdCount || 0));
-          setUser(prev => prev ? { ...prev, xp: d.xp, css_level: d.css_level, logic_level: d.logic_level, react_level: d.react_level, activity: d.activity || {}, streak: d.streak || 0, joinedCount: d.joinedCount || 0, createdCount: d.createdCount || 0 } : null);
+          if (d.bio !== undefined) localStorage.setItem('user_bio', d.bio || '');
+          if (d.stack !== undefined) localStorage.setItem('user_stack', JSON.stringify(d.stack || []));
+          if (d.createdAt !== undefined) localStorage.setItem('user_joined', d.createdAt);
+          
+          setUser(prev => prev ? { 
+            ...prev, 
+            xp: d.xp, 
+            css_level: d.css_level, 
+            logic_level: d.logic_level, 
+            react_level: d.react_level, 
+            activity: d.activity || {}, 
+            streak: d.streak || 0, 
+            joinedCount: d.joinedCount || 0, 
+            createdCount: d.createdCount || 0,
+            bio: d.bio || '',
+            stack: d.stack || [],
+            createdAt: d.createdAt
+          } : null);
         }
       }).catch(() => { /* silent — offline is fine */ });
+    } else {
+      setSessionValid(false);
     }
     setLoading(false);
   }, []);
@@ -70,6 +103,10 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user_streak', String(data.streak || 0));
       localStorage.setItem('joined_count', String(data.joinedCount || 0));
       localStorage.setItem('created_count', String(data.createdCount || 0));
+      localStorage.setItem('user_bio', data.bio || '');
+      localStorage.setItem('user_stack', JSON.stringify(data.stack || []));
+      localStorage.setItem('user_joined', data.createdAt || '');
+      localStorage.setItem('session_start', String(Date.now())); // Set session start time
 
       setUser({ 
         token: data.token, 
@@ -82,42 +119,69 @@ export const AuthProvider = ({ children }) => {
         activity: data.activity || {},
         streak: data.streak || 0,
         joinedCount: data.joinedCount || 0,
-        createdCount: data.createdCount || 0
+        createdCount: data.createdCount || 0,
+        bio: data.bio || '',
+        stack: data.stack || [],
+        createdAt: data.createdAt || null
       });
+      setSessionValid(true);
       return { success: true };
     } catch (err) {
       if (!err.response) {
-          return { success: false, error: 'CRITICAL: Backend Server unreachable. Ensure Port 5000 is open.' };
+          return { success: false, error: 'CRITICAL: Backend Server unreachable.' };
       }
       return { success: false, error: err.response?.data?.error || 'Login failed' };
     }
   };
 
-  const register = async (username, email, password) => {
+  const sendOTP = async (email, username = '', type = 'register') => {
     try {
-      await axios.post('http://localhost:5050/register', { username, email, password });
+      const { data } = await axios.post('http://localhost:5050/send-otp', 
+        { email, username, type },
+        { timeout: 15000 } // 15 seconds timeout
+      );
+      return { success: true, message: data.message };
+    } catch (err) {
+      if (err.code === 'ECONNABORTED') {
+        return { success: false, error: 'Request timed out. Please check your connection or try again.' };
+      }
+      return { success: false, error: err.response?.data?.error || 'Failed to send OTP' };
+    }
+  };
+
+  const register = async (username, email, password, otp) => {
+    try {
+      await axios.post('http://localhost:5050/register', { username, email, password, otp });
       return { success: true };
     } catch (err) {
       const serverError = err.response?.data;
       if (!err.response) {
-          return { success: false, error: 'CRITICAL: Backend Server unreachable. Please ensure the server is running on Port 5000.' };
+          return { success: false, error: 'CRITICAL: Backend Server unreachable.' };
       }
-      console.dir(serverError);
-      const displayError = serverError?.details ? `DB FIX: ${serverError.details}` : (serverError?.error || 'Registration failed');
-      return { success: false, error: displayError };
+      return { success: false, error: serverError?.error || 'Registration failed' };
     }
   };
 
-  const updateProfile = async (newUsername) => {
+  const updateProfile = async (updateData) => {
     try {
       const { data } = await axios.post('http://localhost:5050/update-profile',
-        { username: newUsername },
+        updateData,
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
       localStorage.setItem('token', data.token);
       localStorage.setItem('username', data.username);
       localStorage.setItem('email', data.email);
-      setUser({ token: data.token, username: data.username, email: data.email });
+      localStorage.setItem('user_bio', data.bio || '');
+      localStorage.setItem('user_stack', JSON.stringify(data.stack || []));
+      
+      setUser(prev => ({ 
+        ...prev, 
+        token: data.token, 
+        username: data.username, 
+        email: data.email,
+        bio: data.bio || '',
+        stack: data.stack || []
+      }));
       return { success: true };
     } catch (err) {
       return { success: false, error: err.response?.data?.error || 'Failed to update profile' };
@@ -150,6 +214,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user_streak');
     localStorage.removeItem('joined_count');
     localStorage.removeItem('created_count');
+    localStorage.removeItem('session_start');
     
     // Clear all game-specific progress to prevent leaking to other users
     Object.keys(localStorage).forEach(key => {
@@ -159,10 +224,11 @@ export const AuthProvider = ({ children }) => {
     });
 
     setUser(null);
+    setSessionValid(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, updateProfile, updateXP, loading }}>
+    <AuthContext.Provider value={{ user, login, register, sendOTP, logout, updateProfile, updateXP, loading, sessionValid }}>
       {children}
     </AuthContext.Provider>
   );
