@@ -1,13 +1,13 @@
-# 🌐 Code Sight: The Ultimate Collaborative Coding Frontier
+# 🌐 CodeBright: The Ultimate Collaborative Coding Frontier
 
-Code Sight is a high-performance, real-time collaborative coding platform designed for the modern developer. It blends professional-grade IDE features with gamified learning experiences and competitive social layers, all wrapped in a premium cyberpunk-inspired interface.
+CodeBright is a high-performance, real-time collaborative coding platform designed for the modern developer. It blends professional-grade IDE features with gamified learning experiences and competitive social layers, all wrapped in a premium cyberpunk-inspired interface.
 
 ---
 
 ## 🚀 Mega Features
 
 ### 1. 🏗️ Real-Time Collaborative Workspace
-The heart of Code Sight. Developers can create private or public rooms to code together in real-time.
+The heart of CodeBright. Developers can create private or public rooms to code together in real-time.
 - **Tech Stack**: `Socket.io`, `Monaco Editor`, `UUID`.
 - **How it Works**: Utilizing a robust WebSocket architecture, every keystroke is synchronized across all participants instantly. Admins have granular control, including the ability to mute/kick users, transfer ownership, and manage file permissions.
 
@@ -94,11 +94,11 @@ The social and competitive layer of the platform.
 ---
 
 ## 🎨 Design Philosophy
-Code Sight utilizes a **Cyber-Premium Design System**. 
+CodeBright utilizes a **Cyber-Premium Design System**. 
 - **Glassmorphism**: Layered transparency for depth.
 - **Glow-Based Feedback**: Subtle neon accents and micro-animations indicate system states.
 - **Performance First**: Optimized rendering for zero-latency real-time collaboration.
 
 ---
 
-Built with ❤️ by the Code Sight Team.
+Built with ❤️ by the CodeBright Team.
