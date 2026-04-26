@@ -1,5 +1,5 @@
 {
-  "name": "codesight-server",
+  "name": "codebright-server",
   "version": "1.0.0",
   "description": "Collaborative coding platform server",
   "main": "index.js",

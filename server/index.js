@@ -10,6 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 const { exec } = require('child_process');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const server = http.createServer(app);
@@ -20,7 +21,7 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
-const JWT_SECRET = 'codesight_secret_key_123';
+const JWT_SECRET = 'codebright_secret_key_123';
 
 // Memory Fallback (for when PostgreSQL is offline)
 let memoryStore = { users: [] };
@@ -142,8 +143,25 @@ const initDB = async () => {
                 activity JSONB DEFAULT '{}',
                 created_count INTEGER DEFAULT 0,
                 joined_count INTEGER DEFAULT 0,
-                avatar TEXT
+                avatar TEXT,
+                bio TEXT DEFAULT '',
+                stack JSONB DEFAULT '[]',
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
+            
+            -- Safe migration for existing tables
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='bio') THEN
+                    ALTER TABLE users ADD COLUMN bio TEXT DEFAULT '';
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='stack') THEN
+                    ALTER TABLE users ADD COLUMN stack JSONB DEFAULT '[]';
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='created_at') THEN
+                    ALTER TABLE users ADD COLUMN created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+                END IF;
+            END $$;
             
             -- Safe migration for existing tables missing the activity column
             DO $$ 
@@ -170,18 +188,168 @@ const initDB = async () => {
 initDB();
 
 // --- AUTHENTICATION REWRITE ---
+const otps = new Map(); // Store OTPs: email -> { otp, userData, expires }
+
+const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // Use STARTTLS
+    auth: {
+        user: 'codebrightlim@gmail.com',
+        pass: 'dzoe alqy ocyw gije'
+    },
+    tls: {
+        rejectUnauthorized: false
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000
+});
+
+// Verify connection configuration
+transporter.verify(function (error, success) {
+    if (error) {
+        console.log("[MAIL] Connection Error:", error);
+    } else {
+        console.log("[MAIL] Server is ready to take our messages");
+    }
+});
+
+app.post('/support', async (req, res) => {
+    const { email, subject, message, username } = req.body;
+    
+    if (!email || !message) {
+        return res.status(400).json({ error: 'Email and message are required' });
+    }
+
+    const mailOptions = {
+        from: '"CodeBright Support" <codebrightlim@gmail.com>',
+        to: 'codebrightlim@gmail.com', // Your email for receiving inquiries
+        subject: `[SUPPORT INQUIRY] ${subject || 'New Message'}`,
+        html: `
+            <div style="font-family: 'Poppins', sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb; background: #000; color: #fff;">
+                <h2 style="color: #ef4444; text-align: center; border-bottom: 2px solid #ef4444; padding-bottom: 10px;">Support Inquiry</h2>
+                <div style="padding: 20px;">
+                    <p style="margin-bottom: 10px;"><strong style="color: #ef4444;">From:</strong> ${username || 'User'} (${email})</p>
+                    <p style="margin-bottom: 10px;"><strong style="color: #ef4444;">Subject:</strong> ${subject || 'No Subject'}</p>
+                    <div style="background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; margin-top: 20px;">
+                        <p style="white-space: pre-wrap; line-height: 1.6;">${message}</p>
+                    </div>
+                </div>
+                <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
+                <p style="text-align: center; color: #666; font-size: 12px;">&copy; 2026 CodeBright Command Center.</p>
+            </div>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        res.json({ message: "Your message has been sent to our support team." });
+    } catch (err) {
+        console.error('SUPPORT MAIL ERROR:', err);
+        res.status(500).json({ error: 'Failed to send support message' });
+    }
+});
 
 // Standard response helper
 const sendError = (res, status, message, details = null) => {
     return res.status(status).json({ error: message, details });
 };
 
-app.post('/register', async (req, res) => {
-    const { username, email, password } = req.body;
+app.post('/send-otp', async (req, res) => {
+    let { email, username, type } = req.body;
     
-    if (!username || !email || !password) {
-        return sendError(res, 400, "Missing credentials", "All fields are required.");
+    if (!email) return sendError(res, 400, "Email required");
+    email = email.toLowerCase().trim();
+
+    try {
+        // Check if user already exists for registration
+        if (type === 'register') {
+            if (!username) return sendError(res, 400, "Username required");
+            
+            if (useMemoryDB) {
+                const exists = memoryStore.users.find(u => u.email === email || u.username === username);
+                if (exists) return sendError(res, 400, "User exists", "Name or Email is already taken.");
+            } else {
+                const existing = await pool.query('SELECT id FROM users WHERE email = $1 OR username = $2', [email, username]);
+                if (existing.rows.length > 0) return sendError(res, 400, "User exists", "Name or Email is already taken.");
+            }
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+        otps.set(email, { otp, expires });
+        
+        console.log(`\n[OTP] Verification Code for ${email}: ${otp}\n`);
+        
+        console.log(`[MAIL] Attempting to send email to ${email}...`);
+        
+        const mailOptions = {
+            from: '"CodeBright" <codebrightlim@gmail.com>',
+            to: email,
+            subject: 'Verify your CodeBright Account',
+            html: `
+                <div style="font-family: 'Poppins', sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb;">
+                    <h2 style="color: #ef4444; text-align: center;">Welcome to CodeBright</h2>
+                    <p>Hello <strong>${username || 'Engineer'}</strong>,</p>
+                    <p>Your verification code is:</p>
+                    <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #111827; border: 1px solid #e5e7eb;">
+                        ${otp}
+                    </div>
+                    <p style="margin-top: 20px; color: #6b7280; font-size: 14px;">This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
+                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+                    <p style="text-align: center; color: #9ca3af; font-size: 12px;">&copy; 2026 CodeBright. Built for the Architect.</p>
+                </div>
+            `
+        };
+
+        try {
+            await Promise.race([
+                transporter.sendMail(mailOptions),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Mail Timeout')), 8000))
+            ]);
+            console.log(`[MAIL] Email sent successfully to ${email}`);
+            res.json({ message: "OTP sent to your email address" });
+        } catch (mailErr) {
+            console.error(`[MAIL] Failed to send email:`, mailErr.message);
+            // Even if mail fails, we respond with success in "Developer Mode" 
+            // so the user can see the OTP in the console and continue testing.
+            res.json({ 
+                message: "OTP generated (Email delivery failed, check server console)",
+                devMode: true 
+            });
+        }
+    } catch (err) {
+        sendError(res, 500, "Server error", err.message);
     }
+});
+
+app.post('/register', async (req, res) => {
+    let { username, email, password, otp } = req.body;
+    
+    if (!username || !email || !password || !otp) {
+        return sendError(res, 400, "Missing credentials", "All fields are required including OTP.");
+    }
+
+    email = email.toLowerCase().trim();
+    otp = otp.toString().trim();
+
+    console.log(`[AUTH] Registering ${email} with OTP: ${otp}`);
+    const record = otps.get(email);
+    console.log(`[AUTH] Found Record:`, record);
+    
+    if (!record || record.otp !== otp) {
+        console.log(`[AUTH] OTP Mismatch: Expected ${record?.otp}, Got ${otp}`);
+        return sendError(res, 400, "Invalid OTP", "The verification code is incorrect.");
+    }
+
+    if (Date.now() > record.expires) {
+        otps.delete(email);
+        return sendError(res, 400, "OTP Expired", "Please request a new code.");
+    }
+
+    otps.delete(email); // OTP used
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -229,7 +397,8 @@ app.post('/register', async (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+    if (email) email = email.toLowerCase().trim();
 
     try {
         let user;
@@ -257,7 +426,10 @@ app.post('/login', async (req, res) => {
             activity,
             streak: computeStreakFromActivity(activity),
             createdCount: user.created_count || 0,
-            joinedCount: user.joined_count || 0
+            joinedCount: user.joined_count || 0,
+            bio: user.bio || '',
+            stack: user.stack || [],
+            createdAt: user.created_at || new Date().toISOString()
         });
     } catch (err) {
         console.error('SERVER LOGIN ERROR:', err);
@@ -277,7 +449,7 @@ const authenticateToken = (req, res, next) => {
 };
 
 app.post('/update-profile', authenticateToken, async (req, res) => {
-  const { username } = req.body;
+  const { username, bio, stack } = req.body;
   if (!username) return res.status(400).json({ error: 'Username cannot be empty' });
 
   try {
@@ -285,16 +457,25 @@ app.post('/update-profile', authenticateToken, async (req, res) => {
       if (existing.rows.length > 0) return res.status(400).json({ error: 'Username is already taken' });
 
       const result = await pool.query(
-          'UPDATE users SET username = $1 WHERE id = $2 RETURNING email, xp',
-          [username, req.user.id]
+          'UPDATE users SET username = $1, bio = $2, stack = $3 WHERE id = $4 RETURNING email, xp, bio, stack, created_at',
+          [username, bio || '', JSON.stringify(stack || []), req.user.id]
       );
       
       const user = result.rows[0];
       if (!user) return res.status(404).json({ error: 'User not found' });
 
       const token = jwt.sign({ id: req.user.id, username: username }, JWT_SECRET, { expiresIn: '1d' });
-      res.json({ token, username, email: user.email, xp: user.xp });
+      res.json({ 
+          token, 
+          username, 
+          email: user.email, 
+          xp: user.xp, 
+          bio: user.bio,
+          stack: user.stack || [],
+          createdAt: user.created_at
+      });
   } catch (err) {
+      console.error('UPDATE PROFILE ERROR:', err);
       res.status(500).json({ error: 'Database error' });
   }
 });
@@ -325,7 +506,7 @@ app.get('/me', authenticateToken, async (req, res) => {
                 u = {
                     id: req.user.id,
                     username: req.user.username,
-                    email: `${req.user.username}@codesight.memory`,
+                    email: `${req.user.username}@codebright.memory`,
                     password: 'memory_migrated',
                     xp: 0, css_level: 0, logic_level: 0, react_level: 0
                 };
@@ -348,7 +529,7 @@ app.get('/me', authenticateToken, async (req, res) => {
             });
         }
         const result = await pool.query(
-            'SELECT id, username, email, xp, css_level, logic_level, react_level, activity, created_count, joined_count FROM users WHERE id = $1',
+            'SELECT id, username, email, xp, css_level, logic_level, react_level, activity, created_count, joined_count, bio, stack, created_at FROM users WHERE id = $1',
             [req.user.id]
         );
         if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
@@ -360,7 +541,10 @@ app.get('/me', authenticateToken, async (req, res) => {
             activity: u.activity || {},
             streak: computeStreakFromActivity(u.activity || {}),
             createdCount: u.created_count || 0,
-            joinedCount: u.joined_count || 0
+            joinedCount: u.joined_count || 0,
+            bio: u.bio || '',
+            stack: u.stack || [],
+            createdAt: u.created_at
         });
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch user data' });
@@ -734,7 +918,7 @@ io.on('connection', (socket) => {
         adminId: socket.id,
         users: [],
         permissions: {},
-        files: { 'index.js': { content: '// Code Sight Workspace\nconsole.log("Connect & Code!");', language: 'javascript' } },
+        files: { 'index.js': { content: '// CodeBright Workspace\nconsole.log("Connect & Code!");', language: 'javascript' } },
         snapshots: []
       });
     }
@@ -886,10 +1070,10 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomId);
     if (room) {
       const defaultSnippets = {
-        javascript: "console.log('Hello from Code Sight!');\n",
-        python: "print('Hello from Code Sight!')\n",
-        cpp: "#include <iostream>\n\nint main() {\n    std::cout << \"Hello from Code Sight!\" << std::endl;\n    return 0;\n}\n",
-        java: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello from Code Sight!\");\n    }\n}\n"
+        javascript: "console.log('Hello from CodeBright!');\n",
+        python: "print('Hello from CodeBright!')\n",
+        cpp: "#include <iostream>\n\nint main() {\n    std::cout << \"Hello from CodeBright!\" << std::endl;\n    return 0;\n}\n",
+        java: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello from CodeBright!\");\n    }\n}\n"
       };
       const content = defaultSnippets[language] || '';
       room.files[fileName] = { content, language };
