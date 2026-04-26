@@ -84,6 +84,8 @@ const Leaderboard = () => {
     };
 
     useEffect(() => {
+        // Scroll to top when page loads
+        window.scrollTo(0, 0);
         fetchRankings();
         syncMyXP();
 
@@ -131,12 +133,17 @@ const Leaderboard = () => {
             {/* Nav */}
             <nav className="leaderboard-nav">
                 <button onClick={goBackPreserveScroll} className="back-btn">
-                    <ArrowLeft size={20} /> Back to Hub
+                    <ArrowLeft size={18} />
+                    <span>Back to Hub</span>
                 </button>
 
-                <div className="nav-title">
-                    <Trophy size={24} color="#fbbf24" />
-                    <span>Global Hall of Fame</span>
+                <div className="nav-search">
+                    <Search size={16} className="search-icon" />
+                    <input type="text" placeholder="Search engineers..."
+                        value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                    {searchQuery && (
+                        <button className="clear-search" onClick={() => setSearchQuery('')}>×</button>
+                    )}
                 </div>
 
                 <div className="nav-right-section">
@@ -146,7 +153,7 @@ const Leaderboard = () => {
                             <div>
                                 <span className="your-rank-name">{user.username}</span>
                                 <span className="your-rank-xp">
-                                    <Zap size={10} fill="#fbbf24" /> {(user.xp || 0).toLocaleString()} XP
+                                    <Zap size={10} fill="#faf8f3" /> {(user.xp || 0).toLocaleString()} XP
                                     {userRank && <span style={{ marginLeft: '8px', opacity: 0.7 }}>• Rank #{userRank}</span>}
                                 </span>
                             </div>
@@ -168,22 +175,6 @@ const Leaderboard = () => {
             </AnimatePresence>
 
             <main className="leaderboard-container">
-                {/* Search + Stats Bar */}
-                <div className="lb-toolbar">
-                    <div className="lb-search">
-                        <Search size={15} color="#555" />
-                        <input type="text" placeholder="Search engineers by name..."
-                            value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-                        {searchQuery && (
-                            <button className="clear-search" onClick={() => setSearchQuery('')}>×</button>
-                        )}
-                    </div>
-                    <div className="lb-stats">
-                        <span><Filter size={13} /> {filteredRankers.length} Engineers</span>
-                        <span>·</span>
-                        <span><Zap size={13} color="#fbbf24" /> {filteredRankers.reduce((s, r) => s + (r?.xp || 0), 0).toLocaleString()} Total XP</span>
-                    </div>
-                </div>
 
                 {/* Podium Section */}
                 <section className="top-podium">
@@ -216,7 +207,7 @@ const Leaderboard = () => {
                                             {lvl.label}
                                         </span>
                                         <div className={`xp-tag${cfg.isFirst ? ' gold-xp' : ''}`}>
-                                            <Zap size={13} fill={cfg.isFirst ? '#fbbf24' : 'currentColor'} /> {(rankUser.xp || 0).toLocaleString()} XP
+                                            <Zap size={13} fill={cfg.isFirst ? '#faf8f3' : 'currentColor'} /> {(rankUser.xp || 0).toLocaleString()} XP
                                         </div>
                                         <div className={`podium-bar ${cfg.barClass}`}></div>
                                     </motion.div>
@@ -273,11 +264,11 @@ const Leaderboard = () => {
                                             <span className="rank-num">#{idx + 4}</span>
                                         </div>
                                         <div className="col flex-2 user-cell">
-                                            <div className="mini-avatar" style={isCurrentUser ? { background: 'rgba(251,191,36,0.15)', color: '#fbbf24' } : {}}>
+                                            <div className="mini-avatar" style={isCurrentUser ? { background: 'rgba(250,248,243,0.25)', color: '#2d1b1b' } : {}}>
                                                 {u?.username?.charAt(0)?.toUpperCase() || '?'}
                                             </div>
                                             <div>
-                                                <span style={{ color: isCurrentUser ? '#fbbf24' : 'inherit' }}>{u?.username || 'Unknown'}</span>
+                                                <span style={{ color: isCurrentUser ? '#faf8f3' : 'inherit' }}>{u?.username || 'Unknown'}</span>
                                                 {isCurrentUser && <span className="you-badge">YOU</span>}
                                             </div>
                                         </div>
@@ -300,7 +291,7 @@ const Leaderboard = () => {
 
                             {!loading && filteredRankers.length === 0 && (
                                 <div className="empty-leaderboard">
-                                    <Trophy size={40} color="#2a2a2a" />
+                                    <Trophy size={40} color="rgba(250,248,243,0.6)" />
                                     <p>{searchQuery ? `No engineers matching "${searchQuery}"` : 'No engineers ranked yet. Be the first!'}</p>
                                 </div>
                             )}

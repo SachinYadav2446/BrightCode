@@ -40,6 +40,51 @@ const Arcade = () => {
         'react-quest': REACT_LEVELS
     };
 
+    // Section-based organization
+    const sections = [
+        {
+            id: 'frontend',
+            name: 'Frontend Development',
+            description: 'Master the art of building beautiful, responsive user interfaces',
+            games: [
+                { id: 'css-odyssey', title: 'CSS Forge', subtitle: 'Advanced Layouts', desc: 'Master layouts, grids, and complex animations in a high-fidelity simulator.', icon: <Code2 size={64} />, gradient: 'rgba(255, 255, 255, 0.05)', progressKey: 'highest_css_level', total: 50, btnColor: '#fff', accent: '#fff' },
+                { id: 'react-quest', title: 'React Forge', subtitle: 'Architecture Lab', desc: 'Theoretical MCQ challenges designed to push your React knowledge to its limits.', icon: <RefreshCw size={64} />, gradient: 'rgba(255, 255, 255, 0.05)', progressKey: 'highest_react_quest_level', total: 30, btnColor: '#fff', accent: '#fff' }
+            ]
+        },
+        {
+            id: 'backend',
+            name: 'Backend Development',
+            description: 'Build robust server-side applications and APIs',
+            games: [
+                { id: 'logic-lab', title: 'Logic Forge', subtitle: 'Logic Systems', desc: 'Conquer 100 levels of JavaScript puzzles, from control flow to advanced patterns.', icon: <Zap size={64} />, gradient: 'rgba(255, 255, 255, 0.05)', progressKey: 'highest_logic_lab_level', total: 100, btnColor: '#fff', accent: '#fff' }
+            ]
+        },
+        {
+            id: 'data-science',
+            name: 'Data Science',
+            description: 'Analyze data and build intelligent systems',
+            games: [
+                // Placeholder for future data science games
+            ]
+        },
+        {
+            id: 'open-source',
+            name: 'Open Source',
+            description: 'Contribute to collaborative projects and learn version control',
+            games: [
+                // Placeholder for future open source games
+            ]
+        },
+        {
+            id: 'devops',
+            name: 'DevOps & Cloud',
+            description: 'Master deployment, CI/CD, and cloud infrastructure',
+            games: [
+                // Placeholder for future DevOps games
+            ]
+        }
+    ];
+
     const [xp, setXP] = useState(() => {
         return parseInt(localStorage.getItem('user_xp')) || 0;
     });
@@ -410,147 +455,202 @@ const Arcade = () => {
                         <p>Forge your expertise through specialized engineering tracks.</p>
                     </div>
 
-                    <div style={{ position: 'relative', maxWidth: '850px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '30px', padding: '0 40px' }}>
-                        {/* Navigation Arrows */}
-                        <button 
-                            onClick={() => setGameSliderIdx(prev => (prev === 0 ? 8 : prev - 1))}
-                            style={{ background: 'rgba(99, 102, 241, 0.06)', border: '1px solid rgba(99, 102, 241, 0.22)', color: 'white', padding: '15px', borderRadius: '50%', cursor: 'pointer', zIndex: 10, transition: 'all 0.3s' }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(99, 102, 241, 0.14)'; e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.35)'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(99, 102, 241, 0.06)'; e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.22)'; }}
-                        >
-                            <ChevronLeft size={32} />
-                        </button>
-
-                        <div style={{ flex: 1, overflow: 'hidden', padding: '20px 0' }}>
-                            <motion.div 
-                                key={gameSliderIdx}
-                                initial={{ opacity: 0, x: 60, filter: 'blur(10px)' }}
-                                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                                transition={{ type: 'spring', damping: 25, stiffness: 120 }}
-                                style={{ width: '100%' }}
+                    <div className="sections-grid">
+                        {sections.map((section, sectionIdx) => (
+                            <motion.div
+                                key={section.id}
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: sectionIdx * 0.1 }}
+                                className="section-card"
                             >
-                                {(() => {
-                                    const games = [
-                                        { id: 'css-odyssey', title: 'CSS Forge', subtitle: 'Advanced Layouts', desc: 'Master layouts, grids, and complex animations in a high-fidelity simulator.', icon: <Code2 size={64} />, gradient: 'rgba(255, 255, 255, 0.05)', progressKey: 'highest_css_level', total: 50, btnColor: '#fff', accent: '#fff' },
-                                        { id: 'logic-lab', title: 'Logic Forge', subtitle: 'Logic Systems', desc: 'Conquer 100 levels of JavaScript puzzles, from control flow to advanced patterns.', icon: <Zap size={64} />, gradient: 'rgba(255, 255, 255, 0.05)', progressKey: 'highest_logic_lab_level', total: 100, btnColor: '#fff', accent: '#fff' },
-                                        { id: 'react-quest', title: 'React Forge', subtitle: 'Architecture Lab', desc: 'Theoretical MCQ challenges designed to push your React knowledge to its limits.', icon: <RefreshCw size={64} />, gradient: 'rgba(255, 255, 255, 0.05)', progressKey: 'highest_react_quest_level', total: 30, btnColor: '#fff', accent: '#fff' }
-                                    ];
-                                    const g = games[gameSliderIdx];
-                                    const progValue = parseInt(localStorage.getItem(g.progressKey)) || 0;
-                                    const pct = Math.round((progValue / g.total) * 100);
-
-                                    return (
-                                        <motion.div 
-                                            className="game-card featured-game" 
-                                            whileHover={{ y: -5, boxShadow: '0 30px 60px -12px rgba(255,255,255,0.1)' }}
-                                            onClick={() => { setActiveGame(g.id); setViewingSections(true); }}
-                                            style={{ 
-                                                minHeight: '400px', 
-                                                cursor: 'pointer', 
-                                                background: 'rgba(255, 255, 255, 0.04)', 
-                                                border: '1px solid rgba(255, 255, 255, 0.1)', 
-                                                borderRadius: '32px', 
-                                                overflow: 'hidden', 
-                                                display: 'flex', 
-                                                flexDirection: 'column', 
-                                                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', 
-                                                backdropFilter: 'blur(30px)',
-                                                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                                            }}
-                                        >
-                                            <div style={{ height: '220px', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                                                {/* Ambient Background Icon */}
-                                                <div style={{ opacity: 0.03, position: 'absolute', top: '-10px', right: '-10px', scale: 2.5, filter: 'blur(2px)' }}>{g.icon}</div>
-                                                
-                                                <div style={{ textAlign: 'center' }}>
-                                                    <motion.div 
-                                                        animate={{ y: [0, -10, 0] }}
-                                                        transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                                                        style={{ marginBottom: '15px', background: 'rgba(255,255,255,0.05)', width: '100px', height: '100px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)', boxShadow: '0 0 30px rgba(255,255,255,0.05)' }}
-                                                    >
-                                                        {React.cloneElement(g.icon, { size: 48, color: '#fff' })}
-                                                    </motion.div>
-                                                    <h2 style={{ color: 'white', fontSize: '2.2rem', fontWeight: 900, margin: 0, letterSpacing: '-1px' }}>{g.title}</h2>
-                                                    <div style={{ color: '#fff', letterSpacing: '3px', textTransform: 'uppercase', fontSize: '0.7rem', fontWeight: 800, marginTop: '5px', opacity: 0.5 }}>{g.subtitle}</div>
-                                                </div>
-                                            </div>
-                                            <div style={{ padding: '30px', flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                                <p style={{ color: '#a8a29e', fontSize: '1rem', lineHeight: 1.6, margin: 0, maxWidth: '95%' }}>{g.desc}</p>
-                                                
-                                                <div className="game-footer" style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '16px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '25px' }}>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: '1 1 0', minWidth: 0 }}>
-                                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'baseline' }}>
-                                                            <span style={{ fontSize: '2rem', fontWeight: 900, color: 'white' }}>{pct}%</span>
-                                                            <span style={{ color: '#888', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '1px' }}>MASTERY</span>
-                                                        </div>
-                                                        <div style={{ width: '100%', maxWidth: '240px', height: '6px', background: 'rgba(255,255,255,0.03)', borderRadius: '3px', overflow: 'hidden' }}>
-                                                            <motion.div 
-                                                                initial={{ width: 0 }}
-                                                                animate={{ width: `${pct}%` }}
-                                                                style={{ height: '100%', background: 'linear-gradient(90deg, #fff, #444)', borderRadius: '3px', boxShadow: '0 0 15px rgba(255, 255, 255, 0.1)' }} 
-                                                            />
+                                <div className="section-header">
+                                    <h3 className="section-title">{section.name}</h3>
+                                    <p className="section-description">{section.description}</p>
+                                </div>
+                                
+                                {section.games.length > 0 ? (
+                                    <div className="section-games">
+                                        {section.games.map((game) => {
+                                            const progValue = parseInt(localStorage.getItem(game.progressKey)) || 0;
+                                            const pct = Math.round((progValue / game.total) * 100);
+                                            
+                                            return (
+                                                <motion.div
+                                                    key={game.id}
+                                                    className="game-card"
+                                                    whileHover={{ y: -5, boxShadow: '0 15px 30px -12px rgba(255,255,255,0.1)' }}
+                                                    onClick={() => { setActiveGame(game.id); setViewingSections(true); }}
+                                                >
+                                                    <div className="game-icon">
+                                                        {React.cloneElement(game.icon, { size: 40, color: '#fff' })}
+                                                    </div>
+                                                    <div className="game-info">
+                                                        <h4 className="game-title">{game.title}</h4>
+                                                        <p className="game-subtitle">{game.subtitle}</p>
+                                                        <p className="game-desc">{game.desc}</p>
+                                                        
+                                                        <div className="game-progress">
+                                                            <div className="progress-label">
+                                                                <span className="progress-percentage">{pct}%</span>
+                                                                <span className="progress-text">MASTERY</span>
+                                                            </div>
+                                                            <div className="progress-bar">
+                                                                <motion.div 
+                                                                    initial={{ width: 0 }}
+                                                                    animate={{ width: `${pct}%` }}
+                                                                    className="progress-fill"
+                                                                />
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <button
-                                                        className="primary-btn glow-btn"
-                                                        style={{
-                                                            background: 'rgba(255, 255, 255, 0.08)',
-                                                            padding: '12px 16px',
-                                                            fontSize: '0.95rem',
-                                                            borderRadius: '12px',
-                                                            fontWeight: 800,
-                                                            flex: '0 0 35%',
-                                                            maxWidth: '220px',
-                                                            width: '100%',
-                                                            justifyContent: 'center',
-                                                            boxShadow: 'none',
-                                                            transform: 'none',
-                                                            whiteSpace: 'nowrap',
-                                                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                                                            color: '#fff',
-                                                            backdropFilter: 'blur(10px)',
-                                                            transition: 'all 0.3s'
-                                                        }}
-                                                        onMouseEnter={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#000'; }}
-                                                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'; e.currentTarget.style.color = '#fff'; }}
-                                                    >
-                                                        Enter Challenge <ArrowRight size={18} style={{ marginLeft: '10px' }} />
+                                                    <button className="game-enter-btn">
+                                                        Enter <ArrowRight size={16} />
                                                     </button>
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    );
-                                })()}
+                                                </motion.div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="coming-soon">
+                                        <Lock size={24} />
+                                        <span>Coming Soon</span>
+                                    </div>
+                                )}
                             </motion.div>
-                        </div>
-
-                        <button 
-                            onClick={() => setGameSliderIdx(prev => (prev === 2 ? 0 : prev + 1))}
-                            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '15px', borderRadius: '50%', cursor: 'pointer', zIndex: 10, transition: 'all 0.3s' }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.14)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
-                        >
-                            <ChevronRight size={32} />
-                        </button>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '50px' }}>
-                        {[...Array(3)].map((_, idx) => (
-                            <motion.div 
-                                key={idx}
-                                onClick={() => setGameSliderIdx(idx)}
-                                animate={{ 
-                                    width: gameSliderIdx === idx ? 40 : 12,
-                                    opacity: gameSliderIdx === idx ? 1 : 0.3
-                                }}
-                                style={{ 
-                                    height: '12px', 
-                                    background: gameSliderIdx === idx ? '#fff' : 'rgba(255,255,255,0.15)', 
-                                    borderRadius: '6px',
-                                    cursor: 'pointer'
-                                }} 
-                            />
                         ))}
+                    </div>
+                </motion.div>
+        ) : viewingSections ? (
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="active-game-container" style={{ background: 'transparent' }}>
+                <div className="arcade-header" style={{ position: 'relative' }}>
+                    <button 
+                        className="back-to-hub-btn" 
+                        style={{ 
+                            position: 'absolute', 
+                            left: '20px', 
+                            top: '0', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '8px', 
+                            padding: '10px 20px',
+                            background: 'rgba(255,255,255,0.03)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '12px',
+                            color: '#a8a29e',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                        }}
+                        onClick={() => { setActiveGame(null); setViewingSections(false); }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'white'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = '#a8a29e'; }}
+                    >
+                        <ChevronLeft size={18} /> Back to Selection
+                    </button>
+                    <h1 style={{ fontSize: '2.5rem' }}>Select Phase</h1>
+                    <p>Complete 80% of previous phases to unlock further training modules.</p>
+                </div>
+                
+                <div className="phase-map" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '25px', maxWidth: '1400px', margin: '0 auto', width: '100%', padding: '20px' }}>
+                    {(SUBJECT_PHASES[activeGame] || []).map((phase, idx) => {
+                        const unlocked = isPhaseUnlocked(idx);
+                        const phaseLevels = levels.filter(l => l.phase === phase.name);
+                        const completedInPhase = phaseLevels.filter(l => isLevelSolved(levels.indexOf(l))).length;
+                        const prevPhase = idx > 0 ? (SUBJECT_PHASES[activeGame] || [])[idx - 1] : null;
+                        const prevTotal = prevPhase ? (prevPhase.end - prevPhase.start + 1) : 0;
+                        const prevCompleted = prevPhase
+                            ? Array.from({ length: prevTotal }, (_, i) => prevPhase.start + i).filter(isLevelSolved).length
+                            : 0;
+                        const lockHint = !unlocked && prevPhase
+                            ? `Complete ${prevPhase.label} first (${prevCompleted}/${prevTotal} solved)`
+                            : '';
+                        const tauntMessages = [
+                            "You're not ready for this challenge yet. Gain more experience first.",
+                             "Come back when you've mastered the previous skills.",
+                            "This gate opens only for experienced developers, not beginners.",
+                            "Keep learning. I recommend completing earlier challenges first."
+                        ];
+                        const taunt = tauntMessages[idx % tauntMessages.length];
+                        const showTaunt = !unlocked && hoveredLockedPhase === idx;
+                        const rawPhaseIcon = PHASE_THEORIES[phase.name]?.icon;
+                        const themedPhaseIcon = React.isValidElement(rawPhaseIcon)
+                            ? React.cloneElement(rawPhaseIcon, {
+                                color: unlocked ? '#fff' : '#444'
+                            })
+                            : <Activity size={40} color={unlocked ? '#fff' : '#444'} />;
+                        
+                        return (
+                            <motion.div 
+                                key={idx} 
+                                whileHover={unlocked ? { scale: 1.02, y: -5 } : {}}
+                                className={`phase-button glass-morphism ${unlocked ? 'unlocked' : 'locked'}`}
+                                style={{ 
+                                    padding: '40px', 
+                                    borderRadius: '24px', 
+                                    cursor: unlocked ? 'pointer' : 'not-allowed', 
+                                    textAlign: 'center',
+                                    border: unlocked ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(255,255,255,0.05)',
+                                    background: unlocked ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.01)',
+                                    opacity: unlocked ? 1 : 0.4,
+                                    position: 'relative',
+                                    transition: 'all 0.3s ease',
+                                    transform: showTaunt ? 'perspective(900px) rotateY(7deg) scale(1.02)' : 'none',
+                                    boxShadow: showTaunt ? '0 18px 36px -20px rgba(99,102,241,0.3)' : 'none',
+                                    backdropFilter: 'blur(10px)'
+                                }}
+                                onClick={() => unlocked && startPhase(phase)}
+                                onMouseEnter={() => { if (!unlocked) setHoveredLockedPhase(idx); }}
+                                onMouseLeave={() => { if (!unlocked) setHoveredLockedPhase(null); }}
+                                title={lockHint || undefined}
+                            >
+                                {!unlocked && <Lock size={20} style={{ position: 'absolute', top: '20px', right: '20px', color: '#666' }} />}
+                                {showTaunt ? (
+                                    <div style={{ minHeight: '150px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                                        <div style={{ fontSize: '1.6rem' }}>🔒</div>
+                                        <div style={{ color: '#94a3b8', fontSize: '0.92rem', fontWeight: 700, lineHeight: 1.45, maxWidth: '220px' }}>
+                                            {taunt}
+                                        </div>
+                                        <div style={{ fontSize: '0.68rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
+                                            Complete previous phase to unlock
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div style={{ marginBottom: '20px', opacity: unlocked ? 1 : 0.5, display: 'flex', justifyContent: 'center' }}>
+                                            {themedPhaseIcon}
+                                        </div>
+                                        <h3 style={{ color: 'white', marginBottom: '8px', fontSize: '1.2rem', fontWeight: 800 }}>{phase.label}</h3>
+                                        <div style={{ 
+                                            display: 'inline-block', 
+                                            padding: '5px 15px', 
+                                            background: unlocked ? 'rgba(99, 102, 241, 0.12)' : 'rgba(255,255,255,0.03)', 
+                                            borderRadius: '10px', 
+                                            fontSize: '0.75rem', 
+                                            color: unlocked ? '#818cf8' : '#666',
+                                            fontWeight: 800,
+                                            marginTop: '10px',
+                                            border: unlocked ? '1px solid rgba(99, 102, 241, 0.22)' : 'none'
+                                        }}>
+                                            {completedInPhase} / {phaseLevels.length} MODULES
+                                        </div>
+                                        {!unlocked && lockHint && (
+                                            <div style={{
+                                                marginTop: '12px',
+                                                fontSize: '0.68rem',
+                                                color: '#a8a29e',
+                                                lineHeight: 1.4,
+                                                fontWeight: 600
+                                            }}>
+                                                {lockHint}
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </motion.div>
+                        );
+                    })}
                     </div>
                 </motion.div>
             ) : viewingSections ? (
