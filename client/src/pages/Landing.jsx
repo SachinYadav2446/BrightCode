@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { 
-  ChevronRight, 
-  Code2, 
-  Zap, 
-  Users, 
-  Trophy, 
-  Globe, 
-  Shield, 
+import {
+  ChevronRight,
+  Code2,
+  Zap,
+  Users,
+  Trophy,
+  Globe,
+  Shield,
   Terminal,
   Cpu,
   ArrowRight,
@@ -40,20 +40,20 @@ const Landing = () => {
   const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-17.5deg", "17.5deg"]);
 
   const handleMouseMove = (e) => {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const width = rect.width;
-      const height = rect.height;
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      const xPct = mouseX / width - 0.5;
-      const yPct = mouseY / height - 0.5;
-      x.set(xPct);
-      y.set(yPct);
-      
-      // Update custom properties for the glow effect
-      e.currentTarget.style.setProperty('--mouse-x', `${(mouseX / width) * 100}%`);
-      e.currentTarget.style.setProperty('--mouse-y', `${(mouseY / height) * 100}%`);
-    };
+    const rect = e.currentTarget.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const xPct = mouseX / width - 0.5;
+    const yPct = mouseY / height - 0.5;
+    x.set(xPct);
+    y.set(yPct);
+
+    // Update custom properties for the glow effect
+    e.currentTarget.style.setProperty('--mouse-x', `${(mouseX / width) * 100}%`);
+    e.currentTarget.style.setProperty('--mouse-y', `${(mouseY / height) * 100}%`);
+  };
 
   const handleMouseLeave = () => {
     x.set(0);
@@ -128,12 +128,9 @@ const Landing = () => {
       <nav className="landing-nav">
         <div className="nav-container">
           <div className="nav-logo" onClick={() => navigate('/')}>
-            <div className="logo-icon">
-              <Code2 size={24} color="#ef4444" />
-            </div>
             <span>CodeBright</span>
           </div>
-          
+
           <div className="nav-links">
             <button className="nav-link-btn" onClick={() => document.getElementById('explore')?.scrollIntoView({ behavior: 'smooth' })}>Explore</button>
             <button className="nav-link-btn" onClick={() => document.getElementById('mission')?.scrollIntoView({ behavior: 'smooth' })}>Mission</button>
@@ -154,44 +151,21 @@ const Landing = () => {
       <header className="hero-section">
         <PixelTrail />
         <div className="hero-container">
-          <motion.div 
+          <motion.div
             className="hero-content"
             initial="hidden"
             animate="visible"
             variants={containerVariants}
           >
-            <motion.div className="hero-visual" variants={itemVariants}>
-              <div className="visual-mockup">
-                <div className="mockup-header">
-                  <div className="dots">
-                    <span className="dot red"></span>
-                    <span className="dot yellow"></span>
-                    <span className="dot green"></span>
-                  </div>
-                </div>
-                <div className="mockup-content">
-                  <div className="mockup-chart">
-                    <div className="chart-bar" style={{ height: '60%' }}></div>
-                    <div className="chart-bar" style={{ height: '80%' }}></div>
-                    <div className="chart-bar" style={{ height: '40%' }}></div>
-                    <div className="chart-bar" style={{ height: '90%' }}></div>
-                  </div>
-                  <div className="mockup-stats">
-                    <div className="stat-line"></div>
-                    <div className="stat-line short"></div>
-                    <div className="stat-line"></div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+
 
             <motion.div className="hero-text" variants={itemVariants}>
-                <h1>A New Way to Learn</h1>
-                <p>
-                  Sharpen your engineering edge and master technical architecture 
-                  to prepare for the industry's most demanding roles.
-                </p>
-                <button className="create-account-btn" onClick={() => navigate('/auth', { state: { mode: 'register' } })}>
+              <h1>A New Way to Learn</h1>
+              <p>
+                Sharpen your engineering edge and master technical architecture
+                to prepare for the industry's most demanding roles.
+              </p>
+              <button className="create-account-btn" onClick={() => navigate('/auth', { state: { mode: 'register' } })}>
                 Create Account <ChevronRight size={18} />
               </button>
             </motion.div>
@@ -228,7 +202,7 @@ const Landing = () => {
       {/* Explore Section */}
       <section className="explore-teaser" id="explore">
         <div className="explore-container">
-          <motion.div 
+          <motion.div
             className="explore-header"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -240,8 +214,8 @@ const Landing = () => {
             </div>
             <h2>Universal Exploration Hub</h2>
             <p>
-              Step into a well-organized ecosystem that helps you get the most out of 
-              CodeBright by providing structure to guide your progress towards the next 
+              Step into a well-organized ecosystem that helps you get the most out of
+              CodeBright by providing structure to guide your progress towards the next
               milestone in your engineering career.
             </p>
             <button className="explore-btn" onClick={() => navigate('/hub')}>
@@ -268,9 +242,9 @@ const Landing = () => {
                 <span className="label-text">FEATURED CAPABILITIES</span>
                 <span className="label-line"></span>
               </div>
-              
+
               <AnimatePresence mode="wait">
-                <motion.div 
+                <motion.div
                   key={currentCard}
                   className="explore-card-active"
                   initial={{ opacity: 0, x: 100 }}
@@ -285,11 +259,11 @@ const Landing = () => {
                   <p>{exploreCards[currentCard].description}</p>
                 </motion.div>
               </AnimatePresence>
-              
+
               <div className="carousel-indicators">
                 {exploreCards.map((_, index) => (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className={`indicator ${index === currentCard ? 'active' : ''}`}
                     onClick={() => setCurrentCard(index)}
                   />
@@ -319,7 +293,7 @@ const Landing = () => {
       {/* About Section */}
       <section className="about-project" id="mission">
         <div className="about-container">
-          <motion.div 
+          <motion.div
             className="about-grid"
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -330,11 +304,11 @@ const Landing = () => {
               <span className="about-subtitle">OUR MISSION</span>
               <h2>Beyond the Code</h2>
               <p>
-                CodeBright isn't just a platform; it's a digital ecosystem engineered 
-                to bridge the gap between theoretical knowledge and industrial-scale 
+                CodeBright isn't just a platform; it's a digital ecosystem engineered
+                to bridge the gap between theoretical knowledge and industrial-scale
                 system architecture. We provide the tools you need to build the future.
               </p>
-              
+
               <div className="about-features-grid">
                 <div className="about-feature-item">
                   <div className="feat-icon">
@@ -382,15 +356,15 @@ const Landing = () => {
                 <div className="ide-content">
                   <pre>
                     <code>
-                      <span className="code-keyword">async function</span> <span className="code-func">initializeForge</span>(config) {'{'}<br/>
-                      {'  '}<span className="code-keyword">const</span> core = <span className="code-keyword">new</span> <span className="code-class">Engine</span>(config);<br/>
-                      <br/>
-                      {'  '}<span className="code-comment">// Optimize for high-performance clusters</span><br/>
-                      {'  '}<span className="code-keyword">await</span> core.<span className="code-func">deploy</span>({'{'}<br/>
-                      {'    '}target: <span className="code-str">'production'</span>,<br/>
-                      {'    '}mode: <span className="code-str">'performance'</span>,<br/>
-                      {'    '}autoScale: <span className="code-keyword">true</span><br/>
-                      {'  '}{'}'});<br/>
+                      <span className="code-keyword">async function</span> <span className="code-func">initializeForge</span>(config) {'{'}<br />
+                      {'  '}<span className="code-keyword">const</span> core = <span className="code-keyword">new</span> <span className="code-class">Engine</span>(config);<br />
+                      <br />
+                      {'  '}<span className="code-comment">// Optimize for high-performance clusters</span><br />
+                      {'  '}<span className="code-keyword">await</span> core.<span className="code-func">deploy</span>({'{'}<br />
+                      {'    '}target: <span className="code-str">'production'</span>,<br />
+                      {'    '}mode: <span className="code-str">'performance'</span>,<br />
+                      {'    '}autoScale: <span className="code-keyword">true</span><br />
+                      {'  '}{'}'});<br />
                       {'}'}
                     </code>
                   </pre>
@@ -405,7 +379,7 @@ const Landing = () => {
       {/* User Module Section */}
       <section className="user-module-section" id="guide">
         <div className="user-module-container">
-          <motion.div 
+          <motion.div
             className="user-module-sphere-wrapper"
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
@@ -415,7 +389,7 @@ const Landing = () => {
               transformStyle: "preserve-3d",
             }}
           >
-            <motion.div 
+            <motion.div
               className="user-module-card sphere-effect"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -423,7 +397,7 @@ const Landing = () => {
               transition={{ duration: 0.8 }}
             >
               <div className="sphere-glow-inner"></div>
-              
+
               <div className="module-live-tag" style={{ transform: "translateZ(50px)" }}>
                 <span className="pulse-dot"></span>
                 LIVE DOCS
@@ -439,7 +413,7 @@ const Landing = () => {
                 <div className="module-content">
                   <div className="module-slider-container">
                     <AnimatePresence mode="wait">
-                      <motion.div 
+                      <motion.div
                         key={activeFeature}
                         className="slider-item"
                         initial={{ opacity: 0, y: 20 }}
@@ -458,8 +432,8 @@ const Landing = () => {
                     </AnimatePresence>
                     <div className="slider-dots">
                       {userModuleFeatures.map((_, idx) => (
-                        <div 
-                          key={idx} 
+                        <div
+                          key={idx}
                           className={`slider-dot ${idx === activeFeature ? 'active' : ''}`}
                         ></div>
                       ))}
@@ -468,7 +442,7 @@ const Landing = () => {
                 </div>
 
                 <div className="module-footer-inside">
-                  <motion.button 
+                  <motion.button
                     className="premium-module-btn"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -513,13 +487,13 @@ const Landing = () => {
               </p>
               <div className="footer-social-links">
                 <motion.a whileHover={{ y: -3 }} href="#" className="social-icon-btn" title="GitHub">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.28 1.15-.28 2.35 0 3.5-.73 1.02-1.08 2.25-1 3.5 0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.28 1.15-.28 2.35 0 3.5-.73 1.02-1.08 2.25-1 3.5 0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" /><path d="M9 18c-4.51 2-5-2-7-2" /></svg>
                 </motion.a>
                 <motion.a whileHover={{ y: -3 }} href="#" className="social-icon-btn" title="Twitter">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" /></svg>
                 </motion.a>
                 <motion.a whileHover={{ y: -3 }} href="#" className="social-icon-btn" title="LinkedIn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" /><rect width="4" height="12" x="2" y="9" /><circle cx="4" cy="4" r="2" /></svg>
                 </motion.a>
                 <motion.a whileHover={{ y: -3 }} href="#" className="social-icon-btn" title="More">
                   <ExternalLink size={20} />

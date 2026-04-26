@@ -5,11 +5,10 @@ import toast from 'react-hot-toast';
 import Editor from '@monaco-editor/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Users, FileCode, Play, LogOut, FilePlus, Terminal as TerminalIcon,
-  Monitor, Link as LinkIcon, Trash2, Edit2, Sparkles, Brain, Bot, Send,
-  PenTool, Eraser, Layout as WhiteboardIcon, Zap, Shield, Languages,
-  Mic, MicOff, Video, VideoOff, PhoneOff, Phone, Plus,
-  ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Share2
+    Users, FileCode, Play, LogOut, FilePlus, Terminal as TerminalIcon,
+    Monitor, Link as LinkIcon, Trash2, Edit2, Shield, Sparkles,
+    PenTool, Eraser, Layout as WhiteboardIcon,
+    Plus, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Share2
 } from 'lucide-react';
 import axios from 'axios';
 import './EditorPage.css';
@@ -33,7 +32,6 @@ const EditorPage = () => {
 
     // ── Sidebar/Tab States (BUG FIX: both were missing) ─────────────────────
     const [activeTab, setActiveTab] = useState('files');
-    const [snapshots, setSnapshots] = useState([]);
 
     // ── Whiteboard States ────────────────────────────────────────────────────
     const [viewMode, setViewMode] = useState('editor');
@@ -55,32 +53,15 @@ const EditorPage = () => {
     const [myPermission, setMyPermission] = useState('write');
     const isAdmin = adminId === myId;
 
-    // ── AI Sentinel States ───────────────────────────────────────────────────
-    const [isSidekickOpen, setIsSidekickOpen] = useState(false);
-    const [aiMessages, setAiMessages] = useState([
-        { role: 'ai', content: "Hello! I am your AI Sentinel. How can I assist you with your code today?" }
-    ]);
-    const [isAiThinking, setIsAiThinking] = useState(false);
-    const [aiInput, setAiInput] = useState('');
-
     // ── Resizer & Modal Addition ─────────────────────────────────────────────
     const [creationLang, setCreationLang] = useState('javascript');
-
-    // ── FEATURE 1: Hologram Comms (WebRTC) ───────────────────────────────────
-    const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(false);
-    const [isCallActive, setIsCallActive] = useState(false);
-    const [isMuted, setIsMuted] = useState(false);
-    const [isVideoOn, setIsVideoOn] = useState(false);
-    const localVideoRef = useRef(null);
-    const remoteVideoRef = useRef(null);
-    const localStreamRef = useRef(null);
-    const peerConnectionRef = useRef(null);
 
     // ── Resizer States ───────────────────────────────────────────────────────
     const [sidebarWidth, setSidebarWidth] = useState(280);
     const [terminalHeight, setTerminalHeight] = useState(200);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isTerminalCollapsed, setIsTerminalCollapsed] = useState(false);
+    const [isUsersDropdownOpen, setIsUsersDropdownOpen] = useState(false);
 
     const prevSidebarWidth = useRef(280);
     const prevTerminalHeight = useRef(200);
@@ -147,12 +128,6 @@ const EditorPage = () => {
     }, []);
 
 
-    // ── FEATURE 4: AI Translator ──────────────────────────────────────────────
-    const [isTranslatorOpen, setIsTranslatorOpen] = useState(false);
-    const [translateTarget, setTranslateTarget] = useState('python');
-    const [translatedCode, setTranslatedCode] = useState('');
-    const [isTranslating, setIsTranslating] = useState(false);
-
     // ── Socket.io Effect ─────────────────────────────────────────────────────
     useEffect(() => {
         let isStopped = false;
@@ -167,13 +142,12 @@ const EditorPage = () => {
 
                 socket.emit('join-room', { roomId, username: user?.username });
 
-                socket.on('initial-data', ({ files, users, adminId, yourId, snapshots }) => {
+                socket.on('initial-data', ({ files, users, adminId, yourId }) => {
                     if (isStopped) return;
                     setFiles(files);
                     setClients(users);
                     setAdminId(adminId);
                     setMyId(yourId);
-                    setSnapshots(snapshots || []);
                     const fileNames = Object.keys(files);
                     if (fileNames.length > 0) {
                         setActiveFile(fileNames[0]);
@@ -181,17 +155,7 @@ const EditorPage = () => {
                     }
                 });
 
-                // Warp Drive
-                socket.on('snapshot-captured', (snapshot) => {
-                    setSnapshots(prev => [snapshot, ...prev]);
-                    toast.success(`Temporal Link Established: ${snapshot.name}`);
-                });
-                socket.on('files-warped', ({ files, warpedBy, snapshotName }) => {
-                    setFiles(files);
-                    toast(`WARP DETECTED: ${warpedBy} shifted to [${snapshotName}]`, {
-                        icon: '🌀', style: { background: '#6366f1', color: 'white' }
-                    });
-                });
+
 
                 // Terminal
                 socket.on('terminal-output', (log) => {
@@ -220,10 +184,10 @@ const EditorPage = () => {
                     if (!isStopped) setFiles(prev => ({ ...prev, [fileName]: { ...prev[fileName], content } }));
                 });
                 socket.on('file-created', ({ fileName, language, content }) => {
-                    if (!isStopped) { 
-                        setFiles(prev => ({ ...prev, [fileName]: { content: content || '', language } })); 
+                    if (!isStopped) {
+                        setFiles(prev => ({ ...prev, [fileName]: { content: content || '', language } }));
                         setActiveFile(fileName);
-                        toast.success(`File ${fileName} created`); 
+                        toast.success(`File ${fileName} created`);
                     }
                 });
                 socket.on('file-deleted', ({ fileName }) => {
@@ -247,19 +211,7 @@ const EditorPage = () => {
                     if (!isStopped) { toast.error(message, { duration: 5000 }); navigate('/'); }
                 });
 
-                // ── WebRTC Signaling ─────────────────────────────────────────
-                socket.on('webrtc-offer', async ({ offer, from }) => handleIncomingCall(offer, from));
-                socket.on('webrtc-answer', async ({ answer }) => {
-                    if (peerConnectionRef.current) {
-                        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
-                    }
-                });
-                socket.on('webrtc-ice-candidate', async ({ candidate }) => {
-                    if (peerConnectionRef.current && candidate) {
-                        try { await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate)); } catch {}
-                    }
-                });
-                socket.on('call-ended', () => { endCall(); toast('Call ended by peer', { icon: '📵' }); });
+
 
             } catch (err) {
                 console.error('Socket init error:', err);
@@ -272,7 +224,6 @@ const EditorPage = () => {
         return () => {
             isStopped = true;
             if (socketRef.current) { socketRef.current.disconnect(); socketRef.current = null; }
-            endCall();
         };
     }, [roomId, user?.username, navigate]);
 
@@ -285,18 +236,25 @@ const EditorPage = () => {
 
     const runCode = async () => {
         if (!activeFile || isRunning) return;
+
+        // Auto-expand terminal if collapsed
+        if (isTerminalCollapsed) {
+            setTerminalHeight(prevTerminalHeight.current || 200);
+            setIsTerminalCollapsed(false);
+        }
+
         setIsRunning(true);
         setOutput('Running...');
         try {
             const currentFile = files[activeFile];
-            const pistonLangMap = { 
-                javascript: 'js', 
-                python: 'python3', 
-                cpp: 'cpp', 
-                java: 'java' 
+            const pistonLangMap = {
+                javascript: 'js',
+                python: 'python3',
+                cpp: 'cpp',
+                java: 'java'
             };
             const lang = pistonLangMap[currentFile.language] || currentFile.language;
-            
+
             const response = await axios.post('http://localhost:5050/execute', {
                 language: lang,
                 files: [{ name: currentFile.language === 'java' ? 'Main.java' : activeFile, content: currentFile.content }]
@@ -346,16 +304,16 @@ const EditorPage = () => {
             const extMap = { javascript: 'js', python: 'py', cpp: 'cpp', java: 'java' };
             const ext = extMap[creationLang];
             const finalName = fileName.includes('.') ? fileName : `${fileName}.${ext}`;
-            
+
             if (files[finalName]) {
                 toast.error('File name already exists');
                 return;
             }
-            
-            socketRef.current.emit('file-create', { 
-                roomId, 
-                fileName: finalName, 
-                language: creationLang 
+
+            socketRef.current.emit('file-create', {
+                roomId,
+                fileName: finalName,
+                language: creationLang
             });
         } else if (type === 'rename' && fileName && fileName !== targetFile) {
             if (files[fileName]) { toast.error('File name already exists'); }
@@ -366,127 +324,7 @@ const EditorPage = () => {
         setModalConfig({ isOpen: false });
     };
 
-    // ── AI Sentinel ──────────────────────────────────────────────────────────
-    const sendMessageToAi = async () => { // BUG FIX: was handleAiSubmit, now properly named
-        if (!aiInput.trim()) return;
-        const userMsg = { role: 'user', content: aiInput };
-        const inputCopy = aiInput;
-        setAiMessages(prev => [...prev, userMsg]);
-        setAiInput('');
-        setIsAiThinking(true);
-        try {
-            const input = inputCopy.toLowerCase();
-            setTimeout(() => {
-                let response = '';
-                if (input.includes('optimize')) {
-                    response = "### ⚡ Optimization Protocol\nAnalysis complete. Recommend `.map()`/`.filter()` over explicit loops for ~15% better allocation. Consider `useMemo` for expensive computations.";
-                } else if (input.includes('explain')) {
-                    response = `### 🔍 Code Breakdown\nIn **${activeFile}**, the logic initializes a reactive state loop creating a data sink for incoming signals from the Code Sight server via WebSocket channels.`;
-                } else if (input.includes('generate') || input.includes('create')) {
-                    response = "### 🛠️ Boilerplate Generated\n```javascript\nconst handler = async (req, res) => {\n  try {\n    const data = await processRequest(req.body);\n    res.json({ success: true, data });\n  } catch (err) {\n    res.status(500).json({ error: err.message });\n  }\n};\n```";
-                } else if (input.includes('bug') || input.includes('fix')) {
-                    response = "### 🐛 Diagnostic Mode\nActivate the **Watchdog** (Shield icon in toolbar) for a full security scan. Common issues: unhandled promise chains, missing null-checks, type coercion with `==`.";
-                } else {
-                    response = `Sentinel standby. Currently monitoring **${activeFile || 'workspace'}**. The architecture looks stable. How shall we proceed?`;
-                }
-                setAiMessages(prev => [...prev, { role: 'ai', content: response }]);
-                setIsAiThinking(false);
-            }, 1000);
-        } catch {
-            setIsAiThinking(false);
-            toast.error("Sentinel Offline.");
-        }
-    };
 
-
-    // ── FEATURE 4: AI Translator ──────────────────────────────────────────────
-    const translateCode = async () => {
-        if (!activeFile || isTranslating) return;
-        setIsTranslating(true);
-        setTranslatedCode('');
-        const sourceCode = files[activeFile]?.content || '';
-        await new Promise(r => setTimeout(r, 1500));
-        const sanitized = sourceCode
-            .split('\n').join('\n    ')
-            .replace(/const |let |var /g, '')
-            .replace(/;/g, '')
-            .replace(/\/\//g, '#')
-            .replace(/console\.log/g, 'print');
-        const translations = {
-            python: `# AI Sentinel — Translated to Python\n# Source: ${activeFile}\n\ndef main():\n    ${sanitized}\n\nif __name__ == '__main__':\n    main()`,
-            rust: `// AI Sentinel — Translated to Rust\n// Source: ${activeFile}\n\nfn main() {\n    println!("Code Sight — Rust port");\n    // Note: Rust requires explicit type annotations\n    // Manual port recommended for production use\n}`,
-            go: `// AI Sentinel — Translated to Go\npackage main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Code Sight — Go port")\n    // Note: Go requires explicit type declarations\n}`,
-            java: `// AI Sentinel — Translated to Java\n// Source: ${activeFile}\n\npublic class Translated {\n    public static void main(String[] args) {\n        System.out.println("Code Sight — Java port");\n    }\n}`,
-        };
-        setTranslatedCode(translations[translateTarget] || '// Translation not available for this target language.');
-        setIsTranslating(false);
-        toast.success(`Code translated to ${translateTarget}!`);
-    };
-
-    // ── FEATURE 1: WebRTC Hologram Comms ─────────────────────────────────────
-    const createPeerConnection = (targetId) => {
-        const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-        peerConnectionRef.current = pc;
-        pc.onicecandidate = (event) => {
-            if (event.candidate && socketRef.current) {
-                socketRef.current.emit('webrtc-ice-candidate', { roomId, candidate: event.candidate, targetId });
-            }
-        };
-        pc.ontrack = (event) => {
-            if (remoteVideoRef.current) remoteVideoRef.current.srcObject = event.streams[0];
-        };
-        return pc;
-    };
-
-    const startCall = async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideoOn });
-            localStreamRef.current = stream;
-            if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-            const target = clients.find(c => c.id !== myId);
-            if (!target) { toast.error('No other collaborator in room to call.'); stream.getTracks().forEach(t => t.stop()); return; }
-            const pc = createPeerConnection(target.id);
-            stream.getTracks().forEach(track => pc.addTrack(track, stream));
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            socketRef.current.emit('webrtc-offer', { roomId, offer, targetId: target.id });
-            setIsCallActive(true);
-            toast.success('Hologram Comms initiated...', { style: { background: '#1c1917', color: '#34d399' } });
-        } catch (err) {
-            toast.error('Microphone/Camera access denied: ' + err.message);
-        }
-    };
-
-    const handleIncomingCall = async (offer, from) => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideoOn });
-            localStreamRef.current = stream;
-            if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-            const pc = createPeerConnection(from);
-            stream.getTracks().forEach(track => pc.addTrack(track, stream));
-            await pc.setRemoteDescription(new RTCSessionDescription(offer));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            socketRef.current.emit('webrtc-answer', { roomId, answer, targetId: from });
-            setIsCallActive(true);
-            setIsVoiceChatOpen(true);
-            toast(`Incoming Hologram Comms — connection established`, { icon: '📡' });
-        } catch {}
-    };
-
-    const endCall = () => {
-        if (localStreamRef.current) { localStreamRef.current.getTracks().forEach(t => t.stop()); localStreamRef.current = null; }
-        if (peerConnectionRef.current) { peerConnectionRef.current.close(); peerConnectionRef.current = null; }
-        setIsCallActive(false);
-        socketRef.current?.emit('end-call', { roomId });
-    };
-
-    const toggleMute = () => {
-        if (localStreamRef.current) {
-            localStreamRef.current.getAudioTracks().forEach(t => { t.enabled = isMuted; });
-            setIsMuted(prev => !prev);
-        }
-    };
 
 
     // ── Whiteboard ────────────────────────────────────────────────────────────
@@ -522,437 +360,283 @@ const EditorPage = () => {
     // ── RENDER ────────────────────────────────────────────────────────────────
     return (
         <>
-        <AnimatePresence>
-            {modalConfig.isOpen && (
-                <div className="custom-modal-overlay">
-                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="custom-modal">
-                        <div className="custom-modal-header">
-                            <h3>{modalConfig.type === 'create' ? 'Create New File' : modalConfig.type === 'rename' ? 'Rename File' : 'Delete File'}</h3>
-                        </div>
-                        <div className="custom-modal-body">
-                            {modalConfig.type === 'delete' ? (
-                                <p>Delete <span className="highlight-file">{modalConfig.targetFile}</span>?</p>
-                            ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                    {modalConfig.type === 'create' && (
+            <AnimatePresence>
+                {modalConfig.isOpen && (
+                    <div className="custom-modal-overlay">
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="custom-modal">
+                            <div className="custom-modal-header">
+                                <h3>{modalConfig.type === 'create' ? 'Create New File' : modalConfig.type === 'rename' ? 'Rename File' : 'Delete File'}</h3>
+                            </div>
+                            <div className="custom-modal-body">
+                                {modalConfig.type === 'delete' ? (
+                                    <p>Delete <span className="highlight-file">{modalConfig.targetFile}</span>?</p>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                        {modalConfig.type === 'create' && (
+                                            <div className="modal-field">
+                                                <label>Select Language</label>
+                                                <select className="premium-input modal-select" value={creationLang} onChange={(e) => setCreationLang(e.target.value)}>
+                                                    <option value="javascript">JavaScript</option>
+                                                    <option value="python">Python</option>
+                                                    <option value="cpp">C++</option>
+                                                    <option value="java">Java</option>
+                                                </select>
+                                            </div>
+                                        )}
                                         <div className="modal-field">
-                                            <label>Select Language</label>
-                                            <select className="premium-input modal-select" value={creationLang} onChange={(e) => setCreationLang(e.target.value)}>
-                                                <option value="javascript">JavaScript</option>
-                                                <option value="python">Python</option>
-                                                <option value="cpp">C++</option>
-                                                <option value="java">Java</option>
-                                            </select>
+                                            <label>{modalConfig.type === 'create' ? 'File Name' : 'New Name'}</label>
+                                            <input type="text" autoFocus defaultValue={modalConfig.defaultValue}
+                                                onKeyDown={e => e.key === 'Enter' && handleModalSubmit(e.target.value)}
+                                                placeholder={modalConfig.type === 'create' ? "e.g. data_processor" : "e.g. main.js"} className="premium-input modal-input" />
                                         </div>
-                                    )}
-                                    <div className="modal-field">
-                                        <label>{modalConfig.type === 'create' ? 'File Name' : 'New Name'}</label>
-                                        <input type="text" autoFocus defaultValue={modalConfig.defaultValue}
-                                            onKeyDown={e => e.key === 'Enter' && handleModalSubmit(e.target.value)}
-                                            placeholder={modalConfig.type === 'create' ? "e.g. data_processor" : "e.g. main.js"} className="premium-input modal-input" />
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                        <div className="custom-modal-footer">
-                            <button className="secondary-btn" onClick={() => setModalConfig({ isOpen: false })}>Cancel</button>
-                            <button className={`primary-btn ${modalConfig.type === 'delete' ? 'danger-btn' : 'glow-btn'}`}
-                                onClick={(e) => {
-                                    const modalEl = e.target.closest('.custom-modal');
-                                    const input = modalEl.querySelector('input');
-                                    handleModalSubmit(input ? input.value : null);
-                                }}>
-                                {modalConfig.type === 'delete' ? 'Delete' : 'Confirm'}
+                                )}
+                            </div>
+                            <div className="custom-modal-footer">
+                                <button className="secondary-btn" onClick={() => setModalConfig({ isOpen: false })}>Cancel</button>
+                                <button className={`primary-btn ${modalConfig.type === 'delete' ? 'danger-btn' : 'glow-btn'}`}
+                                    onClick={(e) => {
+                                        const modalEl = e.target.closest('.custom-modal');
+                                        const input = modalEl.querySelector('input');
+                                        handleModalSubmit(input ? input.value : null);
+                                    }}>
+                                    {modalConfig.type === 'delete' ? 'Delete' : 'Confirm'}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+
+
+            {/* ── TOP NAVBAR (MERGED) ────────────────────────────────────────── */}
+            <nav className="editor-navbar">
+                <div className="navbar-left">
+                    <div className="navbar-logo">
+                        <span className="logo-code">CODE</span>
+                        <span className="logo-bright">BRIGHT</span>
+                    </div>
+                </div>
+
+                <div className="navbar-center">
+                    <div className="view-selector">
+                        <button className={`view-btn ${viewMode === 'editor' ? 'active' : ''}`} onClick={() => setViewMode('editor')}><FileCode size={14} /> IDE</button>
+                        <button className={`view-btn ${viewMode === 'whiteboard' ? 'active' : ''}`} onClick={() => setViewMode('whiteboard')}><WhiteboardIcon size={14} /> Architect</button>
+                    </div>
+                    <div className="current-path">
+                        <span>projects / {roomId?.slice(0, 8)}... /</span>
+                        <span className="file-name">{viewMode === 'editor' ? (activeFile || 'No file') : 'System Architect'}</span>
+                    </div>
+                </div>
+
+
+
+                <div className="navbar-right">
+                    {viewMode === 'editor' && (
+                        <>
+                            <button className={`icon-btn terminal-toggle-btn ${!isTerminalCollapsed ? 'active' : ''}`}
+                                onClick={toggleTerminal}
+                                title="Toggle Terminal">
+                                <TerminalIcon size={16} />
                             </button>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
-        </AnimatePresence>
-
-        {/* ── HOLOGRAM COMMS PiP ──────────────────────────────────────────── */}
-        <AnimatePresence>
-            {isVoiceChatOpen && (
-                <motion.div initial={{ opacity: 0, scale: 0.85, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.85, y: 20 }} className="hologram-pip">
-                    <div className="hologram-header">
-                        <div className="hologram-title"><span className="hologram-dot"></span> Hologram Comms</div>
-                        <button className="icon-btn" onClick={() => setIsVoiceChatOpen(false)}><Plus size={16} style={{ transform: 'rotate(45deg)' }} /></button>
-                    </div>
-                    <div className="hologram-video-area">
-                        <video ref={remoteVideoRef} autoPlay playsInline className="remote-video" />
-                        <video ref={localVideoRef} autoPlay playsInline muted className="local-video" />
-                        {!isCallActive && (
-                            <div className="hologram-idle">
-                                <div className="idle-ring"></div>
-                                <span>No active connection</span>
-                            </div>
-                        )}
-                    </div>
-                    <div className="hologram-controls">
-                        {isCallActive ? (
-                            <>
-                                <button className={`holo-btn ${isMuted ? 'danger' : ''}`} onClick={toggleMute} title={isMuted ? 'Unmute' : 'Mute'}>
-                                    {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
-                                </button>
-                                <button className="holo-btn call-end" onClick={endCall} title="End Call">
-                                    <PhoneOff size={16} />
-                                </button>
-                                <button className={`holo-btn ${isVideoOn ? 'active-green' : ''}`} onClick={() => setIsVideoOn(v => !v)} title="Toggle Video">
-                                    {isVideoOn ? <Video size={16} /> : <VideoOff size={16} />}
-                                </button>
-                            </>
-                        ) : (
-                            <button className="holo-btn holo-primary full-width" onClick={startCall}>
-                                <Phone size={16} /> Start Hologram
+                            <button className={`primary-btn run-btn-small ${isRunning ? 'loading' : ''}`} onClick={runCode} disabled={isRunning || !activeFile}>
+                                <Play size={14} fill="white" /> <span>{isRunning ? '...' : 'Run'}</span>
                             </button>
-                        )}
-                    </div>
-                </motion.div>
-            )}
-        </AnimatePresence>
-
-
-        {/* ── AI TRANSLATOR PANEL ─────────────────────────────────────────── */}
-        <AnimatePresence>
-            {isTranslatorOpen && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="translator-panel">
-                    <div className="translator-header">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Languages size={16} color="#818cf8" /> AI Translator</div>
-                        <button className="icon-btn" onClick={() => setIsTranslatorOpen(false)}><Plus size={14} style={{ transform: 'rotate(45deg)' }} /></button>
-                    </div>
-                    <div className="translator-body">
-                        <div className="translator-lang-row">
-                            <span className="translator-label">From: <strong>{activeFile?.split('.').pop()?.toUpperCase() || 'JS'}</strong></span>
-                            <span className="translator-arrow">→</span>
-                            <select value={translateTarget} onChange={e => { setTranslateTarget(e.target.value); setTranslatedCode(''); }} className="lang-select">
-                                <option value="python">Python</option>
-                                <option value="rust">Rust</option>
-                                <option value="go">Go</option>
-                                <option value="java">Java</option>
-                            </select>
+                        </>
+                    )}
+                    {viewMode === 'whiteboard' && (
+                        <div className="canvas-tools">
+                            <button className="tool-btn" onClick={() => setDrawColor('#fbbf24')} style={{ color: drawColor === '#fbbf24' ? '#fbbf24' : '#666' }}><PenTool size={18} /></button>
+                            <button className="tool-btn" onClick={() => setDrawColor('#0d0d0d')} title="Eraser"><Eraser size={18} /></button>
+                            <button className="tool-btn danger" onClick={clearCanvas}><Trash2 size={18} /></button>
                         </div>
-                        {isTranslating && (
-                            <div className="translator-thinking">
-                                <div className="scan-ring" style={{ borderTopColor: '#818cf8' }}></div>
-                                <p>Translating architecture...</p>
-                            </div>
-                        )}
-                        {translatedCode && !isTranslating && (
-                            <div className="translated-output">
-                                <pre>{translatedCode}</pre>
-                            </div>
-                        )}
-                    </div>
-                    <div className="translator-footer">
-                        <button className="primary-btn" style={{ width: '100%', justifyContent: 'center', background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#818cf8' }}
-                            onClick={translateCode} disabled={isTranslating || !activeFile}>
-                            {isTranslating ? 'Translating...' : `Translate → ${translateTarget.charAt(0).toUpperCase() + translateTarget.slice(1)}`}
-                        </button>
-                    </div>
-                </motion.div>
-            )}
-        </AnimatePresence>
-
-        {/* ── MAIN LAYOUT ─────────────────────────────────────────────────── */}
-        <div className="editor-layout" style={{ gridTemplateColumns: `${sidebarWidth}px ${isSidebarCollapsed ? 8 : 4}px 1fr` }}>
-            <aside className="sidebar">
-                <div className="sidebar-header">
-                    <div className="logo-section" style={{ color: 'var(--workspace-accent)' }}>
-                        <Monitor size={22} strokeWidth={2.5} />
-                        <span>Code Sight</span>
-                    </div>
-                    <div style={{ fontSize: '0.6rem', color: 'var(--workspace-text-muted)', marginTop: '8px', letterSpacing: '1px' }}>
-                        HEURISTIC INTERFACE v4.0.2
-                    </div>
+                    )}
                 </div>
+            </nav>
 
-                <div className="sidebar-tabs">
-                    <button className={`tab-btn ${activeTab === 'files' ? 'active' : ''}`} onClick={() => setActiveTab('files')} title="Workspace"><FileCode size={20} /></button>
-                    <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')} title="Collaborators"><Users size={20} /></button>
-                    <button className={`tab-btn ${activeTab === 'warp' ? 'active' : ''}`} onClick={() => setActiveTab('warp')} title="Warp Drive"><Zap size={20} /></button>
-                </div>
+            {/* ── MAIN LAYOUT ─────────────────────────────────────────────────── */}
+            <div className="editor-layout" style={{ gridTemplateColumns: `${sidebarWidth}px ${isSidebarCollapsed ? 2 : 2}px 1fr` }}>
+                <aside className="sidebar">
 
-                <div className="sidebar-content">
-                    {activeTab === 'files' && (
+
+                    <div className="sidebar-content">
                         <div className="sidebar-section">
-                            <div className="section-title">
-                                <span>WORKSPACE</span>
-                                <button onClick={createNewFile} className="icon-btn"><FilePlus size={16} /></button>
+                            <div className="sidebar-header">
+                                <span className="sidebar-title">FILES</span>
+                                <button className="add-file-btn" onClick={createNewFile} title="New File">
+                                    <Plus size={14} />
+                                </button>
                             </div>
                             <div className="file-list">
                                 {Object.keys(files).map(name => (
                                     <div key={name} className={`file-item ${activeFile === name ? 'active' : ''}`}
                                         onClick={() => { setActiveFile(name); setLanguage(files[name].language); }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, overflow: 'hidden' }}>
-                                            <FileCode size={16} color="#94a3b8" style={{ flexShrink: 0 }} />
-                                            <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{name}</span>
+                                        <div className="file-info">
+                                            <span className="file-name-text">{name}</span>
                                         </div>
                                         <div className="file-actions">
-                                            <button onClick={(e) => renameFile(e, name)} className="file-action-btn" title="Rename"><Edit2 size={13} /></button>
-                                            <button onClick={(e) => deleteFile(e, name)} className="file-action-btn danger" title="Delete"><Trash2 size={13} /></button>
+                                            <button onClick={(e) => renameFile(e, name)} className="file-action-btn" title="Rename"><Edit2 size={12} /></button>
+                                            <button onClick={(e) => deleteFile(e, name)} className="file-action-btn danger" title="Delete"><Trash2 size={12} /></button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                    )}
+                    </div>
 
-                    {activeTab === 'users' && (
-                        <div className="sidebar-section">
-                            <div className="section-title"><span>COLLABORATORS ({clients.length})</span></div>
-                            <div className="user-grid">
-                                {clients.map(c => (
-                                    <div key={c?.id} className="user-card">
-                                        <div className="user-info">
-                                            <div className="avatar" title={c?.username}>
-                                                {c?.username ? c.username.charAt(0).toUpperCase() : '?'}
-                                                {c?.id === adminId && <div className="admin-status-dot"></div>}
-                                            </div>
-                                            <div className="user-text">
-                                                <span className={`username ${c?.id === myId ? 'me' : ''}`}>{c?.username} {c?.id === myId ? '(You)' : ''}</span>
-                                                <span className="user-role">{c?.id === adminId ? 'Workspace Owner' : (c?.permission === 'read' ? 'Guest' : 'Contributor')}</span>
-                                            </div>
+                    <div className="sidebar-footer">
+                        <div className="collaborators-preview" onClick={() => setIsUsersDropdownOpen(!isUsersDropdownOpen)}>
+                            <div className="avatar-stack">
+                                {clients.slice(0, 4).map(c => {
+                                    const role = c?.id === adminId ? 'admin' : (c?.permission === 'write' ? 'editor' : 'reviewer');
+                                    const initial = role === 'admin' ? 'A' : (role === 'editor' ? 'E' : 'R');
+                                    return (
+                                        <div key={c?.id} className={`stack-avatar ${role}`} title={`${c?.username} (${role.toUpperCase()})`}>
+                                            {initial}
+                                            {c?.id === adminId && <div className="admin-status-dot"></div>}
                                         </div>
-                                        {isAdmin && c?.id !== myId && (
-                                            <div className="admin-actions">
-                                                <button className="action-icon-btn" title="Toggle permissions"
-                                                    onClick={() => socketRef.current?.emit('update-permissions', { targetId: c.id, permission: c.permission === 'read' ? 'write' : 'read' })}>
-                                                    <PenTool size={14} />
-                                                </button>
-                                                <button className="action-icon-btn danger" title="Remove user"
-                                                    onClick={() => socketRef.current?.emit('kick-user', { targetId: c.id })}>
-                                                    <LogOut size={14} />
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'warp' && (
-                        <div className="sidebar-section">
-                            <div className="section-title">
-                                <span>WARP DRIVE</span>
-                                <button className="icon-btn" onClick={() => {
-                                    const name = prompt("Name this Temporal Snapshot:");
-                                    if (name) socketRef.current?.emit('take-snapshot', { name });
-                                }}><FilePlus size={16} /></button>
-                            </div>
-                            <div className="snapshot-list">
-                                {snapshots.length === 0 ? (
-                                    <div className="empty-state">No temporal snapshots yet. Save one to begin time-travel debugging.</div>
-                                ) : (
-                                    snapshots.map(s => (
-                                        <div key={s.id} className="snapshot-item">
-                                            <div className="snapshot-info">
-                                                <span className="snapshot-name">{s.name}</span>
-                                                <span className="snapshot-meta">{s.creator} · {new Date(s.timestamp).toLocaleTimeString()}</span>
-                                            </div>
-                                            <button className="warp-btn" onClick={() => socketRef.current?.emit('warp-to-snapshot', { snapshotId: s.id })}>
-                                                <Zap size={12} /> Warp
-                                            </button>
-                                        </div>
-                                    ))
+                                    );
+                                })}
+                                {clients.length > 4 && (
+                                    <div className="stack-avatar extra">+{clients.length - 4}</div>
                                 )}
                             </div>
+                            <span className="preview-label">Collaborators</span>
+                            <ChevronUp size={12} style={{ transform: isUsersDropdownOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
                         </div>
-                    )}
-                </div>
 
-                <div className="sidebar-footer" style={{ padding: '16px' }}>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <button className="icon-btn invite-btn" onClick={copyInviteLink} title="Copy Invite Link"
-                            style={{ flexShrink: 0, height: '36px', width: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Share2 size={16} />
-                        </button>
-                        <button className="secondary-btn logout-btn" onClick={() => navigate('/')}
-                            style={{ flex: 1, height: '36px', background: 'rgba(185, 28, 28, 0.05)', color: '#ef4444', border: '1px solid rgba(185, 28, 28, 0.1)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                            <LogOut size={14} /> Leave Space
-                        </button>
-                    </div>
-                </div>
-            </aside>
+                        <AnimatePresence>
+                            {isUsersDropdownOpen && (
+                                <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    className="users-sidebar-dropdown">
+                                    <div className="dropdown-header">
+                                        <h3>Workspace Participants</h3>
+                                        <div className="participant-count-pill">{clients.length}</div>
+                                    </div>
+                                    <div className="dropdown-body">
+                                        {clients.map(c => (
+                                            <div key={c?.id} className={`user-dropdown-item ${c?.id === adminId ? 'is-owner' : ''}`}>
+                                                <div className="user-info">
+                                                    <div className={`avatar ${c?.id === adminId ? 'admin' : (c?.permission === 'write' ? 'editor' : 'reviewer')}`}>
+                                                        {c?.id === adminId ? 'A' : (c?.permission === 'write' ? 'E' : 'R')}
+                                                        {c?.id === adminId && <div className="admin-status-dot"></div>}
+                                                    </div>
+                                                    <div className="user-text">
+                                                        <span className={`username ${c?.id === myId ? 'me' : ''}`}>
+                                                            {c?.id === myId ? 'You' : c?.username}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                {isAdmin && c?.id !== myId && (
+                                                    <div className="admin-actions">
+                                                        <button className="action-icon-btn" title="Toggle permissions"
+                                                            onClick={(e) => { e.stopPropagation(); socketRef.current?.emit('update-permissions', { targetId: c.id, permission: c.permission === 'read' ? 'write' : 'read' }); }}>
+                                                            <PenTool size={12} />
+                                                        </button>
+                                                        <button className="action-icon-btn danger" title="Remove user"
+                                                            onClick={(e) => { e.stopPropagation(); socketRef.current?.emit('kick-user', { targetId: c.id }); }}>
+                                                            <LogOut size={12} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
-            {/* Sidebar Resizer */}
-            <div className={`resizer-x ${isSidebarCollapsed ? 'collapsed' : ''}`} onMouseDown={startSidebarResize}>
-                <button className="collapse-toggle-btn x" onClick={toggleSidebar}>
-                    {isSidebarCollapsed ? <ChevronRight size={10} /> : <ChevronLeft size={10} />}
-                </button>
-            </div>
-
-            <main className="main-content" style={{ gridTemplateRows: `70px 1fr ${isTerminalCollapsed ? 8 : 6}px ${terminalHeight}px` }}>
-                <header className="editor-nav">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div className="view-selector">
-                            <button className={`view-btn ${viewMode === 'editor' ? 'active' : ''}`} onClick={() => setViewMode('editor')}><FileCode size={16} /> IDE</button>
-                            <button className={`view-btn ${viewMode === 'whiteboard' ? 'active' : ''}`} onClick={() => setViewMode('whiteboard')}><WhiteboardIcon size={16} /> Architect</button>
-                        </div>
-                        <div className="current-path">
-                            <span>projects / {roomId?.slice(0, 8)}... /</span>
-                            <span className="file-name">{viewMode === 'editor' ? (activeFile || 'No file') : 'System Architect'}</span>
-                        </div>
-                    </div>
-
-                    <div className="editor-actions">
-                        {/* Chaos Mode */}
-                        {/* AI Sub-tools */}
-                        <div className="ai-subtools">
-                            <button className={`subtool-btn${isTranslatorOpen ? ' active translator-active' : ''}`}
-                                onClick={() => setIsTranslatorOpen(o => !o)}
-                                title="AI Translator — Cross-Language Converter">
-                                <Languages size={15} />
+                        <div className="footer-actions">
+                            <button className="icon-btn invite-btn" onClick={copyInviteLink} title="Copy Invite Link">
+                                <Share2 size={16} />
                             </button>
-                            <button className={`subtool-btn${isVoiceChatOpen ? ' active hologram-active' : ''}`}
-                                onClick={() => setIsVoiceChatOpen(o => !o)}
-                                title="Hologram Comms — Voice & Video">
-                                <Phone size={15} />
-                                {isCallActive && <span className="live-dot"></span>}
+                            <button className="secondary-btn logout-btn" onClick={() => navigate('/')}>
+                                <LogOut size={14} /> Leave Space
                             </button>
                         </div>
-
-                        {viewMode === 'editor' ? (
-                            <button className={`primary-btn run-btn ${isRunning ? 'loading' : ''}`} onClick={runCode} disabled={isRunning || !activeFile}>
-                                <Play size={16} fill="white" /> {isRunning ? 'Running...' : 'Run'}
-                            </button>
-                        ) : (
-                            <div className="canvas-tools">
-                                <button className="tool-btn" onClick={() => setDrawColor('#fbbf24')} style={{ color: drawColor === '#fbbf24' ? '#fbbf24' : '#666' }}><PenTool size={18} /></button>
-                                <button className="tool-btn" onClick={() => setDrawColor('#0d0d0d')} title="Eraser"><Eraser size={18} /></button>
-                                <button className="tool-btn danger" onClick={clearCanvas}><Trash2 size={18} /></button>
-                            </div>
-                        )}
                     </div>
-                </header>
+                </aside>
 
-                <div className="editor-container" style={{ display: viewMode === 'editor' ? 'block' : 'none', minHeight: 0, overflow: 'hidden' }}>
-                    <div className="editor-wrapper">
-                        {activeFile ? (
-                            <Editor
-                                height="100%"
-                                language={language}
-                                theme="vs-dark"
-                                value={files[activeFile]?.content}
-                                onChange={handleCodeChange}
-                                options={{
-                                    fontSize: 14,
-                                    minimap: { enabled: true },
-                                    readOnly: myPermission === 'read',
-                                    scrollBeyondLastLine: false,
-                                    automaticLayout: true,
-                                    colorDecorators: true,
-                                    quickSuggestions: true,
-                                    suggestOnTriggerCharacters: true,
-                                    parameterHints: { enabled: true },
-                                    bracketPairColorization: { enabled: true },
-                                    wordWrap: 'off',
-                                }}
-                            />
-                        ) : (
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
-                                Select a file to start coding
-                            </div>
-                        )}
-                    </div>
-
-                    <AnimatePresence>
-                        {isTerminalOpen && (
-                            <motion.div initial={{ height: 0 }} animate={{ height: '30%' }} exit={{ height: 0 }} className="terminal-tray">
-                                <div className="terminal-header">
-                                    <div className="terminal-title"><TerminalIcon size={14} /> <span>SENTINEL SHELL</span></div>
-                                    <button className="close-btn" onClick={() => setIsTerminalOpen(false)}>×</button>
-                                </div>
-                                <div className="terminal-output">
-                                    {terminalLogs.map((log, index) => (
-                                        <div key={index} className={`log-line ${log.isError ? 'error' : ''} ${log.isSystem ? 'system' : ''}`}>
-                                            {log.command && <span className="log-prompt">$ {log.command}</span>}
-                                            <pre className="log-out">{log.output}</pre>
-                                        </div>
-                                    ))}
-                                    <div ref={terminalEndRef} />
-                                </div>
-                                <div className="terminal-input-wrapper">
-                                    <span className="prompt-symbol">λ</span>
-                                    <input type="text" className="terminal-input" placeholder="Execute system command..."
-                                        value={terminalInput} onChange={(e) => setTerminalInput(e.target.value)}
-                                        onKeyDown={runTerminalCommand} />
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-
-                <div className="whiteboard-container" style={{ display: viewMode === 'whiteboard' ? 'flex' : 'none', minHeight: 0, overflow: 'hidden' }}>
-                    <div className="whiteboard-header">
-                        <div className="status-badge" style={{ background: 'rgba(251,191,36,0.05)', color: '#fbbf24' }}>
-                            <Sparkles size={14} /> Collaborative Canvas Active
-                        </div>
-                    </div>
-                    <canvas ref={canvasRef} onMouseDown={startDrawing} onMouseMove={draw}
-                        onMouseUp={stopDrawing} onMouseLeave={stopDrawing} width={1200} height={800} className="main-canvas" />
-                </div>
-
-                {/* Terminal Resizer */}
-                <div className={`resizer-y ${isTerminalCollapsed ? 'collapsed' : ''}`} onMouseDown={startTerminalResize}>
-                    <button className="collapse-toggle-btn y" onClick={toggleTerminal}>
-                        {isTerminalCollapsed ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                {/* Sidebar Resizer */}
+                <div className={`resizer-x ${isSidebarCollapsed ? 'collapsed' : ''}`} onMouseDown={startSidebarResize}>
+                    <button className={`collapse-toggle-btn x ${isSidebarCollapsed ? 'collapsed' : ''}`} onClick={toggleSidebar}>
+                        {isSidebarCollapsed ? (
+                            <>
+                                <ChevronRight size={14} />
+                                <span className="toggle-text">WORKSPACE</span>
+                            </>
+                        ) : <ChevronLeft size={10} />}
                     </button>
                 </div>
 
-                <div className="terminal-panel">
-                    <div className="terminal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div className="terminal-title">
-                            <Sparkles size={12} style={{ marginRight: '6px' }} />
-                            System Diagnostics & Output
-                        </div>
-                        <div style={{ fontSize: '0.6rem', opacity: 0.5, fontStyle: 'italic' }}>
-                            {isRunning ? 'EXECUTION_IN_PROGRESS...' : 'AWAITING_INPUT'}
-                        </div>
-                    </div>
-                    <pre className="terminal-body" style={{ height: '100%', overflowY: 'auto' }}>
-                        {output || '> System ready. Select a target file and trigger [RUN].'}
-                    </pre>
-                </div>
-            </main>
+                <main className="main-content" style={{ gridTemplateRows: `1fr ${isTerminalCollapsed ? 2 : 2}px ${terminalHeight}px` }}>
 
-            {/* AI Trigger Bubble */}
-            <div className={`ai-trigger-bubble ${isSidekickOpen ? 'active' : ''}`} onClick={() => setIsSidekickOpen(o => !o)}>
-                <Sparkles size={24} color="#fff" />
-            </div>
-
-            <AnimatePresence>
-                {isSidekickOpen && (
-                    <motion.aside initial={{ x: 400 }} animate={{ x: 0 }} exit={{ x: 400 }} className="ai-sidekick">
-                        <div className="ai-header">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <Bot size={22} color="#fbbf24" /><h3>AI Sentinel</h3>
-                            </div>
-                            <button className="icon-btn" onClick={() => setIsSidekickOpen(false)}><Plus size={20} style={{ transform: 'rotate(45deg)' }} /></button>
-                        </div>
-                        <div className="ai-messages">
-                            {aiMessages.map((msg, i) => (
-                                <div key={i} className={`ai-message ${msg.role}`}>
-                                    <div className="avatar">{msg.role === 'ai' ? <Brain size={16} /> : <Users size={16} />}</div>
-                                    <div className="msg-content">{msg.content}</div>
-                                </div>
-                            ))}
-                            {isAiThinking && (
-                                <div className="ai-message ai thinking">
-                                    <div className="avatar"><Brain size={16} className="pulse-icon" /></div>
-                                    <div className="msg-content">Analyzing codebase...</div>
+                    <div className="editor-container" style={{ display: viewMode === 'editor' ? 'block' : 'none', minHeight: 0, overflow: 'hidden' }}>
+                        <div className="editor-wrapper">
+                            {activeFile ? (
+                                <Editor
+                                    height="100%"
+                                    language={language}
+                                    theme="vs-dark"
+                                    value={files[activeFile]?.content}
+                                    onChange={handleCodeChange}
+                                    options={{
+                                        fontSize: 14,
+                                        minimap: { enabled: true },
+                                        readOnly: myPermission === 'read',
+                                        scrollBeyondLastLine: false,
+                                        automaticLayout: true,
+                                        colorDecorators: true,
+                                        quickSuggestions: true,
+                                        suggestOnTriggerCharacters: true,
+                                        parameterHints: { enabled: true },
+                                        bracketPairColorization: { enabled: true },
+                                        wordWrap: 'off',
+                                    }}
+                                />
+                            ) : (
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
+                                    Select a file to start coding
                                 </div>
                             )}
                         </div>
-                        {/* BUG FIX: was onSubmit={handleAiSubmit} which didn't exist */}
-                        <form className="ai-input-area" onSubmit={(e) => { e.preventDefault(); sendMessageToAi(); }}>
-                            <input type="text" placeholder="Ask Sentinel..." value={aiInput} onChange={(e) => setAiInput(e.target.value)} />
-                            <button type="submit" disabled={!aiInput.trim() || isAiThinking}><Send size={18} /></button>
-                        </form>
-                    </motion.aside>
-                )}
-            </AnimatePresence>
-        </div>
+                    </div>
+
+                    <div className="whiteboard-container" style={{ display: viewMode === 'whiteboard' ? 'flex' : 'none', minHeight: 0, overflow: 'hidden' }}>
+                        <div className="whiteboard-header">
+                            <div className="status-badge" style={{ background: 'rgba(251,191,36,0.05)', color: '#fbbf24' }}>
+                                <Sparkles size={14} /> Collaborative Canvas Active
+                            </div>
+                        </div>
+                        <canvas ref={canvasRef} onMouseDown={startDrawing} onMouseMove={draw}
+                            onMouseUp={stopDrawing} onMouseLeave={stopDrawing} width={1200} height={800} className="main-canvas" />
+                    </div>
+
+                    {/* Terminal Resizer */}
+                    <div className={`resizer-y ${isTerminalCollapsed ? 'collapsed' : ''}`} onMouseDown={startTerminalResize}>
+                    </div>
+
+                    <div className="terminal-panel">
+                        <div className="terminal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div className="terminal-title">
+                                <Sparkles size={12} style={{ marginRight: '6px' }} />
+                                System Diagnostics & Output
+                            </div>
+                            <div style={{ fontSize: '0.6rem', opacity: 0.5, fontStyle: 'italic' }}>
+                                {isRunning ? 'EXECUTION_IN_PROGRESS...' : 'AWAITING_INPUT'}
+                            </div>
+                        </div>
+                        <pre className="terminal-body" style={{ height: '100%', overflowY: 'auto' }}>
+                            {output || '> System ready. Select a target file and trigger [RUN].'}
+                        </pre>
+                    </div>
+                </main>
+
+
+            </div>
         </>
     );
 };
