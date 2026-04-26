@@ -26,7 +26,7 @@ const UserModule = () => {
       id: 'providing',
       icon: <Globe size={24} />,
       title: "What we are providing",
-      content: "Code Sight is a high-performance ecosystem designed for the next generation of engineers. We provide an end-to-end platform for collaborative development, competitive programming, and professional networking within specialized factions."
+      content: "CodeBright is a high-performance ecosystem designed for the next generation of engineers. We provide an end-to-end platform for collaborative development, competitive programming, and professional networking within specialized factions."
     },
     {
       id: 'start',
@@ -74,7 +74,7 @@ const UserModule = () => {
         </button>
         <div className="nav-brand">
            <Code2 size={24} color="#ef4444" />
-           <span>Code Sight / User Module</span>
+           <span>CodeBright / User Module</span>
         </div>
       </nav>
 
@@ -101,7 +101,7 @@ const UserModule = () => {
           >
             <div className="intro-badge">Welcome Explorer</div>
             <h1>Mastering the Ecosystem</h1>
-            <p>Your comprehensive guide to navigating, competing, and excelling in Code Sight.</p>
+            <p>Your comprehensive guide to navigating, competing, and excelling in CodeBright.</p>
           </motion.div>
 
           <div className="module-sections-grid">

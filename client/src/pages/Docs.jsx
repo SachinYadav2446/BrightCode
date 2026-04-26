@@ -23,7 +23,7 @@ const Docs = () => {
         <div className="docs-header">
           <div className="docs-icon-wrapper"><BookOpen size={32} color="#fbbf24" /></div>
           <h1>System Documentation</h1>
-          <p>Everything you need to navigate and master the Code Sight architecture.</p>
+          <p>Everything you need to navigate and master the CodeBright architecture.</p>
         </div>
 
         <div className="docs-grid">
@@ -53,7 +53,7 @@ const Docs = () => {
         </div>
 
         <div className="docs-footer-note">
-           Platform Architecture Engineered for Teams. Code Sight V1.0
+           Platform Architecture Engineered for Teams. CodeBright V1.0
         </div>
       </motion.div>
     </div>

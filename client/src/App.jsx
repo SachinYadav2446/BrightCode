@@ -9,6 +9,8 @@ import Arcade from './pages/Arcade';
 import Leaderboard from './pages/Leaderboard';
 import Factions from './pages/Factions';
 import UserModule from './pages/UserModule';
+import Library from './pages/Library';
+import Workspace from './pages/Workspace';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -18,6 +20,15 @@ const ProtectedRoute = ({ children }) => {
   if (loading) return null;
   if (!user) return <Navigate to="/auth" />;
   return children;
+};
+
+const LandingRoute = () => {
+  const { user, loading, sessionValid } = useAuth();
+  if (loading) return null;
+  // If user is logged in and session is valid (within 1 week), redirect to hub
+  if (user && sessionValid) return <Navigate to="/hub" />;
+  // Otherwise show landing page
+  return <Landing />;
 };
 
 function App() {
@@ -35,7 +46,7 @@ function App() {
         </div>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Landing />} />
+            <Route path="/" element={<LandingRoute />} />
             <Route 
               path="/hub" 
               element={
@@ -46,10 +57,18 @@ function App() {
             />
             <Route path="/auth" element={<Auth />} />
             <Route 
-              path="/arcade" 
+              path="/library" 
               element={
                 <ProtectedRoute>
                   <Arcade />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/workspace" 
+              element={
+                <ProtectedRoute>
+                  <Workspace />
                 </ProtectedRoute>
               } 
             />
@@ -58,6 +77,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Settings />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/build" 
+              element={
+                <ProtectedRoute>
+                  <Navigate to="/editor/new" />
                 </ProtectedRoute>
               } 
             />
