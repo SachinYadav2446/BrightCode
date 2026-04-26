@@ -131,18 +131,19 @@ const Landing = () => {
             <div className="logo-icon">
               <Code2 size={24} color="#ef4444" />
             </div>
-            <span>Code Sight</span>
+            <span>CodeBright</span>
           </div>
           
           <div className="nav-links">
-            <button className="nav-link-btn" onClick={() => navigate('/hub')}>Explore</button>
-            <button className="nav-link-btn">Product</button>
-            <button className="nav-link-btn">Developer</button>
-            <button className="nav-link-btn premium">Premium</button>
+            <button className="nav-link-btn" onClick={() => document.getElementById('explore')?.scrollIntoView({ behavior: 'smooth' })}>Explore</button>
+            <button className="nav-link-btn" onClick={() => document.getElementById('mission')?.scrollIntoView({ behavior: 'smooth' })}>Mission</button>
+            <button className="nav-link-btn" onClick={() => document.getElementById('guide')?.scrollIntoView({ behavior: 'smooth' })}>Guide</button>
+            <button className="nav-link-btn" onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}>About</button>
+            <button className="nav-link-btn premium" onClick={() => navigate('/auth', { state: { mode: 'register' } })}>Premium</button>
           </div>
 
           <div className="nav-auth">
-            <button className="bootcamp-btn" onClick={() => navigate('/auth')}>
+            <button className="bootcamp-btn" onClick={() => navigate('/auth', { state: { mode: 'register' } })}>
               Join Bootcamp <ChevronRight size={16} />
             </button>
           </div>
@@ -190,7 +191,7 @@ const Landing = () => {
                   Sharpen your engineering edge and master technical architecture 
                   to prepare for the industry's most demanding roles.
                 </p>
-                <button className="create-account-btn" onClick={() => navigate('/auth')}>
+                <button className="create-account-btn" onClick={() => navigate('/auth', { state: { mode: 'register' } })}>
                 Create Account <ChevronRight size={18} />
               </button>
             </motion.div>
@@ -225,7 +226,7 @@ const Landing = () => {
       </div>
 
       {/* Explore Section */}
-      <section className="explore-teaser">
+      <section className="explore-teaser" id="explore">
         <div className="explore-container">
           <motion.div 
             className="explore-header"
@@ -240,7 +241,7 @@ const Landing = () => {
             <h2>Universal Exploration Hub</h2>
             <p>
               Step into a well-organized ecosystem that helps you get the most out of 
-              Code Sight by providing structure to guide your progress towards the next 
+              CodeBright by providing structure to guide your progress towards the next 
               milestone in your engineering career.
             </p>
             <button className="explore-btn" onClick={() => navigate('/hub')}>
@@ -316,7 +317,7 @@ const Landing = () => {
       </section>
 
       {/* About Section */}
-      <section className="about-project">
+      <section className="about-project" id="mission">
         <div className="about-container">
           <motion.div 
             className="about-grid"
@@ -329,7 +330,7 @@ const Landing = () => {
               <span className="about-subtitle">OUR MISSION</span>
               <h2>Beyond the Code</h2>
               <p>
-                Code Sight isn't just a platform; it's a digital ecosystem engineered 
+                CodeBright isn't just a platform; it's a digital ecosystem engineered 
                 to bridge the gap between theoretical knowledge and industrial-scale 
                 system architecture. We provide the tools you need to build the future.
               </p>
@@ -402,7 +403,7 @@ const Landing = () => {
       </section>
 
       {/* User Module Section */}
-      <section className="user-module-section">
+      <section className="user-module-section" id="guide">
         <div className="user-module-container">
           <motion.div 
             className="user-module-sphere-wrapper"
@@ -496,7 +497,7 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="landing-footer">
+      <footer className="landing-footer" id="about">
         <div className="footer-glow"></div>
         <div className="footer-container">
           <div className="footer-top-grid">
@@ -505,7 +506,7 @@ const Landing = () => {
                 <div className="logo-box">
                   <Code2 size={24} color="#fff" />
                 </div>
-                <span className="logo-text">Code Sight</span>
+                <span className="logo-text">CodeBright</span>
               </div>
               <p className="footer-description">
                 Elevating the standard of technical excellence. The definitive platform for the next generation of engineers.
@@ -560,7 +561,7 @@ const Landing = () => {
 
           <div className="footer-bottom-bar">
             <div className="copyright">
-              &copy; {new Date().getFullYear()} Code Sight Ecosystem. All rights reserved.
+              &copy; {new Date().getFullYear()} CodeBright Ecosystem. All rights reserved.
             </div>
             <div className="footer-bottom-links">
               <span className="built-with">Built for the Elite</span>

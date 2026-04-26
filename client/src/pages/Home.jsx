@@ -1,35 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { v4 as uuidV4 } from 'uuid';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import {
-  Code2,
-  Zap,
-  Users,
-  Share2,
-  LogOut,
-  Plus,
-  Terminal,
-  ShieldCheck,
-  Shield,
-  Sword,
-  UserPlus,
-  ChevronRight,
-  Cpu,
-  Sparkles,
-  Settings as SettingsIcon,
-  Globe,
-  Rocket,
-  Gamepad2,
-  Trophy,
-  CalendarDays,
-  Flame,
-  Target,
-  Activity
-} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, ChevronRight, LogOut, Settings, User, Layout, Library, Code2, Shield } from 'lucide-react';
+import Editor from '@monaco-editor/react';
+import toast from 'react-hot-toast';
+import axios from 'axios';
+import CodeBrightLogo from '../components/CodeBrightLogo';
 import './Home.css';
 
 const containerVariants = {
@@ -55,22 +32,248 @@ const itemVariants = {
 const Home = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const [roomId, setRoomId] = useState('');
-  const [workspaceName, setWorkspaceName] = useState('');
-  const [isCreateMode, setIsCreateMode] = useState(false);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [workspaceHistory, setWorkspaceHistory] = useState([]);
-  const [sessionTotalLive, setSessionTotalLive] = useState(0);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [forgeEnterFx, setForgeEnterFx] = useState(false);
+  const [showEditorMobile, setShowEditorMobile] = useState(false);
+  const [isMonitorActive, setIsMonitorActive] = useState(false);
 
   const xp = Number(user?.xp || 0);
-  const createdSessions = Number(user?.createdCount ?? localStorage.getItem('created_count') ?? 0);
-  const joinedSessions = Number(user?.joinedCount ?? localStorage.getItem('joined_count') ?? 0);
-  const sessionTotal = sessionTotalLive || (createdSessions + joinedSessions);
-  const historyStorageKey = `workspace_history_${user?.username || 'guest'}`;
-  const nextXpMilestone = Math.max(1000, Math.ceil((xp + 1) / 1000) * 1000);
-  const xpProgressPercent = Math.min(100, (xp / 10000) * 100);
+  const activity = user?.activity || {};
+
+  // Calculate Today's XP and Active Days
+  const todayDateKey = new Date().toISOString().split('T')[0];
+  const todaysXp = activity[todayDateKey] || 0;
+  const activeDays = Object.keys(activity).length;
+
+  // Calculate skill progress based on actual skill XP
+  const calculateSkillProgress = (skillXp) => {
+    const maxSkillXp = 5000;
+    const percentage = Math.min((skillXp / maxSkillXp) * 100, 100);
+    return percentage;
+  };
+
+  // Convert skill levels to XP for progress calculation
+  const levelToXp = (level) => {
+    if (level >= 4) return 5000; // Expert
+    if (level >= 3) return 2000; // Advanced
+    if (level >= 2) return 500;  // Intermediate
+    if (level >= 1) return 100;  // Beginner
+    return 0;
+  };
+
+  // Use actual skill levels to calculate XP
+  const skillDistribution = {
+    css: levelToXp(Number(user?.css_level || 0)),
+    logic: levelToXp(Number(user?.logic_level || 0)),
+    react: levelToXp(Number(user?.react_level || 0))
+  };
+
+  const getSkillLevel = (skillXp) => {
+    if (skillXp >= 5000) return 'Expert';
+    if (skillXp >= 2000) return 'Advanced';
+    if (skillXp >= 500) return 'Intermediate';
+    return 'Beginner';
+  };
+
+  // Generate heatmap data based on user activity
+  const generateHeatmapData = () => {
+    const data = [];
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    
+    // Start from January 1st of the current year
+    const startDate = new Date(currentYear, 0, 1);
+    // Adjust to the start of that week (Sunday) to keep the grid consistent
+    startDate.setDate(startDate.getDate() - startDate.getDay());
+    
+    for (let i = 0; i < 53; i++) {
+      const week = [];
+      for (let j = 0; j < 7; j++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + (i * 7 + j));
+        
+        const dateKey = currentDate.toISOString().split('T')[0];
+        const xpGained = (activity && activity[dateKey]) || 0;
+        
+        let level = 0;
+        if (xpGained > 0) {
+          if (xpGained < 50) level = 1;
+          else if (xpGained < 150) level = 2;
+          else if (xpGained < 300) level = 3;
+          else level = 4;
+        }
+        
+        week.push({
+          date: dateKey,
+          xp: xpGained,
+          level
+        });
+      }
+      data.push(week);
+    }
+    return data;
+  };
+
+  const heatmapData = generateHeatmapData();
+
+  const getMonthLabels = () => {
+    if (!heatmapData || heatmapData.length === 0) return [];
+    
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const labels = [];
+    let lastMonth = -1;
+    let lastLabelIndex = -2; // Start with -2 to allow Jan at index 0
+    
+    heatmapData.forEach((week, i) => {
+      if (!week || week.length === 0) return;
+      
+      const firstDayOfWeek = new Date(week[0].date);
+      const currentMonth = firstDayOfWeek.getMonth();
+      
+      if (currentMonth !== lastMonth) {
+        // Ensure at least 2 weeks gap between labels to prevent overlap
+        if (i - lastLabelIndex >= 3) {
+          labels.push({ month: months[currentMonth], index: i });
+          lastLabelIndex = i;
+        }
+        lastMonth = currentMonth;
+      }
+    });
+    
+    return labels;
+  };
+
+  const monthLabels = getMonthLabels();
+
+  const motivationalQuotes = [
+    "CRUSH YOUR GOALS TODAY",
+    "CODE IS POETRY IN MOTION",
+    "CONSISTENCY IS THE MOTHER OF MASTERY",
+    "EVERY LINE OF CODE IS A STEP FORWARD",
+    "MASTER THE FRONTIER, ONE COMMIT AT A TIME",
+    "STAY FOCUSED. STAY HUNGRY. STAY CURIOUS",
+    "THE ONLY LIMIT IS YOUR IMAGINATION",
+    "BUILD. TEST. DEPLOY. REPEAT",
+    "ELITE DEVELOPERS ARE BORN IN THE LATE NIGHT SESSIONS"
+  ];
+
+  const dailyQuest = {
+    id: "DQ-772",
+    difficulty: "Advanced",
+    title: "Project Glass: Protocol implementation",
+    briefing: "Our core navigation systems are currently vulnerable to visual noise. Your mission is to implement a 'Glassmorphic' shield using the backdrop-filter protocol. This will ensure visual clarity while maintaining aesthetic transparency.",
+    objectives: [
+      { id: 1, label: "Initialize backdrop-filter with 10px Gaussian blur", keyword: "backdropFilter: 'blur(10px)'" },
+      { id: 2, label: "Synchronize component transitions at 0.3s ease", keyword: "transition: 'all 0.3s ease'" },
+      { id: 3, label: "Maintain RGBA alpha channel at 0.1 for transparency", keyword: "backgroundColor: 'rgba(255, 255, 255, 0.1)'" }
+    ],
+    initialCode: `const styles = {\n  navbar: {\n    /* MISSION: Update alpha channel and apply effects */\n    backgroundColor: 'rgba(255, 255, 255, 0.7)',\n    \n    /* TODO: Apply backdrop filter for glass effect */\n    backdropFilter: '',\n    \n    /* TODO: Add smooth transition for hover states */\n    transition: '',\n    \n    border: '1px solid rgba(255, 255, 255, 0.2)',\n    padding: '20px 40px',\n    display: 'flex',\n    justifyContent: 'space-between'\n  }\n};`,
+    solutionKeywords: ["backdropFilter: 'blur(10px)'", "transition: 'all 0.3s ease'", "backgroundColor: 'rgba(255, 255, 255, 0.1)'"],
+    language: "javascript"
+  };
+
+  const [questCode, setQuestCode] = useState(dailyQuest.initialCode);
+  const [questStatus, setQuestStatus] = useState('idle'); // idle, checking, success, error
+  const [questMessage, setQuestMessage] = useState(null);
+  
+  // Resizable pane state
+  const [leftPaneWidth, setLeftPaneWidth] = useState(40); // Initial width in percentage
+  const [isResizing, setIsResizing] = useState(false);
+  const [supportForm, setSupportForm] = useState({
+    subject: '',
+    message: '',
+    isSending: false
+  });
+  const [topRankers, setTopRankers] = useState([]);
+  const [selectedRanker, setSelectedRanker] = useState(null);
+
+  useEffect(() => {
+    const fetchTopRankers = async () => {
+      try {
+        const { data } = await axios.get('http://localhost:5050/leaderboard');
+        setTopRankers(data.slice(0, 3));
+      } catch (err) {
+        console.error('Failed to fetch leaderboard:', err);
+      }
+    };
+    fetchTopRankers();
+  }, []);
+
+  const getLevelInfo = (xp) => {
+    if (xp >= 10000) return { label: 'Grandmaster', color: '#fbbf24' };
+    if (xp >= 5000)  return { label: 'Expert',      color: '#818cf8' };
+    if (xp >= 2000)  return { label: 'Advanced',    color: '#34d399' };
+    if (xp >= 500)   return { label: 'Apprentice',  color: '#60a5fa' };
+    return             { label: 'Initiate',    color: '#9ca3af' };
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isResizing) return;
+      
+      const container = document.querySelector('.monitor-internal-layout');
+      if (!container) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      
+      // Constraints: 20% to 70%
+      if (newWidth >= 20 && newWidth <= 70) {
+        setLeftPaneWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.body.style.cursor = 'default';
+    };
+
+    if (isResizing) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
+
+  const startResizing = (e) => {
+    e.preventDefault();
+    setIsResizing(true);
+    document.body.style.cursor = 'col-resize';
+  };
+
+  const handleQuestSubmit = async () => {
+    setQuestStatus('checking');
+    setQuestMessage(null);
+    
+    // Simulate a brief check
+    setTimeout(() => {
+      const isCorrect = dailyQuest.solutionKeywords.every(keyword => 
+        questCode.includes(keyword)
+      );
+
+      if (isCorrect) {
+        setQuestStatus('success');
+        setQuestMessage({
+          type: 'success',
+          title: 'MISSION COMPLETE',
+          text: 'XP Protocol Initiated.'
+        });
+      } else {
+        setQuestStatus('error');
+        setQuestMessage({
+          type: 'error',
+          title: 'MISSION FAILED',
+          text: 'Logic mismatch detected.'
+        });
+        setTimeout(() => {
+          setQuestStatus('idle');
+          setQuestMessage(null);
+        }, 3000);
+      }
+    }, 1200);
+  };
 
   const playerTier =
     xp >= 10000 ? 'Grandmaster' :
@@ -78,826 +281,639 @@ const Home = () => {
         xp >= 2000 ? 'Advanced' :
           xp >= 500 ? 'Apprentice' : 'Initiate';
 
-  useEffect(() => {
-    if (!user?.username) return;
-    try {
-      const raw = localStorage.getItem(historyStorageKey);
-      const parsed = raw ? JSON.parse(raw) : [];
-      setWorkspaceHistory(Array.isArray(parsed) ? parsed : []);
-    } catch {
-      setWorkspaceHistory([]);
-    }
-    setSessionTotalLive(Number(localStorage.getItem('created_count') || 0) + Number(localStorage.getItem('joined_count') || 0));
-  }, [user?.username, historyStorageKey]);
-
-  const heatmapData = useMemo(() => {
-    if (!user) return { days: [], weeks: [], maxActivity: 0, activeDays: 0, totalActivity: 0, bestDay: null };
-
-    const rawActivity = (user && typeof user.activity === 'object' && user.activity !== null)
-      ? user.activity
-      : {};
-    const WEEKS = 53;
-    const totalDays = WEEKS * 7;
-
-    // Anchor to Jan 1, 2026, then align to preceding Sunday
-    const weekAlignedStart = new Date(2026, 0, 1);
-    weekAlignedStart.setDate(weekAlignedStart.getDate() - weekAlignedStart.getDay());
-
-    // Build day array for the whole year
-    const days = [];
-    for (let i = 0; i < totalDays; i++) {
-      const current = new Date(weekAlignedStart);
-      current.setDate(weekAlignedStart.getDate() + i);
-      days.push({ date: current, activity: 0 });
-    }
-
-    // Map activity object keyed by YYYY-MM-DD into the day grid.
-    Object.entries(rawActivity).forEach(([dateStr, value]) => {
-      const numeric = Number(value || 0);
-      if (!Number.isFinite(numeric) || numeric <= 0) return;
-      const date = new Date(`${dateStr}T00:00:00`);
-      const dayIndex = Math.floor((date - weekAlignedStart) / (24 * 60 * 60 * 1000));
-      if (dayIndex >= 0 && dayIndex < totalDays && days[dayIndex]) {
-        days[dayIndex].activity = Math.max(0, numeric);
-      }
-    });
-
-    // Build weeks array for month-label strip
-    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const weeks = [];
-    for (let w = 0; w < WEEKS; w++) {
-      const firstDay = days[w * 7];
-      const month = firstDay ? MONTH_NAMES[firstDay.date.getMonth()] : '';
-      // Only label first week of each month
-      const isFirstOfMonth = firstDay && firstDay.date.getDate() <= 7;
-      weeks.push({ label: isFirstOfMonth ? month : '', weekIdx: w });
-    }
-
-    const maxActivity = days.reduce((max, day) => Math.max(max, day.activity), 0);
-    const totalActivity = days.reduce((sum, day) => sum + day.activity, 0);
-    const activeDays = days.filter((day) => day.activity > 0).length;
-    const bestDay = days.reduce((best, day) => (day.activity > (best?.activity || 0) ? day : best), null);
-
-    return { days, weeks, maxActivity, activeDays, totalActivity, bestDay };
-  }, [user]);
-
-  const getActivityLevel = (value) => {
-    // Any activity should render as green.
-    return value > 0 ? 4 : 0;
+  const handleReset = () => {
+    setQuestCode(dailyQuest.initialCode);
+    setQuestMessage(null);
   };
 
-
-
-  const createNewRoom = (e) => {
+  const handleSupportSubmit = async (e) => {
     e.preventDefault();
-    const id = uuidV4();
-    setRoomId(id);
-    setIsCreateMode(true);
-    toast.success('Generated a new room ID', { style: { background: '#1e293b', color: '#fff' } });
-  };
+    if (!supportForm.message.trim()) {
+      toast.error('Please enter a message');
+      return;
+    }
 
-  const saveWorkspaceHistory = (entry) => {
-    const next = [entry, ...workspaceHistory].slice(0, 10);
-    setWorkspaceHistory(next);
-    localStorage.setItem(historyStorageKey, JSON.stringify(next));
-  };
-
-  const playForgeEnterSound = async () => {
+    setSupportForm(prev => ({ ...prev, isSending: true }));
     try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const now = ctx.currentTime;
-
-      // Premium digital pulse / sweep.
-      const master = ctx.createGain();
-      master.gain.setValueAtTime(0.0001, now);
-      master.gain.exponentialRampToValueAtTime(0.2, now + 0.05);
-      master.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
-      master.connect(ctx.destination);
-
-      // Main pulse
-      const pulse = ctx.createOscillator();
-      pulse.type = 'sine';
-      pulse.frequency.setValueAtTime(440, now);
-      pulse.frequency.exponentialRampToValueAtTime(880, now + 0.4);
-      const pulseGain = ctx.createGain();
-      pulseGain.gain.setValueAtTime(0.0001, now);
-      pulseGain.gain.exponentialRampToValueAtTime(0.15, now + 0.05);
-      pulseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
-      pulse.connect(pulseGain).connect(master);
-
-      // Subtle resonance
-      const res = ctx.createOscillator();
-      res.type = 'triangle';
-      res.frequency.setValueAtTime(220, now);
-      res.frequency.exponentialRampToValueAtTime(440, now + 0.5);
-      const resGain = ctx.createGain();
-      resGain.gain.setValueAtTime(0.0001, now);
-      resGain.gain.exponentialRampToValueAtTime(0.05, now + 0.1);
-      resGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
-      res.connect(resGain).connect(master);
-
-      pulse.start(now);
-      res.start(now);
-      pulse.stop(now + 1.0);
-      res.stop(now + 1.0);
-
-      setTimeout(() => ctx.close().catch(() => {}), 1500);
-    } catch {
-      // ignore audio failures
+      const { data } = await axios.post('http://localhost:5050/support', {
+        email: user.email,
+        username: user.username,
+        subject: supportForm.subject,
+        message: supportForm.message
+      });
+      toast.success(data.message || 'Message sent successfully!');
+      setSupportForm({ subject: '', message: '', isSending: false });
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to send message');
+      setSupportForm(prev => ({ ...prev, isSending: false }));
     }
   };
 
-  const handleEnterForge = async () => {
-    if (forgeEnterFx) return;
-    setForgeEnterFx(true);
-    playForgeEnterSound();
-    setTimeout(() => navigate('/arcade'), 700);
-    setTimeout(() => setForgeEnterFx(false), 1400);
+  const getXpProgress = () => {
+    if (xp >= 10000) return { current: 100, next: 'MAX', percent: 100, totalNext: 10000 };
+    
+    let currentLevelXp = 0;
+    let nextLevelXp = 500;
+    
+    if (xp >= 5000) {
+      currentLevelXp = 5000;
+      nextLevelXp = 10000;
+    } else if (xp >= 2000) {
+      currentLevelXp = 2000;
+      nextLevelXp = 5000;
+    } else if (xp >= 500) {
+      currentLevelXp = 500;
+      nextLevelXp = 2000;
+    } else {
+      currentLevelXp = 0;
+      nextLevelXp = 500;
+    }
+    
+    const progress = ((xp - currentLevelXp) / (nextLevelXp - currentLevelXp)) * 100;
+    return {
+      current: xp - currentLevelXp,
+      next: nextLevelXp - currentLevelXp,
+      percent: Math.min(Math.max(progress, 0), 100),
+      totalNext: nextLevelXp
+    };
   };
 
-  const joinRoom = async () => {
-    if (!user) {
-      toast.error('Please login first', { style: { background: '#1e293b', color: '#fff' } });
-      navigate('/auth');
-      return;
-    }
-    if (!roomId) {
-      toast.error('Room ID is required', { style: { background: '#1e293b', color: '#fff' } });
-      return;
-    }
-
-    if (isCreateMode && !workspaceName.trim()) {
-      toast.error('Workspace name is required when creating', { style: { background: '#1e293b', color: '#fff' } });
-      return;
-    }
-    try {
-      const token = localStorage.getItem('token');
-      const sessionType = isCreateMode ? 'created' : 'joined';
-      const res = await axios.post(
-        'http://localhost:5050/increment-session',
-        { type: sessionType },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (res.data?.joinedCount !== undefined) localStorage.setItem('joined_count', String(res.data.joinedCount || 0));
-      if (res.data?.createdCount !== undefined) localStorage.setItem('created_count', String(res.data.createdCount || 0));
-      setSessionTotalLive(Number(res.data?.createdCount || localStorage.getItem('created_count') || 0) + Number(res.data?.joinedCount || localStorage.getItem('joined_count') || 0));
-    } catch {
-      // Keep UX smooth even if telemetry fails.
-      setSessionTotalLive((prev) => prev + 1);
-    }
-
-    saveWorkspaceHistory({
-      id: roomId,
-      name: (isCreateMode ? workspaceName : '').trim() || `Workspace ${roomId.slice(0, 8)}`,
-      action: isCreateMode ? 'Created' : 'Joined',
-      timestamp: new Date().toISOString()
-    });
-
-    navigate(`/editor/${roomId}`, {
-      state: { username: user.username, workspaceName: isCreateMode ? workspaceName.trim() : '' },
-    });
-  };
-
-  const handleInputEnter = (e) => {
-    if (e.code === 'Enter') joinRoom();
-  };
+  const xpProgress = getXpProgress();
 
   return (
     <div className="homePageWrapper">
-      {/* Immersive Background */}
+      {/* Background Grid */}
       <div className="bg-container">
-        <div className="noise-texture"></div>
         <div className="grid-background"></div>
-        <div className="ambient-light main-light"></div>
-        <div className="ambient-light secondary-light"></div>
-        <div className="ambient-light accent-light"></div>
+        <div className="cursor-light"></div>
+        <div className="ambient-glow"></div>
       </div>
 
-      {/* Floating Navigation */}
+      {/* Sticky Navigation */}
       <nav className="floating-nav">
         <div className="nav-container">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="logo-section"
-          >
-            <div className="logo-icon-wrapper">
-              <Code2 size={24} color="#ef4444" />
-            </div>
-            <span className="logo-text">Code Sight</span>
-          </motion.div>
+          <div className="logo-section">
+            <CodeBrightLogo size="small" />
+          </div>
 
           <div className="nav-links">
-            <a href="#forge" className="nav-link-hover">Skill Forge</a>
-            <a href="#leaderboard" className="nav-link-hover">Hall of Fame</a>
-            <a href="#factions" className="nav-link-hover">Forge Alliances</a>
-            <a href="#solutions" className="nav-link-hover">Solutions</a>
-
+            <Link to="/hub" className="nav-link-hover active">
+              Home
+            </Link>
+            <Link to="/library" className="nav-link-hover">
+              Library
+            </Link>
+            <Link to="/workspace" className="nav-link-hover">
+              Workspace
+            </Link>
+            <Link to="/factions" className="nav-link-hover">
+              Factions
+            </Link>
+            
             {user ? (
-              <div className="user-nav-wrapper">
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  padding: '4px 12px 4px 4px',
-                  borderRadius: '30px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)'
-                }}>
-                  <div className="avatar-gradient" style={{ border: '2px solid rgba(255, 255, 255, 0.2)', background: '#fff', color: '#000' }}>
-                    {user.username?.charAt(0).toUpperCase() || '?'}
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                    <span className="username-display" style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>{user.username}</span>
-                    <span style={{ fontSize: '0.65rem', color: '#fff', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.8 }}>
-                      <Zap size={10} fill="#fff" /> {xp} XP
-                    </span>
-                  </div>
-                  <button
-                    style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', padding: '4px' }}
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                  >
-                    <SettingsIcon size={14} />
-                  </button>
-                </div>
-
-                <AnimatePresence>
-                  {dropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="dropdown-menu glass-panel"
-                    >
-                      <div className="dropdown-header">
-                        <p className="dropdown-name">{user?.username || 'User'}</p>
-                        <p className="dropdown-email">Pro Member</p>
-                      </div>
-                      <div className="dropdown-divider"></div>
-                      <button className="dropdown-item" onClick={() => navigate('/settings')}>
-                        <SettingsIcon size={16} /> Profile & Settings
-                      </button>
-                      <button className="dropdown-item danger" onClick={() => { logout(); setDropdownOpen(false); }}>
-                        <LogOut size={16} /> Logout
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ) : (
-              <Link to="/auth" className="shiny-btn login-link">
-                <span>Sign In / Register</span>
+                <Link to="/settings" className="user-profile-pill">
+                  <span className="profile-initial">
+                    {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
+                  </span>
+                </Link>
+              ) : (
+              <Link to="/auth" className="shiny-btn">
+                Join Now
               </Link>
             )}
           </div>
         </div>
       </nav>
 
-      <main className="landing-container">
-        {forgeEnterFx && (
-          <div className="forge-enter-fx" aria-hidden="true">
-            <div className="forge-enter-fx__veil" />
-            <div className="forge-enter-fx__patches" />
-            <div className="forge-enter-fx__sparks" />
-            <div className="forge-enter-fx__text">ACCESSING FORGE</div>
-          </div>
-        )}
-        {user ? (
-          /* ── USER DASHBOARD: MISSION CONTROL ── */
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mission-control-section"
-          >
-            {/* Welcome bar */}
-            <div className="mission-dashboard-grid single-column">
-              {/* Workspace Section */}
-              <div className="workspace-section-wrapper">
-                <div className="workspace-main-card glass-morphism">
-                  <div className="workspace-header">
-                    <div className="workspace-title-block">
-                      <Terminal className="workspace-icon" size={24} />
-                      <h2>Quick Launch Workspace</h2>
+      {user && user.activity ? (
+        /* ── USER DASHBOARD: MISSION CONTROL ── */
+        <motion.section
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+          className="mission-control-section"
+        >
+          <div className="home-dashboard-container">
+            {/* User Core Stats */}
+            <div className="home-user-info">
+              <h1 className="home-welcome-text">
+                Welcome back, <span className="highlight">{user.username}</span>
+              </h1>
+              
+              {user.stack && user.stack.length > 0 && (
+                <div className="home-user-stack">
+                  {user.stack.map((tech, index) => (
+                    <span key={index} className="tech-pill">{tech}</span>
+                  ))}
+                </div>
+              )}
+
+              <div className="home-stats-row">
+                <div className="home-stat-box">
+                  <span className="stat-label">Experience</span>
+                  <span className="stat-value">{xp} XP</span>
+                </div>
+                <div className="home-stat-box">
+                  <span className="stat-label">Rank</span>
+                  <span className="stat-value">{playerTier}</span>
+                </div>
+                <div className="home-stat-box next-rank-box">
+                  <span className="stat-label">Next Rank</span>
+                  <div className="xp-progress-container">
+                    <div className="xp-progress-header">
+                      <span className="xp-needed">
+                        {xpProgress.totalNext === 10000 && xp >= 10000 
+                          ? "Maximum Rank" 
+                          : `${xpProgress.totalNext - xp} XP to go`}
+                      </span>
+                      <span className="xp-percentage">{Math.round(xpProgress.percent)}%</span>
+                    </div>
+                    <div className="xp-progress-bar-bg">
+                      <motion.div 
+                        className="xp-progress-bar-fill"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${xpProgress.percent}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                      />
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
 
-                  <div className="workspace-content-grid">
-                    {isHistoryOpen ? (
-                      <div className="workspace-form-section" style={{ height: '100%', minHeight: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                          <div style={{ fontSize: '0.78rem', color: '#a8a29e', fontWeight: 700, letterSpacing: '0.8px' }}>
-                            LAST 10 WORKSPACES
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setIsHistoryOpen(false)}
-                            style={{
-                              background: 'rgba(255,255,255,0.04)',
-                              border: '1px solid rgba(255,255,255,0.12)',
-                              color: '#fff',
-                              borderRadius: '8px',
-                              padding: '6px 10px',
-                              cursor: 'pointer',
-                              fontSize: '0.75rem',
-                              fontWeight: 700
+            {/* Developer Activity & Profile Section */}
+            <div className="home-dev-profile">
+              <div className="home-dev-profile-inner">
+                {/* Contribution Timeline */}
+                <div id="timeline" className="home-contribution-section">
+                  <h2 className="section-title">Activity Timeline</h2>
+                  <div className="contribution-grid-wrapper">
+                    <div className="contribution-scroll-container">
+                      <div className="contribution-months">
+                        {monthLabels && monthLabels.map((label, idx) => (
+                          <span 
+                            key={idx} 
+                            className="month-label"
+                            style={{ 
+                              gridColumnStart: label.index + 1 
                             }}
                           >
-                            Back
-                          </button>
-                        </div>
-                        <div style={{
-                          border: '1px solid rgba(255,255,255,0.08)',
-                          borderRadius: '12px',
-                          padding: '12px',
-                          height: '100%',
-                          minHeight: '260px',
-                          overflowY: 'auto',
-                          background: 'rgba(0,0,0,0.2)'
-                        }}>
-                          {workspaceHistory.length === 0 ? (
-                            <div style={{ fontSize: '0.78rem', color: '#78716c' }}>No workspace history yet.</div>
-                          ) : workspaceHistory.map((item, idx) => (
-                            <div key={`${item.id}-${idx}`} style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              gap: '10px',
-                              padding: '10px 0',
-                              borderBottom: idx < workspaceHistory.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none'
-                            }}>
-                              <div style={{ minWidth: 0 }}>
-                                <div style={{ color: '#fff', fontSize: '0.82rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                  {item.name}
-                                </div>
-                                <div style={{ color: '#a8a29e', fontSize: '0.7rem', fontFamily: 'var(--font-mono)' }}>
-                                  {item.id}
-                                </div>
-                              </div>
-                              <div style={{ fontSize: '0.68rem', color: '#fff', fontWeight: 700, flexShrink: 0, opacity: 0.8 }}>
-                                {item.action}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                            {label.month}
+                          </span>
+                        ))}
                       </div>
-                    ) : (
-                    <div className="workspace-form-section">
-                      <div className="workspace-input-group">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <label>Workspace Session ID</label>
-                          {isCreateMode && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsCreateMode(false);
-                                setWorkspaceName('');
-                                setRoomId('');
-                              }}
-                              style={{
-                                background: 'transparent',
-                                color: '#fff',
-                                border: '1px solid rgba(255, 255, 255, 0.35)',
-                                borderRadius: '999px',
-                                width: '24px',
-                                height: '24px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                cursor: 'pointer',
-                                fontWeight: 700,
-                                lineHeight: 1
-                              }}
-                              title="Cancel create mode"
-                              aria-label="Cancel create mode"
-                            >
-                              ×
-                            </button>
-                          )}
-                        </div>
-                        <div className="workspace-input-wrapper full-width">
-                          <input
-                            type="text"
-                            className="workspace-premium-input"
-                            placeholder="Enter or generate a room code..."
-                            onChange={(e) => {
-                              setRoomId(e.target.value);
-                              if (e.target.value) setIsCreateMode(false);
-                            }}
-                            value={roomId}
-                            onKeyUp={handleInputEnter}
-                          />
-                        </div>
+                      <div className="contribution-grid">
+                        {heatmapData && heatmapData.map((week, weekIdx) => (
+                          <div key={weekIdx} className="contribution-week">
+                            {week && week.map((day, dayIdx) => (
+                              <div 
+                                key={dayIdx} 
+                                className={`contribution-day level-${day.level}`}
+                                title={`${day.date}: ${day.xp} XP earned`}
+                              />
+                            ))}
+                          </div>
+                        ))}
                       </div>
-
-                      <div className="workspace-input-group">
-                        <label>Workspace Name</label>
-                        <div className="workspace-input-wrapper full-width">
-                          <input
-                            type="text"
-                            className="workspace-premium-input"
-                            placeholder={isCreateMode ? "Give your workspace a name..." : "Generate workspace ID first to name it"}
-                            value={workspaceName}
-                            onChange={(e) => setWorkspaceName(e.target.value)}
-                            disabled={!isCreateMode}
-                            style={{ cursor: isCreateMode ? 'text' : 'not-allowed' }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="workspace-actions-row">
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          className="workspace-action-btn create-btn"
-                          onClick={createNewRoom}
-                        >
-                          <Plus size={18} />
-                          <span>Create</span>
-                        </motion.button>
-
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          className="workspace-action-btn join-btn"
-                          onClick={joinRoom}
-                        >
-                          <Rocket size={18} />
-                          <span>Join</span>
-                          <ChevronRight size={18} />
-                        </motion.button>
-                      </div>
-
-                      <div className="workspace-quick-info">
-                        <div className="info-item">
-                          <ShieldCheck size={14} />
-                          <span>E2E Encryption Active</span>
-                        </div>
-                        <div className="info-item">
-                          <Globe size={14} />
-                          <span>Global Node: US-EAST-1</span>
-                        </div>
-                      </div>
-
-                      <div className="workspace-footer-metrics">
-                        <button
-                          type="button"
-                          className="ws-h-stat"
-                          onClick={() => setIsHistoryOpen(true)}
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            borderRadius: '10px',
-                            padding: '10px 12px',
-                            cursor: 'pointer',
-                            width: '100%',
-                            textAlign: 'left'
-                          }}
-                        >
-                          <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem' }}>Sessions Joined</span>
-                          <strong style={{ color: '#fff', fontSize: '1.1rem', display: 'block' }}>{sessionTotal}</strong>
-                        </button>
-                      </div>
-                    
+                    </div>
+                    <div className="contribution-legend">
+                      <span>Less</span>
+                      <div className="contribution-day level-0"></div>
+                      <div className="contribution-day level-1"></div>
+                      <div className="contribution-day level-2"></div>
+                      <div className="contribution-day level-3"></div>
+                      <div className="contribution-day level-4"></div>
+                      <span>More</span>
+                    </div>
                   </div>
-                    )}
+                </div>
+
+                {/* Profile Details Grid */}
+                <div className="dev-details-grid">
+                  <div className="detail-item">
+                    <span className="detail-label">Bio</span>
+                    <p className="detail-content">{user.bio || 'No bio set yet.'}</p>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Stack</span>
+                    <div className="tech-tags">
+                      {user.skills && user.skills.length > 0 ? (
+                        user.skills.map((skill, idx) => (
+                          <span key={idx} className="tech-tag">{skill}</span>
+                        ))
+                      ) : (
+                        <span className="tech-tag empty">No skills added</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Streak</span>
+                    <span className="detail-content">
+                      {user.streak || 0} Days
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Active Days</span>
+                    <span className="detail-content">{activeDays} Days</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Today's XP</span>
+                    <span className="detail-content">+{todaysXp} XP</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </motion.section>
-        ) : (
-          /* ── LANDING PAGE: GHOST VISITOR ── */
-          <section className="hero-minimal">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="hero-content-center"
-            >
-              <h1 className="hero-title-large">
-                Crafting The Future.
-              </h1>
-              <p className="hero-subtitle-clean">
-                High-performance environment for modern engineering teams.
-              </p>
 
-              <div className="cta-minimal">
-                <div className="workspace-join-bar">
-                  <input
-                    type="text"
-                    className="minimal-input"
-                    placeholder="Enter Workspace ID"
-                    onChange={(e) => setRoomId(e.target.value)}
-                    value={roomId}
-                    onKeyUp={handleInputEnter}
-                  />
-                  <button className="minimal-btn" onClick={joinRoom}>
-                    Join Session
+            {/* Motivational Live Strip */}
+            <div className="motivational-strip">
+              <div className="ticker-wrapper">
+                <div className="ticker-content">
+                  {motivationalQuotes && [...motivationalQuotes, ...motivationalQuotes].map((quote, idx) => (
+                    <span key={idx} className="ticker-item">
+                      <span className="ticker-bullet">✦</span>
+                      {quote}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Skill Progress Dashboard */}
+            <div id="skill-dashboard" className="skill-dashboard-section">
+              <div className="monitor-header-text">
+                <span className="hunt-label">SKILL PROGRESS</span>
+                <div className="hunt-line"></div>
+              </div>
+              
+              <div className="skills-grid">
+                {/* CSS Skill */}
+                <motion.div 
+                  className="skill-card"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <div className="skill-header">
+                    <div className="skill-icon css-icon">CSS</div>
+                    <div className="skill-level-badge">
+                      {getSkillLevel(skillDistribution.css)}
+                    </div>
+                  </div>
+                  <div className="skill-progress-container">
+                    <div className="skill-progress-bar">
+                      <motion.div 
+                        className="skill-progress-fill css-fill"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${calculateSkillProgress(skillDistribution.css)}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                      />
+                    </div>
+                    <span className="skill-percentage">
+                      {Math.round(calculateSkillProgress(skillDistribution.css))}%
+                    </span>
+                  </div>
+                  <div className="skill-xp">
+                    <Shield size={14} />
+                    <span>{skillDistribution.css} XP</span>
+                  </div>
+                </motion.div>
+
+                {/* Logic Skill */}
+                <motion.div 
+                  className="skill-card"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <div className="skill-header">
+                    <div className="skill-icon logic-icon">LOGIC</div>
+                    <div className="skill-level-badge">
+                      {getSkillLevel(skillDistribution.logic)}
+                    </div>
+                  </div>
+                  <div className="skill-progress-container">
+                    <div className="skill-progress-bar">
+                      <motion.div 
+                        className="skill-progress-fill logic-fill"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${calculateSkillProgress(skillDistribution.logic)}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                      />
+                    </div>
+                    <span className="skill-percentage">
+                      {Math.round(calculateSkillProgress(skillDistribution.logic))}%
+                    </span>
+                  </div>
+                  <div className="skill-xp">
+                    <Shield size={14} />
+                    <span>{skillDistribution.logic} XP</span>
+                  </div>
+                </motion.div>
+
+                {/* React Skill */}
+                <motion.div 
+                  className="skill-card"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <div className="skill-header">
+                    <div className="skill-icon react-icon">REACT</div>
+                    <div className="skill-level-badge">
+                      {getSkillLevel(skillDistribution.react)}
+                    </div>
+                  </div>
+                  <div className="skill-progress-container">
+                    <div className="skill-progress-bar">
+                      <motion.div 
+                        className="skill-progress-fill react-fill"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${calculateSkillProgress(skillDistribution.react)}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                      />
+                    </div>
+                    <span className="skill-percentage">
+                      {Math.round(calculateSkillProgress(skillDistribution.react))}%
+                    </span>
+                  </div>
+                  <div className="skill-xp">
+                    <Shield size={14} />
+                    <span>{skillDistribution.react} XP</span>
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Hall of Fame Section */}
+            <div id="hall-of-fame" className="hall-of-fame-section">
+              <div className="monitor-header-text">
+                <span className="hunt-label">HALL OF FAME</span>
+                <div className="hunt-line"></div>
+              </div>
+              
+              <div className="fame-container">
+                {topRankers && topRankers.length > 0 ? (
+                  <div className="podium-minimal">
+                    {topRankers.map((ranker, index) => (
+                      <div 
+                        key={ranker.id} 
+                        className={`podium-item rank-${index + 1}`}
+                        onClick={() => setSelectedRanker(ranker)}
+                      >
+                        <div className="rank-badge">
+                          {index + 1}
+                        </div>
+                        <div className="ranker-avatar">
+                          {ranker.username.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="ranker-info">
+                          <span className="ranker-name">{ranker.username}</span>
+                          <span className="ranker-xp">{ranker.xp} XP</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="fame-loading">
+                    <span className="loading-text">RETRIVING ELITE DATA...</span>
+                  </div>
+                )}
+                
+                <Link to="/leaderboard" className="view-all-fame">
+                  VIEW FULL LEADERBOARD <ChevronRight size={16} />
+                </Link>
+              </div>
+
+              {/* Quick View Modal */}
+              <AnimatePresence>
+                {selectedRanker && (
+                  <motion.div 
+                    className="ranker-modal-overlay"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setSelectedRanker(null)}
+                  >
+                    <motion.div 
+                      className="ranker-quick-card"
+                      initial={{ scale: 0.9, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      exit={{ scale: 0.9, y: 20 }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="card-accent-line"></div>
+                      <div className="card-header">
+                        <div className="ranker-large-avatar">
+                          {selectedRanker.username.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="ranker-main-info">
+                          <h3>{selectedRanker.username}</h3>
+                          <div className="level-badge" style={{ color: getLevelInfo(selectedRanker.xp).color }}>
+                            {getLevelInfo(selectedRanker.xp).label}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="card-body">
+                        <div className="info-section">
+                          <label>BIOGRAPHY</label>
+                          <p>{selectedRanker.bio || 'No transmission recorded for this operative.'}</p>
+                        </div>
+                        <div className="info-section">
+                          <label>TECH STACK</label>
+                          <div className="stack-tags">
+                            {selectedRanker.stack && selectedRanker.stack.length > 0 ? (
+                              selectedRanker.stack.map((tech, i) => (
+                                <span key={i} className="stack-tag">{tech}</span>
+                              ))
+                            ) : (
+                              <span className="stack-tag empty">Undefined</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <button className="close-card-btn" onClick={() => setSelectedRanker(null)}>
+                        DISMISS
+                      </button>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Support System Section */}
+            <div id="support" className="support-system-section">
+              <div className="monitor-header-text">
+                <span className="hunt-label">SUPPORT COMMAND</span>
+                <div className="hunt-line"></div>
+              </div>
+              
+              <div className="support-container">
+                <div className="support-info">
+                  <h3>Direct Inquiry</h3>
+                  <p>Have a question or need technical assistance? Send a direct message to our core team.</p>
+                  <div className="support-meta">
+                    <div className="meta-item">
+                      <span className="meta-dot"></span>
+                      <span>Response time: ~24h</span>
+                    </div>
+                    <div className="meta-item">
+                      <span className="meta-dot"></span>
+                      <span>Status: Active</span>
+                    </div>
+                  </div>
+                </div>
+
+                <form className="support-form" onSubmit={handleSupportSubmit}>
+                  <div className="form-group">
+                    <input 
+                      type="text" 
+                      placeholder="Subject of inquiry"
+                      value={supportForm.subject}
+                      onChange={(e) => setSupportForm(prev => ({ ...prev, subject: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <textarea 
+                      placeholder="Transmission details..."
+                      value={supportForm.message}
+                      onChange={(e) => setSupportForm(prev => ({ ...prev, message: e.target.value }))}
+                      required
+                    ></textarea>
+                  </div>
+                  <button type="submit" className="support-submit-btn" disabled={supportForm.isSending}>
+                    {supportForm.isSending ? 'TRANSMITTING...' : 'SEND INQUIRY'}
                   </button>
-                </div>
-                <div className="secondary-actions">
-                  <button onClick={createNewRoom} className="minimal-text-btn">Create New Workspace</button>
-                  <span className="divider">|</span>
-                  <button onClick={() => navigate('/auth')} className="minimal-text-btn">Sign In</button>
-                </div>
+                </form>
               </div>
-            </motion.div>
-          </section>
-        )}
+            </div>
 
-        <div className="below-live-heading-dark">
-          <section className="stats-ticker glass-ticker">
-            <div className="stat"><strong>Forge Workspace</strong> <span>Collaborative coding with live sync</span></div>
-            <div className="stat"><strong>Skill Forge Modules</strong> <span>CSS, Logic, and React challenge tracks</span></div>
-            <div className="stat"><strong>XP Tracking</strong> <span>Progress tracking and levels</span></div>
-            <div className="stat"><strong>Forge Alliances</strong> <span>Team play and rankings</span></div>
-          </section>
+            {/* About Section */}
+            <div id="about" className="about-section">
+              <div className="about-content">
+                <div className="about-main-grid">
+                  {/* Left Column - Brand Info */}
+                  <div className="about-brand">
+                    <div className="about-logo">
+                      <div className="logo-box">
+                        <Code2 size={28} />
+                      </div>
+                      <span className="brand-name">CodeBright</span>
+                    </div>
+                    <p className="brand-tagline">
+                      Elevating the standard of technical excellence. The definitive platform for the next generation of engineers.
+                    </p>
+                    <div className="about-social-icons">
+                      <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="social-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                      </a>
+                      <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="social-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                      </a>
+                      <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="social-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                      </a>
+                      <a href="https://codebright.io" target="_blank" rel="noopener noreferrer" className="social-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                      </a>
+                    </div>
+                  </div>
 
-          <div className="news-headline-strip" aria-label="Builder headlines">
-            <div className="news-headline-marquee">
-              <div className="news-headline-track">
-                <span>Rise. Build. Repeat. Every solved challenge levels you up.</span>
-                <span>Small wins every day become unstoppable momentum.</span>
-                <span>Stay consistent: one clean session today beats ten planned tomorrow.</span>
-                <span>Debug with patience, learn with curiosity, ship with confidence.</span>
-              </div>
-              <div className="news-headline-track" aria-hidden="true">
-                <span>Rise. Build. Repeat. Every solved challenge levels you up.</span>
-                <span>Small wins every day become unstoppable momentum.</span>
-                <span>Stay consistent: one clean session today beats ten planned tomorrow.</span>
-                <span>Debug with patience, learn with curiosity, ship with confidence.</span>
+                  {/* Platform Column */}
+                  <div className="about-column">
+                    <h4 className="column-title">PLATFORM</h4>
+                    <ul className="column-links">
+                      <li><Link to="/explore">Explore</Link></li>
+                      <li><Link to="/challenges">Challenges</Link></li>
+                      <li><Link to="/factions">Factions</Link></li>
+                      <li><Link to="/leaderboard">Leaderboard</Link></li>
+                    </ul>
+                  </div>
+
+                  {/* Resources Column */}
+                  <div className="about-column">
+                    <h4 className="column-title">RESOURCES</h4>
+                    <ul className="column-links">
+                      <li><Link to="/docs">Documentation</Link></li>
+                      <li><Link to="/status">System Status</Link></li>
+                      <li><Link to="/community">Community</Link></li>
+                      <li><Link to="/guidelines">Guidelines</Link></li>
+                    </ul>
+                  </div>
+
+                  {/* Legal Column */}
+                  <div className="about-column">
+                    <h4 className="column-title">LEGAL</h4>
+                    <ul className="column-links">
+                      <li><Link to="/privacy">Privacy Policy</Link></li>
+                      <li><Link to="/terms">Terms of Service</Link></li>
+                      <li><Link to="/cookies">Cookie Policy</Link></li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Bottom Bar */}
+                <div className="about-bottom-bar">
+                  <span className="about-copyright">© 2026 CodeBright Ecosystem. All rights reserved.</span>
+                  <span className="about-tagline-right">Built for the Elite</span>
+                </div>
               </div>
             </div>
           </div>
-
-          {/* ═══════════════════════════════════════════════════════════
-            FEATURE SHOWCASE SECTIONS - Forge, Leaderboard, Factions
-            ═══════════════════════════════════════════════════════════ */}
-
-          {/* Skill Forge Showcase */}
-          <motion.section
-            id="forge"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={containerVariants}
-            className="feature-showcase-section forge-section"
+        </motion.section>
+      ) : (
+        <section className="hero-minimal">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="hero-content-center"
           >
-            <div className="showcase-container">
-              <div className="showcase-content">
-                <motion.div variants={itemVariants} className="showcase-text">
-                  <div className="showcase-badge">
-                    <Zap size={16} /> SKILL DEVELOPMENT
-                  </div>
-                  <h2 className="showcase-title">Elite Skill Forge</h2>
-                  <p className="showcase-description">
-                    Ascend to mastery through our specialized engineering tracks. 
-                    From high-performance CSS architectures to complex algorithmic logic, 
-                    the Forge is where the world's best developers refine their craft.
-                  </p>
-                  <div className="showcase-features">
-                    <div className="showcase-feature">
-                      <Code2 size={18} className="feature-check" />
-                      <span>CSS Architecture - Master high-scale styling</span>
-                    </div>
-                    <div className="showcase-feature">
-                      <Terminal size={18} className="feature-check" />
-                      <span>Logic Core - Advanced algorithmic patterns</span>
-                    </div>
-                    <div className="showcase-feature">
-                      <Cpu size={18} className="feature-check" />
-                      <span>System Design - Scalable component architecture</span>
-                    </div>
-                  </div>
-                <motion.button 
-                  whileHover={{ scale: 1.05, x: 10 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="showcase-cta-btn forge-btn" 
-                  onClick={handleEnterForge}
-                >
-                    Enter the Forge <ChevronRight size={18} />
-                  </motion.button>
-                </motion.div>
+            <div className="about-badge">
+              <span className="badge-dot"></span>
+              CORE PROTOCOL
+            </div>
+            
+            <h2 className="about-title">
+              The Workspace for <span className="title-accent">Elite Logic</span>
+            </h2>
 
-                <motion.div variants={itemVariants} className="showcase-visual">
-                  <div className="visual-card glass-morphism premium-border">
-                    <div className="forge-preview">
-                      <div className="preview-header">
-                        <div className="preview-dots">
-                          <span className="dot red"></span>
-                          <span className="dot yellow"></span>
-                          <span className="dot green"></span>
-                        </div>
-                        <span className="preview-title">Forge Engine v4.0</span>
-                      </div>
-                      <div className="preview-content">
-                        <div className="code-line"><span className="keyword">const</span> <span className="variable">forge</span> = <span className="keyword">new</span> <span className="class">ForgeEngine</span>();</div>
-                        <div className="code-line"><span className="variable">forge</span>.<span className="function">optimize</span>({"{"} <span className="property">performance</span>: <span className="value">'max'</span> {"}"});</div>
-                        <div className="code-line"><span className="variable">forge</span>.<span className="function">deploy</span>(<span className="value">'production'</span>);</div>
-                      </div>
-                      <div className="preview-xp-badge">+500 XP</div>
-                    </div>
-                  </div>
-                </motion.div>
+            <p className="hero-subtitle-clean">
+              A high-performance environment designed for developers who treat code as an art form. Build, test, and master the frontier of logic.
+            </p>
+
+            <div className="about-features-grid">
+              <div className="about-feature-item">
+                <span className="feature-number">01.0</span>
+                <h4>Velocity</h4>
+                <p>Engineered for low-latency collaboration and high-speed execution.</p>
+              </div>
+              <div className="about-feature-item">
+                <span className="feature-number">02.0</span>
+                <h4>Mastery</h4>
+                <p>Curated challenges designed to push your technical boundaries.</p>
+              </div>
+              <div className="about-feature-item">
+                <span className="feature-number">03.0</span>
+                <h4>Network</h4>
+                <p>Join a decentralized faction of the world's most capable engineers.</p>
               </div>
             </div>
-          </motion.section>
 
-        {/* Hall of Fame Showcase */}
-        <motion.section
-          id="leaderboard"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          variants={containerVariants}
-          className="feature-showcase-section leaderboard-section"
-        >
-          <div className="showcase-container">
-            <div className="showcase-content reverse">
-              <motion.div variants={itemVariants} className="showcase-visual">
-                <div className="visual-card glass-morphism premium-border">
-                  <div className="leaderboard-preview">
-                    <div className="podium-mini">
-                      <div className="podium-rank silver">
-                        <div className="podium-avatar">JD</div>
-                        <span className="podium-name">Dev_Elite</span>
-                        <span className="podium-xp">18,450 XP</span>
-                      </div>
-                      <div className="podium-rank gold">
-                        <div className="podium-avatar crowned">SM</div>
-                        <span className="podium-name">System_Master</span>
-                        <span className="podium-xp">24,320 XP</span>
-                      </div>
-                      <div className="podium-rank bronze">
-                        <div className="podium-avatar">AX</div>
-                        <span className="podium-name">Alex_Code</span>
-                        <span className="podium-xp">15,890 XP</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div variants={itemVariants} className="showcase-text">
-                <div className="showcase-badge">
-                  <Trophy size={16} /> FORGE MASTERS
-                </div>
-                <h2 className="showcase-title">The Hall of Forge</h2>
-                <p className="showcase-description">
-                  Immortalize your legacy among the top 1% of engineers. 
-                  Compete for dominance, earn master titles, and showcase your 
-                  prowess to the entire community.
-                </p>
-                <div className="showcase-features">
-                  <div className="showcase-feature">
-                    <Trophy size={18} className="feature-check" />
-                    <span>Real-time Global Rankings</span>
-                  </div>
-                  <div className="showcase-feature">
-                    <ShieldCheck size={18} className="feature-check" />
-                    <span>Legendary Mastery Titles</span>
-                  </div>
-                  <div className="showcase-feature">
-                    <Users size={18} className="feature-check" />
-                    <span>Competitive Alliance Wars</span>
-                  </div>
-                </div>
-                <motion.button 
-                  whileHover={{ scale: 1.05, x: 10 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="showcase-cta-btn leaderboard-btn" 
-                  onClick={() => navigate('/leaderboard')}
-                >
-                  View the Hall <ChevronRight size={18} />
-                </motion.button>
-              </motion.div>
-            </div>
-          </div>
-        </motion.section>
-
-        {/* Factions Showcase */}
-        <motion.section
-          id="factions"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          variants={containerVariants}
-          className="feature-showcase-section factions-section"
-        >
-          <div className="showcase-container">
-            <div className="showcase-content">
-              <motion.div variants={itemVariants} className="showcase-text">
-                <div className="showcase-badge">
-                  <Shield size={16} /> FORGE ALLIANCES
-                </div>
-                <h2 className="showcase-title">Forge Alliances</h2>
-                <p className="showcase-description">
-                  Join a global alliance and dominate the forge together. 
-                  Coordinate team sprints, share knowledge, 
-                  and claim your spot in the ecosystem.
-                </p>
-                <div className="showcase-features">
-                  <div className="showcase-feature">
-                    <Sword size={18} className="feature-check" />
-                    <span>Alliance Territory Wars</span>
-                  </div>
-                  <div className="showcase-feature">
-                    <UserPlus size={18} className="feature-check" />
-                    <span>Exclusive Alliance Workspaces</span>
-                  </div>
-                  <div className="showcase-feature">
-                    <Sparkles size={18} className="feature-check" />
-                    <span>Legendary Alliance Rewards</span>
-                  </div>
-                </div>
-                <motion.button 
-                  whileHover={{ scale: 1.05, x: 10 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="showcase-cta-btn factions-btn" 
-                  onClick={() => navigate('/factions')}
-                >
-                  Join an Alliance <ChevronRight size={18} />
-                </motion.button>
-              </motion.div>
-
-              <motion.div variants={itemVariants} className="showcase-visual">
-                <div className="visual-card glass-morphism premium-border">
-                  <div className="factions-preview">
-                    <div className="faction-card-mini">
-                      <div className="faction-icon-box">
-                        <Shield className="faction-shield" size={32} style={{ color: '#fff' }} />
-                      </div>
-                      <div className="faction-info">
-                        <span className="faction-name">Apex Forge</span>
-                        <span className="faction-rank">Rank #1 Global</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-        </motion.section>
-
-        {/* Use Cases Section */}
-        <section id="solutions" className="use-cases-section">
-          <div className="section-header center">
-            <h2 style={{ color: '#fff' }}>Engineered for Teams</h2>
-            <p>Trusted by engineering cohorts worldwide for critical, high-stakes development sessions.</p>
-          </div>
-          <div className="use-cases-flex">
-            <div className="use-case-card glass-morphism">
-              <h3>Technical Interviews</h3>
-              <p>Evaluate candidates live on platform. Watch their logic evolve without screen-sharing artifacts.</p>
-            </div>
-            <div className="use-case-card glass-morphism">
-              <h3>Pair Programming</h3>
-              <p>Break through complex algorithms side-by-side. Follow cursor trajectories and execute together.</p>
-            </div>
-            <div className="use-case-card glass-morphism">
-              <h3>Hackathons & Jams</h3>
-              <p>Eliminate local 'works on my machine' environments. Standardize your hackathon team instantly.</p>
-            </div>
-          </div>
+            <motion.div 
+              className="about-cta"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <Link to="/auth" className="shiny-btn">
+                Initialize Connection
+              </Link>
+            </motion.div>
+          </motion.div>
         </section>
-        </div>
-      </main>
-
-      {/* Simple One-line Footer */}
-      <footer className="refined-footer">
-        <div className="footer-blur-bg"></div>
-        <div className="footer-content-wrapper">
-          <div className="footer-left">
-            <div className="footer-logo">
-              <Code2 size={20} style={{ color: '#fff' }} />
-              <span className="footer-logo-text">Code Sight</span>
-            </div>
-            <div className="footer-divider-v"></div>
-            <span className="footer-copyright">© 2026 Logic Lab. All rights reserved.</span>
-          </div>
-
-          <div className="footer-center">
-            <nav className="footer-nav">
-              <a href="#solutions">Solutions</a>
-              <a href="/docs">Docs</a>
-            </nav>
-          </div>
-
-          <div className="footer-right">
-            <div className="system-status-indicator">
-              <div className="status-pulse" style={{ background: '#fff' }}></div>
-              <span>Network Stable</span>
-            </div>
-            <div className="footer-divider-v"></div>
-            <div className="footer-socials">
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer" style={{ color: '#a0a0a0' }}>GH</a>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" style={{ color: '#a0a0a0' }}>LI</a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" style={{ color: '#a0a0a0' }}>TW</a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      )}
     </div>
   );
 };
