@@ -50,28 +50,26 @@ const ChatPanel = ({ socket, roomId, user, title, messages = [], onSend }) => {
                     </div>
                 )}
                 {messages.map((msg, i) => {
-                    const isMe = msg.sender === user?.username;
-                    const prevMsg = messages[i - 1];
-                    const isCompact = prevMsg && prevMsg.sender === msg.sender;
+                    const isMe = msg.sender?.toLowerCase() === user?.username?.toLowerCase();
 
                     return (
-                        <div key={msg.id || i} className={`chat-msg-wrapper ${isMe ? 'me' : ''} ${isCompact ? 'compact' : ''}`}>
-                            {!isMe && !isCompact && (
-                                <div className="chat-msg-avatar">{msg.avatar}</div>
+                        <div key={msg.id || i} className={`chat-msg-wrapper ${isMe ? 'me' : 'other'}`}>
+                            {/* Avatar: left for others, right for me */}
+                            {!isMe && (
+                                <div className="chat-msg-avatar other">{msg.avatar || msg.sender?.charAt(0).toUpperCase()}</div>
                             )}
                             <div className="chat-msg-content">
-                                {!isCompact && (
-                                    <div className="chat-msg-meta">
-                                        <span className="chat-msg-sender">{msg.sender}</span>
-                                        <span className="chat-msg-time">
-                                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </span>
-                                    </div>
-                                )}
+                                {/* Always show name + time */}
+                                <div className="chat-msg-meta">
+                                    <span className="chat-msg-sender">{isMe ? 'You' : msg.sender}</span>
+                                    <span className="chat-msg-time">
+                                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                </div>
                                 <div className="chat-msg-bubble">{msg.text}</div>
                             </div>
-                            {isMe && !isCompact && (
-                                <div className="chat-msg-avatar me">{msg.avatar}</div>
+                            {isMe && (
+                                <div className="chat-msg-avatar me">{msg.avatar || user?.username?.charAt(0).toUpperCase()}</div>
                             )}
                         </div>
                     );
