@@ -902,8 +902,8 @@ const EditorPage = () => {
             <nav className="editor-navbar">
                 <div className="navbar-left">
                     <div className="navbar-logo">
-                        <span className="logo-code">CODE</span>
-                        <span className="logo-bright">BRIGHT</span>
+                        <span className="logo-code">BRIGHT</span>
+                        <span className="logo-bright">CODE</span>
                     </div>
                 </div>
 

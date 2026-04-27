@@ -128,7 +128,7 @@ const Landing = () => {
       <nav className="landing-nav">
         <div className="nav-container">
           <div className="nav-logo" onClick={() => navigate('/')}>
-            <span>CodeBright</span>
+            <span>BrightCode</span>
           </div>
 
           <div className="nav-links">
@@ -215,7 +215,7 @@ const Landing = () => {
             <h2>Universal Exploration Hub</h2>
             <p>
               Step into a well-organized ecosystem that helps you get the most out of
-              CodeBright by providing structure to guide your progress towards the next
+              BrightCode by providing structure to guide your progress towards the next
               milestone in your engineering career.
             </p>
             <button className="explore-btn" onClick={() => navigate('/hub')}>
@@ -304,7 +304,7 @@ const Landing = () => {
               <span className="about-subtitle">OUR MISSION</span>
               <h2>Beyond the Code</h2>
               <p>
-                CodeBright isn't just a platform; it's a digital ecosystem engineered
+                BrightCode isn't just a platform; it's a digital ecosystem engineered
                 to bridge the gap between theoretical knowledge and industrial-scale
                 system architecture. We provide the tools you need to build the future.
               </p>
@@ -480,7 +480,7 @@ const Landing = () => {
                 <div className="logo-box">
                   <Code2 size={24} color="#fff" />
                 </div>
-                <span className="logo-text">CodeBright</span>
+                <span className="logo-text">BrightCode</span>
               </div>
               <p className="footer-description">
                 Elevating the standard of technical excellence. The definitive platform for the next generation of engineers.
@@ -535,7 +535,7 @@ const Landing = () => {
 
           <div className="footer-bottom-bar">
             <div className="copyright">
-              &copy; {new Date().getFullYear()} CodeBright Ecosystem. All rights reserved.
+              &copy; {new Date().getFullYear()} BrightCode Ecosystem. All rights reserved.
             </div>
             <div className="footer-bottom-links">
               <span className="built-with">Built for the Elite</span>

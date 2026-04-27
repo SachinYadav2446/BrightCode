@@ -24,7 +24,7 @@ const roomMessages = new Map();
 app.use(cors());
 app.use(express.json());
 
-const JWT_SECRET = 'codebright_secret_key_123';
+const JWT_SECRET = 'brightcode_secret_key_123';
 
 // Memory Fallback (for when PostgreSQL is offline)
 let memoryStore = { users: [] };
@@ -198,7 +198,7 @@ const transporter = nodemailer.createTransport({
     port: 587,
     secure: false, // Use STARTTLS
     auth: {
-        user: 'codebrightlim@gmail.com',
+        user: 'brightcodelim@gmail.com',
         pass: 'dzoe alqy ocyw gije'
     },
     tls: {
@@ -226,8 +226,8 @@ app.post('/support', async (req, res) => {
     }
 
     const mailOptions = {
-        from: '"CodeBright Support" <codebrightlim@gmail.com>',
-        to: 'codebrightlim@gmail.com', // Your email for receiving inquiries
+        from: '"BrightCode Support" <brightcodelim@gmail.com>',
+        to: 'brightcodelim@gmail.com', // Your email for receiving inquiries
         subject: `[SUPPORT INQUIRY] ${subject || 'New Message'}`,
         html: `
             <div style="font-family: 'Poppins', sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb; background: #000; color: #fff;">
@@ -240,7 +240,7 @@ app.post('/support', async (req, res) => {
                     </div>
                 </div>
                 <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
-                <p style="text-align: center; color: #666; font-size: 12px;">&copy; 2026 CodeBright Command Center.</p>
+                <p style="text-align: center; color: #666; font-size: 12px;">&copy; 2026 BrightCode Command Center.</p>
             </div>
         `
     };
@@ -302,7 +302,7 @@ app.post('/send-otp', async (req, res) => {
                     </div>
                     <p style="margin-top: 20px; color: #6b7280; font-size: 14px;">This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
                     <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-                    <p style="text-align: center; color: #9ca3af; font-size: 12px;">&copy; 2026 CodeBright. Built for the Architect.</p>
+                    <p style="text-align: center; color: #9ca3af; font-size: 12px;">&copy; 2026 BrightCode. Built for the Architect.</p>
                 </div>
             `
         };
@@ -509,7 +509,7 @@ app.get('/me', authenticateToken, async (req, res) => {
                 u = {
                     id: req.user.id,
                     username: req.user.username,
-                    email: `${req.user.username}@codebright.memory`,
+                    email: `${req.user.username}@brightcode.memory`,
                     password: 'memory_migrated',
                     xp: 0, css_level: 0, logic_level: 0, react_level: 0
                 };
@@ -1019,7 +1019,7 @@ io.on('connection', (socket) => {
                 owner: username, // Track original creator by username
                 users: [],
                 permissions: {},
-                files: { 'script.js': { content: '// CodeBright Workspace\nconsole.log("Connect & Code!");', language: 'javascript' } },
+                files: { 'script.js': { content: '// BrightCode Workspace\nconsole.log("Connect & Code!");', language: 'javascript' } },
                 snapshots: []
             });
         }

@@ -12,7 +12,7 @@ const CodeBrightLogo = ({ size = 'large' }) => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2, duration: 0.8 }}
         >
-          CODE
+          BRIGHT
         </motion.span>
         <motion.span 
           className="cb-logo-text accent"
@@ -20,7 +20,7 @@ const CodeBrightLogo = ({ size = 'large' }) => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4, duration: 0.8 }}
         >
-          BRIGHT
+          CODE
         </motion.span>
         
         {/* Animated underlines/decorations */}
