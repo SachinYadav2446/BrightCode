@@ -24,6 +24,11 @@ const Workspace = () => {
   const [workspaceHistory, setWorkspaceHistory] = useState([]);
   const [activeRooms, setActiveRooms] = useState([]);
 
+  // Force scroll to top on mount to prevent jumping to history
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Load workspace history and active rooms on mount
   useEffect(() => {
     const historyKey = `workspaceHistory_${user?.username || 'guest'}`;
