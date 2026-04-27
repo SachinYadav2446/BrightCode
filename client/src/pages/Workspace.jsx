@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight, Plus, Users, X, Copy, Check, Clock, Crown, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { useAuth } from '../context/AuthContext';
 import './Workspace.css';
 
 // Generate unique workspace ID
@@ -13,6 +14,7 @@ const generateWorkspaceId = () => {
 
 const Workspace = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [workspaceName, setWorkspaceName] = useState('');
@@ -20,11 +22,29 @@ const Workspace = () => {
   const [createdWorkspace, setCreatedWorkspace] = useState(null);
   const [copied, setCopied] = useState(false);
   const [workspaceHistory, setWorkspaceHistory] = useState([]);
+  const [activeRooms, setActiveRooms] = useState([]);
 
-  // Load workspace history on mount
+  // Load workspace history and active rooms on mount
   useEffect(() => {
-    const history = JSON.parse(localStorage.getItem('workspaceHistory') || '[]');
+    const historyKey = `workspaceHistory_${user?.username || 'guest'}`;
+    const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
     setWorkspaceHistory(history);
+
+    // Fetch active rooms from server
+    const fetchActiveRooms = async () => {
+      try {
+        const response = await fetch('http://localhost:5050/active-rooms');
+        const data = await response.json();
+        setActiveRooms(data);
+      } catch (err) {
+        console.error('Failed to fetch active rooms:', err);
+      }
+    };
+
+    fetchActiveRooms();
+    // Refresh every 10 seconds to keep the list updated
+    const interval = setInterval(fetchActiveRooms, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   // Save workspace to history
@@ -37,7 +57,8 @@ const Workspace = () => {
       visitCount: 1
     };
 
-    const existingHistory = JSON.parse(localStorage.getItem('workspaceHistory') || '[]');
+    const historyKey = `workspaceHistory_${user?.username || 'guest'}`;
+    const existingHistory = JSON.parse(localStorage.getItem(historyKey) || '[]');
     
     // Remove if already exists
     const filteredHistory = existingHistory.filter(item => item.id !== workspaceId);
@@ -45,7 +66,7 @@ const Workspace = () => {
     // Add new entry at the beginning
     const updatedHistory = [newEntry, ...filteredHistory].slice(0, 10);
     
-    localStorage.setItem('workspaceHistory', JSON.stringify(updatedHistory));
+    localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
     setWorkspaceHistory(updatedHistory);
   };
 
@@ -251,31 +272,46 @@ const Workspace = () => {
             <div className="history-table-wrap">
               <table className="history-table">
                 <thead>
-                  <tr>
-                    <th>Role</th>
-                    <th>Name</th>
-                    <th>Workspace ID</th>
-                    <th>Last Visited</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {workspaceHistory.map((workspace) => (
-                    <tr key={workspace.id}>
-                      <td>
-                        <span className={`table-role ${workspace.isAdmin ? 'admin' : 'member'}`}>
-                          {workspace.isAdmin ? <Crown size={14} /> : <User size={14} />}
-                          {workspace.isAdmin ? 'Admin' : 'Member'}
-                        </span>
-                      </td>
-                      <td className="table-name">{workspace.name}</td>
-                      <td><code className="table-id">{workspace.id}</code></td>
-                      <td className="table-time">
-                        <Clock size={14} />
-                        <span>{formatTimeAgo(workspace.lastVisited)}</span>
-                      </td>
+                    <tr>
+                      <th>Role</th>
+                      <th>Name</th>
+                      <th>Workspace ID</th>
+                      <th>Last Visited</th>
+                      <th>Action</th>
                     </tr>
-                  ))}
-                </tbody>
+                  </thead>
+                  <tbody>
+                    {workspaceHistory.map((workspace) => (
+                      <tr key={workspace.id}>
+                        <td>
+                          <span className={`table-role ${workspace.isAdmin ? 'admin' : 'member'}`}>
+                            {workspace.isAdmin ? <Crown size={14} /> : <User size={14} />}
+                            {workspace.isAdmin ? 'Admin' : 'Member'}
+                          </span>
+                        </td>
+                        <td className="table-name">{workspace.name}</td>
+                        <td><code className="table-id">{workspace.id}</code></td>
+                        <td className="table-time">
+                          <Clock size={14} />
+                          <span>{formatTimeAgo(workspace.lastVisited)}</span>
+                        </td>
+                        <td>
+                          {activeRooms.includes(workspace.id) ? (
+                            <button 
+                              className="table-action-btn" 
+                              onClick={() => navigate(`/editor/${workspace.id}`)}
+                            >
+                              Resume <ArrowRight size={14} />
+                            </button>
+                          ) : (
+                            <span className="session-ended-label">
+                              Session Ended
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
               </table>
             </div>
           ) : (
