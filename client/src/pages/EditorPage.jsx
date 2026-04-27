@@ -13,10 +13,11 @@ import {
     PenTool, Eraser, Layout as WhiteboardIcon,
     Plus, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Share2,
     Folder, FolderPlus, Download, XOctagon, Square, Circle, Image as ImageIcon,
-    Maximize2, Minimize2
+    Maximize2, Minimize2, MessageSquare
 } from 'lucide-react';
 import './EditorPage.css';
 import { useAuth } from '../context/AuthContext';
+import ChatPanel from '../components/ChatPanel';
 
 
 const EditorPage = () => {
@@ -34,8 +35,13 @@ const EditorPage = () => {
     const [language, setLanguage] = useState('javascript');
     const [modalConfig, setModalConfig] = useState({ isOpen: false, type: '', targetFile: '', defaultValue: '' });
 
-    // ── Sidebar/Tab States (BUG FIX: both were missing) ─────────────────────
-    const [activeTab, setActiveTab] = useState('files');
+    // ── Sidebar/Tab States ───────────────────────────────────────────────────
+    const [activeTab, setActiveTab] = useState('files'); // 'files' | 'users' | 'chat'
+    const [showEndModal, setShowEndModal] = useState(false);
+    const [previewKey, setPreviewKey] = useState(0);
+
+    // ── Chat States (lifted here so messages survive tab switches) ───────────
+    const [chatMessages, setChatMessages] = useState([]);
 
     // ── Whiteboard States ────────────────────────────────────────────────────
     const [viewMode, setViewMode] = useState('editor'); // 'editor', 'whiteboard', 'preview'
@@ -174,6 +180,16 @@ const EditorPage = () => {
                 socket.on('connect_error', () => toast.error('Connection failed. Retrying...'));
 
                 socket.emit('join-room', { roomId, username: user?.username });
+
+                // ── Chat: join room-level chat channel ────────────────────────
+                const chatRoomId = `editor_${roomId}`;
+                socket.emit('join-chat-room', { roomId: chatRoomId });
+                socket.on('chat-history', ({ messages: history }) => {
+                    setChatMessages(history);
+                });
+                socket.on('new-chat-message', (message) => {
+                    setChatMessages(prev => [...prev, message]);
+                });
 
                 socket.on('initial-data', ({ files, users, adminId, yourId }) => {
                     if (isStopped) return;
@@ -364,6 +380,7 @@ const EditorPage = () => {
     const generatePreview = () => {
         // Smart entry point discovery
         const allFiles = Object.entries(files);
+        console.log("[Preview] Detected Files:", allFiles.map(f => f[0]));
 
         // 1. Try to find an index.html (case insensitive, ignoring prefix)
         let htmlFileEntry = allFiles.find(([path]) => path.toLowerCase().endsWith('index.html'));
@@ -557,13 +574,15 @@ const EditorPage = () => {
     };
 
     const endSession = () => {
-        setModalConfig({
-            isOpen: true,
-            type: 'confirm',
-            title: 'End Project Permanently?',
-            message: 'This will delete all files and disconnect all collaborators. This action cannot be undone.',
-            onConfirm: () => socketRef.current?.emit('end-session', { roomId })
-        });
+        setShowEndModal(true);
+    };
+
+    const confirmEndSession = () => {
+        setShowEndModal(false);
+        if (socketRef.current) {
+            socketRef.current.emit('end-session', { roomId });
+        }
+        navigate('/workspace');
     };
 
     const leaveWorkspace = () => {
@@ -790,6 +809,46 @@ const EditorPage = () => {
     // ── RENDER ────────────────────────────────────────────────────────────────
     return (
         <>
+            {/* ── END SESSION MODAL ─────────────────────────────────────────────── */}
+            <AnimatePresence>
+                {showEndModal && (
+                    <motion.div
+                        className="end-modal-backdrop"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowEndModal(false)}
+                    >
+                        <motion.div
+                            className="end-modal"
+                            initial={{ opacity: 0, scale: 0.85, y: 30 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="end-modal-icon-wrap">
+                                <XOctagon size={40} />
+                            </div>
+                            <h2 className="end-modal-title">End Session?</h2>
+                            <p className="end-modal-desc">
+                                This will <strong>permanently terminate</strong> this workspace
+                                and disconnect all collaborators in real-time.
+                            </p>
+                            <p className="end-modal-warning">⚠ This action cannot be undone.</p>
+                            <div className="end-modal-actions">
+                                <button className="end-modal-cancel" onClick={() => setShowEndModal(false)}>
+                                    Cancel
+                                </button>
+                                <button className="end-modal-confirm" onClick={confirmEndSession}>
+                                    <XOctagon size={14} /> End Session
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <AnimatePresence>
                 {modalConfig.isOpen && (
                     <div className="custom-modal-overlay">
@@ -851,7 +910,7 @@ const EditorPage = () => {
                 <div className="navbar-center">
                     <div className="view-selector">
                         <button className={`view-btn ${viewMode === 'editor' ? 'active' : ''}`} onClick={() => setViewMode('editor')}><FileCode size={14} /> IDE</button>
-                        <button className={`view-btn ${viewMode === 'preview' ? 'active' : ''}`} onClick={() => { setViewMode('preview'); setTerminalHeight(0); setIsTerminalCollapsed(true); }}><Monitor size={14} /> Preview</button>
+                        <button className={`view-btn ${viewMode === 'preview' ? 'active' : ''}`} onClick={() => { setViewMode('preview'); setTerminalHeight(0); setIsTerminalCollapsed(true); setPreviewKey(k => k + 1); }}><Monitor size={14} /> Preview</button>
                         <button className={`view-btn ${viewMode === 'whiteboard' ? 'active' : ''}`} onClick={() => { setViewMode('whiteboard'); setTerminalHeight(0); setIsTerminalCollapsed(true); }}><WhiteboardIcon size={14} /> Architect</button>
 
                     </div>
@@ -874,13 +933,24 @@ const EditorPage = () => {
                                 title="Toggle Terminal">
                                 <TerminalIcon size={16} />
                             </button>
-                            <button className="primary-btn download-btn" onClick={downloadProject} title="Download Full Project">
+                            <button className="nav-export-btn" onClick={downloadProject} title="Download Full Project">
                                 <Download size={14} /> <span>Export</span>
                             </button>
-                            <button className={`primary-btn run-btn-small ${isRunning ? 'loading' : ''}`} onClick={runCode} disabled={isRunning || !activeFile} title="Run Code">
-                                {isRunning ? <div className="btn-loader"></div> : <Play size={14} fill="white" />}
+                            <button
+                                className={`nav-run-btn ${isRunning ? 'loading' : ''}`}
+                                onClick={runCode}
+                                disabled={isRunning || !activeFile}
+                                title="Run Code"
+                            >
+                                {isRunning ? <div className="btn-loader"></div> : <Play size={14} fill="currentColor" />}
+                                <span>{isRunning ? 'Running...' : 'Run'}</span>
                             </button>
                         </>
+                    )}
+                    {viewMode === 'preview' && (
+                        <button className="nav-export-btn" onClick={() => setPreviewKey(k => k + 1)} title="Refresh Preview">
+                            <Monitor size={14} /> <span>Refresh</span>
+                        </button>
                     )}
                     {viewMode === 'whiteboard' && (
                         <div className="canvas-tools">
@@ -1036,13 +1106,16 @@ const EditorPage = () => {
                                     })()}
                                 </div>
                             </div>
-                        ) : (
+                        ) : activeTab === 'users' ? (
                             <div className="sidebar-section">
                                 <div className="sidebar-header nav-header">
                                     <button className="tab-switch-btn left-btn" onClick={() => setActiveTab('files')} title="Back to Project">
                                         <ChevronLeft size={16} />
                                     </button>
                                     <span className="sidebar-title centered-title">PARTICIPANTS</span>
+                                    <button className="tab-switch-btn right-btn" onClick={() => setActiveTab('chat')} title="Open Chat">
+                                        <ChevronRight size={16} />
+                                    </button>
                                 </div>
                                 <div className="dropdown-body participants-tab-body">
                                     {clients.map(c => (
@@ -1077,7 +1150,25 @@ const EditorPage = () => {
                                     ))}
                                 </div>
                             </div>
-                        )}
+                        ) : activeTab === 'chat' ? (
+                            <div className="sidebar-section sidebar-chat-section">
+                                <div className="sidebar-header nav-header">
+                                    <button className="tab-switch-btn left-btn" onClick={() => setActiveTab('users')} title="Back to Participants">
+                                        <ChevronLeft size={16} />
+                                    </button>
+                                    <span className="sidebar-title centered-title"><MessageSquare size={13} style={{verticalAlign:'middle', marginRight:4}} />CHAT</span>
+                                </div>
+                                <div className="sidebar-chat-body">
+                                    <ChatPanel
+                                        socket={socketRef.current}
+                                        roomId={`editor_${roomId}`}
+                                        user={user}
+                                        title={`${workspaceName} Chat`}
+                                        messages={chatMessages}
+                                    />
+                                </div>
+                            </div>
+                        ) : null}
                     </div>
 
                     <div className="sidebar-footer">
@@ -1113,6 +1204,7 @@ const EditorPage = () => {
 
                 <main className="main-content" style={{ gridTemplateRows: `1fr ${isTerminalCollapsed ? 2 : 2}px ${terminalHeight}px` }}>
 
+                    {/* ── CONTENT AREA (Row 1) ────────────────────────────────── */}
                     <div className="editor-container" style={{ display: viewMode === 'editor' ? 'block' : 'none', minHeight: 0, overflow: 'hidden' }}>
                         <div className="editor-wrapper">
                             {activeFile ? (
@@ -1178,7 +1270,17 @@ const EditorPage = () => {
                             onMouseUp={stopDrawing} onMouseLeave={stopDrawing} width={1600} height={1000} className="main-canvas" />
                     </div>
 
-                    {/* Terminal Resizer */}
+                    <div className="preview-container" style={{ display: viewMode === 'preview' ? 'flex' : 'none', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }}>
+                        <iframe
+                            key={previewKey}
+                            title="Live Preview"
+                            srcDoc={generatePreview()}
+                            style={{ width: '100%', flex: 1, border: 'none', background: '#fff' }}
+                            sandbox="allow-scripts allow-modals allow-same-origin"
+                        />
+                    </div>
+
+                    {/* ── TERMINAL AREA (Row 2 & 3) ─────────────────────────────── */}
                     <div className={`resizer-y ${isTerminalCollapsed ? 'collapsed' : ''}`} onMouseDown={startTerminalResize}>
                     </div>
 
@@ -1197,20 +1299,7 @@ const EditorPage = () => {
                         </pre>
                     </div>
 
-                    <div className="preview-container" style={{ display: viewMode === 'preview' ? 'block' : 'none', minHeight: 0, overflow: 'hidden', background: '#fff' }}>
-                        <iframe
-                            key={viewMode}
-                            title="Live Preview"
-                            srcDoc={generatePreview()}
-                            style={{ width: '100%', height: '100%', border: 'none' }}
-                            sandbox="allow-scripts allow-modals"
-                        />
-                    </div>
-
-
                 </main>
-
-
             </div>
         </>
     );
