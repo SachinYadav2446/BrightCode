@@ -1019,7 +1019,7 @@ io.on('connection', (socket) => {
                 owner: username, // Track original creator by username
                 users: [],
                 permissions: {},
-                files: { 'index.js': { content: '// CodeBright Workspace\nconsole.log("Connect & Code!");', language: 'javascript' } },
+                files: { 'script.js': { content: '// CodeBright Workspace\nconsole.log("Connect & Code!");', language: 'javascript' } },
                 snapshots: []
             });
         }
