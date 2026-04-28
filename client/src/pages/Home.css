@@ -2996,12 +2996,28 @@ html {
   box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
 }
 
+.skill-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
 .skill-percentage {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
-  min-width: 40px;
-  text-align: right;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.skill-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 1px;
 }
 
 .skill-xp {
@@ -3013,6 +3029,184 @@ html {
   font-weight: 600;
 }
 
+/* ── Hall of Fame Section ── */
+.hall-of-fame-section {
+  width: 100%;
+  max-width: 1200px;
+  margin: 40px auto 60px auto;
+  padding: 0 40px;
+}
+
+.hall-of-fame-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.fame-card {
+  position: relative;
+  background: rgba(15, 15, 15, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+}
+
+.fame-card:hover {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(20, 20, 20, 0.8);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.fame-rank-wrapper {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+}
+
+.fame-rank-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rank-1 .fame-rank-badge {
+  background: linear-gradient(135deg, #fbbf24, #d97706);
+  color: #000;
+  border: none;
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+}
+
+.rank-2 .fame-rank-badge {
+  background: linear-gradient(135deg, #94a3b8, #475569);
+  color: #fff;
+}
+
+.rank-3 .fame-rank-badge {
+  background: linear-gradient(135deg, #b45309, #78350f);
+  color: #fff;
+}
+
+.fame-avatar-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 20px;
+}
+
+.fame-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 900;
+  color: #ef4444;
+  border: 2px solid rgba(239, 68, 68, 0.2);
+  z-index: 2;
+  position: relative;
+}
+
+.rank-1 .fame-avatar {
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+.fame-rank-ring {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  border: 1px solid rgba(239, 68, 68, 0.1);
+  animation: rotate-ring 10s linear infinite;
+}
+
+.rank-1 .fame-rank-ring {
+  border-color: rgba(251, 191, 36, 0.2);
+}
+
+@keyframes rotate-ring {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fame-username {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.fame-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+}
+
+.fame-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.fame-icon {
+  color: #ef4444;
+}
+
+.rank-1 .fame-icon {
+  color: #fbbf24;
+}
+
+.fame-divider {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.fame-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 150%;
+  height: 150%;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.05) 0%, transparent 70%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ── Previous styles continued ── */
 .monitor-header-text {
   width: 100%;
   max-width: 1200px;
@@ -3874,4 +4068,42 @@ html {
     padding: 40px;
     gap: 40px;
   }
+}
+
+.fame-header-centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 60px;
+  width: 100%;
+}
+
+.fame-view-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  margin-top: 5px;
+}
+
+.fame-view-all:hover {
+  color: #ffffff;
+  transform: translateY(-2px);
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.fame-view-all svg {
+  transition: transform 0.3s ease;
+}
+
+.fame-view-all:hover svg {
+  transform: translateX(4px);
 }

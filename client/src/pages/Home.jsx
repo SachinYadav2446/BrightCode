@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { ChevronLeft, ChevronRight, LogOut, Settings, User, Layout, Library, Code2, Shield } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, Settings, User, Layout, Library, Code2, Shield, Zap, Crown } from 'lucide-react';
 
 import Editor from '@monaco-editor/react';
 
@@ -69,6 +69,20 @@ const Home = () => {
   const [showEditorMobile, setShowEditorMobile] = useState(false);
 
   const [isMonitorActive, setIsMonitorActive] = useState(false);
+  const [topRankers, setTopRankers] = useState([]);
+  const [selectedRanker, setSelectedRanker] = useState(null);
+
+  useEffect(() => {
+    const fetchTopRankers = async () => {
+      try {
+        const response = await axios.get('http://localhost:5051/leaderboard');
+        setTopRankers(response.data.slice(0, 3));
+      } catch (err) {
+        console.error('Failed to fetch top rankers', err);
+      }
+    };
+    fetchTopRankers();
+  }, []);
 
 
 
@@ -88,64 +102,28 @@ const Home = () => {
 
 
 
-  // Calculate skill progress based on actual skill XP
-
-  const calculateSkillProgress = (skillXp) => {
-
-    const maxSkillXp = 5000;
-
-    const percentage = Math.min((skillXp / maxSkillXp) * 100, 100);
-
-    return percentage;
-
+  // Calculate skill progress based on actual solved levels from Arcade
+  const calculateSkillProgress = (levelCount, type) => {
+    const totalMap = { css: 50, logic: 150, react: 500 };
+    const total = totalMap[type] || 100;
+    return Math.min((levelCount / total) * 100, 100);
   };
 
-
-
-  // Convert skill levels to XP for progress calculation
-
-  const levelToXp = (level) => {
-
-    if (level >= 4) return 5000; // Expert
-
-    if (level >= 3) return 2000; // Advanced
-
-    if (level >= 2) return 500;  // Intermediate
-
-    if (level >= 1) return 100;  // Beginner
-
-    return 0;
-
+  const getSkillLevel = (percentage) => {
+    if (percentage >= 100) return 'Master';
+    if (percentage >= 75) return 'Expert';
+    if (percentage >= 50) return 'Advanced';
+    if (percentage >= 25) return 'Intermediate';
+    if (percentage > 0) return 'Beginner';
+    return 'Initiate';
   };
 
-
-
-  // Use actual skill levels to calculate XP
-
+  // Use actual skill levels (count of solved challenges)
   const skillDistribution = {
-
-    css: levelToXp(Number(user?.css_level || 0)),
-
-    logic: levelToXp(Number(user?.logic_level || 0)),
-
-    react: levelToXp(Number(user?.react_level || 0))
-
+    css: Number(user?.css_level || 0),
+    logic: Number(user?.logic_level || 0),
+    react: Number(user?.react_level || 0)
   };
-
-
-
-  const getSkillLevel = (skillXp) => {
-
-    if (skillXp >= 5000) return 'Expert';
-
-    if (skillXp >= 2000) return 'Advanced';
-
-    if (skillXp >= 500) return 'Intermediate';
-
-    return 'Beginner';
-
-  };
-
 
 
   // Generate heatmap data based on user activity
@@ -366,33 +344,7 @@ const Home = () => {
 
   });
 
-  const [topRankers, setTopRankers] = useState([]);
 
-  const [selectedRanker, setSelectedRanker] = useState(null);
-
-
-
-  useEffect(() => {
-
-    const fetchTopRankers = async () => {
-
-      try {
-
-        const { data } = await axios.get('http://localhost:5050/leaderboard');
-
-        setTopRankers(data.slice(0, 3));
-
-      } catch (err) {
-
-        console.error('Failed to fetch leaderboard:', err);
-
-      }
-
-    };
-
-    fetchTopRankers();
-
-  }, []);
 
 
 
@@ -1010,6 +962,64 @@ const Home = () => {
 
 
 
+            {/* Hall of Fame (Top 3 Rankers) */}
+            <div id="hall-of-fame" className="hall-of-fame-section">
+              <div className="fame-header-centered">
+                <span className="hunt-label">HALL OF FAME</span>
+                <div className="hunt-line"></div>
+                
+                <Link to="/leaderboard" className="fame-view-all">
+                  <span>FULL RANKINGS</span>
+                  <ChevronRight size={14} />
+                </Link>
+              </div>
+              
+              <div className="hall-of-fame-grid">
+                {topRankers.map((ranker, idx) => (
+                  <motion.div 
+                    key={ranker.username}
+                    className={`fame-card rank-${idx + 1}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1, duration: 0.5 }}
+                    whileHover={{ scale: 1.02, y: -5 }}
+                    onClick={() => setSelectedRanker(ranker)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="fame-rank-wrapper">
+                      <div className="fame-rank-badge">
+                        {idx === 0 ? <Crown size={18} /> : `#${idx + 1}`}
+                      </div>
+                    </div>
+                    
+                    <div className="fame-avatar-wrapper">
+                      <div className="fame-avatar">
+                        {ranker.username[0].toUpperCase()}
+                      </div>
+                      <div className="fame-rank-ring"></div>
+                    </div>
+                    
+                    <div className="fame-content">
+                      <h3 className="fame-username">{ranker.username}</h3>
+                      <div className="fame-meta">
+                        <div className="fame-stat">
+                          <Zap size={12} className="fame-icon" />
+                          <span>{ranker.xp.toLocaleString()}</span>
+                        </div>
+                        <div className="fame-divider"></div>
+                        <div className="fame-stat">
+                          <Shield size={12} className="fame-icon" />
+                          <span>LVL {ranker.level}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {idx === 0 && <div className="fame-glow"></div>}
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
             {/* Skill Progress Dashboard */}
 
             <div id="skill-dashboard" className="skill-dashboard-section">
@@ -1045,9 +1055,7 @@ const Home = () => {
                     <div className="skill-icon css-icon">CSS</div>
 
                     <div className="skill-level-badge">
-
-                      {getSkillLevel(skillDistribution.css)}
-
+                      {getSkillLevel(calculateSkillProgress(skillDistribution.css, 'css'))}
                     </div>
 
                   </div>
@@ -1062,27 +1070,26 @@ const Home = () => {
 
                         initial={{ width: 0 }}
 
-                        animate={{ width: `${calculateSkillProgress(skillDistribution.css)}%` }}
-
-                        transition={{ duration: 1, ease: "easeOut" }}
+                        animate={{ width: `${calculateSkillProgress(skillDistribution.css, 'css')}%` }}
+                        transition={{ duration: 1.5, ease: "easeOut" }}
 
                       />
 
                     </div>
 
-                    <span className="skill-percentage">
-
-                      {Math.round(calculateSkillProgress(skillDistribution.css))}%
-
-                    </span>
+                    <div className="skill-progress-labels">
+                      <span className="skill-percentage">
+                        {Math.round(calculateSkillProgress(skillDistribution.css, 'css'))}%
+                      </span>
+                      <span className="skill-count">{skillDistribution.css}/50</span>
+                    </div>
 
                   </div>
 
                   <div className="skill-xp">
 
-                    <Shield size={14} />
-
-                    <span>{skillDistribution.css} XP</span>
+                    <Zap size={14} className="zap-icon" />
+                    <span>{skillDistribution.css * 10} XP</span>
 
                   </div>
 
@@ -1109,9 +1116,7 @@ const Home = () => {
                     <div className="skill-icon logic-icon">LOGIC</div>
 
                     <div className="skill-level-badge">
-
-                      {getSkillLevel(skillDistribution.logic)}
-
+                      {getSkillLevel(calculateSkillProgress(skillDistribution.logic, 'logic'))}
                     </div>
 
                   </div>
@@ -1126,27 +1131,26 @@ const Home = () => {
 
                         initial={{ width: 0 }}
 
-                        animate={{ width: `${calculateSkillProgress(skillDistribution.logic)}%` }}
-
-                        transition={{ duration: 1, ease: "easeOut" }}
+                        animate={{ width: `${calculateSkillProgress(skillDistribution.logic, 'logic')}%` }}
+                        transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
 
                       />
 
                     </div>
 
-                    <span className="skill-percentage">
-
-                      {Math.round(calculateSkillProgress(skillDistribution.logic))}%
-
-                    </span>
+                    <div className="skill-progress-labels">
+                      <span className="skill-percentage">
+                        {Math.round(calculateSkillProgress(skillDistribution.logic, 'logic'))}%
+                      </span>
+                      <span className="skill-count">{skillDistribution.logic}/150</span>
+                    </div>
 
                   </div>
 
                   <div className="skill-xp">
 
-                    <Shield size={14} />
-
-                    <span>{skillDistribution.logic} XP</span>
+                    <Zap size={14} className="zap-icon" />
+                    <span>{skillDistribution.logic * 10} XP</span>
 
                   </div>
 
@@ -1173,9 +1177,7 @@ const Home = () => {
                     <div className="skill-icon react-icon">REACT</div>
 
                     <div className="skill-level-badge">
-
-                      {getSkillLevel(skillDistribution.react)}
-
+                      {getSkillLevel(calculateSkillProgress(skillDistribution.react, 'react'))}
                     </div>
 
                   </div>
@@ -1190,27 +1192,26 @@ const Home = () => {
 
                         initial={{ width: 0 }}
 
-                        animate={{ width: `${calculateSkillProgress(skillDistribution.react)}%` }}
-
-                        transition={{ duration: 1, ease: "easeOut" }}
+                        animate={{ width: `${calculateSkillProgress(skillDistribution.react, 'react')}%` }}
+                        transition={{ duration: 1.5, ease: "easeOut", delay: 0.4 }}
 
                       />
 
                     </div>
 
-                    <span className="skill-percentage">
-
-                      {Math.round(calculateSkillProgress(skillDistribution.react))}%
-
-                    </span>
+                    <div className="skill-progress-labels">
+                      <span className="skill-percentage">
+                        {Math.round(calculateSkillProgress(skillDistribution.react, 'react'))}%
+                      </span>
+                      <span className="skill-count">{skillDistribution.react}/500</span>
+                    </div>
 
                   </div>
 
                   <div className="skill-xp">
 
-                    <Shield size={14} />
-
-                    <span>{skillDistribution.react} XP</span>
+                    <Zap size={14} className="zap-icon" />
+                    <span>{skillDistribution.react * 10} XP</span>
 
                   </div>
 
@@ -1222,83 +1223,7 @@ const Home = () => {
 
 
 
-            {/* Hall of Fame Section */}
 
-            <div id="hall-of-fame" className="hall-of-fame-section">
-
-              <div className="monitor-header-text">
-
-                <span className="hunt-label">HALL OF FAME</span>
-
-                <div className="hunt-line"></div>
-
-              </div>
-
-              
-
-              <div className="fame-container">
-
-                {topRankers && topRankers.length > 0 ? (
-
-                  <div className="podium-minimal">
-
-                    {topRankers.map((ranker, index) => (
-
-                      <div 
-
-                        key={ranker.id} 
-
-                        className={`podium-item rank-${index + 1}`}
-
-                        onClick={() => setSelectedRanker(ranker)}
-
-                      >
-
-                        <div className="rank-badge">
-
-                          {index + 1}
-
-                        </div>
-
-                        <div className="ranker-avatar">
-
-                          {ranker.username.charAt(0).toUpperCase()}
-
-                        </div>
-
-                        <div className="ranker-info">
-
-                          <span className="ranker-name">{ranker.username}</span>
-
-                          <span className="ranker-xp">{ranker.xp} XP</span>
-
-                        </div>
-
-                      </div>
-
-                    ))}
-
-                  </div>
-
-                ) : (
-
-                  <div className="fame-loading">
-
-                    <span className="loading-text">RETRIVING ELITE DATA...</span>
-
-                  </div>
-
-                )}
-
-                
-
-                <Link to="/leaderboard" className="view-all-fame">
-
-                  VIEW FULL LEADERBOARD <ChevronRight size={16} />
-
-                </Link>
-
-              </div>
 
 
 
@@ -1414,7 +1339,7 @@ const Home = () => {
 
               </AnimatePresence>
 
-            </div>
+
 
 
 
@@ -1509,153 +1434,8 @@ const Home = () => {
               </div>
 
             </div>
-
-
-
-            {/* About Section */}
-
-            <div id="about" className="about-section">
-
-              <div className="about-content">
-
-                <div className="about-main-grid">
-
-                  {/* Left Column - Brand Info */}
-
-                  <div className="about-brand">
-
-                    <div className="about-logo">
-
-                      <div className="logo-box">
-
-                        <Code2 size={28} />
-
-                      </div>
-
-                      <span className="brand-name">CodeBright</span>
-
-                    </div>
-
-                    <p className="brand-tagline">
-
-                      Elevating the standard of technical excellence. The definitive platform for the next generation of engineers.
-
-                    </p>
-
-                    <div className="about-social-icons">
-
-                      <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="social-icon">
-
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-
-                      </a>
-
-                      <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="social-icon">
-
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-
-                      </a>
-
-                      <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="social-icon">
-
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-
-                      </a>
-
-                      <a href="https://codebright.io" target="_blank" rel="noopener noreferrer" className="social-icon">
-
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-
-                      </a>
-
-                    </div>
-
-                  </div>
-
-
-
-                  {/* Platform Column */}
-
-                  <div className="about-column">
-
-                    <h4 className="column-title">PLATFORM</h4>
-
-                    <ul className="column-links">
-
-                      <li><Link to="/explore">Explore</Link></li>
-
-                      <li><Link to="/challenges">Challenges</Link></li>
-
-                      <li><Link to="/factions">Factions</Link></li>
-
-                      <li><Link to="/leaderboard">Leaderboard</Link></li>
-
-                    </ul>
-
-                  </div>
-
-
-
-                  {/* Resources Column */}
-
-                  <div className="about-column">
-
-                    <h4 className="column-title">RESOURCES</h4>
-
-                    <ul className="column-links">
-
-                      <li><Link to="/docs">Documentation</Link></li>
-
-                      <li><Link to="/status">System Status</Link></li>
-
-                      <li><Link to="/community">Community</Link></li>
-
-                      <li><Link to="/guidelines">Guidelines</Link></li>
-
-                    </ul>
-
-                  </div>
-
-
-
-                  {/* Legal Column */}
-
-                  <div className="about-column">
-
-                    <h4 className="column-title">LEGAL</h4>
-
-                    <ul className="column-links">
-
-                      <li><Link to="/privacy">Privacy Policy</Link></li>
-
-                      <li><Link to="/terms">Terms of Service</Link></li>
-
-                      <li><Link to="/cookies">Cookie Policy</Link></li>
-
-                    </ul>
-
-                  </div>
-
-                </div>
-
-
-
-                {/* Bottom Bar */}
-
-                <div className="about-bottom-bar">
-
-                  <span className="about-copyright">© 2026 CodeBright Ecosystem. All rights reserved.</span>
-
-                  <span className="about-tagline-right">Built for the Elite</span>
-
-                </div>
-
-              </div>
-
-            </div>
-
+            {/* End of content */}
           </div>
-
         </motion.section>
 
       ) : (
