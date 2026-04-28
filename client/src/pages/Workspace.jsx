@@ -38,7 +38,7 @@ const Workspace = () => {
     // Fetch active rooms from server
     const fetchActiveRooms = async () => {
       try {
-        const response = await fetch('http://localhost:5050/active-rooms');
+        const response = await fetch('http://localhost:5051/active-rooms');
         const data = await response.json();
         setActiveRooms(data);
       } catch (err) {

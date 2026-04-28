@@ -43,7 +43,7 @@ const Leaderboard = () => {
         if (!silent) setLoading(true);
         else setIsRefreshing(true);
         try {
-            const response = await axios.get('http://localhost:5050/leaderboard', { timeout: 8000 });
+            const response = await axios.get('http://localhost:5051/leaderboard', { timeout: 8000 });
             const data = response.data || [];
             setRankers(data);
             
@@ -69,7 +69,7 @@ const Leaderboard = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
         try {
-            const res = await axios.get('http://localhost:5050/me', {
+            const res = await axios.get('http://localhost:5051/me', {
                 headers: { Authorization: `Bearer ${token}` },
                 timeout: 4000
             });
@@ -90,7 +90,7 @@ const Leaderboard = () => {
         syncMyXP();
 
         // ── Live socket subscription for instant leaderboard updates ──
-        const socket = io('http://localhost:5050', { transports: ['websocket'] });
+        const socket = io('http://localhost:5051', { transports: ['websocket'] });
         socketRef.current = socket;
 
         socket.on('leaderboard-update', (freshData) => {

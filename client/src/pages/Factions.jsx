@@ -89,7 +89,7 @@ const Factions = () => {
     const fetchFactions = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('http://localhost:5050/factions', { timeout: 6000 });
+            const res = await axios.get('http://localhost:5051/factions', { timeout: 6000 });
             const list = res.data || [];
             setFactions(list);
             if (user) {
@@ -111,7 +111,7 @@ const Factions = () => {
         setIsSubmitting(true);
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5050/factions/create', newFaction, {
+            await axios.post('http://localhost:5051/factions/create', newFaction, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success(`Faction "${newFaction.name}" established!`, {
@@ -132,7 +132,7 @@ const Factions = () => {
         if (myFactionId) return toast.error('Leave your current faction before joining another.');
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post(`http://localhost:5050/factions/join/${factionId}`, {}, {
+            const res = await axios.post(`http://localhost:5051/factions/join/${factionId}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success(res.data.message);
@@ -149,7 +149,7 @@ const Factions = () => {
         if (!myFactionId) return;
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`http://localhost:5050/factions/leave/${myFactionId}`, {}, {
+            await axios.post(`http://localhost:5051/factions/leave/${myFactionId}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success('Left faction.');
@@ -163,7 +163,7 @@ const Factions = () => {
     const approveMember = async (userId) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`http://localhost:5050/factions/${myFactionId}/approve`, { userId }, {
+            await axios.post(`http://localhost:5051/factions/${myFactionId}/approve`, { userId }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success('Member approved!');
@@ -176,7 +176,7 @@ const Factions = () => {
     const declineMember = async (userId) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`http://localhost:5050/factions/${myFactionId}/decline`, { userId }, {
+            await axios.post(`http://localhost:5051/factions/${myFactionId}/decline`, { userId }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success('Request declined.');
@@ -190,7 +190,7 @@ const Factions = () => {
         if (!window.confirm('Remove this member from the syndicate?')) return;
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`http://localhost:5050/factions/${myFactionId}/kick`, { userId }, {
+            await axios.post(`http://localhost:5051/factions/${myFactionId}/kick`, { userId }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success('Operative removed.');
@@ -203,7 +203,7 @@ const Factions = () => {
     const togglePrivacy = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post(`http://localhost:5050/factions/${myFactionId}/toggle-privacy`, {}, {
+            const res = await axios.post(`http://localhost:5051/factions/${myFactionId}/toggle-privacy`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success(res.data.message);
@@ -217,7 +217,7 @@ const Factions = () => {
         if (!window.confirm('PERMANENTLY DISBAND this syndicate? All members will be removed and progress lost.')) return;
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`http://localhost:5050/factions/disband/${myFactionId}`, {}, {
+            await axios.post(`http://localhost:5051/factions/disband/${myFactionId}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success('Syndicate disbanded.');
