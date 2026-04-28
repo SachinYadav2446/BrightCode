@@ -29,6 +29,7 @@ const SIDEBAR_TABS = [
 
 // ── LIBRARY LOBBY (Sidebar + Content) ─────────────────────────────────
 const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentLvlIdx }) => {
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('frontend');
 
     // Map sidebar tab id → sections array id
@@ -108,13 +109,14 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                             className="lib-modules-grid"
                         >
                             {currentSection.games.map((game, idx) => {
-                                const sKey = `${game.id.replace(/-/g, '_')}_solutions`;
-                                const solutions = JSON.parse(localStorage.getItem(sKey)) || {};
-                                const solvedCount = Object.keys(solutions).length;
+                                const solvedCount = (function() {
+                                    if (game.id === 'css-odyssey') return user?.css_level || 0;
+                                    if (game.id === 'logic-lab') return user?.logic_level || 0;
+                                    if (game.id === 'react-quest') return user?.react_level || 0;
+                                    return 0;
+                                })();
                                 
-                                const highestVal = parseInt(localStorage.getItem(game.progressKey)) || 0;
-                                const progValue = Math.max(solvedCount, highestVal);
-                                const pct = Math.round((progValue / game.total) * 100);
+                                const pct = Math.round((solvedCount / game.total) * 100);
 
                                 return (
                                     <motion.div
@@ -141,7 +143,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                                             <div className="lib-progress-wrap">
                                                 <div className="lib-progress-header">
                                                     <span>{pct}% Mastery</span>
-                                                    <span>{progValue}/{game.total} Levels</span>
+                                                    <span>{solvedCount}/{game.total} Levels</span>
                                                 </div>
                                                 <div className="lib-progress-bar">
                                                     <motion.div
@@ -192,9 +194,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
 };
 
 const Arcade = () => {
-    const auth = useAuth();
-    const user = auth?.user;
-    const updateXP = auth?.updateXP;
+    const { user, updateXP, setNavbarHidden } = useAuth();
     
     const navigate = useNavigate();
     const goBackPreserveScroll = () => {
@@ -221,6 +221,12 @@ const Arcade = () => {
     const [testResults, setTestResults] = useState(null); // For logic lab feedback
     const [showModal, setShowModal] = useState(false);
     const [modalConfig, setModalConfig] = useState({ type: 'success', title: '', message: '' });
+
+    useEffect(() => {
+        // Hide navbar if any game is active (either in phase selection or playing)
+        setNavbarHidden(!!activeGame);
+        return () => setNavbarHidden(false);
+    }, [activeGame, setNavbarHidden]);
 
     const gameMap = {
         'css-odyssey': CSS_LEVELS,
