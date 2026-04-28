@@ -11,6 +11,7 @@ import Factions from './pages/Factions';
 import UserModule from './pages/UserModule';
 import Library from './pages/Library';
 import Workspace from './pages/Workspace';
+import CodeVault from './pages/CodeVault';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -108,7 +109,17 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/codevault" 
+              element={
+                <ProtectedRoute>
+                  <CodeVault />
+                </ProtectedRoute>
+              } 
+            />
             <Route path="/user-module" element={<UserModule />} />
+            {/* Catch-all: redirect any unknown path to landing */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
