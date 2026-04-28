@@ -212,27 +212,6 @@ html {
   position: relative;
 }
 
-.nav-link-hover::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: var(--primary);
-  transition: width 0.25s ease;
-}
-
-.nav-link-hover:hover,
-.nav-link-hover.active {
-  color: var(--text-hi);
-}
-
-.nav-link-hover:hover::after,
-.nav-link-hover.active::after {
-  width: 100%;
-}
-
 /* Auth / User pill */
 .shiny-btn {
   display: flex;

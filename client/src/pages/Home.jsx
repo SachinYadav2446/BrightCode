@@ -15,7 +15,7 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 
 import CodeBrightLogo from '../components/CodeBrightLogo';
-
+import Navbar from '../components/Navbar';
 import './Home.css';
 
 
@@ -701,80 +701,6 @@ const Home = () => {
 
 
       {/* Sticky Navigation */}
-
-      <nav className="floating-nav">
-
-        <div className="nav-container">
-
-          <div className="logo-section">
-
-            <CodeBrightLogo size="small" />
-
-          </div>
-
-
-
-          <div className="nav-links">
-
-            <Link to="/hub" className="nav-link-hover active">
-
-              Home
-
-            </Link>
-
-            <Link to="/library" className="nav-link-hover">
-
-              Library
-
-            </Link>
-
-            <Link to="/workspace" className="nav-link-hover">
-
-              Workspace
-
-            </Link>
-
-            <Link to="/factions" className="nav-link-hover">
-
-              Factions
-
-            </Link>
-
-            <Link to="/factions" className="nav-link-hover">
-
-              Factions
-
-            </Link>
-
-            
-
-            {user ? (
-
-                <Link to="/settings" className="user-profile-pill">
-
-                  <span className="profile-initial">
-
-                    {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
-
-                  </span>
-
-                </Link>
-
-              ) : (
-
-              <Link to="/auth" className="shiny-btn">
-
-                Join Now
-
-              </Link>
-
-            )}
-
-          </div>
-
-        </div>
-
-      </nav>
 
 
 

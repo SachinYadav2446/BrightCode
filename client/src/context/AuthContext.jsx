@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sessionValid, setSessionValid] = useState(false);
+  const [navbarHidden, setNavbarHidden] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -229,7 +230,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, sendOTP, logout, updateProfile, updateXP, loading, sessionValid }}>
+    <AuthContext.Provider value={{ user, login, register, sendOTP, logout, updateProfile, updateXP, loading, sessionValid, navbarHidden, setNavbarHidden }}>
       {children}
     </AuthContext.Provider>
   );

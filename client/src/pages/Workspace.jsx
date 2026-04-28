@@ -170,7 +170,7 @@ const Workspace = () => {
 
   return (
     <div className="workspace-page">
-      <Navbar currentPage="workspace" />
+
       
       {/* Hero Section */}
       <section className="workspace-hero">

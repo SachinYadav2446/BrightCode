@@ -1,11 +1,24 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import CodeBrightLogo from './CodeBrightLogo';
 import './Navbar.css';
 
-const Navbar = ({ currentPage }) => {
+const Navbar = () => {
   const { user } = useAuth();
+  const location = useLocation();
+
+  const getActivePage = () => {
+    const path = location.pathname;
+    if (path.startsWith('/hub')) return 'home';
+    if (path.startsWith('/library')) return 'library';
+    if (path.startsWith('/workspace')) return 'workspace';
+    if (path.startsWith('/codevault')) return 'codevault';
+    if (path.startsWith('/factions')) return 'factions';
+    return '';
+  };
+
+  const currentPage = getActivePage();
 
   return (
     <nav className="floating-nav">

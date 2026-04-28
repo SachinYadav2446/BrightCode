@@ -239,7 +239,7 @@ const Factions = () => {
                 <div className="faction-ambient-light"></div>
             </div>
 
-            <Navbar currentPage="factions" />
+
 
             <AnimatePresence>
                 {showCreateModal && (

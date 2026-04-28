@@ -3,7 +3,7 @@
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
+  width: 100%;
   z-index: 1000;
   padding: 0 40px;
   height: 50px;
@@ -46,12 +46,25 @@
   position: relative;
 }
 
-.nav-link-hover:hover {
-  color: #ef4444;
+.nav-link-hover:hover,
+.nav-link-hover.active {
+  color: var(--text-hi);
 }
 
-.nav-link-hover.active {
-  color: #ef4444;
+.nav-link-hover::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #ef4444;
+  transition: width 0.25s ease;
+}
+
+.nav-link-hover:hover::after,
+.nav-link-hover.active::after {
+  width: 100%;
 }
 
 .user-profile-pill {

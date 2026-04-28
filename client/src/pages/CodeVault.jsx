@@ -282,7 +282,7 @@ const CodeVault = () => {
 
   return (
     <div className="codevault-container">
-      <Navbar currentPage="codevault" />
+
       <div className="codevault-layout">
         {/* Left Sidebar - Folder Tree */}
         <aside className="vault-sidebar">

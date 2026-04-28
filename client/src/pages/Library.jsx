@@ -8,7 +8,7 @@ import './Library.css';
 const Library = () => {
   return (
     <div className="library-page">
-      <Navbar currentPage="library" />
+
       
       <div className="library-empty">
         <div className="empty-icon">

@@ -15,6 +15,8 @@ import CodeVault from './pages/CodeVault';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import Navbar from './components/Navbar';
+import { useLocation } from 'react-router-dom';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -32,6 +34,18 @@ const LandingRoute = () => {
   return <Landing />;
 };
 
+const NavbarWrapper = () => {
+  const location = useLocation();
+  const { navbarHidden } = useAuth();
+  
+  const hideOnPaths = ['/auth', '/editor', '/user-module'];
+  const isLanding = location.pathname === '/';
+  const shouldHide = navbarHidden || isLanding || hideOnPaths.some(p => location.pathname.startsWith(p));
+  
+  if (shouldHide) return null;
+  return <Navbar />;
+};
+
 function App() {
   return (
     <ErrorBoundary>
@@ -46,6 +60,7 @@ function App() {
           />
         </div>
         <BrowserRouter>
+          <NavbarWrapper />
           <Routes>
             <Route path="/" element={<LandingRoute />} />
             <Route 
