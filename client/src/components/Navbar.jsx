@@ -24,6 +24,9 @@ const Navbar = ({ currentPage }) => {
           <Link to="/workspace" className={`nav-link-hover ${currentPage === 'workspace' ? 'active' : ''}`}>
             Workspace
           </Link>
+          <Link to="/codevault" className={`nav-link-hover ${currentPage === 'codevault' ? 'active' : ''}`}>
+            Vault
+          </Link>
           <Link to="/factions" className={`nav-link-hover ${currentPage === 'factions' ? 'active' : ''}`}>
             Factions
           </Link>

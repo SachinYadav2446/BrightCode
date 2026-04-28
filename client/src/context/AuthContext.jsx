@@ -1,11 +1,12 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 
-const AuthContext = createContext();
+const AuthContext = createContext({});
 
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 1 week in milliseconds
 
 export const AuthProvider = ({ children }) => {
+  console.log('[AuthContext] Provider rendering');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sessionValid, setSessionValid] = useState(false);
@@ -49,7 +50,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       // Then sync fresh XP from server (non-blocking)
-      axios.get('http://localhost:5050/me', {
+      axios.get('http://localhost:5051/me', {
         headers: { Authorization: `Bearer ${token}` },
         timeout: 4000
       }).then(res => {
@@ -91,7 +92,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const { data } = await axios.post('http://localhost:5050/login', { email, password });
+      const { data } = await axios.post('http://localhost:5051/login', { email, password });
       localStorage.setItem('token', data.token);
       localStorage.setItem('username', data.username);
       localStorage.setItem('email', data.email);
@@ -136,7 +137,7 @@ export const AuthProvider = ({ children }) => {
 
   const sendOTP = async (email, username = '', type = 'register') => {
     try {
-      const { data } = await axios.post('http://localhost:5050/send-otp', 
+      const { data } = await axios.post('http://localhost:5051/send-otp', 
         { email, username, type },
         { timeout: 15000 } // 15 seconds timeout
       );
@@ -151,7 +152,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (username, email, password, otp) => {
     try {
-      await axios.post('http://localhost:5050/register', { username, email, password, otp });
+      await axios.post('http://localhost:5051/register', { username, email, password, otp });
       return { success: true };
     } catch (err) {
       const serverError = err.response?.data;
@@ -164,7 +165,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (updateData) => {
     try {
-      const { data } = await axios.post('http://localhost:5050/update-profile',
+      const { data } = await axios.post('http://localhost:5051/update-profile',
         updateData,
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
