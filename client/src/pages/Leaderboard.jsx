@@ -29,7 +29,13 @@ const Leaderboard = () => {
         if (window.history.length > 1) navigate(-1);
         else navigate('/');
     };
-    const { user, updateXP } = useAuth();
+    const { user, updateXP, setNavbarHidden } = useAuth();
+    
+    useEffect(() => {
+        setNavbarHidden(true);
+        return () => setNavbarHidden(false);
+    }, [setNavbarHidden]);
+
     const [rankers, setRankers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [dbError, setDbError] = useState(null);
@@ -130,40 +136,74 @@ const Leaderboard = () => {
                 <div className="ambient-light main-light"></div>
             </div>
 
-            {/* Nav */}
-            <nav className="leaderboard-nav">
-                <button onClick={goBackPreserveScroll} className="back-btn">
-                    <ArrowLeft size={18} />
-                    <span>Back to Hub</span>
-                </button>
-
-                <div className="nav-search">
-                    <Search size={16} className="search-icon" />
-                    <input type="text" placeholder="Search engineers..."
-                        value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-                    {searchQuery && (
-                        <button className="clear-search" onClick={() => setSearchQuery('')}>×</button>
-                    )}
+            <header className="lb-header">
+                <div className="lb-header-left">
+                    <button onClick={goBackPreserveScroll} className="lb-back-btn">
+                        <ArrowLeft size={20} />
+                    </button>
+                    <div className="lb-brand">
+                        <div className="lb-trophy-box">
+                            <Trophy size={20} className="lb-trophy-icon" />
+                        </div>
+                        <div className="lb-title-group">
+                            <h1>HALL OF FAME</h1>
+                            <div className="lb-subtitle-row">
+                                <span className="lb-pulse-dot"></span>
+                                <span className="lb-subtitle">GLOBAL RANKINGS</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="nav-right-section">
+                <div className="lb-header-center">
+                    <div className="lb-search-container">
+                        <Search size={16} className="lb-search-icon" />
+                        <input 
+                            type="text" 
+                            placeholder="SEARCH OPERATIVES..." 
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                        />
+                        {searchQuery && (
+                            <button className="lb-search-clear" onClick={() => setSearchQuery('')}>
+                                <X size={14} />
+                            </button>
+                        )}
+                        <div className="lb-search-glow"></div>
+                    </div>
+                </div>
+
+                <div className="lb-header-right">
                     {user && (
-                        <div className="your-rank-chip">
-                            <div className="your-rank-avatar">{user.username?.charAt(0)?.toUpperCase()}</div>
-                            <div>
-                                <span className="your-rank-name">{user.username}</span>
-                                <span className="your-rank-xp">
-                                    <Zap size={10} fill="#faf8f3" /> {(user.xp || 0).toLocaleString()} XP
-                                    {userRank && <span style={{ marginLeft: '8px', opacity: 0.7 }}>• Rank #{userRank}</span>}
-                                </span>
+                        <div className="lb-user-pnl">
+                            <div className="lb-user-avatar">
+                                {user.username[0].toUpperCase()}
+                            </div>
+                            <div className="lb-user-details">
+                                <span className="lb-user-name">{user.username}</span>
+                                <div className="lb-user-stats">
+                                    <div className="lb-stat-item">
+                                        <Zap size={10} />
+                                        <span>{user.xp} XP</span>
+                                    </div>
+                                    <div className="lb-stat-sep"></div>
+                                    <div className="lb-stat-item">
+                                        <Shield size={10} />
+                                        <span>#{userRank || '--'}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
-                    <button className={`refresh-btn ${isRefreshing ? 'spinning' : ''}`} onClick={() => fetchRankings(true)} title="Refresh">
-                        <RefreshCw size={16} />
+                    <button 
+                        className={`lb-refresh-btn ${isRefreshing ? 'spinning' : ''}`}
+                        onClick={() => fetchRankings()}
+                        title="Refresh Rankings"
+                    >
+                        <RefreshCw size={18} />
                     </button>
                 </div>
-            </nav>
+            </header>
 
             {/* DB Error Banner */}
             <AnimatePresence>
