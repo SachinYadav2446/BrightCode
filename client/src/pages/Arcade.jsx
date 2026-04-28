@@ -4,10 +4,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import { 
     Gamepad2, ArrowLeft, Code2, Trophy, Zap, ArrowRight, Lock, 
     ChevronLeft, ChevronRight, RefreshCw, Activity, BookOpen,
-    Layout, Server, GraduationCap, GitBranch, Database, Brain, Layers
+    Layout, Server, GraduationCap, GitBranch, Database, Brain, Layers,
+    CheckCircle2, AlertCircle, X
 } from 'lucide-react';
 import './Arcade.css';
-import toast from 'react-hot-toast';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
@@ -28,7 +28,7 @@ const SIDEBAR_TABS = [
 ];
 
 // ── LIBRARY LOBBY (Sidebar + Content) ─────────────────────────────────
-const LibraryLobby = ({ sections, setActiveGame, setViewingSections }) => {
+const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentLvlIdx }) => {
     const [activeTab, setActiveTab] = useState('frontend');
 
     // Map sidebar tab id → sections array id
@@ -124,7 +124,10 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections }) => {
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.08 }}
                                         whileHover={{ y: -6 }}
-                                        onClick={() => { setActiveGame(game.id); setViewingSections(true); }}
+                                        onClick={() => { 
+                                            setActiveGame(game.id); 
+                                            setViewingSections(true);
+                                        }}
                                     >
                                         <div className="lib-module-top">
                                             <div className="lib-module-icon">
@@ -154,7 +157,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections }) => {
                                                 </div>
                                             </div>
                                             <button className="lib-enter-btn">
-                                                {pct >= 100 ? 'Review' : 'Enter'} <ArrowRight size={14} />
+                                                {pct >= 100 ? 'Review' : 'Enter'}
                                             </button>
                                         </div>
                                     </motion.div>
@@ -204,11 +207,20 @@ const Arcade = () => {
     const [answerRevealed, setAnswerRevealed] = useState(false);
     const [wrongSelection, setWrongSelection] = useState(null);
     const [cssInput, setCssInput] = useState('');
+    const [logicInput, setLogicInput] = useState('');
     const [currentLvlIdx, setCurrentLvlIdx] = useState(0);
     const [showTheory, setShowTheory] = useState(false);
     const [viewingSections, setViewingSections] = useState(false);
+    const [phasePage, setPhasePage] = useState(0);
+    const phasesPerPage = 3;
     const [isWarping, setIsWarping] = useState(false);
+    const [cssStatus, setCssStatus] = useState('neutral'); // 'neutral', 'correct', 'wrong'
+    const [logicStatus, setLogicStatus] = useState('neutral'); // 'neutral', 'correct', 'wrong'
     const [phaseCompleteMessage, setPhaseCompleteMessage] = useState('');
+    const [progressSidebarOpen, setProgressSidebarOpen] = useState(true);
+    const [testResults, setTestResults] = useState(null); // For logic lab feedback
+    const [showModal, setShowModal] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ type: 'success', title: '', message: '' });
 
     const gameMap = {
         'css-odyssey': CSS_LEVELS,
@@ -236,6 +248,7 @@ const Arcade = () => {
 
     useEffect(() => {
         if (!activeGame || !user) return;
+        setPhasePage(0); // Reset pagination when switching modules
         let dbLevel = 0;
         if (activeGame === 'css-odyssey') dbLevel = user.css_level || 0;
         else if (activeGame === 'logic-lab') dbLevel = user.logic_level || 0;
@@ -252,41 +265,65 @@ const Arcade = () => {
     const levels = gameMap[activeGame] || [];
     const levelData = levels[currentLvlIdx];
 
+    // Calculate phase-relative level info
+    const currentPhase = (SUBJECT_PHASES[activeGame] || []).find(p => currentLvlIdx >= p.start && currentLvlIdx <= p.end);
+    const relativeLvlIdx = currentPhase ? currentLvlIdx - currentPhase.start + 1 : currentLvlIdx + 1;
+    const totalInPhase = currentPhase ? currentPhase.end - currentPhase.start + 1 : levels.length;
+
     useEffect(() => {
         if (savedSolutions[currentLvlIdx]) {
-            setCssInput(savedSolutions[currentLvlIdx]);
+            if (activeGame === 'css-odyssey') setCssInput(savedSolutions[currentLvlIdx]);
+            else if (activeGame === 'logic-lab') setLogicInput(savedSolutions[currentLvlIdx]);
         } else {
             setCssInput('');
+            setLogicInput(activeGame === 'logic-lab' && levelData?.syntax ? levelData.syntax : '');
         }
+        // Reset states for new level
+        setSelectedOption(null);
+        setAnswerRevealed(false);
+        setWrongSelection(null);
+        setCssStatus('neutral');
+        setLogicStatus('neutral');
+        setTestResults(null);
     }, [currentLvlIdx, savedSolutions, activeGame]);
 
     const isLevelSolved = (levelIdx) => {
         return Boolean(savedSolutions[levelIdx]) || levelIdx < highestLevel;
     };
 
-    const isPhaseUnlocked = (phaseIdx) => {
-        if (phaseIdx <= 0) return true;
+    const isLevelLocked = (levelIdx) => {
+        if (levelIdx === 0) return false;
+        return !isLevelSolved(levelIdx - 1);
+    };
+
+    const isPhaseLocked = (phaseIdx) => {
+        if (phaseIdx === 0) return false;
         const phases = SUBJECT_PHASES[activeGame] || [];
-        for (let i = 0; i < phaseIdx; i++) {
-            const phase = phases[i];
-            for (let levelIdx = phase.start; levelIdx <= phase.end; levelIdx++) {
-                if (!isLevelSolved(levelIdx)) return false;
-            }
-        }
-        return true;
+        const prevPhase = phases[phaseIdx - 1];
+        if (!prevPhase) return false;
+        return !isLevelSolved(prevPhase.end);
     };
 
     const startPhase = (phase) => {
         const phases = SUBJECT_PHASES[activeGame] || [];
         const pIdx = phases.findIndex(p => p.name === phase.name);
-        if (isPhaseUnlocked(pIdx)) {
-            setCurrentLvlIdx(phase.start);
+        if (!isPhaseLocked(pIdx)) {
+            // Find first unsolved level in this phase
+            let startIdx = phase.start;
+            for (let i = phase.start; i <= phase.end; i++) {
+                if (!isLevelSolved(i)) {
+                    startIdx = i;
+                    break;
+                }
+            }
+            setCurrentLvlIdx(startIdx);
             setViewingSections(false);
             if (activeGame !== 'react-quest') setShowTheory(true);
         }
     };
 
-    const handleVictory = (code) => {
+    const saveProgress = async (code) => {
+        const isNewLevel = currentLvlIdx + 1 > highestLevel;
         const newHighest = Math.max(highestLevel, currentLvlIdx + 1);
         setHighestLevel(newHighest);
         const storageKey = `highest_${activeGame.replace(/-/g, '_')}_level`;
@@ -295,6 +332,235 @@ const Arcade = () => {
         const updatedSolutions = { ...savedSolutions, [currentLvlIdx]: code };
         setSavedSolutions(updatedSolutions);
         localStorage.setItem(`${activeGame.replace(/-/g, '_')}_solutions`, JSON.stringify(updatedSolutions));
+
+        // ── AWARD 10 XP FOR NEW SOLVE ───────────────────────────────────
+        if (isNewLevel && user) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.post('http://localhost:5051/add-xp', {
+                    amount: 10,
+                    module: activeGame,
+                    level: currentLvlIdx + 1
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                if (response.data.success) {
+                    const { xp, ...stats } = response.data;
+                    updateXP(xp, stats);
+                    console.log(`[XP] Awarded 10 XP for ${activeGame} Level ${currentLvlIdx + 1}`);
+                }
+            } catch (err) {
+                console.error('[XP SYNC ERROR]', err);
+            }
+        }
+    };
+
+    const handleTryAgain = () => {
+        setShowModal(false);
+        setAnswerRevealed(false);
+        setWrongSelection(null);
+        setSelectedOption(null);
+        setCssStatus('neutral');
+        setLogicStatus('neutral');
+        setTestResults(null);
+    };
+
+    const handleNextLevel = () => {
+        if (currentLvlIdx < levels.length - 1 && !isLevelLocked(currentLvlIdx + 1)) {
+            // Use warp animation if they just solved it
+            if (answerRevealed && !wrongSelection) {
+                setIsWarping(true);
+                setTimeout(() => {
+                    setIsWarping(false);
+                    setCurrentLvlIdx(i => Math.min(levels.length - 1, i + 1));
+                }, 1500);
+            } else {
+                setCurrentLvlIdx(i => Math.min(levels.length - 1, i + 1));
+            }
+        }
+    };
+
+    const triggerModal = (type, title, message) => {
+        setModalConfig({ type, title, message });
+        setShowModal(true);
+    };
+
+    const handleVictory = async (code) => {
+        const isMCQ = levelData.options && levelData.answer !== undefined;
+        
+        if (isMCQ) {
+            if (selectedOption === null) {
+                triggerModal('error', 'Selection Required', 'Please select an option first!');
+                return;
+            }
+            
+            const userAnswer = parseInt(code);
+            const isCorrect = userAnswer === levelData.answer;
+            
+            setAnswerRevealed(true);
+            if (!isCorrect) {
+                setWrongSelection(userAnswer);
+                triggerModal('error', 'Incorrect Answer', 'That\'s not quite right. Try again!');
+            } else {
+                await saveProgress(code);
+                triggerModal('success', 'Perfect! +10 XP', 'Great job! You\'ve selected the correct answer and earned 10 XP.');
+            }
+            // No automatic progression anymore - let user click "Next"
+        } else if (activeGame === 'css-odyssey') {
+            // CSS Validation Logic
+            const input = code.toLowerCase().replace(/\s/g, '');
+            const reqs = levelData.reqs || [];
+            
+            const isCorrect = reqs.every(req => {
+                if (Array.isArray(req)) {
+                    return req.some(r => input.includes(r.toLowerCase().replace(/\s/g, '')));
+                }
+                return input.includes(req.toLowerCase().replace(/\s/g, ''));
+            });
+
+            if (isCorrect) {
+                setAnswerRevealed(true);
+                setCssStatus('correct');
+                await saveProgress(code);
+                triggerModal('success', 'Requirements Met +10 XP', 'Fantastic! Your design meets all the requirements. You earned 10 XP!');
+            } else {
+                setCssStatus('wrong');
+                triggerModal('error', 'Check Requirements', 'Some design requirements are missing or incorrect. Keep trying!');
+            }
+        } else if (activeGame === 'logic-lab') {
+            // Logic Lab Validation with Async and DOM support
+            const runLogicTest = async () => {
+                try {
+                    const results = [];
+                    // Process test cases sequentially to handle async properly
+                    for (const tc of levelData.testCases) {
+                        const args = tc.slice(0, tc.length - 1);
+                        const expected = tc[tc.length - 1];
+                        let actual;
+                        let error = null;
+
+                        // Mock DOM setup if level requires it
+                        let mockDoc = null;
+                        let container = null;
+                        if (levelData.isDOM) {
+                            container = document.createElement('div');
+                            container.innerHTML = levelData.mockDOM || '';
+                            
+                            // Scoped document mock
+                            mockDoc = {
+                                getElementById: (id) => container.querySelector(`#${id}`),
+                                getElementsByClassName: (cls) => container.getElementsByClassName(cls),
+                                getElementsByTagName: (tag) => container.getElementsByTagName(tag),
+                                querySelector: (sel) => container.querySelector(sel),
+                                querySelectorAll: (sel) => container.querySelectorAll(sel),
+                                createElement: (tag) => document.createElement(tag),
+                                body: container,
+                                addEventListener: (type, fn) => container.addEventListener(type, fn),
+                                removeEventListener: (type, fn) => container.removeEventListener(type, fn),
+                                write: (txt) => container.innerHTML += txt,
+                            };
+                        }
+
+                        const mockFetch = () => Promise.resolve({ 
+                            status: 200, 
+                            ok: true,
+                            json: () => Promise.resolve({ data: "Success" }),
+                            text: () => Promise.resolve("Success")
+                        });
+
+                        try {
+                            const fnBody = `
+                                try {
+                                    ${code}
+                                    if (typeof solution === 'function') {
+                                        return solution(${levelData.params});
+                                    }
+                                    ${!code.includes('return') && !code.trim().startsWith('function') ? `return (${code})` : ''}
+                                } catch (e) {
+                                    throw e;
+                                }
+                            `;
+                            
+                            const params = [];
+                            const values = [];
+                            
+                            if (levelData.isDOM) {
+                                params.push('document');
+                                values.push(mockDoc);
+                            }
+                            
+                            params.push('mockFetch');
+                            values.push(mockFetch);
+
+                            // Add original params from levelData
+                            const levelParams = levelData.params ? levelData.params.split(',').map(p => p.trim()).filter(Boolean) : [];
+                            params.push(...levelParams);
+                            values.push(...args);
+
+                            // Use AsyncFunction if it's an async level
+                            const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+                            const userFn = levelData.isAsync 
+                                ? new AsyncFunction(...params, fnBody)
+                                : new Function(...params, fnBody);
+                            
+                            actual = levelData.isAsync ? await userFn(...values) : userFn(...values);
+                            
+                            // Special case for DOM innerHTML checks if user modified the container
+                            if (levelData.isDOM && levelData.id === 116 && actual === undefined) {
+                                actual = container.innerHTML;
+                            }
+                        } catch (e) {
+                            error = e.message;
+                        }
+                        
+                        // Deep compare results
+                        const isMatch = (a, b) => {
+                            try {
+                                return JSON.stringify(a) === JSON.stringify(b);
+                            } catch {
+                                return a === b;
+                            }
+                        };
+
+                        results.push({ 
+                            args, 
+                            expected, 
+                            actual, 
+                            error,
+                            passed: !error && isMatch(actual, expected) 
+                        });
+                    }
+
+                    const allPassed = results.every(r => r.passed);
+                    setTestResults(results);
+
+                    if (allPassed) {
+                        setAnswerRevealed(true);
+                        setLogicStatus('correct');
+                        await saveProgress(code);
+                        triggerModal('success', 'Logic Correct +10 XP', 'Brilliant! All test cases passed successfully. You earned 10 XP!');
+                    } else {
+                        setLogicStatus('wrong');
+                        triggerModal('error', 'Logic Failed', 'Some test cases failed. Check your logic and try again.');
+                    }
+                } catch (err) {
+                    setLogicStatus('wrong');
+                    triggerModal('error', 'Execution Error', err.message);
+                }
+            };
+
+            runLogicTest();
+        } else {
+            // For other levels (if any)
+            setAnswerRevealed(true);
+            await saveProgress(code);
+            triggerModal('success', 'Level Complete +10 XP', 'You\'ve successfully completed this level and earned 10 XP!');
+        }
+    };
+
+    const proceedToNext = async (code) => {
+        await saveProgress(code);
 
         setIsWarping(true);
         setTimeout(() => {
@@ -308,42 +574,531 @@ const Arcade = () => {
     };
 
     return (
-        <div className="arcade-page">
-            <Navbar currentPage="library" />
+        <div className={`arcade-page ${activeGame ? 'no-navbar' : ''}`}>
+
 
             {!activeGame ? (
-                <LibraryLobby sections={sections} setActiveGame={setActiveGame} setViewingSections={setViewingSections} />
+                <LibraryLobby 
+                    sections={sections} 
+                    setActiveGame={setActiveGame} 
+                    setViewingSections={setViewingSections} 
+                    setCurrentLvlIdx={setCurrentLvlIdx}
+                />
             ) : viewingSections ? (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="active-game-container" style={{
-                    marginTop: '50px', height: 'calc(100vh - 50px)', background: '#0a0a0a', padding: '40px'
-                }}>
-                    <button className="lib-enter-btn" onClick={() => { setActiveGame(null); setViewingSections(false); }}>
-                        <ArrowLeft size={16} /> BACK TO LIBRARY
-                    </button>
-                    <div className="phase-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px', marginTop: '40px' }}>
-                        {(SUBJECT_PHASES[activeGame] || []).map((phase, idx) => {
-                            const unlocked = isPhaseUnlocked(idx);
-                            return (
-                                <motion.div key={idx} className={`phase-card ${unlocked ? 'unlocked' : 'locked'}`} style={{
-                                    padding: '24px', borderRadius: '16px', background: unlocked ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.05)',
-                                    border: unlocked ? '1px solid #ef4444' : '1px solid #333', cursor: unlocked ? 'pointer' : 'not-allowed'
-                                }} onClick={() => unlocked && startPhase(phase)}>
-                                    <h3>{phase.label}</h3>
-                                    {!unlocked && <Lock size={16} />}
-                                </motion.div>
-                            );
-                        })}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="phase-view-container"
+                >
+                    <div className="phase-view-header">
+                        <button className="phase-back-btn" onClick={() => { setActiveGame(null); setViewingSections(false); }}>
+                            Back
+                        </button>
+                        
+                        <div className="phase-view-title-group">
+                            <h1 className="phase-view-title">
+                                {sections.flatMap(s => s.games).find(g => g.id === activeGame)?.title || 'Module'}
+                                <span className="phase-title-accent"> — Phases</span>
+                            </h1>
+                            <p className="phase-view-subtitle">Select a phase to begin. Complete all levels in a phase to unlock the next one.</p>
+                        </div>
+
+                        <div className="phase-view-controls-row">
+                            <div className="phase-view-left-controls">
+                                {highestLevel > 0 && highestLevel < levels.length && (
+                                    <motion.button 
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            className="phase-resume-banner"
+                                            onClick={() => {
+                                                setCurrentLvlIdx(highestLevel);
+                                                setViewingSections(false);
+                                            }}
+                                        >
+                                            <Zap size={16} fill="#ef4444" color="#ef4444" />
+                                            <span>Resume from where you left off (Level {highestLevel + 1})</span>
+                                        </motion.button>
+                                )}
+                            </div>
+
+                            {/* Pagination Controls */}
+                            {(() => {
+                                const allPhases = SUBJECT_PHASES[activeGame] || [];
+                                const totalPages = Math.ceil(allPhases.length / phasesPerPage);
+                                if (totalPages <= 1) return null;
+                                
+                                return (
+                                    <div className="phase-pagination-controls">
+                                        <button 
+                                            className="phase-page-btn"
+                                            disabled={phasePage === 0}
+                                            onClick={() => setPhasePage(p => Math.max(0, p - 1))}
+                                        >
+                                            <ChevronLeft size={20} />
+                                        </button>
+                                        <span className="phase-page-indicator">
+                                            Page {phasePage + 1} of {totalPages}
+                                        </span>
+                                        <button 
+                                            className="phase-page-btn"
+                                            disabled={phasePage >= totalPages - 1}
+                                            onClick={() => setPhasePage(p => Math.min(totalPages - 1, p + 1))}
+                                        >
+                                            <ChevronRight size={20} />
+                                        </button>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    </div>
+
+                    <div className="phase-cards-grid">
+                        {(() => {
+                            const allPhases = SUBJECT_PHASES[activeGame] || [];
+                            const visiblePhases = allPhases.slice(phasePage * phasesPerPage, (phasePage + 1) * phasesPerPage);
+                            
+                            return visiblePhases.map((phase, localIdx) => {
+                                const globalIdx = phasePage * phasesPerPage + localIdx;
+                                const locked = isPhaseLocked(globalIdx);
+                                const totalInPhase = phase.end - phase.start + 1;
+                                const solvedInPhase = Array.from({ length: totalInPhase }, (_, i) => isLevelSolved(phase.start + i)).filter(Boolean).length;
+                                const phasePct = Math.round((solvedInPhase / totalInPhase) * 100);
+
+                                return (
+                                    <motion.div
+                                        key={globalIdx}
+                                        className={`phase-card-new ${locked ? 'locked' : 'unlocked'}`}
+                                        initial={{ opacity: 0, y: 24 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: localIdx * 0.07 }}
+                                        whileHover={locked ? {} : { y: -4 }}
+                                        onClick={() => !locked && startPhase(phase)}
+                                    >
+                                        <div className="phase-card-top">
+                                            <div className="phase-card-num">Phase {String(globalIdx + 1).padStart(2, '0')}</div>
+                                            {phasePct === 100 ? (
+                                                <span className="phase-complete-badge">✓ Complete</span>
+                                            ) : locked ? (
+                                                <span className="phase-locked-badge"><Lock size={12} /> Locked</span>
+                                            ) : null}
+                                        </div>
+                                        <h3 className="phase-card-title">{phase.label}</h3>
+                                        <p className="phase-card-range">Levels {phase.start + 1} – {phase.end + 1}</p>
+                                        <div className="phase-card-progress">
+                                            <div className="phase-progress-bar">
+                                                <motion.div
+                                                    className="phase-progress-fill"
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${phasePct}%` }}
+                                                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                                                    style={{ background: phasePct === 100 ? '#10b981' : (locked ? '#333' : '#ef4444') }}
+                                                />
+                                            </div>
+                                            <span className="phase-progress-label">{solvedInPhase}/{totalInPhase}</span>
+                                        </div>
+                                        <div className="phase-card-cta">
+                                            {locked ? (
+                                                <>Locked <Lock size={14} /></>
+                                            ) : (
+                                                <>{phasePct === 100 ? 'Review' : phasePct > 0 ? 'Continue' : 'Start'}</>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                );
+                            });
+                        })()}
                     </div>
                 </motion.div>
             ) : (
-                <div className="game-view" style={{ marginTop: '50px', padding: '40px', color: 'white' }}>
-                    <h2>{levelData?.title || 'Victory!'}</h2>
-                    <p>{levelData?.desc}</p>
-                    <button className="lib-enter-btn" onClick={() => handleVictory('solved')}>Complete Level</button>
-                    <button className="lib-enter-btn" style={{ marginLeft: '10px' }} onClick={() => setViewingSections(true)}>Select Phase</button>
-                </div>
+                <motion.div
+                    className="game-view-container"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                >
+                    {/* Top bar */}
+                    <div className="game-top-strip">
+                        <div className="game-top-left">
+                            <button className="game-back-text-btn" onClick={() => setViewingSections(true)}>
+                                Back
+                            </button>
+                            <div className="game-level-info">
+                                <span className="game-module-tag">
+                                    {sections.flatMap(s => s.games).find(g => g.id === activeGame)?.title}
+                                </span>
+                                <span className="game-level-sep">›</span>
+                                <span className="game-level-tag">
+                                    {currentPhase ? `${currentPhase.label}: ` : ''}
+                                    Level {relativeLvlIdx} / {totalInPhase}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="game-nav-btns hidden-top-nav">
+                            <button
+                                className="game-nav-btn"
+                                disabled={currentLvlIdx === 0}
+                                onClick={() => setCurrentLvlIdx(i => Math.max(0, i - 1))}
+                            >
+                                <ChevronLeft size={16} />
+                            </button>
+                            <button
+                                className="game-nav-btn"
+                                disabled={currentLvlIdx >= levels.length - 1 || isLevelLocked(currentLvlIdx + 1)}
+                                onClick={() => setCurrentLvlIdx(i => Math.min(levels.length - 1, i + 1))}
+                            >
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Main content */}
+                    <div className={`game-main-layout ${progressSidebarOpen ? '' : 'sidebar-collapsed'}`}>
+                        {/* Left: Challenge Panel */}
+                        <div className="game-challenge-panel">
+                            <div className="game-challenge-header">
+                                <div className="game-challenge-num">Challenge #{relativeLvlIdx}</div>
+                                <h2 className="game-challenge-title">{levelData?.title || '🎉 All Done!'}</h2>
+                                <p className="game-challenge-desc">{levelData?.desc || 'You completed all levels in this module.'}</p>
+                            </div>
+
+                            {levelData && (
+                                <div className="game-challenge-body">
+                                    {activeGame === 'css-odyssey' && (() => {
+                                        // Parse CSS text to React style object
+                                        const parseCss = (text) => {
+                                            const style = {};
+                                            text.split(';').forEach(rule => {
+                                                const [prop, ...vals] = rule.split(':');
+                                                if (prop && vals.length) {
+                                                    const camel = prop.trim().replace(/-([a-z])/g, (_, l) => l.toUpperCase());
+                                                    style[camel] = vals.join(':').trim();
+                                                }
+                                            });
+                                            return style;
+                                        };
+                                        const liveStyle = parseCss(cssInput);
+                                        const baseStyle = levelData.base || {};
+                                        const parentBaseStyle = levelData.parentBase || {};
+                                        const boxCount = levelData.multiBox || 1;
+                                        return (
+                                            <div className="css-forge-layout">
+                                                {/* Left: Code Editor */}
+                                                <div className="css-forge-editor">
+                                                    <div className="game-code-label">
+                                                        <Code2 size={13} /> Write your CSS
+                                                    </div>
+                                                    <textarea
+                                                        className={`game-css-input css-forge-textarea ${cssStatus}`}
+                                                        value={cssInput}
+                                                        onChange={e => {
+                                                            setCssInput(e.target.value);
+                                                            if (cssStatus === 'wrong') setCssStatus('neutral');
+                                                        }}
+                                                        placeholder={`/* Type CSS here...\ne.g.\ndisplay: flex;\njustify-content: center;\n*/`}
+                                                        spellCheck={false}
+                                                        disabled={answerRevealed}
+                                                    />
+                                                    <div className="css-forge-hint">
+                                                        <span>💡</span>
+                                                        <span>Changes appear live in the preview →</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Right: Live Preview */}
+                                                <div className="css-forge-preview">
+                                                    <div className="css-forge-preview-label">Live Preview</div>
+                                                    <div className="css-forge-canvas">
+                                                        {levelData.isParent ? (
+                                                            <div style={{ ...parentBaseStyle, ...liveStyle, width: parentBaseStyle.width || '100%', minHeight: '80px' }}>
+                                                                {Array.from({ length: boxCount }).map((_, i) => (
+                                                                    <div key={i} style={{ ...baseStyle }}>
+                                                                        {levelData.renderBoxText || ''}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <div style={{ ...baseStyle, ...liveStyle }}>
+                                                                {levelData.renderBoxText || ''}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="css-forge-props">
+                                                        {Object.keys(parseCss(cssInput)).length > 0 && (
+                                                            <>
+                                                                <div className="css-forge-props-title">Applied Properties</div>
+                                                                {Object.entries(parseCss(cssInput)).map(([k, v]) => (
+                                                                    <div key={k} className="css-prop-row">
+                                                                        <span className="css-prop-key">{k.replace(/([A-Z])/g, '-$1').toLowerCase()}</span>
+                                                                        <span className="css-prop-colon">:</span>
+                                                                        <span className="css-prop-val">{v}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {activeGame === 'logic-lab' && (
+                                        <div className="logic-forge-layout">
+                                            <div className="logic-forge-editor">
+                                                <div className="game-code-label">
+                                                    <Zap size={13} /> JavaScript Logic
+                                                </div>
+                                                <textarea
+                                                    className={`game-logic-input logic-forge-textarea ${logicStatus}`}
+                                                    value={logicInput}
+                                                    onChange={e => {
+                                                        setLogicInput(e.target.value);
+                                                        if (logicStatus === 'wrong') setLogicStatus('neutral');
+                                                    }}
+                                                    placeholder={levelData.syntax || `function solution(${levelData.params}) {\n  // Your code here\n  return \n}`}
+                                                    spellCheck={false}
+                                                    disabled={answerRevealed}
+                                                />
+                                                <div className="logic-forge-hint">
+                                                    <span>💡</span>
+                                                    <span>Click Submit to run test cases.</span>
+                                                </div>
+                                            </div>
+
+                                            {testResults && (
+                                                <div className="logic-test-results">
+                                                    <div className="logic-results-header">Test Results</div>
+                                                    <div className="logic-results-list">
+                                                        {testResults.map((res, i) => (
+                                                            <div key={i} className={`logic-test-item ${res.passed ? 'passed' : 'failed'}`}>
+                                                                <div className="logic-test-status">
+                                                                    {res.passed ? '✓' : '✗'}
+                                                                </div>
+                                                                <div className="logic-test-details">
+                                                                    <div className="logic-test-args">
+                                                                        Input: ({res.args.join(', ')})
+                                                                    </div>
+                                                                    <div className="logic-test-comparison">
+                                                                        {res.error ? (
+                                                                            <span className="logic-error">Error: {res.error}</span>
+                                                                        ) : (
+                                                                            <>
+                                                                                Expected: <span className="logic-val">{res.expected === undefined ? 'undefined' : JSON.stringify(res.expected)}</span> | 
+                                                                                Actual: <span className="logic-val">{res.actual === undefined ? 'undefined' : JSON.stringify(res.actual)}</span>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {levelData.options && levelData.answer !== undefined && (
+                                        <div className="game-options-list">
+                                            {levelData.options.map((opt, i) => {
+                                                const isCorrect = answerRevealed && i === levelData.answer;
+                                                const isWrong = answerRevealed && wrongSelection === i;
+                                                const isSelected = !answerRevealed && selectedOption === i;
+
+                                                return (
+                                                    <button
+                                                        key={i}
+                                                        className={`game-option-btn ${isSelected ? 'selected' : ''} ${isWrong ? 'wrong' : ''} ${isCorrect ? 'correct' : ''}`}
+                                                        onClick={() => !answerRevealed && setSelectedOption(i)}
+                                                        disabled={answerRevealed}
+                                                    >
+                                                        <span className="option-letter">{String.fromCharCode(65 + i)}</span>
+                                                        <span>{opt}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    <div className="game-actions centered-actions">
+                                        <button
+                                            className="game-nav-btn action-nav-btn"
+                                            disabled={currentLvlIdx === 0}
+                                            onClick={() => setCurrentLvlIdx(i => Math.max(0, i - 1))}
+                                            title="Previous Level"
+                                        >
+                                            <ChevronLeft size={20} />
+                                        </button>
+
+                                        <button
+                                            className="game-submit-btn"
+                                            onClick={() => {
+                                                const input = levelData.options ? String(selectedOption) : 
+                                                            (activeGame === 'css-odyssey' ? cssInput : logicInput);
+                                                handleVictory(input);
+                                            }}
+                                            disabled={isWarping || answerRevealed}
+                                        >
+                                            {isWarping ? 'Warping...' : 'Submit'} 
+                                            <ArrowRight size={15} />
+                                        </button>
+
+                                        <button
+                                            className="game-nav-btn action-nav-btn"
+                                            disabled={currentLvlIdx >= levels.length - 1 || isWarping}
+                                            onClick={handleNextLevel}
+                                            title="Next Level"
+                                        >
+                                            <ChevronRight size={20} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {!levelData && (
+                                <div className="game-victory-state">
+                                    <div className="game-victory-icon">🏆</div>
+                                    <h3>Module Complete!</h3>
+                                    <p>You've mastered all levels in this module.</p>
+                                    <button className="game-submit-btn" onClick={() => { setActiveGame(null); setViewingSections(false); }}>
+                                        Back to Library <ArrowRight size={15} />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Right: Progress sidebar */}
+                        <motion.div
+                            initial={false}
+                            animate={{ width: progressSidebarOpen ? 260 : 44 }}
+                            className={`game-progress-sidebar ${progressSidebarOpen ? '' : 'collapsed'}`}
+                        >
+                            <button
+                                className="gps-toggle-btn"
+                                onClick={() => setProgressSidebarOpen(o => !o)}
+                                title={progressSidebarOpen ? 'Collapse' : 'Expand'}
+                            >
+                                {progressSidebarOpen ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+                            </button>
+
+                            <div className="gps-header">
+                                <span>{progressSidebarOpen ? 'Level Progress' : ''}</span>
+                            </div>
+                            {progressSidebarOpen && (
+                                <div className="gps-body">
+                                    <div className="gps-levels">
+                                        {(() => {
+                                            const visibleLevels = currentPhase 
+                                                ? levels.slice(currentPhase.start, currentPhase.end + 1)
+                                                : levels;
+                                            
+                                            return visibleLevels.map((lvl, localIdx) => {
+                                                const globalIdx = currentPhase ? currentPhase.start + localIdx : localIdx;
+                                                const solved = isLevelSolved(globalIdx);
+                                                const current = globalIdx === currentLvlIdx;
+                                                const locked = isLevelLocked(globalIdx);
+                                                return (
+                                                    <button
+                                                        key={globalIdx}
+                                                        className={`gps-level-dot ${current ? 'current' : ''} ${solved ? 'solved' : ''} ${locked ? 'locked' : ''}`}
+                                                        onClick={() => !locked && setCurrentLvlIdx(globalIdx)}
+                                                        title={locked ? 'Locked' : lvl.title}
+                                                        disabled={locked}
+                                                    >
+                                                        {locked ? <Lock size={10} /> : localIdx + 1}
+                                                    </button>
+                                                );
+                                            });
+                                        })()}
+                                    </div>
+                                    <div className="gps-stat">
+                                        {(() => {
+                                            const phaseLevels = currentPhase 
+                                                ? levels.slice(currentPhase.start, currentPhase.end + 1)
+                                                : levels;
+                                            const solvedInPhase = phaseLevels.filter((_, i) => {
+                                                const globalIdx = currentPhase ? currentPhase.start + i : i;
+                                                return isLevelSolved(globalIdx);
+                                            }).length;
+                                            return (
+                                                <>
+                                                    <span>{solvedInPhase}</span>
+                                                    <span>/ {phaseLevels.length} solved</span>
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
+                                </div>
+                            )}
+                        </motion.div>
+                    </div>
+                </motion.div>
             )}
 
+            {/* ── Custom Popup Modal ── */}
+            <AnimatePresence>
+                {showModal && (
+                    <motion.div 
+                        className="arcade-modal-overlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowModal(false)}
+                    >
+                        <motion.div 
+                            className={`arcade-modal-card ${modalConfig.type}`}
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="modal-header">
+                                <div className="modal-icon-wrap">
+                                    {modalConfig.type === 'success' ? (
+                                        <CheckCircle2 size={32} color="#10b981" />
+                                    ) : (
+                                        <AlertCircle size={32} color="#ef4444" />
+                                    )}
+                                </div>
+                                <button className="modal-close-btn" onClick={() => setShowModal(false)}>
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            <div className="modal-body">
+                                <h3 className="modal-title">{modalConfig.title}</h3>
+                                <p className="modal-message">{modalConfig.message}</p>
+                            </div>
+                            <div className="modal-footer">
+                                {modalConfig.type === 'success' ? (
+                                    <>
+                                        <button 
+                                            className="modal-secondary-btn"
+                                            onClick={() => setShowModal(false)}
+                                        >
+                                            Review
+                                        </button>
+                                        <button 
+                                            className="modal-action-btn success"
+                                            onClick={() => {
+                                                setShowModal(false);
+                                                handleNextLevel();
+                                            }}
+                                            disabled={currentLvlIdx >= levels.length - 1}
+                                        >
+                                            {currentLvlIdx >= levels.length - 1 ? 'Finish Module' : 'Next Level'}
+                                            <ArrowRight size={18} style={{ marginLeft: '8px' }} />
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button 
+                                        className="modal-action-btn error"
+                                        onClick={handleTryAgain}
+                                    >
+                                        Try Again
+                                    </button>
+                                )}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

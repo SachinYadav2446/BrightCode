@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -12,15 +12,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import {
 
-  Users, FileCode, Play, LogOut, FilePlus, Terminal as TerminalIcon,
+    Users, FileCode, Play, LogOut, FilePlus, Terminal as TerminalIcon,
 
-  Monitor, Link as LinkIcon, Trash2, Edit2, Sparkles, Brain, Bot, Send,
+    Monitor, Link as LinkIcon, Trash2, Edit2, Sparkles, Brain, Bot, Send,
 
-  PenTool, Eraser, Layout as WhiteboardIcon, Zap, Shield, Languages,
+    PenTool, Eraser, Layout as WhiteboardIcon, Zap, Shield, Languages,
 
-  Mic, MicOff, Video, VideoOff, PhoneOff, Phone, Plus,
+    Mic, MicOff, Video, VideoOff, PhoneOff, Phone, Plus,
 
-  ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Share2
+    ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Share2
 
 } from 'lucide-react';
 
@@ -209,25 +209,17 @@ const EditorPage = () => {
 
 
     const toggleTerminal = (e) => {
-
-        e.stopPropagation();
-
+        if (e && e.stopPropagation) e.stopPropagation();
         if (isTerminalCollapsed) {
-
-            setTerminalHeight(prevTerminalHeight.current);
-
+            // Ensure height is at least 200px if prev was too small
+            const newHeight = Math.max(prevTerminalHeight.current, 200);
+            setTerminalHeight(newHeight);
             setIsTerminalCollapsed(false);
-
         } else {
-
             prevTerminalHeight.current = terminalHeight;
-
             setTerminalHeight(0);
-
             setIsTerminalCollapsed(true);
-
         }
-
     };
 
 
@@ -442,13 +434,13 @@ const EditorPage = () => {
 
                 socket.on('file-created', ({ fileName, language, content }) => {
 
-                    if (!isStopped) { 
+                    if (!isStopped) {
 
-                        setFiles(prev => ({ ...prev, [fileName]: { content: content || '', language } })); 
+                        setFiles(prev => ({ ...prev, [fileName]: { content: content || '', language } }));
 
                         setActiveFile(fileName);
 
-                        toast.success(`File ${fileName} created`); 
+                        toast.success(`File ${fileName} created`);
 
                     }
 
@@ -514,7 +506,7 @@ const EditorPage = () => {
 
                     if (peerConnectionRef.current && candidate) {
 
-                        try { await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate)); } catch {}
+                        try { await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate)); } catch { }
 
                     }
 
@@ -580,23 +572,23 @@ const EditorPage = () => {
 
             const currentFile = files[activeFile];
 
-            const pistonLangMap = { 
+            const pistonLangMap = {
 
-                javascript: 'js', 
+                javascript: 'js',
 
-                python: 'python3', 
+                python: 'python3',
 
-                cpp: 'cpp', 
+                cpp: 'cpp',
 
-                java: 'java' 
+                java: 'java'
 
             };
 
             const lang = pistonLangMap[currentFile.language] || currentFile.language;
 
-            
 
-            const response = await axios.post('http://localhost:5050/execute', {
+
+            const response = await axios.post('http://localhost:5051/execute', {
 
                 language: lang,
 
@@ -614,9 +606,9 @@ const EditorPage = () => {
 
                     const token = localStorage.getItem('token');
 
-                    const xpAmount = 5;
+                    const xpAmount = 10;
 
-                    const xpRes = await axios.post('http://localhost:5050/add-xp', { amount: xpAmount },
+                    const xpRes = await axios.post('http://localhost:5051/add-xp', { amount: xpAmount },
 
                         { headers: { Authorization: `Bearer ${token}` } }
 
@@ -694,7 +686,7 @@ const EditorPage = () => {
 
             const finalName = fileName.includes('.') ? fileName : `${fileName}.${ext}`;
 
-            
+
 
             if (files[finalName]) {
 
@@ -704,15 +696,15 @@ const EditorPage = () => {
 
             }
 
-            
 
-            socketRef.current.emit('file-create', { 
 
-                roomId, 
+            socketRef.current.emit('file-create', {
 
-                fileName: finalName, 
+                roomId,
 
-                language: creationLang 
+                fileName: finalName,
+
+                language: creationLang
 
             });
 
@@ -944,7 +936,7 @@ const EditorPage = () => {
 
             toast(`Incoming Hologram Comms — connection established`, { icon: '📡' });
 
-        } catch {}
+        } catch { }
 
     };
 
@@ -1046,63 +1038,131 @@ const EditorPage = () => {
 
         <>
 
-        <AnimatePresence>
+            <AnimatePresence>
 
-            {modalConfig.isOpen && (
+                {modalConfig.isOpen && (
 
-                <div className="custom-modal-overlay">
+                    <div className="custom-modal-overlay">
 
-                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="custom-modal">
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="custom-modal">
 
-                        <div className="custom-modal-header">
+                            <div className="custom-modal-header">
 
-                            <h3>{modalConfig.type === 'create' ? 'Create New File' : modalConfig.type === 'rename' ? 'Rename File' : 'Delete File'}</h3>
+                                <h3>{modalConfig.type === 'create' ? 'Create New File' : modalConfig.type === 'rename' ? 'Rename File' : 'Delete File'}</h3>
 
-                        </div>
+                            </div>
 
-                        <div className="custom-modal-body">
+                            <div className="custom-modal-body">
 
-                            {modalConfig.type === 'delete' ? (
+                                {modalConfig.type === 'delete' ? (
 
-                                <p>Delete <span className="highlight-file">{modalConfig.targetFile}</span>?</p>
+                                    <p>Delete <span className="highlight-file">{modalConfig.targetFile}</span>?</p>
 
-                            ) : (
+                                ) : (
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
 
-                                    {modalConfig.type === 'create' && (
+                                        {modalConfig.type === 'create' && (
+
+                                            <div className="modal-field">
+
+                                                <label>Select Language</label>
+
+                                                <select className="premium-input modal-select" value={creationLang} onChange={(e) => setCreationLang(e.target.value)}>
+
+                                                    <option value="javascript">JavaScript</option>
+
+                                                    <option value="python">Python</option>
+
+                                                    <option value="cpp">C++</option>
+
+                                                    <option value="java">Java</option>
+
+                                                </select>
+
+                                            </div>
+
+                                        )}
 
                                         <div className="modal-field">
 
-                                            <label>Select Language</label>
+                                            <label>{modalConfig.type === 'create' ? 'File Name' : 'New Name'}</label>
 
-                                            <select className="premium-input modal-select" value={creationLang} onChange={(e) => setCreationLang(e.target.value)}>
+                                            <input type="text" autoFocus defaultValue={modalConfig.defaultValue}
 
-                                                <option value="javascript">JavaScript</option>
+                                                onKeyDown={e => e.key === 'Enter' && handleModalSubmit(e.target.value)}
 
-                                                <option value="python">Python</option>
-
-                                                <option value="cpp">C++</option>
-
-                                                <option value="java">Java</option>
-
-                                            </select>
+                                                placeholder={modalConfig.type === 'create' ? "e.g. data_processor" : "e.g. main.js"} className="premium-input modal-input" />
 
                                         </div>
 
-                                    )}
-
-                                    <div className="modal-field">
-
-                                        <label>{modalConfig.type === 'create' ? 'File Name' : 'New Name'}</label>
-
-                                        <input type="text" autoFocus defaultValue={modalConfig.defaultValue}
-
-                                            onKeyDown={e => e.key === 'Enter' && handleModalSubmit(e.target.value)}
-
-                                            placeholder={modalConfig.type === 'create' ? "e.g. data_processor" : "e.g. main.js"} className="premium-input modal-input" />
-
                                     </div>
+
+                                )}
+
+                            </div>
+
+                            <div className="custom-modal-footer">
+
+                                <button className="secondary-btn" onClick={() => setModalConfig({ isOpen: false })}>Cancel</button>
+
+                                <button className={`primary-btn ${modalConfig.type === 'delete' ? 'danger-btn' : 'glow-btn'}`}
+
+                                    onClick={(e) => {
+
+                                        const modalEl = e.target.closest('.custom-modal');
+
+                                        const input = modalEl.querySelector('input');
+
+                                        handleModalSubmit(input ? input.value : null);
+
+                                    }}>
+
+                                    {modalConfig.type === 'delete' ? 'Delete' : 'Confirm'}
+
+                                </button>
+
+                            </div>
+
+                        </motion.div>
+
+                    </div>
+
+                )}
+
+            </AnimatePresence>
+
+
+
+            {/* ── HOLOGRAM COMMS PiP ──────────────────────────────────────────── */}
+
+            <AnimatePresence>
+
+                {isVoiceChatOpen && (
+
+                    <motion.div initial={{ opacity: 0, scale: 0.85, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.85, y: 20 }} className="hologram-pip">
+
+                        <div className="hologram-header">
+
+                            <div className="hologram-title"><span className="hologram-dot"></span> Hologram Comms</div>
+
+                            <button className="icon-btn" onClick={() => setIsVoiceChatOpen(false)}><Plus size={16} style={{ transform: 'rotate(45deg)' }} /></button>
+
+                        </div>
+
+                        <div className="hologram-video-area">
+
+                            <video ref={remoteVideoRef} autoPlay playsInline className="remote-video" />
+
+                            <video ref={localVideoRef} autoPlay playsInline muted className="local-video" />
+
+                            {!isCallActive && (
+
+                                <div className="hologram-idle">
+
+                                    <div className="idle-ring"></div>
+
+                                    <span>No active connection</span>
 
                                 </div>
 
@@ -1110,23 +1170,123 @@ const EditorPage = () => {
 
                         </div>
 
-                        <div className="custom-modal-footer">
+                        <div className="hologram-controls">
 
-                            <button className="secondary-btn" onClick={() => setModalConfig({ isOpen: false })}>Cancel</button>
+                            {isCallActive ? (
 
-                            <button className={`primary-btn ${modalConfig.type === 'delete' ? 'danger-btn' : 'glow-btn'}`}
+                                <>
 
-                                onClick={(e) => {
+                                    <button className={`holo-btn ${isMuted ? 'danger' : ''}`} onClick={toggleMute} title={isMuted ? 'Unmute' : 'Mute'}>
 
-                                    const modalEl = e.target.closest('.custom-modal');
+                                        {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
 
-                                    const input = modalEl.querySelector('input');
+                                    </button>
 
-                                    handleModalSubmit(input ? input.value : null);
+                                    <button className="holo-btn call-end" onClick={endCall} title="End Call">
 
-                                }}>
+                                        <PhoneOff size={16} />
 
-                                {modalConfig.type === 'delete' ? 'Delete' : 'Confirm'}
+                                    </button>
+
+                                    <button className={`holo-btn ${isVideoOn ? 'active-green' : ''}`} onClick={() => setIsVideoOn(v => !v)} title="Toggle Video">
+
+                                        {isVideoOn ? <Video size={16} /> : <VideoOff size={16} />}
+
+                                    </button>
+
+                                </>
+
+                            ) : (
+
+                                <button className="holo-btn holo-primary full-width" onClick={startCall}>
+
+                                    <Phone size={16} /> Start Hologram
+
+                                </button>
+
+                            )}
+
+                        </div>
+
+                    </motion.div>
+
+                )}
+
+            </AnimatePresence>
+
+
+
+
+
+            {/* ── AI TRANSLATOR PANEL ─────────────────────────────────────────── */}
+
+            <AnimatePresence>
+
+                {isTranslatorOpen && (
+
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="translator-panel">
+
+                        <div className="translator-header">
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Languages size={16} color="#818cf8" /> AI Translator</div>
+
+                            <button className="icon-btn" onClick={() => setIsTranslatorOpen(false)}><Plus size={14} style={{ transform: 'rotate(45deg)' }} /></button>
+
+                        </div>
+
+                        <div className="translator-body">
+
+                            <div className="translator-lang-row">
+
+                                <span className="translator-label">From: <strong>{activeFile?.split('.').pop()?.toUpperCase() || 'JS'}</strong></span>
+
+                                <span className="translator-arrow">→</span>
+
+                                <select value={translateTarget} onChange={e => { setTranslateTarget(e.target.value); setTranslatedCode(''); }} className="lang-select">
+
+                                    <option value="python">Python</option>
+
+                                    <option value="rust">Rust</option>
+
+                                    <option value="go">Go</option>
+
+                                    <option value="java">Java</option>
+
+                                </select>
+
+                            </div>
+
+                            {isTranslating && (
+
+                                <div className="translator-thinking">
+
+                                    <div className="scan-ring" style={{ borderTopColor: '#818cf8' }}></div>
+
+                                    <p>Translating architecture...</p>
+
+                                </div>
+
+                            )}
+
+                            {translatedCode && !isTranslating && (
+
+                                <div className="translated-output">
+
+                                    <pre>{translatedCode}</pre>
+
+                                </div>
+
+                            )}
+
+                        </div>
+
+                        <div className="translator-footer">
+
+                            <button className="primary-btn" style={{ width: '100%', justifyContent: 'center', background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#818cf8' }}
+
+                                onClick={translateCode} disabled={isTranslating || !activeFile}>
+
+                                {isTranslating ? 'Translating...' : `Translate → ${translateTarget.charAt(0).toUpperCase() + translateTarget.slice(1)}`}
 
                             </button>
 
@@ -1134,755 +1294,236 @@ const EditorPage = () => {
 
                     </motion.div>
 
-                </div>
+                )}
 
-            )}
-
-        </AnimatePresence>
+            </AnimatePresence>
 
 
 
-        {/* ── HOLOGRAM COMMS PiP ──────────────────────────────────────────── */}
+            {/* ── MAIN LAYOUT ─────────────────────────────────────────────────── */}
 
-        <AnimatePresence>
+            <div className="editor-layout" style={{ gridTemplateColumns: `${sidebarWidth}px ${isSidebarCollapsed ? 8 : 4}px 1fr` }}>
 
-            {isVoiceChatOpen && (
+                <aside className="sidebar">
 
-                <motion.div initial={{ opacity: 0, scale: 0.85, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.85, y: 20 }} className="hologram-pip">
+                    <div className="sidebar-header">
 
-                    <div className="hologram-header">
-
-                        <div className="hologram-title"><span className="hologram-dot"></span> Hologram Comms</div>
-
-                        <button className="icon-btn" onClick={() => setIsVoiceChatOpen(false)}><Plus size={16} style={{ transform: 'rotate(45deg)' }} /></button>
-
-                    </div>
-
-                    <div className="hologram-video-area">
-
-                        <video ref={remoteVideoRef} autoPlay playsInline className="remote-video" />
-
-                        <video ref={localVideoRef} autoPlay playsInline muted className="local-video" />
-
-                        {!isCallActive && (
-
-                            <div className="hologram-idle">
-
-                                <div className="idle-ring"></div>
-
-                                <span>No active connection</span>
-
+                        <div className="logo-section" style={{ color: 'var(--workspace-accent)' }}>
+                            <div className="logo-icon-wrapper">
+                                <Monitor size={22} strokeWidth={2.5} />
                             </div>
+                            <span className="logo-text">CODE <span className="text-bright">BRIGHT</span></span>
+                        </div>
 
-                        )}
+                        <div style={{ fontSize: '0.6rem', color: 'var(--workspace-text-muted)', marginTop: '8px', letterSpacing: '1px' }}>
 
-                    </div>
-
-                    <div className="hologram-controls">
-
-                        {isCallActive ? (
-
-                            <>
-
-                                <button className={`holo-btn ${isMuted ? 'danger' : ''}`} onClick={toggleMute} title={isMuted ? 'Unmute' : 'Mute'}>
-
-                                    {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
-
-                                </button>
-
-                                <button className="holo-btn call-end" onClick={endCall} title="End Call">
-
-                                    <PhoneOff size={16} />
-
-                                </button>
-
-                                <button className={`holo-btn ${isVideoOn ? 'active-green' : ''}`} onClick={() => setIsVideoOn(v => !v)} title="Toggle Video">
-
-                                    {isVideoOn ? <Video size={16} /> : <VideoOff size={16} />}
-
-                                </button>
-
-                            </>
-
-                        ) : (
-
-                            <button className="holo-btn holo-primary full-width" onClick={startCall}>
-
-                                <Phone size={16} /> Start Hologram
-
-                            </button>
-
-                        )}
-
-                    </div>
-
-                </motion.div>
-
-            )}
-
-        </AnimatePresence>
-
-
-
-
-
-        {/* ── AI TRANSLATOR PANEL ─────────────────────────────────────────── */}
-
-        <AnimatePresence>
-
-            {isTranslatorOpen && (
-
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="translator-panel">
-
-                    <div className="translator-header">
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Languages size={16} color="#818cf8" /> AI Translator</div>
-
-                        <button className="icon-btn" onClick={() => setIsTranslatorOpen(false)}><Plus size={14} style={{ transform: 'rotate(45deg)' }} /></button>
-
-                    </div>
-
-                    <div className="translator-body">
-
-                        <div className="translator-lang-row">
-
-                            <span className="translator-label">From: <strong>{activeFile?.split('.').pop()?.toUpperCase() || 'JS'}</strong></span>
-
-                            <span className="translator-arrow">→</span>
-
-                            <select value={translateTarget} onChange={e => { setTranslateTarget(e.target.value); setTranslatedCode(''); }} className="lang-select">
-
-                                <option value="python">Python</option>
-
-                                <option value="rust">Rust</option>
-
-                                <option value="go">Go</option>
-
-                                <option value="java">Java</option>
-
-                            </select>
+                            HEURISTIC INTERFACE v4.0.2
 
                         </div>
 
-                        {isTranslating && (
-
-                            <div className="translator-thinking">
-
-                                <div className="scan-ring" style={{ borderTopColor: '#818cf8' }}></div>
-
-                                <p>Translating architecture...</p>
-
-                            </div>
-
-                        )}
-
-                        {translatedCode && !isTranslating && (
-
-                            <div className="translated-output">
-
-                                <pre>{translatedCode}</pre>
-
-                            </div>
-
-                        )}
-
                     </div>
 
-                    <div className="translator-footer">
-
-                        <button className="primary-btn" style={{ width: '100%', justifyContent: 'center', background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#818cf8' }}
-
-                            onClick={translateCode} disabled={isTranslating || !activeFile}>
-
-                            {isTranslating ? 'Translating...' : `Translate → ${translateTarget.charAt(0).toUpperCase() + translateTarget.slice(1)}`}
-
-                        </button>
-
-                    </div>
-
-                </motion.div>
-
-            )}
-
-        </AnimatePresence>
 
 
 
-        {/* ── MAIN LAYOUT ─────────────────────────────────────────────────── */}
-
-        <div className="editor-layout" style={{ gridTemplateColumns: `${sidebarWidth}px ${isSidebarCollapsed ? 8 : 4}px 1fr` }}>
-
-            <aside className="sidebar">
-
-                <div className="sidebar-header">
-
-                    <div className="logo-section" style={{ color: 'var(--workspace-accent)' }}>
-
-                        <Monitor size={22} strokeWidth={2.5} />
-
-                        <span>Code Sight</span>
-
-                    </div>
-
-                    <div style={{ fontSize: '0.6rem', color: 'var(--workspace-text-muted)', marginTop: '8px', letterSpacing: '1px' }}>
-
-                        HEURISTIC INTERFACE v4.0.2
-
-                    </div>
-
-                </div>
 
 
 
-                <div className="sidebar-tabs">
-
-                    <button className={`tab-btn ${activeTab === 'files' ? 'active' : ''}`} onClick={() => setActiveTab('files')} title="Workspace"><FileCode size={20} /></button>
-
-                    <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')} title="Collaborators"><Users size={20} /></button>
-
-                    <button className={`tab-btn ${activeTab === 'warp' ? 'active' : ''}`} onClick={() => setActiveTab('warp')} title="Warp Drive"><Zap size={20} /></button>
-
-                </div>
-
-
-
-                <div className="sidebar-content">
-
-                    {activeTab === 'files' && (
-
+                    <div className="sidebar-content">
                         <div className="sidebar-section">
-
                             <div className="section-title">
-
                                 <span>WORKSPACE</span>
-
-                                <button onClick={createNewFile} className="icon-btn"><FilePlus size={16} /></button>
-
+                                <button onClick={createNewFile} className="icon-btn-ghost"><FilePlus size={16} /></button>
                             </div>
-
                             <div className="file-list">
-
-                                {Object.keys(files).map(name => (
-
-                                    <div key={name} className={`file-item ${activeFile === name ? 'active' : ''}`}
-
-                                        onClick={() => { setActiveFile(name); setLanguage(files[name].language); }}>
-
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, overflow: 'hidden' }}>
-
-                                            <FileCode size={16} color="#94a3b8" style={{ flexShrink: 0 }} />
-
-                                            <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{name}</span>
-
-                                        </div>
-
-                                        <div className="file-actions">
-
-                                            <button onClick={(e) => renameFile(e, name)} className="file-action-btn" title="Rename"><Edit2 size={13} /></button>
-
-                                            <button onClick={(e) => deleteFile(e, name)} className="file-action-btn danger" title="Delete"><Trash2 size={13} /></button>
-
-                                        </div>
-
+                                {/* Recursive folder structure would go here, for now using simple list with folders */}
+                                <div className="folder-item">
+                                    <div className="folder-header">
+                                        <ChevronDown size={14} />
+                                        <span className="folder-icon">📂</span>
+                                        <span>DEVESH</span>
                                     </div>
-
-                                ))}
-
-                            </div>
-
-                        </div>
-
-                    )}
-
-
-
-                    {activeTab === 'users' && (
-
-                        <div className="sidebar-section">
-
-                            <div className="section-title"><span>COLLABORATORS ({clients.length})</span></div>
-
-                            <div className="user-grid">
-
-                                {clients.map(c => (
-
-                                    <div key={c?.id} className="user-card">
-
-                                        <div className="user-info">
-
-                                            <div className="avatar" title={c?.username}>
-
-                                                {c?.username ? c.username.charAt(0).toUpperCase() : '?'}
-
-                                                {c?.id === adminId && <div className="admin-status-dot"></div>}
-
+                                    <div className="folder-contents">
+                                        {Object.keys(files).map(name => (
+                                            <div key={name} className={`file-item ${activeFile === name ? 'active' : ''}`}
+                                                onClick={() => { setActiveFile(name); setLanguage(files[name].language); }}>
+                                                <div className="active-indicator" />
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, overflow: 'hidden' }}>
+                                                    <FileCode size={14} className="file-icon" />
+                                                    <span className="file-name-text">{name}</span>
+                                                </div>
                                             </div>
-
-                                            <div className="user-text">
-
-                                                <span className={`username ${c?.id === myId ? 'me' : ''}`}>{c?.username} {c?.id === myId ? '(You)' : ''}</span>
-
-                                                <span className="user-role">{c?.id === adminId ? 'Workspace Owner' : (c?.permission === 'read' ? 'Guest' : 'Contributor')}</span>
-
-                                            </div>
-
-                                        </div>
-
-                                        {isAdmin && c?.id !== myId && (
-
-                                            <div className="admin-actions">
-
-                                                <button className="action-icon-btn" title="Toggle permissions"
-
-                                                    onClick={() => socketRef.current?.emit('update-permissions', { targetId: c.id, permission: c.permission === 'read' ? 'write' : 'read' })}>
-
-                                                    <PenTool size={14} />
-
-                                                </button>
-
-                                                <button className="action-icon-btn danger" title="Remove user"
-
-                                                    onClick={() => socketRef.current?.emit('kick-user', { targetId: c.id })}>
-
-                                                    <LogOut size={14} />
-
-                                                </button>
-
-                                            </div>
-
-                                        )}
-
+                                        ))}
                                     </div>
-
-                                ))}
-
+                                </div>
                             </div>
-
                         </div>
+                    </div>
 
-                    )}
-
-
-
-                    {activeTab === 'warp' && (
-
-                        <div className="sidebar-section">
-
-                            <div className="section-title">
-
-                                <span>WARP DRIVE</span>
-
-                                <button className="icon-btn" onClick={() => {
-
-                                    const name = prompt("Name this Temporal Snapshot:");
-
-                                    if (name) socketRef.current?.emit('take-snapshot', { name });
-
-                                }}><FilePlus size={16} /></button>
-
+                    <div className="sidebar-panels">
+                        <div className={`collapsible-panel ${activeTab === 'users' ? 'expanded' : ''}`}>
+                            <div className="panel-header" onClick={() => setActiveTab(activeTab === 'users' ? 'files' : 'users')}>
+                                <div className="panel-title">
+                                    <span className="panel-icon-badge">A</span>
+                                    <span>COLLABORATORS</span>
+                                </div>
+                                <ChevronUp size={16} className={`panel-arrow ${activeTab === 'users' ? 'rotated' : ''}`} />
                             </div>
-
-                            <div className="snapshot-list">
-
-                                {snapshots.length === 0 ? (
-
-                                    <div className="empty-state">No temporal snapshots yet. Save one to begin time-travel debugging.</div>
-
-                                ) : (
-
-                                    snapshots.map(s => (
-
-                                        <div key={s.id} className="snapshot-item">
-
-                                            <div className="snapshot-info">
-
-                                                <span className="snapshot-name">{s.name}</span>
-
-                                                <span className="snapshot-meta">{s.creator} · {new Date(s.timestamp).toLocaleTimeString()}</span>
-
-                                            </div>
-
-                                            <button className="warp-btn" onClick={() => socketRef.current?.emit('warp-to-snapshot', { snapshotId: s.id })}>
-
-                                                <Zap size={12} /> Warp
-
-                                            </button>
-
+                            <AnimatePresence>
+                                {activeTab === 'users' && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="panel-content"
+                                    >
+                                        <div className="user-list-mini">
+                                            {clients.map(c => (
+                                                <div key={c?.id} className="user-item-mini">
+                                                    <div className="user-status-dot online" />
+                                                    <span>{c?.username}</span>
+                                                    {c?.id === adminId && <span className="owner-tag">OWNER</span>}
+                                                </div>
+                                            ))}
                                         </div>
-
-                                    ))
-
+                                    </motion.div>
                                 )}
-
-                            </div>
-
+                            </AnimatePresence>
                         </div>
+                    </div>
 
-                    )}
-
-                </div>
-
-
-
-                <div className="sidebar-footer" style={{ padding: '16px' }}>
-
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-
-                        <button className="icon-btn invite-btn" onClick={copyInviteLink} title="Copy Invite Link"
-
-                            style={{ flexShrink: 0, height: '36px', width: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-
-                            <Share2 size={16} />
-
+                    <div className="sidebar-action-bar">
+                        <button className="action-btn-circle" onClick={copyInviteLink} title="Share Link">
+                            <Share2 size={18} />
                         </button>
-
-                        <button className="secondary-btn logout-btn" onClick={() => navigate('/')}
-
-                            style={{ flex: 1, height: '36px', background: 'rgba(185, 28, 28, 0.05)', color: '#ef4444', border: '1px solid rgba(185, 28, 28, 0.1)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-
-                            <LogOut size={14} /> Leave Space
-
+                        <button className="action-btn-leave" onClick={() => navigate('/hub')}>
+                            <LogOut size={16} />
+                            <span>Leave</span>
                         </button>
-
+                        {isAdmin && (
+                            <button className="action-btn-end" onClick={() => {
+                                if (window.confirm("Permanently end this session?")) {
+                                    socketRef.current?.emit('end-session', { roomId });
+                                }
+                            }}>
+                                <Plus size={18} style={{ transform: 'rotate(45deg)' }} />
+                                <span>End</span>
+                            </button>
+                        )}
                     </div>
 
+                </aside>
+
+
+
+                {/* Sidebar Resizer */}
+
+                <div className={`resizer-x ${isSidebarCollapsed ? 'collapsed' : ''}`} onMouseDown={startSidebarResize}>
+                    {/* Collapse arrow removed per user request */}
                 </div>
 
-            </aside>
 
 
+                <main className="main-content" style={{ gridTemplateRows: `70px 1fr ${isTerminalCollapsed ? 8 : 6}px ${terminalHeight}px` }}>
 
-            {/* Sidebar Resizer */}
+                    <header className="editor-nav">
 
-            <div className={`resizer-x ${isSidebarCollapsed ? 'collapsed' : ''}`} onMouseDown={startSidebarResize}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
 
-                <button className="collapse-toggle-btn x" onClick={toggleSidebar}>
+                            <div className="view-selector">
+                                <button className={`view-btn ${viewMode === 'editor' ? 'active' : ''}`} onClick={() => setViewMode('editor')}>
+                                    <FileCode size={14} /> IDE
+                                </button>
+                                <button className={`view-btn ${viewMode === 'preview' ? 'active' : ''}`} onClick={() => setViewMode('preview')}>
+                                    <Monitor size={14} /> Preview
+                                </button>
+                                <button className={`view-btn ${viewMode === 'whiteboard' ? 'active' : ''}`} onClick={() => setViewMode('whiteboard')}>
+                                    <WhiteboardIcon size={14} /> Architect
+                                </button>
+                            </div>
 
-                    {isSidebarCollapsed ? <ChevronRight size={10} /> : <ChevronLeft size={10} />}
+                            <div className="current-path">
 
-                </button>
+                                <span>projects / {roomId?.slice(0, 8)}... /</span>
 
-            </div>
-
-
-
-            <main className="main-content" style={{ gridTemplateRows: `70px 1fr ${isTerminalCollapsed ? 8 : 6}px ${terminalHeight}px` }}>
-
-                <header className="editor-nav">
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-
-                        <div className="view-selector">
-
-                            <button className={`view-btn ${viewMode === 'editor' ? 'active' : ''}`} onClick={() => setViewMode('editor')}><FileCode size={16} /> IDE</button>
-
-                            <button className={`view-btn ${viewMode === 'whiteboard' ? 'active' : ''}`} onClick={() => setViewMode('whiteboard')}><WhiteboardIcon size={16} /> Architect</button>
-
-                        </div>
-
-                        <div className="current-path">
-
-                            <span>projects / {roomId?.slice(0, 8)}... /</span>
-
-                            <span className="file-name">{viewMode === 'editor' ? (activeFile || 'No file') : 'System Architect'}</span>
-
-                        </div>
-
-                    </div>
-
-
-
-                    <div className="editor-actions">
-
-                        {/* Chaos Mode */}
-
-                        {/* AI Sub-tools */}
-
-                        <div className="ai-subtools">
-
-                            <button className={`subtool-btn${isTranslatorOpen ? ' active translator-active' : ''}`}
-
-                                onClick={() => setIsTranslatorOpen(o => !o)}
-
-                                title="AI Translator — Cross-Language Converter">
-
-                                <Languages size={15} />
-
-                            </button>
-
-                            <button className={`subtool-btn${isVoiceChatOpen ? ' active hologram-active' : ''}`}
-
-                                onClick={() => setIsVoiceChatOpen(o => !o)}
-
-                                title="Hologram Comms — Voice & Video">
-
-                                <Phone size={15} />
-
-                                {isCallActive && <span className="live-dot"></span>}
-
-                            </button>
-
-                        </div>
-
-
-
-                        {viewMode === 'editor' ? (
-
-                            <button className={`primary-btn run-btn ${isRunning ? 'loading' : ''}`} onClick={runCode} disabled={isRunning || !activeFile}>
-
-                                <Play size={16} fill="white" /> {isRunning ? 'Running...' : 'Run'}
-
-                            </button>
-
-                        ) : (
-
-                            <div className="canvas-tools">
-
-                                <button className="tool-btn" onClick={() => setDrawColor('#fbbf24')} style={{ color: drawColor === '#fbbf24' ? '#fbbf24' : '#666' }}><PenTool size={18} /></button>
-
-                                <button className="tool-btn" onClick={() => setDrawColor('#0d0d0d')} title="Eraser"><Eraser size={18} /></button>
-
-                                <button className="tool-btn danger" onClick={clearCanvas}><Trash2 size={18} /></button>
+                                <span className="file-name">{viewMode === 'editor' ? (activeFile || 'No file') : 'System Architect'}</span>
 
                             </div>
 
-                        )}
-
-                    </div>
-
-                </header>
-
-
-
-                <div className="editor-container" style={{ display: viewMode === 'editor' ? 'block' : 'none', minHeight: 0, overflow: 'hidden' }}>
-
-                    <div className="editor-wrapper">
-
-                        {activeFile ? (
-
-                            <Editor
-
-                                height="100%"
-
-                                language={language}
-
-                                theme="vs-dark"
-
-                                value={files[activeFile]?.content}
-
-                                onChange={handleCodeChange}
-
-                                options={{
-
-                                    fontSize: 14,
-
-                                    minimap: { enabled: true },
-
-                                    readOnly: myPermission === 'read',
-
-                                    scrollBeyondLastLine: false,
-
-                                    automaticLayout: true,
-
-                                    colorDecorators: true,
-
-                                    quickSuggestions: true,
-
-                                    suggestOnTriggerCharacters: true,
-
-                                    parameterHints: { enabled: true },
-
-                                    bracketPairColorization: { enabled: true },
-
-                                    wordWrap: 'off',
-
-                                }}
-
-                            />
-
-                        ) : (
-
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
-
-                                Select a file to start coding
-
-                            </div>
-
-                        )}
-
-                    </div>
-
-
-
-                    <AnimatePresence>
-
-                        {isTerminalOpen && (
-
-                            <motion.div initial={{ height: 0 }} animate={{ height: '30%' }} exit={{ height: 0 }} className="terminal-tray">
-
-                                <div className="terminal-header">
-
-                                    <div className="terminal-title"><TerminalIcon size={14} /> <span>SENTINEL SHELL</span></div>
-
-                                    <button className="close-btn" onClick={() => setIsTerminalOpen(false)}>×</button>
-
-                                </div>
-
-                                <div className="terminal-output">
-
-                                    {terminalLogs.map((log, index) => (
-
-                                        <div key={index} className={`log-line ${log.isError ? 'error' : ''} ${log.isSystem ? 'system' : ''}`}>
-
-                                            {log.command && <span className="log-prompt">$ {log.command}</span>}
-
-                                            <pre className="log-out">{log.output}</pre>
-
-                                        </div>
-
-                                    ))}
-
-                                    <div ref={terminalEndRef} />
-
-                                </div>
-
-                                <div className="terminal-input-wrapper">
-
-                                    <span className="prompt-symbol">λ</span>
-
-                                    <input type="text" className="terminal-input" placeholder="Execute system command..."
-
-                                        value={terminalInput} onChange={(e) => setTerminalInput(e.target.value)}
-
-                                        onKeyDown={runTerminalCommand} />
-
-                                </div>
-
-                            </motion.div>
-
-                        )}
-
-                    </AnimatePresence>
-
-                </div>
-
-
-
-                <div className="whiteboard-container" style={{ display: viewMode === 'whiteboard' ? 'flex' : 'none', minHeight: 0, overflow: 'hidden' }}>
-
-                    <div className="whiteboard-header">
-
-                        <div className="status-badge" style={{ background: 'rgba(251,191,36,0.05)', color: '#fbbf24' }}>
-
-                            <Sparkles size={14} /> Collaborative Canvas Active
-
                         </div>
 
-                    </div>
-
-                    <canvas ref={canvasRef} onMouseDown={startDrawing} onMouseMove={draw}
-
-                        onMouseUp={stopDrawing} onMouseLeave={stopDrawing} width={1200} height={800} className="main-canvas" />
-
-                </div>
 
 
-
-                {/* Terminal Resizer */}
-
-                <div className={`resizer-y ${isTerminalCollapsed ? 'collapsed' : ''}`} onMouseDown={startTerminalResize}>
-
-                    <button className="collapse-toggle-btn y" onClick={toggleTerminal}>
-
-                        {isTerminalCollapsed ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-
-                    </button>
-
-                </div>
-
-
-
-                <div className="terminal-panel">
-
-                    <div className="terminal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-
-                        <div className="terminal-title">
-
-                            <Sparkles size={12} style={{ marginRight: '6px' }} />
-
-                            System Diagnostics & Output
-
+                        <div className="editor-nav-actions">
+                            <button className="nav-icon-btn" onClick={() => navigate('/hub')} title="Exit">
+                                <LogOut size={18} />
+                            </button>
+                            <button className="nav-icon-btn" onClick={toggleTerminal} title="Terminal">
+                                <TerminalIcon size={18} />
+                            </button>
+                            <button className="export-btn">
+                                <Share2 size={16} /> Export
+                            </button>
+                            <button className={`nav-play-btn ${isRunning ? 'pulse' : ''}`} onClick={runCode} disabled={isRunning}>
+                                <Play size={18} fill="currentColor" />
+                            </button>
                         </div>
 
-                        <div style={{ fontSize: '0.6rem', opacity: 0.5, fontStyle: 'italic' }}>
-
-                            {isRunning ? 'EXECUTION_IN_PROGRESS...' : 'AWAITING_INPUT'}
-
-                        </div>
-
-                    </div>
-
-                    <pre className="terminal-body" style={{ height: '100%', overflowY: 'auto' }}>
-
-                        {output || '> System ready. Select a target file and trigger [RUN].'}
-
-                    </pre>
-
-                </div>
-
-            </main>
+                    </header>
 
 
 
-            {/* AI Trigger Bubble */}
+                    <div className="editor-container" style={{ display: viewMode === 'editor' ? 'block' : 'none', minHeight: 0, overflow: 'hidden' }}>
 
-            <div className={`ai-trigger-bubble ${isSidekickOpen ? 'active' : ''}`} onClick={() => setIsSidekickOpen(o => !o)}>
+                        <div className="editor-wrapper">
 
-                <Sparkles size={24} color="#fff" />
+                            {activeFile ? (
 
-            </div>
+                                <Editor
 
+                                    height="100%"
 
+                                    language={language}
 
-            <AnimatePresence>
+                                    theme="vs-dark"
 
-                {isSidekickOpen && (
+                                    value={files[activeFile]?.content}
 
-                    <motion.aside initial={{ x: 400 }} animate={{ x: 0 }} exit={{ x: 400 }} className="ai-sidekick">
+                                    onChange={handleCodeChange}
 
-                        <div className="ai-header">
+                                    options={{
 
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        fontSize: 14,
 
-                                <Bot size={22} color="#fbbf24" /><h3>AI Sentinel</h3>
+                                        minimap: { enabled: true },
 
-                            </div>
+                                        readOnly: myPermission === 'read',
 
-                            <button className="icon-btn" onClick={() => setIsSidekickOpen(false)}><Plus size={20} style={{ transform: 'rotate(45deg)' }} /></button>
+                                        scrollBeyondLastLine: false,
 
-                        </div>
+                                        automaticLayout: true,
 
-                        <div className="ai-messages">
+                                        colorDecorators: true,
 
-                            {aiMessages.map((msg, i) => (
+                                        quickSuggestions: true,
 
-                                <div key={i} className={`ai-message ${msg.role}`}>
+                                        suggestOnTriggerCharacters: true,
 
-                                    <div className="avatar">{msg.role === 'ai' ? <Brain size={16} /> : <Users size={16} />}</div>
+                                        parameterHints: { enabled: true },
 
-                                    <div className="msg-content">{msg.content}</div>
+                                        bracketPairColorization: { enabled: true },
 
-                                </div>
+                                        wordWrap: 'off',
 
-                            ))}
+                                    }}
 
-                            {isAiThinking && (
+                                />
 
-                                <div className="ai-message ai thinking">
+                            ) : (
 
-                                    <div className="avatar"><Brain size={16} className="pulse-icon" /></div>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
 
-                                    <div className="msg-content">Analyzing codebase...</div>
+                                    Select a file to start coding
 
                                 </div>
 
@@ -1890,23 +1531,159 @@ const EditorPage = () => {
 
                         </div>
 
-                        {/* BUG FIX: was onSubmit={handleAiSubmit} which didn't exist */}
 
-                        <form className="ai-input-area" onSubmit={(e) => { e.preventDefault(); sendMessageToAi(); }}>
 
-                            <input type="text" placeholder="Ask Sentinel..." value={aiInput} onChange={(e) => setAiInput(e.target.value)} />
 
-                            <button type="submit" disabled={!aiInput.trim() || isAiThinking}><Send size={18} /></button>
 
-                        </form>
+                    </div>
 
-                    </motion.aside>
 
-                )}
 
-            </AnimatePresence>
+                    <div className="whiteboard-container" style={{ display: viewMode === 'whiteboard' ? 'flex' : 'none', minHeight: 0, overflow: 'hidden' }}>
 
-        </div>
+                        <div className="whiteboard-header">
+
+                            <div className="status-badge" style={{ background: 'rgba(251,191,36,0.05)', color: '#fbbf24' }}>
+
+                                <Sparkles size={14} /> Collaborative Canvas Active
+
+                            </div>
+
+                        </div>
+
+                        <canvas ref={canvasRef} onMouseDown={startDrawing} onMouseMove={draw}
+
+                            onMouseUp={stopDrawing} onMouseLeave={stopDrawing} width={1200} height={800} className="main-canvas" />
+
+                    </div>
+
+
+
+                    {/* Terminal Resizer */}
+
+                    <div className={`resizer-y ${isTerminalCollapsed ? 'collapsed' : ''}`} onMouseDown={startTerminalResize}>
+                        {/* Collapse arrow removed per user request */}
+                    </div>
+
+
+
+                    <div className="terminal-panel" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                        <div className="terminal-header">
+                            <div className="terminal-title">
+                                <TerminalIcon size={14} style={{ marginRight: '8px' }} />
+                                <span>SENTINEL SHELL & DIAGNOSTICS</span>
+                            </div>
+                            <div className="terminal-status">
+                                {isRunning ? 'EXECUTING_CODE...' : 'SYSTEM_READY'}
+                            </div>
+                        </div>
+
+                        <div className="terminal-body" style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
+                            {/* Show combined logs: Execution output + Interactive shell logs */}
+                            {output && (
+                                <div className="log-line system">
+                                    <pre className="log-out">{output}</pre>
+                                </div>
+                            )}
+                            {terminalLogs.map((log, index) => (
+                                <div key={index} className={`log-line ${log.isError ? 'error' : ''} ${log.isSystem ? 'system' : ''}`}>
+                                    {log.command && <span className="log-prompt">$ {log.command}</span>}
+                                    <pre className="log-out">{log.output}</pre>
+                                </div>
+                            ))}
+                            <div ref={terminalEndRef} />
+                        </div>
+
+                        <div className="terminal-input-wrapper">
+                            <span className="prompt-symbol">λ</span>
+                            <input
+                                type="text"
+                                className="terminal-input"
+                                placeholder="Execute system command..."
+                                value={terminalInput}
+                                onChange={(e) => setTerminalInput(e.target.value)}
+                                onKeyDown={runTerminalCommand}
+                            />
+                        </div>
+                    </div>
+
+                </main>
+
+
+
+                {/* AI Trigger Bubble */}
+
+                <div className={`ai-trigger-bubble ${isSidekickOpen ? 'active' : ''}`} onClick={() => setIsSidekickOpen(o => !o)}>
+
+                    <Sparkles size={24} color="#fff" />
+
+                </div>
+
+
+
+                <AnimatePresence>
+
+                    {isSidekickOpen && (
+
+                        <motion.aside initial={{ x: 400 }} animate={{ x: 0 }} exit={{ x: 400 }} className="ai-sidekick">
+
+                            <div className="ai-header">
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+
+                                    <Bot size={22} color="#fbbf24" /><h3>AI Sentinel</h3>
+
+                                </div>
+
+                                <button className="icon-btn" onClick={() => setIsSidekickOpen(false)}><Plus size={20} style={{ transform: 'rotate(45deg)' }} /></button>
+
+                            </div>
+
+                            <div className="ai-messages">
+
+                                {aiMessages.map((msg, i) => (
+
+                                    <div key={i} className={`ai-message ${msg.role}`}>
+
+                                        <div className="avatar">{msg.role === 'ai' ? <Brain size={16} /> : <Users size={16} />}</div>
+
+                                        <div className="msg-content">{msg.content}</div>
+
+                                    </div>
+
+                                ))}
+
+                                {isAiThinking && (
+
+                                    <div className="ai-message ai thinking">
+
+                                        <div className="avatar"><Brain size={16} className="pulse-icon" /></div>
+
+                                        <div className="msg-content">Analyzing codebase...</div>
+
+                                    </div>
+
+                                )}
+
+                            </div>
+
+                            {/* BUG FIX: was onSubmit={handleAiSubmit} which didn't exist */}
+
+                            <form className="ai-input-area" onSubmit={(e) => { e.preventDefault(); sendMessageToAi(); }}>
+
+                                <input type="text" placeholder="Ask Sentinel..." value={aiInput} onChange={(e) => setAiInput(e.target.value)} />
+
+                                <button type="submit" disabled={!aiInput.trim() || isAiThinking}><Send size={18} /></button>
+
+                            </form>
+
+                        </motion.aside>
+
+                    )}
+
+                </AnimatePresence>
+
+            </div>
 
         </>
 
