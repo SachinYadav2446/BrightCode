@@ -1,1 +1,47 @@
-[]
+[
+  {
+    "id": "8883ff1b-079d-4de5-890e-41b3661d8784",
+    "name": "Nothing",
+    "description": "everthing is needed",
+    "emblem": "⚡",
+    "ownerId": "952407e1-83b1-4ddf-8d2e-adf3637c38f3",
+    "ownerName": "aryan1",
+    "members": [
+      {
+        "id": "952407e1-83b1-4ddf-8d2e-adf3637c38f3",
+        "username": "aryan1",
+        "xp": 540,
+        "role": "leader",
+        "activity": {
+          "2026-04-20": 80,
+          "2026-04-21": 90,
+          "2026-04-26": 15,
+          "2026-04-27": 5
+        }
+      },
+      {
+        "id": "edc9d6b9-ce68-4ecd-b255-dc306f3d7aa3",
+        "username": "Sachin",
+        "xp": 680,
+        "role": "member",
+        "activity": {
+          "2026-04-26": 15,
+          "2026-04-27": 645,
+          "2026-04-28": 20
+        }
+      },
+      {
+        "id": "61f817b3-810f-48fa-b1bf-639d65034e97",
+        "username": "Soham",
+        "xp": 260,
+        "role": "member",
+        "activity": {
+          "2026-04-20": 150
+        }
+      }
+    ],
+    "createdAt": "2026-04-26T17:45:46.209Z",
+    "isPublic": false,
+    "pendingMembers": []
+  }
+]

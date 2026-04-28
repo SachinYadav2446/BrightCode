@@ -1,0 +1,128 @@
+{
+  "users": [
+    {
+      "id": "4d00cd02-0363-4143-923a-913cce81e597",
+      "username": "aryan",
+      "email": "aryan123@gmail.com",
+      "password": "$2b$10$032lk2X9phmEzGfJneCyAeJjMdBjy35q/asktWWAEgSApk4kXgvvi",
+      "xp": 0,
+      "css_level": 0,
+      "logic_level": 0,
+      "react_level": 0
+    },
+    {
+      "id": "61f817b3-810f-48fa-b1bf-639d65034e97",
+      "username": "Soham",
+      "email": "xyz@gmail.com",
+      "password": "$2b$10$BsowmLD8hniaMcAvre/QeeFfIc5yk7ZSr5rSQEdc/OLAE3EqZG2Yq",
+      "xp": 260,
+      "css_level": 0,
+      "logic_level": 0,
+      "react_level": 2,
+      "activity": {
+        "2026-04-20": 150
+      }
+    },
+    {
+      "id": "952407e1-83b1-4ddf-8d2e-adf3637c38f3",
+      "username": "aryan1",
+      "email": "abc@gmail.com",
+      "password": "$2b$10$qxjD7j/pXFGw8lYjRHJ0u.5eFjgkQYJXW9rLLtzvmI7U8zz16l7De",
+      "xp": 540,
+      "css_level": 1,
+      "logic_level": 0,
+      "react_level": 21,
+      "activity": {
+        "2026-04-20": 80,
+        "2026-04-21": 90,
+        "2026-04-26": 15,
+        "2026-04-27": 5
+      }
+    },
+    {
+      "id": "537d7e56-0e59-45ed-8b54-2d8d59334d2d",
+      "username": "test_1776706468489",
+      "email": "test_1776706468489@test.com",
+      "password": "$2b$10$vqtkKcNBA/r8EPzSVHuXdeDVQk.8dzia2ipAbbbARbIg8VJAvZpuO",
+      "xp": 1500,
+      "css_level": 0,
+      "logic_level": 2,
+      "react_level": 0
+    },
+    {
+      "id": "5cbba4f1-63a8-445f-be5f-75e982fa7627",
+      "username": "test_1776706608087",
+      "email": "test_1776706608087@test.com",
+      "password": "$2b$10$bn6EKc2pjKwq1mnO4ZTUXeuqChlKWfVUg9Zo31QFWUoLW3GaK1b8O",
+      "xp": 1500,
+      "css_level": 0,
+      "logic_level": 2,
+      "react_level": 0
+    },
+    {
+      "id": "b0cafd5a-915f-49fa-8593-445740eb39ca",
+      "username": "tester",
+      "email": "tester@gmail.com",
+      "password": "$2b$10$zA./dJmniV3F3E2TYgBuAuZpcGZYYS6gIyNKb8F6j3231mZSkmlou",
+      "xp": 0,
+      "css_level": 0,
+      "logic_level": 0,
+      "react_level": 0
+    },
+    {
+      "id": "7dbf7376-7700-45b4-8e9f-26fc0df9eee7",
+      "username": "devesh",
+      "email": "efg@gmail.com",
+      "password": "$2b$10$OxvD0X2SB16kDPS1be8l2uoKERZfz5v2VrICDDi3xRTWc/dnQ8b26",
+      "xp": 0,
+      "css_level": 0,
+      "logic_level": 0,
+      "react_level": 0
+    },
+    {
+      "id": "a918cbd8-3cff-473a-a9f0-137906c5e5cd",
+      "username": "sachin",
+      "email": "sachin@gmail.com",
+      "password": "$2b$10$b7dZfhGdUlVR/FhmWi7a.OF5ZzVsk6GnoTWkxyWVCosA2RzRiFyRK",
+      "xp": 110,
+      "css_level": 1,
+      "logic_level": 0,
+      "react_level": 10,
+      "activity": {
+        "2026-04-21": 110
+      },
+      "joinedAt": "2026-04-21T10:07:16.530Z",
+      "joined_count": 1,
+      "created_count": 7
+    },
+    {
+      "id": "0fa590c1-9cad-41e6-87b3-d9a869d751e5",
+      "username": "tanishq",
+      "email": "tanishq@gmail.com",
+      "password": "$2b$10$08WBmivbl8AupgbZ4dBBwuHttsebezCyD67l7xydr6j5gnnCRRT8m",
+      "xp": 0,
+      "css_level": 0,
+      "logic_level": 0,
+      "react_level": 0,
+      "activity": {},
+      "joinedAt": "2026-04-21T16:04:05.179Z"
+    },
+    {
+      "id": "edc9d6b9-ce68-4ecd-b255-dc306f3d7aa3",
+      "username": "Sachin",
+      "email": "yadavsachin123411@gmail.com",
+      "password": "$2b$10$JcCvBpz7.Fzu37eh5qxib.Ev9mCKeWCjbQRAfXoHMYrshmhUsZSvG",
+      "xp": 680,
+      "css_level": 6,
+      "logic_level": 0,
+      "react_level": 56,
+      "activity": {
+        "2026-04-26": 15,
+        "2026-04-27": 645,
+        "2026-04-28": 20
+      },
+      "joinedAt": "2026-04-25T11:35:08.241Z",
+      "created_count": 1
+    }
+  ]
+}

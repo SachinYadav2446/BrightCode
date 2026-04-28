@@ -11,6 +11,8 @@ const path = require('path');
 const { Pool } = require('pg');
 const { exec } = require('child_process');
 const nodemailer = require('nodemailer');
+const pty = require('node-pty');
+const os = require('os');
 
 const app = express();
 const server = http.createServer(app);
@@ -21,6 +23,10 @@ const io = new Server(server, {
 // Chat History Store: roomId -> Array of messages
 const roomMessages = new Map();
 
+// Interactive Terminal Store: roomId -> ptyProcess
+const roomTerminals = new Map();
+const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
+
 app.use(cors());
 app.use(express.json());
 
@@ -29,6 +35,11 @@ const JWT_SECRET = 'brightcode_secret_key_123';
 // Memory Fallback (for when PostgreSQL is offline)
 let memoryStore = { users: [] };
 let useMemoryDB = false;
+
+// In-memory CodeVault store (used when PostgreSQL is unavailable)
+const notesMemoryStore = [];
+const foldersMemoryStore = [];
+const { v4: uuidV4Notes } = require('uuid');
 const DB_FILE = path.join(__dirname, 'users_db.json');
 
 const loadStore = () => {
@@ -181,6 +192,16 @@ const initDB = async () => {
             END $$;
         `);
         console.log('PostgreSQL Tables Initialized & Migrated');
+
+        // Initialize CodeVault notes and folders tables
+        const notesMigration = fs.readFileSync(path.join(__dirname, 'migrations', '001_create_notes_tables.sql'), 'utf8');
+        await pool.query(notesMigration);
+        console.log('CodeVault Notes Tables Initialized');
+
+        // Apply enhanced features migration
+        const enhancedFeaturesMigration = fs.readFileSync(path.join(__dirname, 'migrations', '002_add_notes_features.sql'), 'utf8');
+        await pool.query(enhancedFeaturesMigration);
+        console.log('CodeVault Enhanced Features Migration Applied');
     } catch (err) {
         console.error('DATABASE INIT ERROR:', err.message);
         console.log('--- SWAPPING TO MEMORY FALLBACK MODE (USING PERSISTENT users_db.json) ---');
@@ -580,6 +601,452 @@ app.get('/leaderboard', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch leaderboard' });
     }
 });
+
+// ── CodeVault Notes API ──────────────────────────────────────────────────────
+
+// GET /api/notes - Get all notes for user with filtering
+app.get('/api/notes', authenticateToken, async (req, res) => {
+    const { folderId, tag, search } = req.query;
+
+    if (useMemoryDB) {
+        let results = notesMemoryStore.filter(n => n.user_id === req.user.id && !n.deleted_at);
+        if (folderId) results = results.filter(n => n.folder_id === folderId);
+        if (tag) results = results.filter(n => (n.tags || []).includes(tag));
+        if (search) {
+            const q = search.toLowerCase();
+            results = results.filter(n =>
+                n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q)
+            );
+        }
+        results.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+        return res.json(results.map(({ deleted_at, ...n }) => n));
+    }
+
+    try {
+        let query = 'SELECT id, title, content, folder_id, tags, challenge_id, challenge_module, created_at, updated_at FROM notes WHERE user_id = $1 AND deleted_at IS NULL';
+        const params = [req.user.id];
+        let paramIndex = 2;
+
+        if (folderId) { query += ` AND folder_id = $${paramIndex}`; params.push(folderId); paramIndex++; }
+        if (tag) { query += ` AND $${paramIndex} = ANY(tags)`; params.push(tag); paramIndex++; }
+        if (search) {
+            query += ` AND (title ILIKE $${paramIndex} OR content ILIKE $${paramIndex})`;
+            params.push(`%${search}%`);
+            paramIndex++;
+        }
+        query += ' ORDER BY updated_at DESC';
+
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('GET /api/notes ERROR:', err);
+        res.status(500).json({ error: 'Failed to fetch notes' });
+    }
+});
+
+// GET /api/notes/related/:challengeId - Get notes related to a challenge (must be before /api/notes/:id)
+app.get('/api/notes/related/:challengeId', authenticateToken, async (req, res) => {
+    if (useMemoryDB) {
+        const results = notesMemoryStore
+            .filter(n => n.user_id === req.user.id && n.challenge_id === req.params.challengeId && !n.deleted_at)
+            .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+            .map(({ id, title, tags, folder_id, updated_at }) => ({ id, title, tags, folder_id, updated_at }));
+        return res.json(results);
+    }
+    try {
+        const result = await pool.query(
+            `SELECT id, title, tags, folder_id, updated_at FROM notes WHERE user_id = $1 AND challenge_id = $2 AND deleted_at IS NULL ORDER BY updated_at DESC`,
+            [req.user.id, req.params.challengeId]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error('GET /api/notes/related/:challengeId ERROR:', err);
+        res.status(500).json({ error: 'Failed to fetch related notes' });
+    }
+});
+
+// GET /api/notes/:id - Get single note
+app.get('/api/notes/:id', authenticateToken, async (req, res) => {
+    if (useMemoryDB) {
+        const note = notesMemoryStore.find(n => n.id === req.params.id && n.user_id === req.user.id && !n.deleted_at);
+        if (!note) return res.status(404).json({ error: 'Note not found' });
+        const { deleted_at, ...safeNote } = note;
+        return res.json(safeNote);
+    }
+    try {
+        const result = await pool.query(
+            'SELECT * FROM notes WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
+            [req.params.id, req.user.id]
+        );
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Note not found' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('GET /api/notes/:id ERROR:', err);
+        res.status(500).json({ error: 'Failed to fetch note' });
+    }
+});
+
+// POST /api/notes - Create new note
+app.post('/api/notes', authenticateToken, async (req, res) => {
+    let { title, content, folderId, tags, challengeId, challengeModule } = req.body;
+
+    if (!title || title.trim().length === 0) {
+        if (content && content.trim().length > 0) {
+            title = content.trim().split('\n')[0].substring(0, 50).trim() || 'Untitled Note';
+        } else {
+            title = 'Untitled Note';
+        }
+    }
+    if (title.length > 200) return res.status(400).json({ error: 'Title too long (max 200 characters)' });
+    if (content && content.length > 1000000) return res.status(400).json({ error: 'Content too large (max 1MB)' });
+
+    if (useMemoryDB) {
+        const now = new Date().toISOString();
+        const newNote = {
+            id: uuidV4Notes(),
+            user_id: req.user.id,
+            title,
+            content: content || '',
+            folder_id: folderId || null,
+            tags: tags || [],
+            challenge_id: challengeId || null,
+            challenge_module: challengeModule || null,
+            created_at: now,
+            updated_at: now,
+            deleted_at: null
+        };
+        notesMemoryStore.push(newNote);
+        const { deleted_at, user_id, ...safeNote } = newNote;
+        return res.status(201).json(safeNote);
+    }
+
+    try {
+        const result = await pool.query(
+            `INSERT INTO notes (user_id, title, content, folder_id, tags, challenge_id, challenge_module)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             RETURNING id, title, content, folder_id, tags, challenge_id, challenge_module, created_at, updated_at`,
+            [req.user.id, title, content || '', folderId || null, tags || [], challengeId || null, challengeModule || null]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        console.error('POST /api/notes ERROR:', err);
+        res.status(500).json({ error: 'Failed to create note' });
+    }
+});
+
+// PUT /api/notes/:id - Update note
+app.put('/api/notes/:id', authenticateToken, async (req, res) => {
+    const { title, content, tags, folderId } = req.body;
+    if (title && title.length > 200) return res.status(400).json({ error: 'Title too long (max 200 characters)' });
+    if (content && content.length > 1000000) return res.status(400).json({ error: 'Content too large (max 1MB)' });
+
+    if (useMemoryDB) {
+        const idx = notesMemoryStore.findIndex(n => n.id === req.params.id && n.user_id === req.user.id && !n.deleted_at);
+        if (idx === -1) return res.status(404).json({ error: 'Note not found' });
+        if (title !== undefined) notesMemoryStore[idx].title = title;
+        if (content !== undefined) notesMemoryStore[idx].content = content;
+        if (tags !== undefined) notesMemoryStore[idx].tags = tags;
+        if (folderId !== undefined) notesMemoryStore[idx].folder_id = folderId || null;
+        notesMemoryStore[idx].updated_at = new Date().toISOString();
+        const { deleted_at, user_id, ...safeNote } = notesMemoryStore[idx];
+        return res.json(safeNote);
+    }
+
+    try {
+        const checkResult = await pool.query(
+            'SELECT id FROM notes WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
+            [req.params.id, req.user.id]
+        );
+        if (checkResult.rows.length === 0) return res.status(404).json({ error: 'Note not found' });
+
+        const result = await pool.query(
+            `UPDATE notes
+             SET title = COALESCE($1, title),
+                 content = COALESCE($2, content),
+                 tags = COALESCE($3, tags),
+                 folder_id = COALESCE($4, folder_id)
+             WHERE id = $5 AND user_id = $6
+             RETURNING id, title, content, folder_id, tags, challenge_id, challenge_module, created_at, updated_at`,
+            [title, content, tags, folderId, req.params.id, req.user.id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('PUT /api/notes/:id ERROR:', err);
+        res.status(500).json({ error: 'Failed to update note' });
+    }
+});
+
+// DELETE /api/notes/:id - Soft delete note
+app.delete('/api/notes/:id', authenticateToken, async (req, res) => {
+    if (useMemoryDB) {
+        const idx = notesMemoryStore.findIndex(n => n.id === req.params.id && n.user_id === req.user.id && !n.deleted_at);
+        if (idx === -1) return res.status(404).json({ error: 'Note not found' });
+        notesMemoryStore[idx].deleted_at = new Date().toISOString();
+        return res.json({ message: 'Note deleted successfully' });
+    }
+    try {
+        const checkResult = await pool.query(
+            'SELECT id FROM notes WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
+            [req.params.id, req.user.id]
+        );
+        if (checkResult.rows.length === 0) return res.status(404).json({ error: 'Note not found' });
+        await pool.query(
+            'UPDATE notes SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 AND user_id = $2',
+            [req.params.id, req.user.id]
+        );
+        res.json({ message: 'Note deleted successfully' });
+    } catch (err) {
+        console.error('DELETE /api/notes/:id ERROR:', err);
+        res.status(500).json({ error: 'Failed to delete note' });
+    }
+});
+
+// ── CodeVault Folders API ────────────────────────────────────────────────────
+
+// GET /api/folders - Get folder tree for user
+app.get('/api/folders', authenticateToken, async (req, res) => {
+    if (useMemoryDB) {
+        const userFolders = foldersMemoryStore.filter(f => f.user_id === req.user.id);
+        const results = userFolders.map(f => ({
+            ...f,
+            note_count: notesMemoryStore.filter(n => n.folder_id === f.id && n.user_id === req.user.id && !n.deleted_at).length
+        }));
+        return res.json(results);
+    }
+    try {
+        const result = await pool.query(
+            `SELECT f.id, f.name, f.parent_id, f.created_at,
+                    COUNT(n.id) as note_count
+             FROM folders f
+             LEFT JOIN notes n ON f.id = n.folder_id AND n.deleted_at IS NULL
+             WHERE f.user_id = $1
+             GROUP BY f.id, f.name, f.parent_id, f.created_at
+             ORDER BY f.created_at ASC`,
+            [req.user.id]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error('GET /api/folders ERROR:', err);
+        res.status(500).json({ error: 'Failed to fetch folders' });
+    }
+});
+
+// POST /api/folders - Create new folder
+app.post('/api/folders', authenticateToken, async (req, res) => {
+    const { name, parentId } = req.body;
+    if (!name || name.trim().length === 0) return res.status(400).json({ error: 'Folder name is required' });
+
+    if (useMemoryDB) {
+        const duplicate = foldersMemoryStore.find(
+            f => f.user_id === req.user.id && f.name === name.trim() && f.parent_id === (parentId || null)
+        );
+        if (duplicate) return res.status(400).json({ error: 'A folder with this name already exists in this location' });
+        const now = new Date().toISOString();
+        const newFolder = {
+            id: uuidV4Notes(),
+            user_id: req.user.id,
+            name: name.trim(),
+            parent_id: parentId || null,
+            created_at: now
+        };
+        foldersMemoryStore.push(newFolder);
+        const { user_id, ...safeFolder } = newFolder;
+        return res.status(201).json(safeFolder);
+    }
+
+    try {
+        const duplicateCheck = await pool.query(
+            'SELECT id FROM folders WHERE user_id = $1 AND name = $2 AND parent_id IS NOT DISTINCT FROM $3',
+            [req.user.id, name.trim(), parentId || null]
+        );
+        if (duplicateCheck.rows.length > 0) return res.status(400).json({ error: 'A folder with this name already exists in this location' });
+
+        const result = await pool.query(
+            'INSERT INTO folders (user_id, name, parent_id) VALUES ($1, $2, $3) RETURNING id, name, parent_id, created_at',
+            [req.user.id, name.trim(), parentId || null]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        console.error('POST /api/folders ERROR:', err);
+        res.status(500).json({ error: 'Failed to create folder' });
+    }
+});
+
+// PUT /api/folders/:id - Rename folder
+app.put('/api/folders/:id', authenticateToken, async (req, res) => {
+    const { name } = req.body;
+    if (!name || name.trim().length === 0) return res.status(400).json({ error: 'Folder name is required' });
+
+    if (useMemoryDB) {
+        const idx = foldersMemoryStore.findIndex(f => f.id === req.params.id && f.user_id === req.user.id);
+        if (idx === -1) return res.status(404).json({ error: 'Folder not found' });
+        const duplicate = foldersMemoryStore.find(
+            f => f.user_id === req.user.id && f.name === name.trim() &&
+                f.parent_id === foldersMemoryStore[idx].parent_id && f.id !== req.params.id
+        );
+        if (duplicate) return res.status(400).json({ error: 'A folder with this name already exists in this location' });
+        foldersMemoryStore[idx].name = name.trim();
+        const { user_id, ...safeFolder } = foldersMemoryStore[idx];
+        return res.json(safeFolder);
+    }
+
+    try {
+        const checkResult = await pool.query(
+            'SELECT id, parent_id FROM folders WHERE id = $1 AND user_id = $2',
+            [req.params.id, req.user.id]
+        );
+        if (checkResult.rows.length === 0) return res.status(404).json({ error: 'Folder not found' });
+        const folder = checkResult.rows[0];
+        const duplicateCheck = await pool.query(
+            'SELECT id FROM folders WHERE user_id = $1 AND name = $2 AND parent_id IS NOT DISTINCT FROM $3 AND id != $4',
+            [req.user.id, name.trim(), folder.parent_id, req.params.id]
+        );
+        if (duplicateCheck.rows.length > 0) return res.status(400).json({ error: 'A folder with this name already exists in this location' });
+        const result = await pool.query(
+            'UPDATE folders SET name = $1 WHERE id = $2 AND user_id = $3 RETURNING id, name, parent_id, created_at',
+            [name.trim(), req.params.id, req.user.id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('PUT /api/folders/:id ERROR:', err);
+        res.status(500).json({ error: 'Failed to rename folder' });
+    }
+});
+
+// DELETE /api/folders/:id - Delete folder (moves its notes/children to parent)
+app.delete('/api/folders/:id', authenticateToken, async (req, res) => {
+    if (useMemoryDB) {
+        const idx = foldersMemoryStore.findIndex(f => f.id === req.params.id && f.user_id === req.user.id);
+        if (idx === -1) return res.status(404).json({ error: 'Folder not found' });
+        const parentId = foldersMemoryStore[idx].parent_id;
+        // Move notes to parent
+        notesMemoryStore.forEach(n => { if (n.folder_id === req.params.id) n.folder_id = parentId; });
+        // Move child folders to parent
+        foldersMemoryStore.forEach(f => { if (f.parent_id === req.params.id) f.parent_id = parentId; });
+        foldersMemoryStore.splice(idx, 1);
+        return res.json({ message: 'Folder deleted successfully' });
+    }
+    try {
+        const checkResult = await pool.query(
+            'SELECT id, parent_id FROM folders WHERE id = $1 AND user_id = $2',
+            [req.params.id, req.user.id]
+        );
+        if (checkResult.rows.length === 0) return res.status(404).json({ error: 'Folder not found' });
+        const folder = checkResult.rows[0];
+        await pool.query('UPDATE notes SET folder_id = $1 WHERE folder_id = $2 AND user_id = $3', [folder.parent_id, req.params.id, req.user.id]);
+        await pool.query('UPDATE folders SET parent_id = $1 WHERE parent_id = $2 AND user_id = $3', [folder.parent_id, req.params.id, req.user.id]);
+        await pool.query('DELETE FROM folders WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+        res.json({ message: 'Folder deleted successfully' });
+    } catch (err) {
+        console.error('DELETE /api/folders/:id ERROR:', err);
+        res.status(500).json({ error: 'Failed to delete folder' });
+    }
+});
+
+// ── CodeVault Search and Tags API ───────────────────────────────────────────
+
+// GET /api/search - Search notes
+app.get('/api/search', authenticateToken, async (req, res) => {
+    const { q, limit = 20 } = req.query;
+    if (!q || q.trim().length === 0) return res.status(400).json({ error: 'Search query is required' });
+
+    if (useMemoryDB) {
+        const query = q.trim().toLowerCase();
+        const results = notesMemoryStore
+            .filter(n => n.user_id === req.user.id && !n.deleted_at &&
+                (n.title.toLowerCase().includes(query) || n.content.toLowerCase().includes(query)))
+            .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+            .slice(0, parseInt(limit))
+            .map(({ deleted_at, user_id, ...n }) => n);
+        return res.json(results);
+    }
+
+    try {
+        const result = await pool.query(
+            `SELECT id, title, content, folder_id, tags, challenge_id, challenge_module, created_at, updated_at
+             FROM notes
+             WHERE user_id = $1 AND deleted_at IS NULL
+               AND (title ILIKE $2 OR content ILIKE $2)
+             ORDER BY updated_at DESC
+             LIMIT $3`,
+            [req.user.id, `%${q.trim()}%`, parseInt(limit)]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error('GET /api/search ERROR:', err);
+        res.status(500).json({ error: 'Search failed' });
+    }
+});
+
+// GET /api/tags - Get all tags with usage count
+app.get('/api/tags', authenticateToken, async (req, res) => {
+    if (useMemoryDB) {
+        const tagCount = {};
+        notesMemoryStore
+            .filter(n => n.user_id === req.user.id && !n.deleted_at)
+            .forEach(n => (n.tags || []).forEach(tag => { tagCount[tag] = (tagCount[tag] || 0) + 1; }));
+        const results = Object.entries(tagCount)
+            .map(([tag, count]) => ({ tag, count }))
+            .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+        return res.json(results);
+    }
+    try {
+        const result = await pool.query(
+            `SELECT unnest(tags) as tag, COUNT(*) as count
+             FROM notes WHERE user_id = $1 AND deleted_at IS NULL
+             GROUP BY tag ORDER BY count DESC, tag ASC`,
+            [req.user.id]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error('GET /api/tags ERROR:', err);
+        res.status(500).json({ error: 'Failed to fetch tags' });
+    }
+});
+
+// POST /api/notes/from-challenge - Create note from arcade challenge
+app.post('/api/notes/from-challenge', authenticateToken, async (req, res) => {
+    const { challengeId, challengeTitle, challengeModule } = req.body;
+    if (!challengeId || !challengeTitle) return res.status(400).json({ error: 'Challenge ID and title are required' });
+
+    const title = `${challengeTitle} - Notes`;
+    const content = `# ${challengeTitle}\n\n**Module:** ${challengeModule || 'Unknown'}\n**Challenge ID:** ${challengeId}\n\n## Key Concepts\n\n- \n\n## My Solution\n\n\`\`\`javascript\n// Your code here\n\`\`\`\n\n## Learnings\n\n- \n\n## Questions\n\n- \n`;
+
+    if (useMemoryDB) {
+        const now = new Date().toISOString();
+        const newNote = {
+            id: uuidV4Notes(),
+            user_id: req.user.id,
+            title,
+            content,
+            folder_id: null,
+            tags: [challengeModule || 'challenge'],
+            challenge_id: challengeId,
+            challenge_module: challengeModule || null,
+            created_at: now,
+            updated_at: now,
+            deleted_at: null
+        };
+        notesMemoryStore.push(newNote);
+        const { deleted_at, user_id, ...safeNote } = newNote;
+        return res.status(201).json(safeNote);
+    }
+
+    try {
+        const result = await pool.query(
+            `INSERT INTO notes (user_id, title, content, challenge_id, challenge_module, tags)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING id, title, content, folder_id, tags, challenge_id, challenge_module, created_at, updated_at`,
+            [req.user.id, title, content, challengeId, challengeModule, [challengeModule || 'challenge']]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        console.error('POST /api/notes/from-challenge ERROR:', err);
+        res.status(500).json({ error: 'Failed to create note from challenge' });
+    }
+});
+
+
 
 // ── Factions API ─────────────────────────────────────────────────────────────
 
@@ -1034,6 +1501,33 @@ io.on('connection', (socket) => {
         if (!room.snapshots) room.snapshots = [];
         if (!room.permissions) room.permissions = {};
 
+        // ── SYNC VIRTUAL FILES TO DISK FOR TERMINAL ─────────────
+        const roomDir = path.join(__dirname, 'tmp_builds', roomId);
+        if (!fs.existsSync(roomDir)) {
+            fs.mkdirSync(roomDir, { recursive: true });
+        }
+        Object.entries(room.files).forEach(([fileName, fileData]) => {
+            const filePath = path.join(roomDir, fileName);
+            fs.writeFileSync(filePath, fileData.content || '');
+        });
+
+        // ── INITIALIZE INTERACTIVE TERMINAL ──────────────────────
+        if (!roomTerminals.has(roomId)) {
+            const ptyProcess = pty.spawn(shell, [], {
+                name: 'xterm-color',
+                cols: 80,
+                rows: 24,
+                cwd: roomDir,
+                env: process.env
+            });
+
+            ptyProcess.onData((data) => {
+                io.in(roomId).emit('terminal-output', data);
+            });
+
+            roomTerminals.set(roomId, ptyProcess);
+        }
+
         // --- Prevent Ghost Duplicate Users on Refresh ---
         // If this user is already in the room with an old stale socket, remove the old one.
         const staleIndex = room.users.findIndex(u => u.username === username);
@@ -1167,14 +1661,22 @@ io.on('connection', (socket) => {
         });
 
         // --- BUILT-IN TERMINAL CORE ---
-        socket.on('terminal-command', ({ command }) => {
-            if (!command) return;
-            exec(command, { cwd: path.resolve(__dirname) }, (error, stdout, stderr) => {
-                const output = stdout || stderr || (error ? error.message : 'Command executed with no output.');
-                io.in(roomId).emit('terminal-output', {
-                    command, output: output.trim(), isError: !!error || !!stderr
-                });
-            });
+        socket.on('terminal-input', ({ input }) => {
+            const ptyProcess = roomTerminals.get(roomId);
+            if (ptyProcess) {
+                ptyProcess.write(input);
+            }
+        });
+
+        socket.on('terminal-resize', ({ cols, rows }) => {
+            const ptyProcess = roomTerminals.get(roomId);
+            if (ptyProcess) {
+                try {
+                    ptyProcess.resize(cols, rows);
+                } catch (e) {
+                    console.error('Resize failed:', e);
+                }
+            }
         });
 
         // ── WebRTC Hologram Comms Signaling ────────────────────────
@@ -1200,6 +1702,16 @@ io.on('connection', (socket) => {
         if (room && room.files[fileName]) {
             room.files[fileName].content = content;
             socket.to(roomId).emit('code-update', { fileName, content });
+
+            // Sync to disk so terminal can run the latest code
+            try {
+                const filePath = path.join(__dirname, 'tmp_builds', roomId, fileName);
+                const fileDir = path.dirname(filePath);
+                if (!fs.existsSync(fileDir)) fs.mkdirSync(fileDir, { recursive: true });
+                fs.writeFileSync(filePath, content);
+            } catch (err) {
+                console.error('[SYNC ERROR]', err);
+            }
         }
     });
 
@@ -1231,6 +1743,13 @@ io.on('connection', (socket) => {
             const content = defaultSnippets[language] || '';
             room.files[fileName] = { content, language };
             io.in(roomId).emit('file-created', { fileName, language, content });
+
+            try {
+                const filePath = path.join(__dirname, 'tmp_builds', roomId, fileName);
+                const fileDir = path.dirname(filePath);
+                if (!fs.existsSync(fileDir)) fs.mkdirSync(fileDir, { recursive: true });
+                fs.writeFileSync(filePath, content);
+            } catch (err) { }
         }
     });
 
@@ -1438,5 +1957,5 @@ app.post('/execute', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 5050;
+const PORT = process.env.PORT || 5051;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
