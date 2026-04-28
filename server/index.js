@@ -13,6 +13,7 @@ const { exec } = require('child_process');
 const nodemailer = require('nodemailer');
 const pty = require('node-pty');
 const os = require('os');
+const FileSystem = require('./fileSystem');
 
 const app = express();
 const server = http.createServer(app);
@@ -1486,11 +1487,16 @@ io.on('connection', (socket) => {
                 owner: username, // Track original creator by username
                 users: [],
                 permissions: {},
-                files: { 'script.js': { content: '// BrightCode Workspace\nconsole.log("Connect & Code!");', language: 'javascript' } },
+                files: {},
                 snapshots: []
             });
         }
         const room = rooms.get(roomId);
+
+        // Initialize robust FileSystem if not present
+        if (!room.fs) {
+            room.fs = new FileSystem(roomId, room.files || {});
+        }
 
         // If the joining user is the original owner, they reclaim Admin rights
         if (room.owner === username) {
@@ -1553,7 +1559,8 @@ io.on('connection', (socket) => {
             users: room.users,
             adminId: room.adminId,
             yourId: socket.id,
-            snapshots: room.snapshots
+            snapshots: room.snapshots,
+            workspaceOwner: room.owner
         });
 
         socket.to(roomId).emit('user-joined', { socketId: socket.id, username, role, permission });
@@ -1699,19 +1706,8 @@ io.on('connection', (socket) => {
 
     socket.on('code-change', ({ roomId, fileName, content }) => {
         const room = rooms.get(roomId);
-        if (room && room.files[fileName]) {
-            room.files[fileName].content = content;
+        if (room && room.fs && room.fs.updateFileContent(fileName, content)) {
             socket.to(roomId).emit('code-update', { fileName, content });
-
-            // Sync to disk so terminal can run the latest code
-            try {
-                const filePath = path.join(__dirname, 'tmp_builds', roomId, fileName);
-                const fileDir = path.dirname(filePath);
-                if (!fs.existsSync(fileDir)) fs.mkdirSync(fileDir, { recursive: true });
-                fs.writeFileSync(filePath, content);
-            } catch (err) {
-                console.error('[SYNC ERROR]', err);
-            }
         }
     });
 
@@ -1729,81 +1725,107 @@ io.on('connection', (socket) => {
 
     socket.on('file-create', ({ roomId, fileName, language }) => {
         const room = rooms.get(roomId);
-        if (room) {
-            const defaultSnippets = {
-                javascript: "// JavaScript Initialized\nconsole.log('Hello from CodeBright!');\n",
-                javascriptreact: "// React Component Initialized\nimport React from 'react';\n\nconst App = () => {\n  return <div>Hello React!</div>;\n};\n",
-                html: "<!DOCTYPE html>\n<html>\n<head>\n  <title>New Page</title>\n</head>\n<body>\n  <h1>Hello from CodeBright!</h1>\n</body>\n</html>\n",
-                css: "/* Style Initialized */\nbody {\n  margin: 0;\n  padding: 0;\n}\n",
-                python: "print('Hello from CodeBright!')\n",
-                cpp: "#include <iostream>\n\nint main() {\n    std::cout << \"Hello from CodeBright!\" << std::endl;\n    return 0;\n}\n",
-                java: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello from CodeBright!\");\n    }\n}\n",
-                plaintext: "Welcome to CodeBright Notepad.\nWrite anything here...\n"
-            };
-            const content = defaultSnippets[language] || '';
-            room.files[fileName] = { content, language };
-            io.in(roomId).emit('file-created', { fileName, language, content });
+        if (room && room.fs) {
+            // Check if it's a folder (no extension)
+            let result;
+            if (!fileName.includes('.')) {
+                result = room.fs.createFolder(fileName);
+            } else {
+                // Use default snippets for new files
+                const defaultSnippets = {
+                    javascript: "// JavaScript\nconsole.log('Hello!');\n",
+                    typescript: "// TypeScript\nconst greet = (name: string): string => {\n  return `Hello, ${name}!`;\n};\n",
+                    html: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Document</title>\n</head>\n<body>\n  \n</body>\n</html>\n",
+                    css: "/* Styles */\n* {\n  box-sizing: border-box;\n  margin: 0;\n  padding: 0;\n}\n",
+                    json: "{\n  \"name\": \"\",\n  \"version\": \"1.0.0\"\n}\n",
+                    python: "# Python\nprint('Hello!')\n",
+                    cpp: "#include <iostream>\n\nint main() {\n    std::cout << \"Hello!\" << std::endl;\n    return 0;\n}\n",
+                    java: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello!\");\n    }\n}\n",
+                    markdown: "# Title\n\nWrite your documentation here.\n",
+                    yaml: "# YAML Configuration\nname: my-app\nversion: 1.0.0\n",
+                    sql: "-- SQL\nSELECT * FROM table_name;\n",
+                    plaintext: "",
+                    shell: "#!/bin/bash\necho \"Hello!\"\n",
+                };
+                const content = defaultSnippets[language] || '';
+                result = room.fs.createFile(fileName, content, language);
+            }
 
-            try {
-                const filePath = path.join(__dirname, 'tmp_builds', roomId, fileName);
-                const fileDir = path.dirname(filePath);
-                if (!fs.existsSync(fileDir)) fs.mkdirSync(fileDir, { recursive: true });
-                fs.writeFileSync(filePath, content);
-            } catch (err) { }
+            if (result) {
+                io.in(roomId).emit('file-created', result);
+            }
+        }
+    });
+
+    socket.on('files-batch-create', ({ roomId, files }) => {
+        const room = rooms.get(roomId);
+        if (room && room.fs) {
+            const createdFiles = [];
+            files.forEach(({ fileName, language }) => {
+                let result;
+                if (!fileName.includes('.')) {
+                    result = room.fs.createFolder(fileName);
+                } else {
+                    const defaultSnippets = {
+                        javascript: "// JavaScript\nconsole.log('Hello!');\n",
+                        typescript: "// TypeScript\nconst greet = (name: string): string => {\n  return `Hello, ${name}!`;\n};\n",
+                        html: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Document</title>\n</head>\n<body>\n  \n</body>\n</html>\n",
+                        css: "/* Styles */\n* {\n  box-sizing: border-box;\n  margin: 0;\n  padding: 0;\n}\n",
+                        json: "{\n  \"name\": \"\",\n  \"version\": \"1.0.0\"\n}\n",
+                        python: "# Python\nprint('Hello!')\n",
+                        cpp: "#include <iostream>\n\nint main() {\n    std::cout << \"Hello!\" << std::endl;\n    return 0;\n}\n",
+                        java: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello!\");\n    }\n}\n",
+                        markdown: "# Title\n\nWrite your documentation here.\n",
+                        yaml: "# YAML Configuration\nname: my-app\nversion: 1.0.0\n",
+                        sql: "-- SQL\nSELECT * FROM table_name;\n",
+                        plaintext: "",
+                        shell: "#!/bin/bash\necho \"Hello!\"\n",
+                    };
+                    const content = defaultSnippets[language] || '';
+                    result = room.fs.createFile(fileName, content, language);
+                }
+                if (result) createdFiles.push(result);
+            });
+            if (createdFiles.length > 0) {
+                io.in(roomId).emit('files-batch-created', { files: createdFiles });
+            }
         }
     });
 
     socket.on('file-delete', ({ roomId, fileName }) => {
-        console.log(`[FILE_DELETE] Room: ${roomId}, File: ${fileName}`);
         const room = rooms.get(roomId);
-        if (room && room.files[fileName]) {
-            delete room.files[fileName];
+        if (room && room.fs && room.fs.deleteFile(fileName)) {
             io.in(roomId).emit('file-deleted', { fileName });
-            console.log(`[FILE_DELETE] Success: ${fileName}`);
-        } else {
-            console.warn(`[FILE_DELETE] Failed: File not found or room invalid`);
         }
     });
 
     socket.on('file-rename', ({ roomId, oldName, newName }) => {
         const room = rooms.get(roomId);
-        if (room && room.files[oldName] && !room.files[newName]) {
-            room.files[newName] = room.files[oldName];
-            delete room.files[oldName];
-            io.in(roomId).emit('file-renamed', { oldName, newName });
+        if (room && room.fs) {
+            const result = room.fs.renameFile(oldName, newName);
+            if (result) {
+                io.in(roomId).emit('file-renamed', result);
+            }
         }
     });
 
     socket.on('folder-delete', ({ roomId, folderPath }) => {
         const room = rooms.get(roomId);
-        if (room) {
-            const folderPrefix = folderPath + '/';
-            const deletedFiles = [];
-            Object.keys(room.files).forEach(fileName => {
-                if (fileName.startsWith(folderPrefix)) {
-                    delete room.files[fileName];
-                    deletedFiles.push(fileName);
-                }
-            });
-            io.in(roomId).emit('folder-deleted', { folderPath, deletedFiles });
+        if (room && room.fs) {
+            const deletedFiles = room.fs.deleteFolder(folderPath);
+            if (deletedFiles) {
+                io.in(roomId).emit('folder-deleted', { folderPath, deletedFiles });
+            }
         }
     });
 
     socket.on('folder-rename', ({ roomId, oldPath, newPath }) => {
         const room = rooms.get(roomId);
-        if (room) {
-            const oldPrefix = oldPath + '/';
-            const newPrefix = newPath + '/';
-            const renamedMap = {};
-            Object.keys(room.files).forEach(fileName => {
-                if (fileName.startsWith(oldPrefix)) {
-                    const newName = fileName.replace(oldPrefix, newPrefix);
-                    room.files[newName] = room.files[fileName];
-                    delete room.files[fileName];
-                    renamedMap[fileName] = newName;
-                }
-            });
-            io.in(roomId).emit('folder-renamed', { oldPath, newPath, renamedMap });
+        if (room && room.fs) {
+            const renamedMap = room.fs.renameFolder(oldPath, newPath);
+            if (renamedMap) {
+                io.in(roomId).emit('folder-renamed', { oldPath, newPath, renamedMap });
+            }
         }
     });
 
