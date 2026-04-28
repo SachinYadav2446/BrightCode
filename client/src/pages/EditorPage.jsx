@@ -19,9 +19,8 @@ import {
     PenTool, Eraser, Layout as WhiteboardIcon, Zap, Shield, Languages,
 
     Mic, MicOff, Video, VideoOff, PhoneOff, Phone, Plus,
-
-    ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Share2
-
+    ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Share2,
+    Folder, FolderOpen, FolderPlus, File as FileIcon
 } from 'lucide-react';
 
 import axios from 'axios';
@@ -39,6 +38,7 @@ const EditorPage = () => {
     const { user, updateXP } = useAuth(); // BUG FIX: added updateXP
 
     const socketRef = useRef(null);
+    const modalInputRef = useRef(null);
 
     const { roomId } = useParams();
 
@@ -57,10 +57,12 @@ const EditorPage = () => {
     const [output, setOutput] = useState('');
 
     const [isRunning, setIsRunning] = useState(false);
-
+    const [expandedFolders, setExpandedFolders] = useState(new Set(['/']));
+    
     const [language, setLanguage] = useState('javascript');
 
     const [modalConfig, setModalConfig] = useState({ isOpen: false, type: '', targetFile: '', defaultValue: '' });
+    const [modalInputValue, setModalInputValue] = useState('');
 
 
 
@@ -81,6 +83,16 @@ const EditorPage = () => {
     const [isDrawing, setIsDrawing] = useState(false);
 
     const [drawColor, setDrawColor] = useState('#fbbf24');
+
+    const [drawTool, setDrawTool] = useState('pen');
+
+    const [drawWidth, setDrawWidth] = useState(3);
+
+    const [eraserWidth, setEraserWidth] = useState(20);
+
+    const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+
+    const [snapshot, setSnapshot] = useState(null);
 
 
 
@@ -103,12 +115,14 @@ const EditorPage = () => {
     // ── Admin States ─────────────────────────────────────────────────────────
 
     const [adminId, setAdminId] = useState(null);
-
     const [myId, setMyId] = useState(null);
-
     const [myPermission, setMyPermission] = useState('write');
+    const [workspaceOwner, setWorkspaceOwner] = useState('');
 
     const isAdmin = adminId === myId;
+
+    // Workspace folder name: from server-sent owner, or fallback to current user
+    const workspaceName = (workspaceOwner || user?.username || 'WORKSPACE').toUpperCase();
 
 
 
@@ -156,9 +170,10 @@ const EditorPage = () => {
 
     // ── Resizer States ───────────────────────────────────────────────────────
 
-    const [sidebarWidth, setSidebarWidth] = useState(280);
+    const sidebarWidth = 280; // Hardcoded fixed width
 
     const [terminalHeight, setTerminalHeight] = useState(200);
+
 
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -178,33 +193,17 @@ const EditorPage = () => {
 
 
 
-    const startSidebarResize = () => { if (!isSidebarCollapsed) { isResizingSidebar.current = true; document.body.style.cursor = 'col-resize'; } };
+
 
     const startTerminalResize = () => { if (!isTerminalCollapsed) { isResizingTerminal.current = true; document.body.style.cursor = 'row-resize'; } };
 
 
 
     const toggleSidebar = (e) => {
-
-        e.stopPropagation();
-
-        if (isSidebarCollapsed) {
-
-            setSidebarWidth(prevSidebarWidth.current);
-
-            setIsSidebarCollapsed(false);
-
-        } else {
-
-            prevSidebarWidth.current = sidebarWidth;
-
-            setSidebarWidth(0);
-
-            setIsSidebarCollapsed(true);
-
-        }
-
+        if (e && e.stopPropagation) e.stopPropagation();
+        setIsSidebarCollapsed(!isSidebarCollapsed);
     };
+
 
 
 
@@ -227,48 +226,23 @@ const EditorPage = () => {
     useEffect(() => {
 
         const handleMouseMove = (e) => {
-
-            if (isResizingSidebar.current) {
-
-                const newWidth = e.clientX;
-
-                if (newWidth > 180 && newWidth < 500) {
-
-                    setSidebarWidth(newWidth);
-
-                    setIsSidebarCollapsed(false);
-
-                }
-
-            }
-
             if (isResizingTerminal.current) {
-
                 const newHeight = window.innerHeight - e.clientY;
-
                 if (newHeight >= 0 && newHeight < 600) {
-
                     setTerminalHeight(newHeight);
-
                     if (newHeight > 20) setIsTerminalCollapsed(false);
-
                     else if (newHeight === 0) setIsTerminalCollapsed(true);
-
                 }
-
             }
-
         };
+
 
         const handleMouseUp = () => {
-
             isResizingSidebar.current = false;
-
             isResizingTerminal.current = false;
-
             document.body.style.cursor = 'default';
-
         };
+
 
         window.addEventListener('mousemove', handleMouseMove);
 
@@ -328,30 +302,15 @@ const EditorPage = () => {
 
 
 
-                socket.on('initial-data', ({ files, users, adminId, yourId, snapshots }) => {
-
+                socket.on('initial-data', ({ files, users, adminId, yourId, snapshots, workspaceOwner }) => {
                     if (isStopped) return;
-
                     setFiles(files);
-
                     setClients(users);
-
                     setAdminId(adminId);
-
                     setMyId(yourId);
-
                     setSnapshots(snapshots || []);
-
-                    const fileNames = Object.keys(files);
-
-                    if (fileNames.length > 0) {
-
-                        setActiveFile(fileNames[0]);
-
-                        setLanguage(files[fileNames[0]].language);
-
-                    }
-
+                    if (workspaceOwner) setWorkspaceOwner(workspaceOwner);
+                    // Don't auto-open any file — let user pick from tree
                 });
 
 
@@ -433,17 +392,15 @@ const EditorPage = () => {
                 });
 
                 socket.on('file-created', ({ fileName, language, content }) => {
-
                     if (!isStopped) {
-
                         setFiles(prev => ({ ...prev, [fileName]: { content: content || '', language } }));
-
-                        setActiveFile(fileName);
-
-                        toast.success(`File ${fileName} created`);
-
+                        // Only switch to the file if it's a real file (not a folder placeholder)
+                        if (!fileName.endsWith('/.keep')) {
+                            setActiveFile(fileName);
+                            setLanguage(language);
+                            toast.success(`Created ${fileName.split('/').pop()}`);
+                        }
                     }
-
                 });
 
                 socket.on('file-deleted', ({ fileName }) => {
@@ -460,18 +417,88 @@ const EditorPage = () => {
 
                 });
 
-                socket.on('file-renamed', ({ oldName, newName }) => {
-
+                socket.on('file-renamed', ({ oldName, newName, newLanguage }) => {
                     if (!isStopped) {
-
-                        setFiles(prev => { const n = { ...prev }; n[newName] = n[oldName]; delete n[oldName]; return n; });
-
-                        setActiveFile(prev => prev === oldName ? newName : prev);
-
-                        toast.success(`File renamed to ${newName}`);
-
+                        setFiles(prev => {
+                            const n = { ...prev };
+                            if (n[oldName]) {
+                                n[newName] = { ...n[oldName], language: newLanguage || n[oldName].language };
+                                delete n[oldName];
+                            }
+                            return n;
+                        });
+                        if (activeFile === oldName) {
+                            setActiveFile(newName);
+                            if (newLanguage) setLanguage(newLanguage);
+                        }
+                        toast.success(`File renamed to ${newName.split('/').pop()}`);
                     }
+                });
 
+                socket.on('folder-deleted', ({ folderPath, deletedFiles }) => {
+                    if (!isStopped) {
+                        setFiles(prev => {
+                            const newFiles = { ...prev };
+                            deletedFiles.forEach(f => delete newFiles[f]);
+                            return newFiles;
+                        });
+                        if (deletedFiles.includes(activeFile)) {
+                            setActiveFile('');
+                        }
+                        setExpandedFolders(prev => {
+                            const newExpanded = new Set(prev);
+                            newExpanded.delete(folderPath);
+                            deletedFiles.forEach(f => {
+                                if (f.endsWith('/.keep')) {
+                                    newExpanded.delete(f.replace('/.keep', ''));
+                                }
+                            });
+                            return newExpanded;
+                        });
+                        toast.success(`Folder deleted`);
+                    }
+                });
+
+                socket.on('folder-renamed', ({ oldPath, newPath, renamedMap }) => {
+                    if (!isStopped) {
+                        setFiles(prev => {
+                            const newFiles = { ...prev };
+                            Object.entries(renamedMap).forEach(([oldF, newF]) => {
+                                if (newFiles[oldF]) {
+                                    // Recalculate language based on new extension if it changed
+                                    const newLang = getFileLanguage(newF);
+                                    newFiles[newF] = { ...newFiles[oldF], language: newLang };
+                                    delete newFiles[oldF];
+                                }
+                            });
+                            return newFiles;
+                        });
+
+                        if (renamedMap[activeFile]) {
+                            const newActive = renamedMap[activeFile];
+                            setActiveFile(newActive);
+                            setLanguage(getFileLanguage(newActive));
+                        }
+
+                        setExpandedFolders(prev => {
+                            const newExpanded = new Set(prev);
+                            // Also rename nested expanded folders
+                            const oldPrefix = oldPath + '/';
+                            const newPrefix = newPath + '/';
+                            
+                            prev.forEach(path => {
+                                if (path === oldPath) {
+                                    newExpanded.delete(oldPath);
+                                    newExpanded.add(newPath);
+                                } else if (path.startsWith(oldPrefix)) {
+                                    newExpanded.delete(path);
+                                    newExpanded.add(path.replace(oldPrefix, newPrefix));
+                                }
+                            });
+                            return newExpanded;
+                        });
+                        toast.success(`Folder renamed to ${newPath.split('/').pop()}`);
+                    }
                 });
 
                 socket.on('user-left', ({ id, username }) => {
@@ -638,93 +665,130 @@ const EditorPage = () => {
 
 
 
-    const createNewFile = () => setModalConfig({ isOpen: true, type: 'create', targetFile: '', defaultValue: '' });
-
-
-
-    const copyInviteLink = async () => {
-
-        try { await navigator.clipboard.writeText(window.location.href); toast.success('Invite link copied!'); }
-
-        catch { toast.error('Failed to copy link'); }
-
+    // ── File System Helpers ───────────────────────────────────────────────────
+    const openModal = (config) => {
+        setModalConfig({ ...config, isOpen: true });
+        setModalInputValue(config.defaultValue || '');
     };
 
-
-
-    const deleteFile = (e, fileName) => {
-
-        e.stopPropagation();
-
-        if (Object.keys(files).length === 1) { toast.error('Cannot delete the last remaining file'); return; }
-
-        setModalConfig({ isOpen: true, type: 'delete', targetFile: fileName, defaultValue: '' });
-
+    const createNewFile = (folderPath) => {
+        const path = typeof folderPath === 'string' ? folderPath : '';
+        openModal({ type: 'create', targetFile: path, defaultValue: '' });
+    };
+    const createNewFolder = (folderPath) => {
+        const path = typeof folderPath === 'string' ? folderPath : '';
+        openModal({ type: 'create-folder', targetFile: path, defaultValue: '' });
     };
 
-
-
-    const renameFile = (e, oldName) => {
-
-        e.stopPropagation();
-
-        setModalConfig({ isOpen: true, type: 'rename', targetFile: oldName, defaultValue: oldName });
-
+    const getFileLanguage = (name) => {
+        const ext = (name.split('.').pop() || '').toLowerCase();
+        return { js:'javascript', jsx:'javascript', ts:'typescript', tsx:'typescript',
+                 py:'python', html:'html', htm:'html', css:'css', scss:'css',
+                 json:'json', md:'markdown', mdx:'markdown', cpp:'cpp', c:'cpp',
+                 h:'cpp', java:'java', sql:'sql', yaml:'yaml', yml:'yaml',
+                 sh:'shell', txt:'plaintext', env:'plaintext' }[ext] || 'plaintext';
     };
 
+    const getFileColor = (name) => {
+        const ext = (name.split('.').pop() || '').toLowerCase();
+        return { js:'#f7df1e', jsx:'#61dafb', ts:'#3178c6', tsx:'#61dafb',
+                 py:'#3572A5', html:'#e34f26', css:'#7c83fd', scss:'#c6538c',
+                 json:'#f5a623', md:'#aaaaaa', cpp:'#5a9fd4', c:'#5a9fd4',
+                 java:'#b07219', sql:'#336791', yaml:'#cc1018', sh:'#89e051' }[ext] || '#6b7280';
+    };
 
-
-    const handleModalSubmit = (fileName) => {
-
+    const handleModalSubmit = () => {
+        const inputVal = modalInputValue.trim();
         const { type, targetFile } = modalConfig;
 
-        if (type === 'create' && fileName && socketRef.current) {
-
-            const extMap = { javascript: 'js', python: 'py', cpp: 'cpp', java: 'java' };
-
-            const ext = extMap[creationLang];
-
-            const finalName = fileName.includes('.') ? fileName : `${fileName}.${ext}`;
-
-
-
-            if (files[finalName]) {
-
-                toast.error('File name already exists');
-
+        // Validation for new names
+        if (['create', 'create-folder', 'rename', 'rename-folder'].includes(type)) {
+            if (!inputVal) { toast.error('Name cannot be empty'); return; }
+            if (/[\\/:*?"<>|]/.test(inputVal)) {
+                toast.error('Name contains invalid characters');
                 return;
-
             }
+        }
 
+        if (type === 'create') {
+            if (!inputVal.includes('.')) { toast.error('Add extension: e.g. index.js or style.css'); return; }
+            const finalName = targetFile ? `${targetFile}/${inputVal}` : inputVal;
+            if (files[finalName]) { toast.error('File already exists'); return; }
+            const lang = getFileLanguage(inputVal);
+            socketRef.current?.emit('file-create', { roomId, fileName: finalName, language: lang });
+            setExpandedFolders(p => new Set(p).add(targetFile || '/'));
 
+        } else if (type === 'create-folder') {
+            const clean = inputVal;
+            const folderPath = targetFile ? `${targetFile}/${clean}` : clean;
+            
+            // Check if folder or file with same name exists
+            const folderPrefix = folderPath + '/';
+            const exists = Object.keys(files).some(f => f === folderPath || f.startsWith(folderPrefix));
+            if (exists) { toast.error('Folder already exists'); return; }
 
-            socketRef.current.emit('file-create', {
+            socketRef.current?.emit('file-create', { roomId, fileName: `${folderPath}/.keep`, language: 'plaintext' });
+            setExpandedFolders(p => { const s = new Set(p); s.add('/'); s.add(folderPath); return s; });
+            toast.success(`Folder ${clean} created`);
 
-                roomId,
-
-                fileName: finalName,
-
-                language: creationLang
-
-            });
-
-        } else if (type === 'rename' && fileName && fileName !== targetFile) {
-
-            if (files[fileName]) { toast.error('File name already exists'); }
-
-            else if (socketRef.current) { socketRef.current.emit('file-rename', { roomId, oldName: targetFile, newName: fileName }); }
+        } else if (type === 'rename') {
+            const parts = targetFile.split('/');
+            const oldBase = parts.pop();
+            const newBase = inputVal.includes('.') ? inputVal : `${inputVal}.${oldBase.split('.').pop()}`;
+            if (newBase === oldBase) { setModalConfig({ isOpen: false }); return; }
+            const newPath = [...parts, newBase].join('/');
+            if (files[newPath]) { toast.error('Name already in use'); return; }
+            socketRef.current?.emit('file-rename', { roomId, oldName: targetFile, newName: newPath });
 
         } else if (type === 'delete') {
-
             socketRef.current?.emit('file-delete', { roomId, fileName: targetFile });
 
+        } else if (type === 'rename-folder') {
+            const parts = targetFile.split('/');
+            parts.pop();
+            const newPath = [...parts, inputVal].join('/');
+            if (newPath === targetFile) { setModalConfig({ isOpen: false }); return; }
+            
+            // Check if target name already exists
+            const newPrefix = newPath + '/';
+            const exists = Object.keys(files).some(f => f === newPath || f.startsWith(newPrefix));
+            if (exists) { toast.error('Name already in use'); return; }
+
+            socketRef.current?.emit('folder-rename', { roomId, oldPath: targetFile, newPath });
+
+        } else if (type === 'delete-folder') {
+            socketRef.current?.emit('folder-delete', { roomId, folderPath: targetFile });
         }
 
         setModalConfig({ isOpen: false });
+    };
 
+    const deleteFile = (e, fileName) => {
+        e.stopPropagation();
+        openModal({ type: 'delete', targetFile: fileName, defaultValue: '' });
+    };
+    const deleteFolder = (e, folderPath) => {
+        e.stopPropagation();
+        openModal({ type: 'delete-folder', targetFile: folderPath, defaultValue: '' });
+    };
+    const renameFile = (e, oldPath) => {
+        e.stopPropagation();
+        openModal({ type: 'rename', targetFile: oldPath, defaultValue: oldPath.split('/').pop() });
+    };
+    const renameFolder = (e, folderPath) => {
+        e.stopPropagation();
+        openModal({ type: 'rename-folder', targetFile: folderPath, defaultValue: folderPath.split('/').pop() });
     };
 
 
+
+
+
+    // ── Copy invite ───────────────────────────────────────────────────────────
+    const copyInviteLink = async () => {
+        try { await navigator.clipboard.writeText(window.location.href); toast.success('Invite link copied!'); }
+        catch { toast.error('Failed to copy link'); }
+    };
 
     // ── AI Sentinel ──────────────────────────────────────────────────────────
 
@@ -974,29 +1038,181 @@ const EditorPage = () => {
 
     // ── Whiteboard ────────────────────────────────────────────────────────────
 
+    const getCoordinates = (nativeEvent) => {
+
+        const canvas = canvasRef.current;
+
+        if (!canvas) return { x: 0, y: 0 };
+
+        const rect = canvas.getBoundingClientRect();
+
+        // Account for canvas scaling (CSS size vs Coordinate size)
+
+        const scaleX = canvas.width / rect.width;
+
+        const scaleY = canvas.height / rect.height;
+
+        return {
+
+            x: (nativeEvent.clientX - rect.left) * scaleX,
+
+            y: (nativeEvent.clientY - rect.top) * scaleY
+
+        };
+
+    };
+
+
+
     const startDrawing = ({ nativeEvent }) => {
+
+        const { x, y } = getCoordinates(nativeEvent);
 
         const ctx = canvasRef.current.getContext('2d');
 
-        ctx.beginPath(); ctx.moveTo(nativeEvent.offsetX, nativeEvent.offsetY);
+        
+
+        setStartPos({ x, y });
+
+        // Save state for shape previews
+
+        setSnapshot(ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height));
+
+
+
+        if (drawTool === 'pen' || drawTool === 'eraser') {
+
+            ctx.beginPath();
+
+            ctx.moveTo(x, y);
+
+            ctx.lineCap = 'round';
+
+            ctx.lineJoin = 'round';
+
+        }
+
+        
 
         setIsDrawing(true);
 
     };
 
+
+
     const draw = ({ nativeEvent }) => {
 
         if (!isDrawing) return;
 
+        const { x, y } = getCoordinates(nativeEvent);
+
         const ctx = canvasRef.current.getContext('2d');
 
-        ctx.lineTo(nativeEvent.offsetX, nativeEvent.offsetY);
 
-        ctx.strokeStyle = drawColor; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.stroke();
+
+        if (drawTool === 'pen' || drawTool === 'eraser') {
+
+            ctx.strokeStyle = drawTool === 'eraser' ? '#120e0b' : drawColor;
+
+            ctx.lineWidth = drawTool === 'eraser' ? eraserWidth : drawWidth;
+
+            ctx.lineTo(x, y);
+
+            ctx.stroke();
+
+        } else {
+
+            // Shapes logic: restore snapshot and draw preview
+
+            if (snapshot) {
+
+                ctx.putImageData(snapshot, 0, 0);
+
+                ctx.strokeStyle = drawColor;
+
+                ctx.lineWidth = drawWidth;
+
+                ctx.lineCap = 'round';
+
+                ctx.beginPath();
+
+
+
+                const dx = x - startPos.x;
+
+                const dy = y - startPos.y;
+
+
+
+                if (drawTool === 'rect') {
+
+                    ctx.strokeRect(startPos.x, startPos.y, dx, dy);
+
+                } else if (drawTool === 'circle') {
+
+                    const radius = Math.sqrt(dx * dx + dy * dy);
+
+                    ctx.arc(startPos.x, startPos.y, radius, 0, 2 * Math.PI);
+
+                    ctx.stroke();
+
+                } else if (drawTool === 'line') {
+
+                    ctx.moveTo(startPos.x, startPos.y);
+
+                    ctx.lineTo(x, y);
+
+                    ctx.stroke();
+
+                } else if (drawTool === 'arrow') {
+
+                    const headLength = 15;
+
+                    const angle = Math.atan2(dy, dx);
+
+                    ctx.moveTo(startPos.x, startPos.y);
+
+                    ctx.lineTo(x, y);
+
+                    ctx.lineTo(x - headLength * Math.cos(angle - Math.PI / 6), y - headLength * Math.sin(angle - Math.PI / 6));
+
+                    ctx.moveTo(x, y);
+
+                    ctx.lineTo(x - headLength * Math.cos(angle + Math.PI / 6), y - headLength * Math.sin(angle + Math.PI / 6));
+
+                    ctx.stroke();
+
+                } else if (drawTool === 'triangle') {
+
+                    ctx.moveTo(startPos.x + dx / 2, startPos.y);
+
+                    ctx.lineTo(startPos.x, startPos.y + dy);
+
+                    ctx.lineTo(startPos.x + dx, startPos.y + dy);
+
+                    ctx.closePath();
+
+                    ctx.stroke();
+
+                }
+
+            }
+
+        }
 
     };
 
-    const stopDrawing = () => setIsDrawing(false);
+
+
+    const stopDrawing = () => {
+
+        setIsDrawing(false);
+
+        setSnapshot(null);
+
+    };
+
+
 
     const clearCanvas = () => {
 
@@ -1032,8 +1248,100 @@ const EditorPage = () => {
 
 
 
-    // ── RENDER ────────────────────────────────────────────────────────────────
+    // ── FILE SYSTEM TREE ──────────────────────────────────────────────────────
+    const fileTree = React.useMemo(() => {
+        const root = { type: 'folder', children: {} };
+        Object.keys(files).forEach(path => {
+            const parts = path.split('/');
+            let current = root;
+            for (let i = 0; i < parts.length - 1; i++) {
+                if (!current.children[parts[i]]) {
+                    current.children[parts[i]] = { type: 'folder', children: {} };
+                }
+                current = current.children[parts[i]];
+            }
+            const fileName = parts[parts.length - 1];
+            if (fileName === '.keep') return;
+            current.children[fileName] = { type: 'file', path };
+        });
+        return root;
+    }, [files]);
 
+    const toggleFolder = (path) => {
+        setExpandedFolders(prev => {
+            const next = new Set(prev);
+            if (next.has(path)) next.delete(path);
+            else next.add(path);
+            return next;
+        });
+    };
+
+    const renderFileTree = (node, path = '', depth = 0) => {
+        return Object.entries(node.children)
+            .sort(([nameA, nodeA], [nameB, nodeB]) => {
+                if (nodeA.type === nodeB.type) return nameA.localeCompare(nameB);
+                return nodeA.type === 'folder' ? -1 : 1;
+            })
+            .map(([name, childNode]) => {
+                const currentPath = path ? `${path}/${name}` : name;
+                
+                if (childNode.type === 'folder') {
+                    const isExpanded = expandedFolders.has(currentPath);
+                    return (
+                        <div key={currentPath} className="folder-item">
+                            <div className="folder-header" onClick={() => toggleFolder(currentPath)} style={{ paddingLeft: `${depth * 12 + 8}px` }}>
+                                <span className="tree-arrow">{isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</span>
+                                {isExpanded
+                                    ? <FolderOpen size={14} style={{ color: '#e2a04a', flexShrink: 0 }} />
+                                    : <Folder size={14} style={{ color: '#e2a04a', flexShrink: 0 }} />}
+                                <span className="folder-name-text" style={{ flex: 1, fontSize: '0.85rem' }}>{name}</span>
+                                <div className="folder-actions" style={{ display: 'flex', gap: '4px' }}>
+                                    <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFile(currentPath); }} title="New File"><FilePlus size={12} /></button>
+                                    <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFolder(currentPath); }} title="New Folder"><FolderPlus size={12} /></button>
+                                    <button className="icon-btn-ghost" onClick={(e) => renameFolder(e, currentPath)} title="Rename"><Edit2 size={12} /></button>
+                                    <button className="icon-btn-ghost" onClick={(e) => deleteFolder(e, currentPath)} title="Delete"><Trash2 size={12} /></button>
+                                </div>
+                            </div>
+                            <AnimatePresence>
+                                {isExpanded && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        style={{ overflow: 'hidden' }}
+                                    >
+                                        {Object.keys(childNode.children).length === 0 ? (
+                                            <div className="empty-folder-hint-inline" style={{ paddingLeft: `${depth * 12 + 32}px`, fontSize: '0.75rem', color: 'var(--text-muted)', paddingY: '4px', fontStyle: 'italic' }}>
+                                                (empty)
+                                            </div>
+                                        ) : renderFileTree(childNode, currentPath, depth + 1)}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    );
+                }
+
+                const isActive = activeFile === currentPath;
+                return (
+                    <div key={currentPath} className={`file-item ${isActive ? 'active' : ''}`}
+                        onClick={() => { setActiveFile(currentPath); setLanguage(files[currentPath].language); }}
+                        style={{ paddingLeft: `${depth * 12 + 24}px` }}>
+                        <div className="active-indicator" />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, overflow: 'hidden' }}>
+                            <FileIcon size={13} style={{ color: getFileColor(name), flexShrink: 0 }} />
+                            <span className="file-name-text">{name}</span>
+                        </div>
+                        <div className="file-actions" style={{ display: 'flex', gap: '4px' }}>
+                            <button className="icon-btn-ghost" onClick={(e) => renameFile(e, currentPath)} title="Rename"><Edit2 size={12} /></button>
+                            <button className="icon-btn-ghost" onClick={(e) => deleteFile(e, currentPath)} title="Delete"><Trash2 size={12} /></button>
+                        </div>
+                    </div>
+                );
+            });
+    };
+
+    // ── RENDER ────────────────────────────────────────────────────────────────
     return (
 
         <>
@@ -1043,89 +1351,65 @@ const EditorPage = () => {
                 {modalConfig.isOpen && (
 
                     <div className="custom-modal-overlay">
-
                         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="custom-modal">
 
                             <div className="custom-modal-header">
-
-                                <h3>{modalConfig.type === 'create' ? 'Create New File' : modalConfig.type === 'rename' ? 'Rename File' : 'Delete File'}</h3>
-
+                                <h3>
+                                    {modalConfig.type === 'create' ? '📄 New File' :
+                                     modalConfig.type === 'create-folder' ? '📁 New Folder' :
+                                     (modalConfig.type === 'rename' || modalConfig.type === 'rename-folder') ? '✏️ Rename' :
+                                     '🗑️ Delete'}
+                                </h3>
                             </div>
 
                             <div className="custom-modal-body">
-
-                                {modalConfig.type === 'delete' ? (
-
-                                    <p>Delete <span className="highlight-file">{modalConfig.targetFile}</span>?</p>
-
-                                ) : (
-
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-
-                                        {modalConfig.type === 'create' && (
-
-                                            <div className="modal-field">
-
-                                                <label>Select Language</label>
-
-                                                <select className="premium-input modal-select" value={creationLang} onChange={(e) => setCreationLang(e.target.value)}>
-
-                                                    <option value="javascript">JavaScript</option>
-
-                                                    <option value="python">Python</option>
-
-                                                    <option value="cpp">C++</option>
-
-                                                    <option value="java">Java</option>
-
-                                                </select>
-
-                                            </div>
-
-                                        )}
-
-                                        <div className="modal-field">
-
-                                            <label>{modalConfig.type === 'create' ? 'File Name' : 'New Name'}</label>
-
-                                            <input type="text" autoFocus defaultValue={modalConfig.defaultValue}
-
-                                                onKeyDown={e => e.key === 'Enter' && handleModalSubmit(e.target.value)}
-
-                                                placeholder={modalConfig.type === 'create' ? "e.g. data_processor" : "e.g. main.js"} className="premium-input modal-input" />
-
-                                        </div>
-
+                                {(modalConfig.type === 'delete' || modalConfig.type === 'delete-folder') ? (
+                                    <div>
+                                        <p>Delete <span className="highlight-file">{modalConfig.targetFile.split('/').pop()}</span>?</p>
+                                        {modalConfig.type === 'delete-folder' && <p style={{ color: '#f87171', fontSize: '0.8rem', marginTop: '8px' }}>⚠️ All files inside will be deleted.</p>}
                                     </div>
-
+                                ) : (
+                                    <div className="modal-field">
+                                        <label>
+                                            {modalConfig.type === 'create'
+                                                ? 'File name (include extension)'
+                                                : modalConfig.type === 'create-folder'
+                                                ? 'Folder name'
+                                                : 'New name'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            autoFocus
+                                            value={modalInputValue}
+                                            onChange={e => setModalInputValue(e.target.value)}
+                                            placeholder={
+                                                modalConfig.type === 'create' ? 'e.g. index.js, App.tsx, style.css'
+                                                : modalConfig.type === 'create-folder' ? 'e.g. components'
+                                                : 'New name...'
+                                            }
+                                            className="premium-input modal-input"
+                                            onKeyDown={e => { if (e.key === 'Enter') handleModalSubmit(); }}
+                                        />
+                                        {modalConfig.type === 'create' && (
+                                            <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '6px' }}>
+                                                Language is auto-detected from the extension.
+                                            </p>
+                                        )}
+                                    </div>
                                 )}
-
                             </div>
 
                             <div className="custom-modal-footer">
-
                                 <button className="secondary-btn" onClick={() => setModalConfig({ isOpen: false })}>Cancel</button>
-
-                                <button className={`primary-btn ${modalConfig.type === 'delete' ? 'danger-btn' : 'glow-btn'}`}
-
-                                    onClick={(e) => {
-
-                                        const modalEl = e.target.closest('.custom-modal');
-
-                                        const input = modalEl.querySelector('input');
-
-                                        handleModalSubmit(input ? input.value : null);
-
-                                    }}>
-
-                                    {modalConfig.type === 'delete' ? 'Delete' : 'Confirm'}
-
+                                <button
+                                    className={`primary-btn ${(modalConfig.type === 'delete' || modalConfig.type === 'delete-folder') ? 'danger-btn' : 'glow-btn'}`}
+                                    onClick={handleModalSubmit}
+                                >
+                                    {(modalConfig.type === 'delete' || modalConfig.type === 'delete-folder') ? 'Delete' : 'Confirm'}
                                 </button>
-
                             </div>
 
                         </motion.div>
-
                     </div>
 
                 )}
@@ -1302,23 +1586,73 @@ const EditorPage = () => {
 
             {/* ── MAIN LAYOUT ─────────────────────────────────────────────────── */}
 
-            <div className="editor-layout" style={{ gridTemplateColumns: `${sidebarWidth}px ${isSidebarCollapsed ? 8 : 4}px 1fr` }}>
+            <div className="ide-shell">
+
+            {/* ── FULL-WIDTH TOPBAR ──────────────────────────────────────────── */}
+            <header className="editor-nav">
+
+                <div className="nav-left">
+                    {/* Sidebar toggle moved to floating handle */}
+                </div>
+
+
+
+                <div className="nav-center">
+                    <div className="view-selector">
+                        <button className={`view-btn ${viewMode === 'editor' ? 'active' : ''}`} onClick={() => setViewMode('editor')}>
+                            <FileCode size={14} /> IDE
+                        </button>
+                        <button className={`view-btn ${viewMode === 'preview' ? 'active' : ''}`} onClick={() => setViewMode('preview')}>
+                            <Monitor size={14} /> Preview
+                        </button>
+                        <button className={`view-btn ${viewMode === 'whiteboard' ? 'active' : ''}`} onClick={() => setViewMode('whiteboard')}>
+                            <WhiteboardIcon size={14} /> Architect
+                        </button>
+                    </div>
+                </div>
+
+                <div className="nav-right">
+                    <div className="editor-nav-actions">
+
+                        <button className="nav-icon-btn" onClick={toggleTerminal} title="Terminal">
+                            <TerminalIcon size={18} />
+                        </button>
+                        <button className="export-btn">
+                            <Share2 size={16} /> Export
+                        </button>
+                        <button className={`nav-play-btn ${isRunning ? 'pulse' : ''}`} onClick={runCode} disabled={isRunning}>
+                            <Play size={18} fill="currentColor" />
+                        </button>
+                    </div>
+                </div>
+
+            </header>
+
+            <div className="editor-layout" style={{ gridTemplateColumns: `${isSidebarCollapsed ? 0 : sidebarWidth}px 1fr`, position: 'relative' }}>
+
+                <button 
+                    className={`sidebar-handle-toggle ${isSidebarCollapsed ? 'collapsed' : ''}`} 
+                    onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                    title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                >
+                    {isSidebarCollapsed && <span className="handle-text">WORKSPACE</span>}
+                    <div className="handle-icon">
+                        {isSidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                    </div>
+                </button>
+
+
+
+
+
+
 
                 <aside className="sidebar">
 
                     <div className="sidebar-header">
 
-                        <div className="logo-section" style={{ color: 'var(--workspace-accent)' }}>
-                            <div className="logo-icon-wrapper">
-                                <Monitor size={22} strokeWidth={2.5} />
-                            </div>
-                            <span className="logo-text">CODE <span className="text-bright">BRIGHT</span></span>
-                        </div>
-
-                        <div style={{ fontSize: '0.6rem', color: 'var(--workspace-text-muted)', marginTop: '8px', letterSpacing: '1px' }}>
-
-                            HEURISTIC INTERFACE v4.0.2
-
+                        <div className="sidebar-header-top">
+                            {/* Header toggle removed */}
                         </div>
 
                     </div>
@@ -1329,32 +1663,37 @@ const EditorPage = () => {
 
 
 
+
                     <div className="sidebar-content">
                         <div className="sidebar-section">
-                            <div className="section-title">
-                                <span>WORKSPACE</span>
-                                <button onClick={createNewFile} className="icon-btn-ghost"><FilePlus size={16} /></button>
+                            {/* Explorer title row */}
+                            <div className="explorer-header">
+                                <span className="explorer-title">EXPLORER</span>
                             </div>
+
                             <div className="file-list">
-                                {/* Recursive folder structure would go here, for now using simple list with folders */}
-                                <div className="folder-item">
-                                    <div className="folder-header">
-                                        <ChevronDown size={14} />
-                                        <span className="folder-icon">📂</span>
-                                        <span>DEVESH</span>
+                                <div className="folder-item root-folder">
+                                    <div className="folder-header root-folder-header" onClick={() => toggleFolder('/')}>
+                                        <span className="tree-arrow">{expandedFolders.has('/') ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</span>
+                                        {expandedFolders.has('/') ? <FolderOpen size={14} style={{ color: '#e2a04a', flexShrink: 0 }} /> : <Folder size={14} style={{ color: '#e2a04a', flexShrink: 0 }} />}
+                                        <span className="folder-name-text root-name" style={{ flex: 1 }}>{workspaceName}</span>
+                                        <div className="folder-actions" style={{ display: 'flex', gap: '4px' }}>
+                                            <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFile(''); }} title="New File in root"><FilePlus size={12} /></button>
+                                            <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFolder(''); }} title="New Folder in root"><FolderPlus size={12} /></button>
+                                        </div>
                                     </div>
-                                    <div className="folder-contents">
-                                        {Object.keys(files).map(name => (
-                                            <div key={name} className={`file-item ${activeFile === name ? 'active' : ''}`}
-                                                onClick={() => { setActiveFile(name); setLanguage(files[name].language); }}>
-                                                <div className="active-indicator" />
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, overflow: 'hidden' }}>
-                                                    <FileCode size={14} className="file-icon" />
-                                                    <span className="file-name-text">{name}</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    <AnimatePresence>
+                                        {expandedFolders.has('/') && (
+                                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
+                                                {Object.keys(fileTree.children).length === 0 ? (
+                                                    <div className="empty-folder-hint">
+                                                        <span>No files yet.</span>
+                                                        <button onClick={() => createNewFile('')} className="hint-btn">+ New File</button>
+                                                    </div>
+                                                ) : renderFileTree(fileTree, '')}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
                             </div>
                         </div>
@@ -1416,60 +1755,12 @@ const EditorPage = () => {
 
 
 
-                {/* Sidebar Resizer */}
-
-                <div className={`resizer-x ${isSidebarCollapsed ? 'collapsed' : ''}`} onMouseDown={startSidebarResize}>
-                    {/* Collapse arrow removed per user request */}
-                </div>
 
 
 
-                <main className="main-content" style={{ gridTemplateRows: `70px 1fr ${isTerminalCollapsed ? 8 : 6}px ${terminalHeight}px` }}>
 
-                    <header className="editor-nav">
+                <main className="main-content" style={{ gridTemplateRows: `1fr ${isTerminalCollapsed ? 0 : 2}px ${terminalHeight}px` }}>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-
-                            <div className="view-selector">
-                                <button className={`view-btn ${viewMode === 'editor' ? 'active' : ''}`} onClick={() => setViewMode('editor')}>
-                                    <FileCode size={14} /> IDE
-                                </button>
-                                <button className={`view-btn ${viewMode === 'preview' ? 'active' : ''}`} onClick={() => setViewMode('preview')}>
-                                    <Monitor size={14} /> Preview
-                                </button>
-                                <button className={`view-btn ${viewMode === 'whiteboard' ? 'active' : ''}`} onClick={() => setViewMode('whiteboard')}>
-                                    <WhiteboardIcon size={14} /> Architect
-                                </button>
-                            </div>
-
-                            <div className="current-path">
-
-                                <span>projects / {roomId?.slice(0, 8)}... /</span>
-
-                                <span className="file-name">{viewMode === 'editor' ? (activeFile || 'No file') : 'System Architect'}</span>
-
-                            </div>
-
-                        </div>
-
-
-
-                        <div className="editor-nav-actions">
-                            <button className="nav-icon-btn" onClick={() => navigate('/hub')} title="Exit">
-                                <LogOut size={18} />
-                            </button>
-                            <button className="nav-icon-btn" onClick={toggleTerminal} title="Terminal">
-                                <TerminalIcon size={18} />
-                            </button>
-                            <button className="export-btn">
-                                <Share2 size={16} /> Export
-                            </button>
-                            <button className={`nav-play-btn ${isRunning ? 'pulse' : ''}`} onClick={runCode} disabled={isRunning}>
-                                <Play size={18} fill="currentColor" />
-                            </button>
-                        </div>
-
-                    </header>
 
 
 
@@ -1521,10 +1812,19 @@ const EditorPage = () => {
 
                             ) : (
 
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
-
-                                    Select a file to start coding
-
+                                <div className="editor-empty-state">
+                                    <div className="empty-state-content">
+                                        <div className="empty-state-icon">
+                                            <FileCode size={48} strokeWidth={1} />
+                                        </div>
+                                        <h2>No file selected</h2>
+                                        <p>Select a file from the explorer to start building your vision.</p>
+                                        <div className="empty-state-actions">
+                                            <button onClick={() => createNewFile('')} className="empty-action-btn">
+                                                <FilePlus size={16} /> New File
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
                             )}
@@ -1541,19 +1841,67 @@ const EditorPage = () => {
 
                     <div className="whiteboard-container" style={{ display: viewMode === 'whiteboard' ? 'flex' : 'none', minHeight: 0, overflow: 'hidden' }}>
 
-                        <div className="whiteboard-header">
+                        <div className="whiteboard-main">
 
-                            <div className="status-badge" style={{ background: 'rgba(251,191,36,0.05)', color: '#fbbf24' }}>
+                            <div className="floating-toolbar">
+                                <div className="toolbar-group">
+                                    <div className="color-swatches">
+                                        {['#fbbf24', '#ef4444', '#3b82f6', '#10b981', '#ffffff'].map(color => (
+                                            <button 
+                                                key={color} 
+                                                className={`swatch ${drawColor === color && drawTool !== 'eraser' ? 'active' : ''}`}
+                                                style={{ background: color }}
+                                                onClick={() => { setDrawColor(color); setDrawTool('pen'); }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
 
-                                <Sparkles size={14} /> Collaborative Canvas Active
+                                <div className="toolbar-divider" />
 
+                                <div className="toolbar-group">
+                                    <button className={`icon-tool ${drawTool === 'pen' ? 'active' : ''}`} onClick={() => setDrawTool('pen')} title="Pen"><PenTool size={16} /></button>
+                                    <button className={`icon-tool ${drawTool === 'eraser' ? 'active' : ''}`} onClick={() => setDrawTool('eraser')} title="Eraser"><Eraser size={16} /></button>
+                                    <button className={`icon-tool ${drawTool === 'rect' ? 'active' : ''}`} onClick={() => setDrawTool('rect')} title="Rectangle"><div className="mini-shape rect"></div></button>
+                                    <button className={`icon-tool ${drawTool === 'circle' ? 'active' : ''}`} onClick={() => setDrawTool('circle')} title="Circle"><div className="mini-shape circle"></div></button>
+                                    <button className={`icon-tool ${drawTool === 'line' ? 'active' : ''}`} onClick={() => setDrawTool('line')} title="Line"><div className="mini-shape line"></div></button>
+                                    <button className={`icon-tool ${drawTool === 'triangle' ? 'active' : ''}`} onClick={() => setDrawTool('triangle')} title="Triangle"><div className="mini-shape triangle"></div></button>
+                                    <button className={`icon-tool ${drawTool === 'arrow' ? 'active' : ''}`} onClick={() => setDrawTool('arrow')} title="Arrow"><ChevronRight size={16} /></button>
+                                </div>
+
+
+                                <div className="toolbar-divider" />
+
+                                <div className="toolbar-group size-group">
+                                    <input 
+                                        type="range" 
+                                        min="1" 
+                                        max={drawTool === 'eraser' ? "100" : "20"} 
+                                        value={drawTool === 'eraser' ? eraserWidth : drawWidth}
+                                        onChange={(e) => drawTool === 'eraser' ? setEraserWidth(parseInt(e.target.value)) : setDrawWidth(parseInt(e.target.value))}
+                                        className="compact-slider"
+                                    />
+                                    <span className="size-indicator">{drawTool === 'eraser' ? eraserWidth : drawWidth}px</span>
+                                </div>
+
+                                <div className="toolbar-divider" />
+
+                                <button className="compact-clear-btn" onClick={clearCanvas} title="Clear Canvas">
+                                    <Trash2 size={16} />
+                                </button>
                             </div>
 
+                            <canvas 
+                                ref={canvasRef} 
+                                onMouseDown={startDrawing} 
+                                onMouseMove={draw}
+                                onMouseUp={stopDrawing} 
+                                onMouseLeave={stopDrawing} 
+                                width={1920} 
+                                height={1080} 
+                                className="main-canvas" 
+                            />
                         </div>
-
-                        <canvas ref={canvasRef} onMouseDown={startDrawing} onMouseMove={draw}
-
-                            onMouseUp={stopDrawing} onMouseLeave={stopDrawing} width={1200} height={800} className="main-canvas" />
 
                     </div>
 
@@ -1685,7 +2033,10 @@ const EditorPage = () => {
 
             </div>
 
+            </div>
+
         </>
+
 
     );
 
