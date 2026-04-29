@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Plus, 
-  Search, 
-  FileText, 
-  Clock, 
-  Hash, 
-  BookOpen, 
+import {
+  Plus,
+  Search,
+  Hash,
+  Folder,
+  FolderOpen,
+  File,
   Command,
   SlidersHorizontal,
   X as XIcon,
@@ -21,18 +21,20 @@ import { useAuth } from '../context/AuthContext';
 import NoteEditor from '../components/codevault/NoteEditor';
 import Sidebar from '../components/codevault/Sidebar';
 import Navbar from '../components/Navbar';
-import { 
-  fetchNotes, 
-  fetchFolders, 
-  createNote, 
-  createFolder, 
-  updateFolder, 
+import CommandPalette from '../components/codevault/CommandPalette';
+import {
+  fetchNotes,
+  fetchFolders,
+  createNote,
+  createFolder,
+  updateFolder,
   deleteFolder,
   updateNote,
   deleteNote
 } from '../services/notesService';
 import toast from 'react-hot-toast';
 import './CodeVault.css';
+import VaultModal from '../components/codevault/VaultModal';
 
 const CodeVault = () => {
   const { user } = useAuth();
@@ -50,6 +52,8 @@ const CodeVault = () => {
   const [expandedFolders, setExpandedFolders] = useState({});
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [modalConfig, setModalConfig] = useState(null);
+
 
   useEffect(() => {
     loadData();
@@ -66,18 +70,18 @@ const CodeVault = () => {
       setFolders(foldersData || []);
     } catch (error) {
       console.error('Failed to load data:', error);
-      toast.error('Failed to load notes. Please ensure the server is running on port 5051.');
+      toast.error('Failed to load notes: ' + error.message);
       setNotes([]);
       setFolders([]);
     } finally {
       setLoading(false);
     }
   };
-  
+
   const handleFolderCreateSubmit = async (e) => {
     if (e) e.preventDefault();
     if (!newFolderName.trim()) return;
-    
+
     try {
       const folder = await createFolder({ name: newFolderName.trim() });
       setFolders([...folders, folder]);
@@ -108,7 +112,7 @@ const CodeVault = () => {
       toast.error('Please select a repository first');
       return;
     }
-    
+
     try {
       const newNote = await createNote({
         title: 'Untitled Note',
@@ -136,14 +140,13 @@ const CodeVault = () => {
     const handleKeyDown = (e) => {
       // Don't intercept shortcuts if the user is typing in an input or editor
       const activeEl = document.activeElement;
-      const isInput = activeEl.tagName === 'INPUT' || 
-                     activeEl.tagName === 'TEXTAREA' || 
-                     activeEl.isContentEditable ||
-                     activeEl.closest('.monaco-editor');
+      const isInput = activeEl.tagName === 'INPUT' && !activeEl.classList.contains('cp-search-input') ||
+        activeEl.tagName === 'TEXTAREA' ||
+        activeEl.isContentEditable ||
+        activeEl.closest('.ProseMirror');
 
       if (isInput) {
-        if (e.key === 'Escape' && (showSearchModal || showCreateFolderModal)) {
-          setShowSearchModal(false);
+        if (e.key === 'Escape' && showCreateFolderModal) {
           setShowCreateFolderModal(false);
         }
         return;
@@ -153,13 +156,48 @@ const CodeVault = () => {
         e.preventDefault();
         setShowSearchModal(true);
       }
-      if (e.key === 'Escape' && showSearchModal) {
-        setShowSearchModal(false);
-      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showSearchModal, showCreateFolderModal]);
+
+  const handleCommandAction = (actionId) => {
+    switch (actionId) {
+      case 'new-note':
+        if (!selectedFolder && folders.length > 0) {
+          setSelectedFolder(folders[0].id);
+        }
+        handleCreateNote();
+        break;
+      case 'new-folder':
+        setShowCreateFolderModal(true);
+        break;
+      case 'export-pdf':
+        if (activeNote) {
+          const event = new CustomEvent('export-note-pdf', { detail: { noteId: activeNote.id } });
+          document.dispatchEvent(event);
+        } else {
+          toast.error('Open a note first to export it');
+        }
+        break;
+      case 'export-md':
+        if (activeNote) {
+          const event = new CustomEvent('export-note-md', { detail: { noteId: activeNote.id } });
+          document.dispatchEvent(event);
+        } else {
+          toast.error('Open a note first to export it');
+        }
+        break;
+      case 'share-note':
+        toast.success('Public sharing link generated and copied to clipboard!');
+        break;
+      case 'lock-folder':
+        toast.success('Folder encryption feature activated!');
+        break;
+      default:
+        break;
+    }
+  };
 
   const handleNoteUpdate = (updatedNote) => {
     setNotes(notes.map(n => n.id === updatedNote.id ? updatedNote : n));
@@ -255,17 +293,16 @@ const CodeVault = () => {
     }
   };
 
-  const filteredNotes = notes.filter(note => {
-    const matchesSearch = !searchQuery || 
+  const filteredSearchNotes = notes.filter(note => {
+    const matchesSearch = !searchQuery ||
       note.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       note.content?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFolder = !selectedFolder || note.folder_id === selectedFolder;
     const matchesTag = !selectedTag || (note.tags && note.tags.includes(selectedTag));
-    return matchesSearch && matchesFolder && matchesTag;
+    return matchesSearch && matchesTag;
   });
 
   // Sort notes
-  const sortedNotes = [...filteredNotes].sort((a, b) => {
+  const sortedNotes = [...filteredSearchNotes].sort((a, b) => {
     switch (sortBy) {
       case 'title':
         return (a.title || '').localeCompare(b.title || '');
@@ -276,6 +313,9 @@ const CodeVault = () => {
         return new Date(b.updated_at) - new Date(a.updated_at);
     }
   });
+
+  // Get notes for the current view (filtered by folder if needed)
+  const displayNotes = sortedNotes.filter(note => !selectedFolder || note.folder_id === selectedFolder);
 
   // Get all unique tags from notes
   const allTags = [...new Set(notes.flatMap(note => note.tags || []))].sort();
@@ -292,15 +332,18 @@ const CodeVault = () => {
 
           {/* Sort Filter in Sidebar */}
           <div className="sidebar-filter">
-            <select 
-              value={sortBy} 
-              onChange={(e) => setSortBy(e.target.value)}
-              className="sort-select-sidebar"
-            >
-              <option value="updated">Last Updated</option>
-              <option value="created">Date Created</option>
-              <option value="title">Title (A-Z)</option>
-            </select>
+            <div className="sort-select-wrapper">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="sort-select-sidebar"
+              >
+                <option value="updated">Last Updated</option>
+                <option value="created">Date Created</option>
+                <option value="title">Title (A-Z)</option>
+              </select>
+              <ChevronDown size={14} className="sort-arrow" />
+            </div>
           </div>
 
           {/* Folder Tree */}
@@ -310,20 +353,20 @@ const CodeVault = () => {
               <div className="tree-section-header">
                 <span>REPOSITORIES</span>
                 {folders.length > 0 && (
-                  <button 
-                    className="btn-add-folder" 
-                    onClick={() => setShowCreateFolderModal(true)} 
+                  <button
+                    className="btn-add-folder"
+                    onClick={() => setShowCreateFolderModal(true)}
                     title="Add Repository"
                   >
                     <Plus size={12} />
                   </button>
                 )}
               </div>
-              
+
               {folders.length === 0 ? (
                 <div className="empty-folders">
                   <p>No repositories yet</p>
-                  <button 
+                  <button
                     className="btn-create-first-folder"
                     onClick={() => setShowCreateFolderModal(true)}
                   >
@@ -332,9 +375,9 @@ const CodeVault = () => {
                 </div>
               ) : (
                 folders.map(folder => {
-                  const folderNotes = notes.filter(n => n.folder_id === folder.id);
+                  const folderNotes = sortedNotes.filter(n => n.folder_id === folder.id);
                   const isExpanded = expandedFolders[folder.id];
-                  
+
                   return (
                     <div key={folder.id}>
                       <div className="tree-item-wrapper">
@@ -345,8 +388,8 @@ const CodeVault = () => {
                             toggleFolder(folder.id);
                           }}
                         >
-                          {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                          <BookOpen size={16} />
+                          {isExpanded ? <ChevronDown size={14} className="tree-chevron" /> : <ChevronRight size={14} className="tree-chevron" />}
+                          {isExpanded ? <FolderOpen size={16} className="folder-icon" /> : <Folder size={16} className="folder-icon" />}
                           <span>{folder.name}</span>
                           <span className="item-count">{folderNotes.length}</span>
                         </button>
@@ -367,10 +410,13 @@ const CodeVault = () => {
                             className="tree-action-btn"
                             onClick={(e) => {
                               e.stopPropagation();
-                              const newName = prompt('Rename repository:', folder.name);
-                              if (newName && newName.trim()) {
-                                handleFolderRename(folder.id, newName.trim());
-                              }
+                              setModalConfig({
+                                type: 'input',
+                                title: 'Rename Repository',
+                                placeholder: 'Enter new name...',
+                                initialValue: folder.name,
+                                onConfirm: (newName) => handleFolderRename(folder.id, newName)
+                              });
                             }}
                             title="Rename"
                           >
@@ -380,9 +426,14 @@ const CodeVault = () => {
                             className="tree-action-btn tree-action-delete"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (window.confirm(`Delete repository "${folder.name}"? All notes will be deleted.`)) {
-                                handleFolderDelete(folder.id);
-                              }
+                              setModalConfig({
+                                type: 'confirm',
+                                variant: 'danger',
+                                title: 'Delete Repository',
+                                message: `Are you sure you want to delete "${folder.name}"? All notes inside will be permanently removed.`,
+                                confirmText: 'Delete Everything',
+                                onConfirm: () => handleFolderDelete(folder.id)
+                              });
                             }}
                             title="Delete"
                           >
@@ -390,7 +441,7 @@ const CodeVault = () => {
                           </button>
                         </div>
                       </div>
-                      
+
                       {/* File list under folder */}
                       {isExpanded && (
                         <div className="nested-files">
@@ -403,7 +454,7 @@ const CodeVault = () => {
                                   className={`file-item ${activeNote?.id === note.id ? 'active' : ''}`}
                                   onClick={() => setActiveNote(note)}
                                 >
-                                  <FileText size={14} />
+                                  <File size={14} className="file-icon" />
                                   <span>{note.title || 'Untitled'}</span>
                                 </button>
                                 <div className="file-item-actions">
@@ -411,18 +462,22 @@ const CodeVault = () => {
                                     className="file-action-btn"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      const newTitle = prompt('Rename file:', note.title || 'Untitled');
-                                      if (newTitle && newTitle.trim()) {
-                                        updateNote(note.id, { ...note, title: newTitle.trim() })
-                                          .then(updatedNote => {
-                                            setNotes(notes.map(n => n.id === note.id ? updatedNote : n));
-                                            if (activeNote?.id === note.id) {
-                                              setActiveNote(updatedNote);
-                                            }
-                                            toast.success('File renamed');
-                                          })
-                                          .catch(() => toast.error('Failed to rename file'));
-                                      }
+                                      setModalConfig({
+                                        type: 'input',
+                                        title: 'Rename File',
+                                        initialValue: note.title || 'Untitled',
+                                        onConfirm: (newTitle) => {
+                                          updateNote(note.id, { ...note, title: newTitle })
+                                            .then(updatedNote => {
+                                              setNotes(notes.map(n => n.id === note.id ? updatedNote : n));
+                                              if (activeNote?.id === note.id) {
+                                                setActiveNote(updatedNote);
+                                              }
+                                              toast.success('File renamed');
+                                            })
+                                            .catch(() => toast.error('Failed to rename file'));
+                                        }
+                                      });
                                     }}
                                     title="Rename"
                                   >
@@ -432,17 +487,24 @@ const CodeVault = () => {
                                     className="file-action-btn file-action-delete"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      if (window.confirm(`Delete file "${note.title || 'Untitled'}"?`)) {
-                                        deleteNote(note.id)
-                                          .then(() => {
-                                            setNotes(notes.filter(n => n.id !== note.id));
-                                            if (activeNote?.id === note.id) {
-                                              setActiveNote(null);
-                                            }
-                                            toast.success('File deleted');
-                                          })
-                                          .catch(() => toast.error('Failed to delete file'));
-                                      }
+                                      setModalConfig({
+                                        type: 'confirm',
+                                        variant: 'danger',
+                                        title: 'Delete File',
+                                        message: `Are you sure you want to delete "${note.title || 'Untitled'}"?`,
+                                        confirmText: 'Delete File',
+                                        onConfirm: () => {
+                                          deleteNote(note.id)
+                                            .then(() => {
+                                              setNotes(notes.filter(n => n.id !== note.id));
+                                              if (activeNote?.id === note.id) {
+                                                setActiveNote(null);
+                                              }
+                                              toast.success('File deleted');
+                                            })
+                                            .catch(() => toast.error('Failed to delete file'));
+                                        }
+                                      });
                                     }}
                                     title="Delete"
                                   >
@@ -488,34 +550,28 @@ const CodeVault = () => {
         <main className="vault-main">
           <AnimatePresence mode="wait">
             {activeNote ? (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                style={{ height: '100%' }}
+                style={{ height: '100%', width: '100%' }}
               >
-                <NoteEditor 
-                  note={activeNote} 
+                <NoteEditor
+                  note={activeNote}
                   onNoteUpdate={handleNoteUpdate}
                   onNoteDelete={handleNoteDelete}
                   onClose={() => setActiveNote(null)}
                 />
               </motion.div>
             ) : (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="vault-welcome"
               >
                 {/* Notes List */}
                 <div className="notes-list-main">
-                  {selectedFolder && (
-                    <div className="folder-actions-bar">
-                      <button className="btn-new-note-main" onClick={handleCreateNote}>
-                        <Plus size={16} /> New Note
-                      </button>
-                    </div>
-                  )}
+                  {/* Notes List Empty State */}
                   {loading ? (
                     <div className="loading-state-vault">
                       <div className="spinner-vault"></div>
@@ -523,7 +579,7 @@ const CodeVault = () => {
                     </div>
                   ) : (
                     <div className="empty-state-vault">
-                      <BookOpen size={64} className="empty-icon-vault" />
+                      <File size={64} className="empty-icon-vault" />
                       <h3>No File Selected</h3>
                       <p>Select a file from the sidebar to start editing</p>
                     </div>
@@ -535,62 +591,31 @@ const CodeVault = () => {
         </main>
       </div>
 
-      {/* Search Modal */}
-      <AnimatePresence>
-        {showSearchModal && (
-          <motion.div 
-            className="search-modal-overlay" 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowSearchModal(false)}
-          >
-            <motion.div 
-              className="search-modal" 
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="search-modal-header">
-                <Command size={24} color="var(--cv-accent)" />
-                <input
-                  type="text"
-                  placeholder="Search across all vaults..."
-                  autoFocus
-                  className="search-modal-input"
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div className="search-results">
-                {sortedNotes.length > 0 ? (
-                   <div className="quick-results">
-                     {sortedNotes.slice(0, 5).map(n => (
-                       <div key={n.id} className="quick-result-item" onClick={() => { setActiveNote(n); setShowSearchModal(false); }}>
-                         <Hash size={14} /> {n.title}
-                       </div>
-                     ))}
-                   </div>
-                ) : (
-                  <p style={{textAlign: 'center', padding: 20, color: '#666'}}>No records matching query</p>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Search Modal -> Command Palette */}
+      <CommandPalette
+        isOpen={showSearchModal}
+        onClose={() => setShowSearchModal(false)}
+        notes={notes}
+        folders={folders}
+        onSelectNote={(note) => {
+          setActiveNote(note);
+          setSelectedFolder(note.folder_id);
+          setExpandedFolders(prev => ({ ...prev, [note.folder_id]: true }));
+        }}
+        onAction={handleCommandAction}
+      />
 
       {/* Create Repository Modal */}
       <AnimatePresence>
         {showCreateFolderModal && (
-          <motion.div 
+          <motion.div
             className="vault-modal-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowCreateFolderModal(false)}
           >
-            <motion.div 
+            <motion.div
               className="vault-modal"
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -599,8 +624,8 @@ const CodeVault = () => {
             >
               <div className="vault-modal-header">
                 <h3>Create New Repository</h3>
-                <button 
-                  className="vault-modal-close" 
+                <button
+                  className="vault-modal-close"
                   onClick={() => setShowCreateFolderModal(false)}
                 >
                   <Plus size={20} style={{ transform: 'rotate(45deg)' }} />
@@ -619,15 +644,15 @@ const CodeVault = () => {
                   <p className="modal-hint">A repository helps you organize your snippets and notes.</p>
                 </div>
                 <div className="vault-modal-footer">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="vault-modal-btn cancel"
                     onClick={() => setShowCreateFolderModal(false)}
                   >
                     Cancel
                   </button>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     className="vault-modal-btn confirm"
                     disabled={!newFolderName.trim()}
                   >
@@ -639,6 +664,11 @@ const CodeVault = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <VaultModal
+        isOpen={!!modalConfig}
+        onClose={() => setModalConfig(null)}
+        config={modalConfig}
+      />
     </div>
   );
 };

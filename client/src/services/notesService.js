@@ -31,6 +31,9 @@ export const fetchNotes = async (filters = {}) => {
   });
   
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      throw new Error('Session expired. Please log out and log in again.');
+    }
     throw new Error('Failed to fetch notes');
   }
   

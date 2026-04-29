@@ -1,0 +1,578 @@
+/* ── Rich Text Editor Wrapper ───────────────────────────────── */
+.rich-editor-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--cv-bg);
+  font-family: var(--font-main);
+  position: relative;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────── */
+.rich-toolbar {
+  display: flex;
+  flex-wrap: nowrap;
+  /* Force single row */
+  align-items: center;
+  justify-content: center; /* Center the features */
+  gap: 2px;
+  /* Minimal gap to save space */
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  z-index: 50;
+  position: sticky;
+  top: 0;
+  overflow-x: auto;
+  /* Allow horizontal scroll if really tight */
+  scrollbar-width: none;
+  /* Hide scrollbar for clean look */
+}
+
+.rich-toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+.toolbar-btn {
+  width: 28px;
+  /* Slightly smaller */
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--cv-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  /* Don't shrink buttons */
+}
+
+.toolbar-btn:hover:not(.toolbar-btn-disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--cv-text-primary);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.toolbar-btn-active {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: var(--cv-accent) !important;
+  border-color: rgba(239, 68, 68, 0.2) !important;
+}
+
+.toolbar-btn-disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+/* ── Color Picker ─────────────────────────────────────────── */
+.color-picker-wrapper {
+  position: relative;
+}
+
+.color-picker-trigger {
+  gap: 4px;
+  padding: 5px 6px;
+}
+
+.color-bar {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  margin-top: 2px;
+}
+
+.color-picker-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: #111;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 12px;
+  z-index: 200;
+  min-width: 160px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  animation: dropdownIn 0.15s ease;
+}
+
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.color-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+}
+
+.color-picker-title {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.color-swatches {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+}
+
+.color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border: 2px solid transparent;
+}
+
+.color-swatch:hover {
+  transform: scale(1.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Editor Content Area ─────────────────────────────────── */
+.rich-editor-scroll {
+  flex: 1;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.rich-editor-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rich-editor-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rich-editor-scroll::-webkit-scrollbar-thumb {
+  background: #222;
+  border-radius: 3px;
+}
+
+.rich-editor-scroll::-webkit-scrollbar-thumb:hover {
+  background: #333;
+}
+
+/* ── ProseMirror Core ─────────────────────────────────────── */
+.prose-editor {
+  outline: none;
+  padding: 32px 48px;
+  min-height: 100%;
+  color: #e4e4e7;
+  font-size: 15px;
+  line-height: 1.7;
+  caret-color: #ef4444;
+  /* Vibrant red caret */
+}
+
+/* Focused line highlight to help tracking */
+.prose-editor .ProseMirror-focused .ProseMirror-selectednode,
+.prose-editor p.is-editor-empty:first-child {
+  /* optional styles */
+}
+
+.prose-editor:focus {
+  /* No outline, handled by caret */
+}
+
+/* Placeholder */
+.prose-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #333;
+  pointer-events: none;
+  float: left;
+  height: 0;
+  font-style: italic;
+}
+
+/* Headings */
+.prose-editor .ProseMirror h1 {
+  font-size: 2.2rem;
+  margin-top: 1rem;
+  /* Reduced from 2rem */
+  margin-bottom: 0.5rem;
+  /* Reduced from 1rem */
+  font-weight: 800;
+  color: #ef4444 !important;
+  /* Force color */
+  letter-spacing: -0.5px;
+  border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+  padding-bottom: 0.3rem;
+}
+
+.prose-editor .ProseMirror h2 {
+  font-size: 1.8rem;
+  margin-top: 0.8rem;
+  /* Reduced from 1.8rem */
+  margin-bottom: 0.4rem;
+  /* Reduced from 0.8rem */
+  font-weight: 700;
+  color: #fbbf24 !important;
+  /* Force color */
+}
+
+.prose-editor .ProseMirror h3 {
+  font-size: 1.4rem;
+  margin-top: 0.6rem;
+  /* Reduced from 1.5rem */
+  margin-bottom: 0.3rem;
+  /* Reduced from 0.6rem */
+  font-weight: 700;
+  color: #34d399 !important;
+  /* Force color */
+}
+
+/* Paragraph */
+.prose-editor .ProseMirror p {
+  margin-bottom: 0.6rem;
+  /* Reduced from 1.2rem */
+  transition: background 0.2s ease;
+  border-radius: 4px;
+}
+
+/* Current line/paragraph focus indicator */
+.rich-editor-content .ProseMirror p.ProseMirror-focused,
+.rich-editor-content .ProseMirror-focused p:has(br:only-child),
+.rich-editor-content .ProseMirror-focused p:focus {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Bold, Italic, Underline, Strike */
+.rich-editor-content .ProseMirror strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+.rich-editor-content .ProseMirror em {
+  color: #fde68a;
+  font-style: italic;
+}
+
+.rich-editor-content .ProseMirror u {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.rich-editor-content .ProseMirror s {
+  opacity: 0.5;
+}
+
+/* Inline code */
+.rich-editor-content .ProseMirror code {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 4px;
+  color: #f87171;
+  font-family: 'Fira Code', 'JetBrains Mono', monospace;
+  font-size: 0.88em;
+  padding: 2px 6px;
+}
+
+/* Code block */
+.rich-editor-content .ProseMirror pre {
+  background: #0d0d0d;
+  border: 1px solid #222;
+  border-radius: 10px;
+  margin: 1.2rem 0;
+  padding: 20px 24px;
+  overflow-x: auto;
+  position: relative;
+}
+
+.rich-editor-content .ProseMirror pre::before {
+  content: '</>';
+  position: absolute;
+  top: 8px;
+  right: 14px;
+  font-size: 10px;
+  color: #333;
+  font-family: 'Fira Code', monospace;
+}
+
+.rich-editor-content .ProseMirror pre code {
+  background: none;
+  border: none;
+  color: #a3e635;
+  font-size: 14px;
+  padding: 0;
+  line-height: 1.7;
+}
+
+/* Blockquote */
+.rich-editor-content .ProseMirror blockquote {
+  border-left: 3px solid #ef4444;
+  margin: 1.2rem 0;
+  padding: 12px 20px;
+  background: rgba(239, 68, 68, 0.05);
+  border-radius: 0 8px 8px 0;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Lists */
+.rich-editor-content .ProseMirror ul,
+.rich-editor-content .ProseMirror ol {
+  padding-left: 1.5rem;
+  margin-bottom: 0.8rem;
+}
+
+.rich-editor-content .ProseMirror li {
+  margin-bottom: 0.3rem;
+  padding-left: 0.2rem;
+}
+
+.rich-editor-content .ProseMirror ul li::marker {
+  color: #ef4444;
+}
+
+.rich-editor-content .ProseMirror ol li::marker {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+/* Task list */
+.rich-editor-content .ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.rich-editor-content .ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.rich-editor-content .ProseMirror ul[data-type="taskList"] li>label {
+  display: flex;
+  align-items: center;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.rich-editor-content .ProseMirror ul[data-type="taskList"] input[type="checkbox"] {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #444;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.rich-editor-content .ProseMirror ul[data-type="taskList"] input[type="checkbox"]:checked {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+.rich-editor-content .ProseMirror ul[data-type="taskList"] input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: -2px;
+  left: 2px;
+  font-size: 11px;
+  color: #fff;
+  font-weight: 900;
+}
+
+.rich-editor-content .ProseMirror ul[data-type="taskList"] li[data-checked="true"]>div {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+/* Horizontal Rule */
+.rich-editor-content .ProseMirror hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(239, 68, 68, 0.4), transparent);
+  margin: 2rem 0;
+}
+
+/* Links */
+.rich-editor-content .ProseMirror a {
+  color: #60a5fa;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.rich-editor-content .ProseMirror a:hover {
+  color: #93c5fd;
+}
+
+/* Images */
+.rich-editor-content .ProseMirror img {
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid #222;
+  margin: 1rem 0;
+  display: block;
+}
+
+/* Selection */
+.rich-editor-content .ProseMirror ::selection {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+/* Focus ring on block selection */
+.rich-editor-content .ProseMirror .ProseMirror-selectednode {
+  outline: 2px solid rgba(239, 68, 68, 0.5);
+  border-radius: 4px;
+}
+
+/* --- Editor Custom Modal --- */
+.editor-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.editor-modal-content {
+  background: #0f0f0f;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.editor-modal-header {
+  padding: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.editor-modal-header h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.2px;
+}
+
+.close-modal-btn {
+  background: transparent;
+  border: none;
+  color: var(--cv-text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 10px;
+  transition: all 0.2s;
+  display: flex;
+}
+
+.close-modal-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.editor-modal-body {
+  padding: 28px 24px;
+}
+
+.editor-modal-input {
+  width: 100%;
+  background: #151515;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px 18px;
+  color: #fff;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.editor-modal-input:focus {
+  border-color: var(--cv-accent);
+  background: #1a1515;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.editor-modal-footer {
+  padding: 18px 24px;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.modal-btn-cancel {
+  padding: 12px 20px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: var(--cv-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.modal-btn-primary {
+  padding: 12px 24px;
+  background: var(--cv-accent);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-btn-primary:hover {
+  background: var(--cv-accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px var(--cv-accent-glow);
+}
