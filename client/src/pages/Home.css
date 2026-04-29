@@ -4263,3 +4263,80 @@ html {
     height: 18px;
   }
 }
+/* -- Comprehensive Mobile Responsiveness -- */
+@media (max-width: 992px) {
+  .home-dashboard-container {
+    padding: 0 20px;
+  }
+  .home-stats-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+  .support-container {
+    flex-direction: column;
+  }
+  .support-form {
+    width: 100%;
+    padding: 0;
+  }
+  .support-info {
+    width: 100%;
+    padding-bottom: 20px;
+  }
+  .dev-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 3rem;
+  }
+  .about-title {
+    font-size: 2.5rem;
+  }
+  .home-welcome-text {
+    font-size: 2rem;
+  }
+  .contribution-grid-wrapper {
+    overflow-x: auto;
+  }
+  .contribution-scroll-container {
+    min-width: 600px;
+  }
+  .nav-content {
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+  }
+  .nav-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-welcome-text {
+    font-size: 1.5rem !important;
+  }
+  .highlight {
+    margin-left: 4px !important;
+  }
+}
+
+/* Welcome Text Styles */
+.home-welcome-text {
+  font-size: clamp(1.8rem, 5vw, 3.5rem);
+  font-weight: 800;
+  margin-bottom: 20px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--text-hi);
+}
+
+.home-welcome-text .highlight {
+  color: var(--primary);
+  display: inline-block;
+  margin-left: 8px;
+  text-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
+}

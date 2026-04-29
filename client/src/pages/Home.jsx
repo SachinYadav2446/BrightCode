@@ -136,7 +136,7 @@ const Home = () => {
 
     const currentYear = today.getFullYear();
 
-    
+
 
     // Start from January 1st of the current year
 
@@ -146,7 +146,7 @@ const Home = () => {
 
     startDate.setDate(startDate.getDate() - startDate.getDay());
 
-    
+
 
     for (let i = 0; i < 53; i++) {
 
@@ -158,13 +158,13 @@ const Home = () => {
 
         currentDate.setDate(startDate.getDate() + (i * 7 + j));
 
-        
+
 
         const dateKey = currentDate.toISOString().split('T')[0];
 
         const xpGained = (activity && activity[dateKey]) || 0;
 
-        
+
 
         let level = 0;
 
@@ -180,7 +180,7 @@ const Home = () => {
 
         }
 
-        
+
 
         week.push({
 
@@ -212,7 +212,7 @@ const Home = () => {
 
     if (!heatmapData || heatmapData.length === 0) return [];
 
-    
+
 
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -222,19 +222,19 @@ const Home = () => {
 
     let lastLabelIndex = -2; // Start with -2 to allow Jan at index 0
 
-    
+
 
     heatmapData.forEach((week, i) => {
 
       if (!week || week.length === 0) return;
 
-      
+
 
       const firstDayOfWeek = new Date(week[0].date);
 
       const currentMonth = firstDayOfWeek.getMonth();
 
-      
+
 
       if (currentMonth !== lastMonth) {
 
@@ -254,7 +254,7 @@ const Home = () => {
 
     });
 
-    
+
 
     return labels;
 
@@ -326,7 +326,7 @@ const Home = () => {
 
   const [questMessage, setQuestMessage] = useState(null);
 
-  
+
 
   // Resizable pane state
 
@@ -352,13 +352,13 @@ const Home = () => {
 
     if (xp >= 10000) return { label: 'Grandmaster', color: '#fbbf24' };
 
-    if (xp >= 5000)  return { label: 'Expert',      color: '#818cf8' };
+    if (xp >= 5000) return { label: 'Expert', color: '#818cf8' };
 
-    if (xp >= 2000)  return { label: 'Advanced',    color: '#34d399' };
+    if (xp >= 2000) return { label: 'Advanced', color: '#34d399' };
 
-    if (xp >= 500)   return { label: 'Apprentice',  color: '#60a5fa' };
+    if (xp >= 500) return { label: 'Apprentice', color: '#60a5fa' };
 
-    return             { label: 'Initiate',    color: '#9ca3af' };
+    return { label: 'Initiate', color: '#9ca3af' };
 
   };
 
@@ -370,7 +370,7 @@ const Home = () => {
 
       if (!isResizing) return;
 
-      
+
 
       const container = document.querySelector('.monitor-internal-layout');
 
@@ -382,7 +382,7 @@ const Home = () => {
 
       const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
 
-      
+
 
       // Constraints: 20% to 70%
 
@@ -446,13 +446,13 @@ const Home = () => {
 
     setQuestMessage(null);
 
-    
+
 
     // Simulate a brief check
 
     setTimeout(() => {
 
-      const isCorrect = dailyQuest.solutionKeywords.every(keyword => 
+      const isCorrect = dailyQuest.solutionKeywords.every(keyword =>
 
         questCode.includes(keyword)
 
@@ -576,13 +576,13 @@ const Home = () => {
 
     if (xp >= 10000) return { current: 100, next: 'MAX', percent: 100, totalNext: 10000 };
 
-    
+
 
     let currentLevelXp = 0;
 
     let nextLevelXp = 500;
 
-    
+
 
     if (xp >= 5000) {
 
@@ -610,7 +610,7 @@ const Home = () => {
 
     }
 
-    
+
 
     const progress = ((xp - currentLevelXp) / (nextLevelXp - currentLevelXp)) * 100;
 
@@ -684,7 +684,7 @@ const Home = () => {
 
               </h1>
 
-              
+
 
               {user.stack && user.stack.length > 0 && (
 
@@ -730,9 +730,9 @@ const Home = () => {
 
                       <span className="xp-needed">
 
-                        {xpProgress.totalNext === 10000 && xp >= 10000 
+                        {xpProgress.totalNext === 10000 && xp >= 10000
 
-                          ? "Maximum Rank" 
+                          ? "Maximum Rank"
 
                           : `${xpProgress.totalNext - xp} XP to go`}
 
@@ -744,7 +744,7 @@ const Home = () => {
 
                     <div className="xp-progress-bar-bg">
 
-                      <motion.div 
+                      <motion.div
 
                         className="xp-progress-bar-fill"
 
@@ -788,15 +788,15 @@ const Home = () => {
 
                         {monthLabels && monthLabels.map((label, idx) => (
 
-                          <span 
+                          <span
 
-                            key={idx} 
+                            key={idx}
 
                             className="month-label"
 
-                            style={{ 
+                            style={{
 
-                              gridColumnStart: label.index + 1 
+                              gridColumnStart: label.index + 1
 
                             }}
 
@@ -818,9 +818,9 @@ const Home = () => {
 
                             {week && week.map((day, dayIdx) => (
 
-                              <div 
+                              <div
 
-                                key={dayIdx} 
+                                key={dayIdx}
 
                                 className={`contribution-day level-${day.level}`}
 
@@ -968,7 +968,7 @@ const Home = () => {
                 <span className="hunt-label">HALL OF FAME</span>
                 <div className="hunt-line"></div>
               </div>
-              
+
               <div className="hall-of-fame-grid">
                 {(() => {
                   // Reorder: 2nd place (index 1) first, 1st place (index 0) middle, 3rd place (index 2) last
@@ -977,13 +977,13 @@ const Home = () => {
                     topRankers[0], // 1st place - middle
                     topRankers[2]  // 3rd place - right
                   ].filter(Boolean); // Remove undefined if less than 3 rankers
-                  
+
                   return orderedRankers.map((ranker, displayIdx) => {
                     // Find the actual index for rank calculation
                     const actualIdx = topRankers.indexOf(ranker);
-                    
+
                     return (
-                      <motion.div 
+                      <motion.div
                         key={ranker.username}
                         className={`fame-card rank-${actualIdx + 1}`}
                         initial={{ opacity: 0, y: 20 }}
@@ -998,14 +998,14 @@ const Home = () => {
                             {actualIdx === 0 ? <Crown size={18} /> : `#${actualIdx + 1}`}
                           </div>
                         </div>
-                        
+
                         <div className="fame-avatar-wrapper">
                           <div className="fame-avatar">
                             {ranker.username[0].toUpperCase()}
                           </div>
                           <div className="fame-rank-ring"></div>
                         </div>
-                        
+
                         <div className="fame-content">
                           <h3 className="fame-username">{ranker.username}</h3>
                           <div className="fame-meta">
@@ -1020,7 +1020,7 @@ const Home = () => {
                             </div>
                           </div>
                         </div>
-                        
+
                         {actualIdx === 0 && <div className="fame-glow"></div>}
                       </motion.div>
                     );
@@ -1029,7 +1029,7 @@ const Home = () => {
               </div>
 
               {/* View All Rankings Button */}
-              <motion.div 
+              <motion.div
                 className="fame-view-all-wrapper"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -1056,13 +1056,13 @@ const Home = () => {
 
               </div>
 
-              
+
 
               <div className="skills-grid">
 
                 {/* CSS Skill */}
 
-                <motion.div 
+                <motion.div
 
                   className="skill-card"
 
@@ -1088,7 +1088,7 @@ const Home = () => {
 
                     <div className="skill-progress-bar">
 
-                      <motion.div 
+                      <motion.div
 
                         className="skill-progress-fill css-fill"
 
@@ -1123,7 +1123,7 @@ const Home = () => {
 
                 {/* Logic Skill */}
 
-                <motion.div 
+                <motion.div
 
                   className="skill-card"
 
@@ -1149,7 +1149,7 @@ const Home = () => {
 
                     <div className="skill-progress-bar">
 
-                      <motion.div 
+                      <motion.div
 
                         className="skill-progress-fill logic-fill"
 
@@ -1184,7 +1184,7 @@ const Home = () => {
 
                 {/* React Skill */}
 
-                <motion.div 
+                <motion.div
 
                   className="skill-card"
 
@@ -1210,7 +1210,7 @@ const Home = () => {
 
                     <div className="skill-progress-bar">
 
-                      <motion.div 
+                      <motion.div
 
                         className="skill-progress-fill react-fill"
 
@@ -1251,117 +1251,117 @@ const Home = () => {
 
 
 
-              {/* Quick View Modal */}
+            {/* Quick View Modal */}
 
-              <AnimatePresence>
+            <AnimatePresence>
 
-                {selectedRanker && (
+              {selectedRanker && (
 
-                  <motion.div 
+                <motion.div
 
-                    className="ranker-modal-overlay"
+                  className="ranker-modal-overlay"
 
-                    initial={{ opacity: 0 }}
+                  initial={{ opacity: 0 }}
 
-                    animate={{ opacity: 1 }}
+                  animate={{ opacity: 1 }}
 
-                    exit={{ opacity: 0 }}
+                  exit={{ opacity: 0 }}
 
-                    onClick={() => setSelectedRanker(null)}
+                  onClick={() => setSelectedRanker(null)}
+
+                >
+
+                  <motion.div
+
+                    className="ranker-quick-card"
+
+                    initial={{ scale: 0.9, y: 20 }}
+
+                    animate={{ scale: 1, y: 0 }}
+
+                    exit={{ scale: 0.9, y: 20 }}
+
+                    onClick={(e) => e.stopPropagation()}
 
                   >
 
-                    <motion.div 
+                    <div className="card-accent-line"></div>
 
-                      className="ranker-quick-card"
+                    <div className="card-header">
 
-                      initial={{ scale: 0.9, y: 20 }}
+                      <div className="ranker-large-avatar">
 
-                      animate={{ scale: 1, y: 0 }}
+                        {selectedRanker.username.charAt(0).toUpperCase()}
 
-                      exit={{ scale: 0.9, y: 20 }}
+                      </div>
 
-                      onClick={(e) => e.stopPropagation()}
+                      <div className="ranker-main-info">
 
-                    >
+                        <h3>{selectedRanker.username}</h3>
 
-                      <div className="card-accent-line"></div>
+                        <div className="level-badge" style={{ color: getLevelInfo(selectedRanker.xp).color }}>
 
-                      <div className="card-header">
-
-                        <div className="ranker-large-avatar">
-
-                          {selectedRanker.username.charAt(0).toUpperCase()}
-
-                        </div>
-
-                        <div className="ranker-main-info">
-
-                          <h3>{selectedRanker.username}</h3>
-
-                          <div className="level-badge" style={{ color: getLevelInfo(selectedRanker.xp).color }}>
-
-                            {getLevelInfo(selectedRanker.xp).label}
-
-                          </div>
+                          {getLevelInfo(selectedRanker.xp).label}
 
                         </div>
 
                       </div>
 
+                    </div>
 
 
-                      <div className="card-body">
 
-                        <div className="info-section">
+                    <div className="card-body">
 
-                          <label>BIOGRAPHY</label>
+                      <div className="info-section">
 
-                          <p>{selectedRanker.bio || 'No transmission recorded for this operative.'}</p>
+                        <label>BIOGRAPHY</label>
 
-                        </div>
+                        <p>{selectedRanker.bio || 'No transmission recorded for this operative.'}</p>
 
-                        <div className="info-section">
+                      </div>
 
-                          <label>TECH STACK</label>
+                      <div className="info-section">
 
-                          <div className="stack-tags">
+                        <label>TECH STACK</label>
 
-                            {selectedRanker.stack && selectedRanker.stack.length > 0 ? (
+                        <div className="stack-tags">
 
-                              selectedRanker.stack.map((tech, i) => (
+                          {selectedRanker.stack && selectedRanker.stack.length > 0 ? (
 
-                                <span key={i} className="stack-tag">{tech}</span>
+                            selectedRanker.stack.map((tech, i) => (
 
-                              ))
+                              <span key={i} className="stack-tag">{tech}</span>
 
-                            ) : (
+                            ))
 
-                              <span className="stack-tag empty">Undefined</span>
+                          ) : (
 
-                            )}
+                            <span className="stack-tag empty">Undefined</span>
 
-                          </div>
+                          )}
 
                         </div>
 
                       </div>
 
+                    </div>
 
 
-                      <button className="close-card-btn" onClick={() => setSelectedRanker(null)}>
 
-                        DISMISS
+                    <button className="close-card-btn" onClick={() => setSelectedRanker(null)}>
 
-                      </button>
+                      DISMISS
 
-                    </motion.div>
+                    </button>
 
                   </motion.div>
 
-                )}
+                </motion.div>
 
-              </AnimatePresence>
+              )}
+
+            </AnimatePresence>
 
 
 
@@ -1379,7 +1379,7 @@ const Home = () => {
 
               </div>
 
-              
+
 
               <div className="support-container">
 
@@ -1417,9 +1417,9 @@ const Home = () => {
 
                   <div className="form-group">
 
-                    <input 
+                    <input
 
-                      type="text" 
+                      type="text"
 
                       placeholder="Subject of inquiry"
 
@@ -1433,7 +1433,7 @@ const Home = () => {
 
                   <div className="form-group">
 
-                    <textarea 
+                    <textarea
 
                       placeholder="Transmission details..."
 
@@ -1486,7 +1486,7 @@ const Home = () => {
 
             </div>
 
-            
+
 
             <h2 className="about-title">
 
@@ -1540,7 +1540,7 @@ const Home = () => {
 
 
 
-            <motion.div 
+            <motion.div
 
               className="about-cta"
 
