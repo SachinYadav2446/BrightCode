@@ -484,7 +484,7 @@ app.post('/update-profile', authenticateToken, async (req, res) => {
 
         // Ensure stack is properly formatted as JSON
         const stackJson = Array.isArray(stack) ? JSON.stringify(stack) : '[]';
-        
+
         const result = await pool.query(
             'UPDATE users SET username = $1, bio = $2, stack = $3::jsonb WHERE id = $4 RETURNING email, xp, bio, stack, created_at',
             [username, bio || '', stackJson, req.user.id]
