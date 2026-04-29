@@ -16,6 +16,7 @@ import {
     CSS_LEVELS, LOGIC_LEVELS, REACT_LEVELS, 
     SUBJECT_PHASES, PHASE_THEORIES, ALL_QUOTES 
 } from '../data/arcadeData';
+import { MERN_LEVELS, MERN_PHASES, MERN_THEORIES } from '../data/mernQuestions';
 
 // ── SIDEBAR TABS CONFIG ───────────────────────────────────────────────
 const SIDEBAR_TABS = [
@@ -113,6 +114,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                                     if (game.id === 'css-odyssey') return user?.css_level || 0;
                                     if (game.id === 'logic-lab') return user?.logic_level || 0;
                                     if (game.id === 'react-quest') return user?.react_level || 0;
+                                    if (game.id === 'mern-mastery') return user?.mern_level || 0;
                                     return 0;
                                 })();
                                 
@@ -231,7 +233,8 @@ const Arcade = () => {
     const gameMap = {
         'css-odyssey': CSS_LEVELS,
         'logic-lab': LOGIC_LEVELS,
-        'react-quest': REACT_LEVELS
+        'react-quest': REACT_LEVELS,
+        'mern-mastery': MERN_LEVELS
     };
 
     const sections = [
@@ -245,7 +248,14 @@ const Arcade = () => {
                 { id: 'react-quest', title: 'React Forge', subtitle: 'Architecture Lab', desc: 'Theoretical MCQ challenges designed to push your React knowledge to its limits.', icon: <RefreshCw />, progressKey: 'highest_react_quest_level', total: REACT_LEVELS.length }
             ]
         },
-        { id: 'backend', name: 'Backend Development', description: 'Build robust server-side applications and APIs', games: [] },
+        { 
+            id: 'backend', 
+            name: 'Backend Development', 
+            description: 'Build robust server-side applications and APIs', 
+            games: [
+                { id: 'mern-mastery', title: 'MERN Mastery', subtitle: 'Fullstack Systems', desc: 'The ultimate deep-dive into MongoDB, Express, React, and Node.js.', icon: <Database />, progressKey: 'highest_mern_mastery_level', total: MERN_LEVELS.length }
+            ] 
+        },
         { id: 'data-science', name: 'Data Science', description: 'Analyze data and build intelligent systems', games: [] }
     ];
 
@@ -259,6 +269,7 @@ const Arcade = () => {
         if (activeGame === 'css-odyssey') dbLevel = user.css_level || 0;
         else if (activeGame === 'logic-lab') dbLevel = user.logic_level || 0;
         else if (activeGame === 'react-quest') dbLevel = user.react_level || 0;
+        else if (activeGame === 'mern-mastery') dbLevel = user.mern_level || 0;
 
         const hKey = `highest_${activeGame.replace(/-/g, '_')}_level`;
         const sKey = `${activeGame.replace(/-/g, '_')}_solutions`;
@@ -271,8 +282,8 @@ const Arcade = () => {
     const levels = gameMap[activeGame] || [];
     const levelData = levels[currentLvlIdx];
 
-    // Calculate phase-relative level info
-    const currentPhase = (SUBJECT_PHASES[activeGame] || []).find(p => currentLvlIdx >= p.start && currentLvlIdx <= p.end);
+    const activePhases = activeGame === 'mern-mastery' ? MERN_PHASES : (SUBJECT_PHASES[activeGame] || []);
+    const currentPhase = activePhases.find(p => currentLvlIdx >= p.start && currentLvlIdx <= p.end);
     const relativeLvlIdx = currentPhase ? currentLvlIdx - currentPhase.start + 1 : currentLvlIdx + 1;
     const totalInPhase = currentPhase ? currentPhase.end - currentPhase.start + 1 : levels.length;
 
@@ -304,14 +315,14 @@ const Arcade = () => {
 
     const isPhaseLocked = (phaseIdx) => {
         if (phaseIdx === 0) return false;
-        const phases = SUBJECT_PHASES[activeGame] || [];
+        const phases = activeGame === 'mern-mastery' ? MERN_PHASES : (SUBJECT_PHASES[activeGame] || []);
         const prevPhase = phases[phaseIdx - 1];
         if (!prevPhase) return false;
         return !isLevelSolved(prevPhase.end);
     };
 
     const startPhase = (phase) => {
-        const phases = SUBJECT_PHASES[activeGame] || [];
+        const phases = activeGame === 'mern-mastery' ? MERN_PHASES : (SUBJECT_PHASES[activeGame] || []);
         const pIdx = phases.findIndex(p => p.name === phase.name);
         if (!isPhaseLocked(pIdx)) {
             // Find first unsolved level in this phase
@@ -434,9 +445,41 @@ const Arcade = () => {
                 setCssStatus('wrong');
                 triggerModal('error', 'Check Requirements', 'Some design requirements are missing or incorrect. Keep trying!');
             }
-        } else if (activeGame === 'logic-lab') {
-            // Logic Lab Validation with Async and DOM support
+        } else if (activeGame === 'logic-lab' || (activeGame === 'mern-mastery' && levelData.type === 'CODING')) {
+            // Logic Lab & MERN Coding Validation
             const runLogicTest = async () => {
+                const isMernQuery = activeGame === 'mern-mastery';
+                
+                // Syntax Integrity Check (Ensure brackets/commas are valid)
+                if (isMernQuery) {
+                    try {
+                        // We try to evaluate the code as an expression to check for syntax errors
+                        new Function(`return (${code})`);
+                    } catch (e) {
+                        setLogicStatus('wrong');
+                        triggerModal('error', 'Syntax Error', 'Your query has a structural syntax error. Check your brackets, braces, and commas!');
+                        return;
+                    }
+                }
+
+                // If it's a MERN query, we first try string requirement matching (like CSS)
+                if (isMernQuery && levelData.testCases) {
+                    const input = code.toLowerCase().replace(/\s/g, '');
+                    const allRequirementsPassed = levelData.testCases.every(tc => {
+                        const expectedStr = String(tc[0]).toLowerCase().replace(/\s/g, '');
+                        // If it's a simple string match
+                        return input.includes(expectedStr);
+                    });
+
+                    if (allRequirementsPassed) {
+                        setAnswerRevealed(true);
+                        setLogicStatus('correct');
+                        await saveProgress(code);
+                        triggerModal('success', 'Query Validated +10 XP', 'Excellent! Your query structure is correct. You earned 10 XP!');
+                        return;
+                    }
+                }
+
                 try {
                     const results = [];
                     // Process test cases sequentially to handle async properly
@@ -629,7 +672,7 @@ const Arcade = () => {
 
                             {/* Pagination Controls */}
                             {(() => {
-                                const allPhases = SUBJECT_PHASES[activeGame] || [];
+                                const allPhases = activeGame === 'mern-mastery' ? MERN_PHASES : (SUBJECT_PHASES[activeGame] || []);
                                 const totalPages = Math.ceil(allPhases.length / phasesPerPage);
                                 if (totalPages <= 1) return null;
                                 
@@ -660,7 +703,7 @@ const Arcade = () => {
 
                     <div className="phase-cards-grid">
                         {(() => {
-                            const allPhases = SUBJECT_PHASES[activeGame] || [];
+                            const allPhases = activeGame === 'mern-mastery' ? MERN_PHASES : (SUBJECT_PHASES[activeGame] || []);
                             const visiblePhases = allPhases.slice(phasePage * phasesPerPage, (phasePage + 1) * phasesPerPage);
                             
                             return visiblePhases.map((phase, localIdx) => {
@@ -762,8 +805,8 @@ const Arcade = () => {
                         <div className="game-challenge-panel">
                             <div className="game-challenge-header">
                                 <div className="game-challenge-num">Challenge #{relativeLvlIdx}</div>
-                                <h2 className="game-challenge-title">{levelData?.title || '🎉 All Done!'}</h2>
-                                <p className="game-challenge-desc">{levelData?.desc || 'You completed all levels in this module.'}</p>
+                                <h2 className="game-challenge-title">{levelData?.title}</h2>
+                                <p className="game-challenge-desc">{levelData?.desc || (levelData ? '' : 'You completed all levels in this module.')}</p>
                             </div>
 
                             {levelData && (
@@ -846,7 +889,7 @@ const Arcade = () => {
                                         );
                                     })()}
 
-                                    {activeGame === 'logic-lab' && (
+                                    {(activeGame === 'logic-lab' || (activeGame === 'mern-mastery' && levelData.type === 'CODING')) && (
                                         <div className="logic-forge-layout">
                                             <div className="logic-forge-editor">
                                                 <div className="game-code-label">
@@ -902,7 +945,13 @@ const Arcade = () => {
                                     )}
 
                                     {levelData.options && levelData.answer !== undefined && (
-                                        <div className="game-options-list">
+                                        <div className="game-mcq-wrap">
+                                            {levelData.question && (
+                                                <div className="game-question-text">
+                                                    {levelData.question}
+                                                </div>
+                                            )}
+                                            <div className="game-options-list">
                                             {levelData.options.map((opt, i) => {
                                                 const isCorrect = answerRevealed && i === levelData.answer;
                                                 const isWrong = answerRevealed && wrongSelection === i;
@@ -920,6 +969,7 @@ const Arcade = () => {
                                                     </button>
                                                 );
                                             })}
+                                            </div>
                                         </div>
                                     )}
 
