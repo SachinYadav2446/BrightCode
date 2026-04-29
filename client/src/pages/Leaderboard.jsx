@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Crown, ArrowLeft, Zap, Search, Shield, Filter, RefreshCw } from 'lucide-react';
+import { Trophy, Crown, ArrowLeft, Zap, Search, Shield, Filter, RefreshCw, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { io } from 'socket.io-client';

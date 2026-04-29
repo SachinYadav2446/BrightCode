@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -220,8 +221,8 @@ const transporter = nodemailer.createTransport({
     port: 587,
     secure: false, // Use STARTTLS
     auth: {
-        user: 'brightcodelim@gmail.com',
-        pass: 'dzoe alqy ocyw gije'
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
     },
     tls: {
         rejectUnauthorized: false
@@ -481,13 +482,19 @@ app.post('/update-profile', authenticateToken, async (req, res) => {
         const existing = await pool.query('SELECT id FROM users WHERE username = $1 AND id != $2', [username, req.user.id]);
         if (existing.rows.length > 0) return res.status(400).json({ error: 'Username is already taken' });
 
+        // Ensure stack is properly formatted as JSON
+        const stackJson = Array.isArray(stack) ? JSON.stringify(stack) : '[]';
+        
         const result = await pool.query(
-            'UPDATE users SET username = $1, bio = $2, stack = $3 WHERE id = $4 RETURNING email, xp, bio, stack, created_at',
-            [username, bio || '', JSON.stringify(stack || []), req.user.id]
+            'UPDATE users SET username = $1, bio = $2, stack = $3::jsonb WHERE id = $4 RETURNING email, xp, bio, stack, created_at',
+            [username, bio || '', stackJson, req.user.id]
         );
 
         const user = result.rows[0];
         if (!user) return res.status(404).json({ error: 'User not found' });
+
+        // Parse stack if it's a string
+        const parsedStack = typeof user.stack === 'string' ? JSON.parse(user.stack) : (user.stack || []);
 
         const token = jwt.sign({ id: req.user.id, username: username }, JWT_SECRET, { expiresIn: '1d' });
         res.json({
@@ -496,12 +503,12 @@ app.post('/update-profile', authenticateToken, async (req, res) => {
             email: user.email,
             xp: user.xp,
             bio: user.bio,
-            stack: user.stack || [],
+            stack: parsedStack,
             createdAt: user.created_at
         });
     } catch (err) {
         console.error('UPDATE PROFILE ERROR:', err);
-        res.status(500).json({ error: 'Database error' });
+        res.status(500).json({ error: 'Database error: ' + err.message });
     }
 });
 

@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { ChevronLeft, ChevronRight, LogOut, Settings, User, Layout, Library, Code2, Shield, Zap, Crown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, Settings, User, Layout, Library, Code2, Shield, Zap, Crown, Trophy } from 'lucide-react';
 
 import Editor from '@monaco-editor/react';
 
@@ -967,57 +967,81 @@ const Home = () => {
               <div className="fame-header-centered">
                 <span className="hunt-label">HALL OF FAME</span>
                 <div className="hunt-line"></div>
-                
-                <Link to="/leaderboard" className="fame-view-all">
-                  <span>FULL RANKINGS</span>
-                  <ChevronRight size={14} />
-                </Link>
               </div>
               
               <div className="hall-of-fame-grid">
-                {topRankers.map((ranker, idx) => (
-                  <motion.div 
-                    key={ranker.username}
-                    className={`fame-card rank-${idx + 1}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.1, duration: 0.5 }}
-                    whileHover={{ scale: 1.02, y: -5 }}
-                    onClick={() => setSelectedRanker(ranker)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="fame-rank-wrapper">
-                      <div className="fame-rank-badge">
-                        {idx === 0 ? <Crown size={18} /> : `#${idx + 1}`}
-                      </div>
-                    </div>
+                {(() => {
+                  // Reorder: 2nd place (index 1) first, 1st place (index 0) middle, 3rd place (index 2) last
+                  const orderedRankers = [
+                    topRankers[1], // 2nd place - left
+                    topRankers[0], // 1st place - middle
+                    topRankers[2]  // 3rd place - right
+                  ].filter(Boolean); // Remove undefined if less than 3 rankers
+                  
+                  return orderedRankers.map((ranker, displayIdx) => {
+                    // Find the actual index for rank calculation
+                    const actualIdx = topRankers.indexOf(ranker);
                     
-                    <div className="fame-avatar-wrapper">
-                      <div className="fame-avatar">
-                        {ranker.username[0].toUpperCase()}
-                      </div>
-                      <div className="fame-rank-ring"></div>
-                    </div>
-                    
-                    <div className="fame-content">
-                      <h3 className="fame-username">{ranker.username}</h3>
-                      <div className="fame-meta">
-                        <div className="fame-stat">
-                          <Zap size={12} className="fame-icon" />
-                          <span>{ranker.xp.toLocaleString()}</span>
+                    return (
+                      <motion.div 
+                        key={ranker.username}
+                        className={`fame-card rank-${actualIdx + 1}`}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: displayIdx * 0.1, duration: 0.5 }}
+                        whileHover={{ scale: 1.02, y: -5 }}
+                        onClick={() => setSelectedRanker(ranker)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div className="fame-rank-wrapper">
+                          <div className="fame-rank-badge">
+                            {actualIdx === 0 ? <Crown size={18} /> : `#${actualIdx + 1}`}
+                          </div>
                         </div>
-                        <div className="fame-divider"></div>
-                        <div className="fame-stat">
-                          <Shield size={12} className="fame-icon" />
-                          <span>LVL {ranker.level}</span>
+                        
+                        <div className="fame-avatar-wrapper">
+                          <div className="fame-avatar">
+                            {ranker.username[0].toUpperCase()}
+                          </div>
+                          <div className="fame-rank-ring"></div>
                         </div>
-                      </div>
-                    </div>
-                    
-                    {idx === 0 && <div className="fame-glow"></div>}
-                  </motion.div>
-                ))}
+                        
+                        <div className="fame-content">
+                          <h3 className="fame-username">{ranker.username}</h3>
+                          <div className="fame-meta">
+                            <div className="fame-stat">
+                              <Zap size={12} className="fame-icon" />
+                              <span>{ranker.xp.toLocaleString()}</span>
+                            </div>
+                            <div className="fame-divider"></div>
+                            <div className="fame-stat">
+                              <Shield size={12} className="fame-icon" />
+                              <span>LVL {ranker.level}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {actualIdx === 0 && <div className="fame-glow"></div>}
+                      </motion.div>
+                    );
+                  });
+                })()}
               </div>
+
+              {/* View All Rankings Button */}
+              <motion.div 
+                className="fame-view-all-wrapper"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+              >
+                <Link to="/leaderboard" className="fame-view-all-btn">
+                  <Trophy size={20} />
+                  <span>View Full Rankings</span>
+                  <ChevronRight size={18} />
+                </Link>
+              </motion.div>
             </div>
 
             {/* Skill Progress Dashboard */}

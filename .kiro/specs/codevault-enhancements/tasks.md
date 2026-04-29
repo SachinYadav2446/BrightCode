@@ -12,119 +12,119 @@
 - [ ] 1.7 Test migration on development database
 
 ### Task 2: Trash/Recycle Bin
-- [~] 2.1 Update DELETE endpoint to soft delete (set `deleted_at`)
-- [~] 2.2 Create `GET /api/notes/trash` endpoint
-- [~] 2.3 Create `POST /api/notes/:id/restore` endpoint
-- [~] 2.4 Create `DELETE /api/notes/:id/permanent` endpoint
-- [~] 2.5 Add TrashSection component to sidebar
-- [~] 2.6 Add trash icon with badge count
-- [~] 2.7 Add restore and permanent delete buttons
-- [~] 2.8 Add confirmation dialogs
-- [~] 2.9 Style trash section
-- [~] 2.10 Test trash functionality
+- [ ] 2.1 Update DELETE endpoint to soft delete (set `deleted_at`)
+- [ ] 2.2 Create `GET /api/notes/trash` endpoint
+- [ ] 2.3 Create `POST /api/notes/:id/restore` endpoint
+- [ ] 2.4 Create `DELETE /api/notes/:id/permanent` endpoint
+- [ ] 2.5 Add TrashSection component to sidebar
+- [ ] 2.6 Add trash icon with badge count
+- [ ] 2.7 Add restore and permanent delete buttons
+- [ ] 2.8 Add confirmation dialogs
+- [ ] 2.9 Style trash section
+- [ ] 2.10 Test trash functionality
 
 ### Task 3: Favorites System
-- [~] 3.1 Create `PATCH /api/notes/:id/favorite` endpoint
-- [~] 3.2 Create `GET /api/notes/favorites` endpoint
-- [~] 3.3 Add FavoritesSection component to sidebar
-- [~] 3.4 Add star icon to file items (hover state)
-- [~] 3.5 Add star icon to editor header
-- [~] 3.6 Implement toggle favorite functionality
-- [~] 3.7 Style favorite indicators (gold star)
-- [~] 3.8 Add collapse/expand for favorites section
-- [~] 3.9 Test favorite functionality
-- [~] 3.10 Add keyboard shortcut (Ctrl+Shift+F)
+- [ ] 3.1 Create `PATCH /api/notes/:id/favorite` endpoint
+- [ ] 3.2 Create `GET /api/notes/favorites` endpoint
+- [ ] 3.3 Add FavoritesSection component to sidebar
+- [ ] 3.4 Add star icon to file items (hover state)
+- [ ] 3.5 Add star icon to editor header
+- [ ] 3.6 Implement toggle favorite functionality
+- [ ] 3.7 Style favorite indicators (gold star)
+- [ ] 3.8 Add collapse/expand for favorites section
+- [ ] 3.9 Test favorite functionality
+- [ ] 3.10 Add keyboard shortcut (Ctrl+Shift+F)
 
 ### Task 4: Recent Notes
-- [~] 4.1 Create `PATCH /api/notes/:id/open` endpoint
-- [~] 4.2 Create `GET /api/notes/recent` endpoint
-- [~] 4.3 Add RecentSection component to sidebar
-- [~] 4.4 Track note opens in CodeVault.jsx
-- [~] 4.5 Display relative time ("2 min ago")
-- [~] 4.6 Limit to 10 most recent
-- [~] 4.7 Add collapse/expand for recent section
-- [~] 4.8 Style recent section
-- [~] 4.9 Add clear recent history option
-- [~] 4.10 Test recent notes functionality
+- [ ] 4.1 Create `PATCH /api/notes/:id/open` endpoint
+- [ ] 4.2 Create `GET /api/notes/recent` endpoint
+- [ ] 4.3 Add RecentSection component to sidebar
+- [ ] 4.4 Track note opens in CodeVault.jsx
+- [ ] 4.5 Display relative time ("2 min ago")
+- [ ] 4.6 Limit to 10 most recent
+- [ ] 4.7 Add collapse/expand for recent section
+- [ ] 4.8 Style recent section
+- [ ] 4.9 Add clear recent history option
+- [ ] 4.10 Test recent notes functionality
 
 ### Task 5: Rich Text Toolbar
-- [~] 5.1 Create RichTextToolbar component
-- [~] 5.2 Add Bold button with Ctrl+B handler
-- [~] 5.3 Add Italic button with Ctrl+I handler
-- [~] 5.4 Add Strikethrough button
-- [~] 5.5 Add Inline code button
-- [~] 5.6 Add Headers dropdown (H1-H6)
-- [~] 5.7 Add Bullet list button
-- [~] 5.8 Add Numbered list button
-- [~] 5.9 Add Checkbox list button
-- [~] 5.10 Add Link insertion button with modal
-- [~] 5.11 Add Image upload button
-- [~] 5.12 Integrate toolbar with Monaco editor
-- [~] 5.13 Add tooltips with keyboard shortcuts
-- [~] 5.14 Style toolbar (minimal, subtle)
-- [~] 5.15 Hide toolbar in preview mode
-- [~] 5.16 Test all formatting options
+- [ ] 5.1 Create RichTextToolbar component
+- [ ] 5.2 Add Bold button with Ctrl+B handler
+- [ ] 5.3 Add Italic button with Ctrl+I handler
+- [ ] 5.4 Add Strikethrough button
+- [ ] 5.5 Add Inline code button
+- [ ] 5.6 Add Headers dropdown (H1-H6)
+- [ ] 5.7 Add Bullet list button
+- [ ] 5.8 Add Numbered list button
+- [ ] 5.9 Add Checkbox list button
+- [ ] 5.10 Add Link insertion button with modal
+- [ ] 5.11 Add Image upload button
+- [ ] 5.12 Integrate toolbar with Monaco editor
+- [ ] 5.13 Add tooltips with keyboard shortcuts
+- [ ] 5.14 Style toolbar (minimal, subtle)
+- [ ] 5.15 Hide toolbar in preview mode
+- [ ] 5.16 Test all formatting options
 
 ### Task 6: Split View
-- [~] 6.1 Install react-split-pane library
-- [~] 6.2 Create SplitView component
-- [~] 6.3 Add split view toggle button to editor header
-- [~] 6.4 Implement vertical split (editor left, preview right)
-- [~] 6.5 Add resizable divider
-- [~] 6.6 Implement synchronized scrolling
-- [~] 6.7 Save split view preference to localStorage
-- [~] 6.8 Style split view
-- [~] 6.9 Test split view functionality
-- [~] 6.10 Add keyboard shortcut (Ctrl+\\)
+- [ ] 6.1 Install react-split-pane library
+- [ ] 6.2 Create SplitView component
+- [ ] 6.3 Add split view toggle button to editor header
+- [ ] 6.4 Implement vertical split (editor left, preview right)
+- [ ] 6.5 Add resizable divider
+- [ ] 6.6 Implement synchronized scrolling
+- [ ] 6.7 Save split view preference to localStorage
+- [ ] 6.8 Style split view
+- [ ] 6.9 Test split view functionality
+- [ ] 6.10 Add keyboard shortcut (Ctrl+\\)
 
 ### Task 7: Keyboard Shortcuts
-- [~] 7.1 Create KeyboardShortcutsModal component
-- [~] 7.2 Implement global keyboard event listener
-- [~] 7.3 Add Ctrl+N for new note
-- [~] 7.4 Add Ctrl+B for bold
-- [~] 7.5 Add Ctrl+I for italic
-- [~] 7.6 Add Ctrl+E for toggle preview
-- [~] 7.7 Add Ctrl+D for duplicate note
-- [~] 7.8 Add Ctrl+/ or ? for shortcuts help
-- [~] 7.9 Add Esc for close modals
-- [~] 7.10 Display shortcuts in tooltips
-- [~] 7.11 Style shortcuts modal
-- [~] 7.12 Test all keyboard shortcuts
+- [ ] 7.1 Create KeyboardShortcutsModal component
+- [ ] 7.2 Implement global keyboard event listener
+- [ ] 7.3 Add Ctrl+N for new note
+- [ ] 7.4 Add Ctrl+B for bold
+- [ ] 7.5 Add Ctrl+I for italic
+- [ ] 7.6 Add Ctrl+E for toggle preview
+- [ ] 7.7 Add Ctrl+D for duplicate note
+- [ ] 7.8 Add Ctrl+/ or ? for shortcuts help
+- [ ] 7.9 Add Esc for close modals
+- [ ] 7.10 Display shortcuts in tooltips
+- [ ] 7.11 Style shortcuts modal
+- [ ] 7.12 Test all keyboard shortcuts
 
 ### Task 8: Note Statistics
-- [~] 8.1 Create StatsBar component
-- [~] 8.2 Calculate word count in real-time
-- [~] 8.3 Calculate character count
-- [~] 8.4 Calculate reading time estimate
-- [~] 8.5 Calculate line count
-- [~] 8.6 Add stats bar to editor footer
-- [~] 8.7 Style stats bar (minimal, subtle)
-- [~] 8.8 Optimize performance with useMemo
-- [~] 8.9 Test stats calculations
-- [~] 8.10 Add toggle to show/hide stats
+- [ ] 8.1 Create StatsBar component
+- [ ] 8.2 Calculate word count in real-time
+- [ ] 8.3 Calculate character count
+- [ ] 8.4 Calculate reading time estimate
+- [ ] 8.5 Calculate line count
+- [ ] 8.6 Add stats bar to editor footer
+- [ ] 8.7 Style stats bar (minimal, subtle)
+- [ ] 8.8 Optimize performance with useMemo
+- [ ] 8.9 Test stats calculations
+- [ ] 8.10 Add toggle to show/hide stats
 
 ### Task 9: Export Functionality
-- [~] 9.1 Create exportService.js
-- [~] 9.2 Implement Markdown export
-- [~] 9.3 Implement HTML export (with styling)
-- [~] 9.4 Implement PDF export (using jsPDF or similar)
-- [~] 9.5 Create `POST /api/notes/:id/export` endpoint
-- [~] 9.6 Create ExportModal component
-- [~] 9.7 Add export button to editor header (dropdown)
-- [~] 9.8 Add export options (Markdown, HTML, PDF)
-- [~] 9.9 Add progress indicator for exports
-- [~] 9.10 Add repository export (zip all notes)
-- [~] 9.11 Style export modal
-- [~] 9.12 Test all export formats
+- [ ] 9.1 Create exportService.js
+- [ ] 9.2 Implement Markdown export
+- [ ] 9.3 Implement HTML export (with styling)
+- [ ] 9.4 Implement PDF export (using jsPDF or similar)
+- [ ] 9.5 Create `POST /api/notes/:id/export` endpoint
+- [ ] 9.6 Create ExportModal component
+- [ ] 9.7 Add export button to editor header (dropdown)
+- [ ] 9.8 Add export options (Markdown, HTML, PDF)
+- [ ] 9.9 Add progress indicator for exports
+- [ ] 9.10 Add repository export (zip all notes)
+- [ ] 9.11 Style export modal
+- [ ] 9.12 Test all export formats
 
 ### Task 10: Duplicate Note
-- [~] 10.1 Create `POST /api/notes/:id/duplicate` endpoint
-- [~] 10.2 Add duplicate button to file actions
-- [~] 10.3 Add duplicate option to editor menu
-- [~] 10.4 Append "(Copy)" to duplicated note title
-- [~] 10.5 Open duplicated note after creation
-- [~] 10.6 Test duplicate functionality
-- [~] 10.7 Add keyboard shortcut (Ctrl+D)
+- [ ] 10.1 Create `POST /api/notes/:id/duplicate` endpoint
+- [ ] 10.2 Add duplicate button to file actions
+- [ ] 10.3 Add duplicate option to editor menu
+- [ ] 10.4 Append "(Copy)" to duplicated note title
+- [ ] 10.5 Open duplicated note after creation
+- [ ] 10.6 Test duplicate functionality
+- [ ] 10.7 Add keyboard shortcut (Ctrl+D)
 
 ---
 
