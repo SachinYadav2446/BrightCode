@@ -8,7 +8,6 @@ import Settings from './pages/Settings';
 import Arcade from './pages/Arcade';
 import Leaderboard from './pages/Leaderboard';
 import Factions from './pages/Factions';
-import UserModule from './pages/UserModule';
 import Library from './pages/Library';
 import Workspace from './pages/Workspace';
 import CodeVault from './pages/CodeVault';
@@ -38,7 +37,7 @@ const NavbarWrapper = () => {
   const location = useLocation();
   const { navbarHidden } = useAuth();
   
-  const hideOnPaths = ['/auth', '/editor', '/user-module'];
+  const hideOnPaths = ['/auth', '/editor'];
   const isLanding = location.pathname === '/';
   const shouldHide = navbarHidden || isLanding || hideOnPaths.some(p => location.pathname.startsWith(p));
   
@@ -132,7 +131,6 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-            <Route path="/user-module" element={<UserModule />} />
             {/* Catch-all: redirect any unknown path to landing */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
