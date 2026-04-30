@@ -19,7 +19,7 @@ import {
     PenTool, Eraser, Layout as WhiteboardIcon, Zap, Shield, Languages,
 
     Mic, MicOff, Video, VideoOff, PhoneOff, Phone, Plus,
-    ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Share2,
+    ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Share2, Download,
     Folder, FolderOpen, FolderPlus, File as FileIcon
 } from 'lucide-react';
 
@@ -28,6 +28,8 @@ import axios from 'axios';
 import './EditorPage.css';
 
 import { useAuth } from '../context/AuthContext';
+
+import CodeBrightLogo from '../components/CodeBrightLogo';
 
 
 
@@ -68,9 +70,25 @@ const EditorPage = () => {
 
     // ── Sidebar/Tab States (BUG FIX: both were missing) ─────────────────────
 
-    const [activeTab, setActiveTab] = useState('files');
+    const [sidebarView, setSidebarView] = useState('files'); // 'files', 'collaborators', 'chat'
 
     const [snapshots, setSnapshots] = useState([]);
+
+    // ── Chat States ──────────────────────────────────────────────────────────
+    const [chatMessages, setChatMessages] = useState([]);
+    const [chatInput, setChatInput] = useState('');
+    const chatEndRef = useRef(null);
+
+    // Navigate sidebar views with arrow buttons
+    const goToNextView = () => {
+        if (sidebarView === 'files') setSidebarView('collaborators');
+        else if (sidebarView === 'collaborators') setSidebarView('chat');
+    };
+
+    const goToPreviousView = () => {
+        if (sidebarView === 'chat') setSidebarView('collaborators');
+        else if (sidebarView === 'collaborators') setSidebarView('files');
+    };
 
 
 
@@ -118,6 +136,7 @@ const EditorPage = () => {
     const [myId, setMyId] = useState(null);
     const [myPermission, setMyPermission] = useState('write');
     const [workspaceOwner, setWorkspaceOwner] = useState('');
+    const [showEndSessionModal, setShowEndSessionModal] = useState(false);
 
     const isAdmin = adminId === myId;
 
@@ -509,11 +528,16 @@ const EditorPage = () => {
 
                 socket.on('session-ended', ({ message }) => {
 
-                    if (!isStopped) { toast.error(message, { duration: 5000 }); navigate('/'); }
+                    if (!isStopped) { navigate('/workspace'); }
 
                 });
 
-
+                // ── Chat Messages ────────────────────────────────────────────
+                socket.on('chat-message', ({ username, message, timestamp }) => {
+                    if (!isStopped) {
+                        setChatMessages(prev => [...prev, { username, message, timestamp, id: Date.now() }]);
+                    }
+                });
 
                 // ── WebRTC Signaling ─────────────────────────────────────────
 
@@ -663,6 +687,56 @@ const EditorPage = () => {
 
     };
 
+    // ── Export File Function ──────────────────────────────────────────────────
+    const exportFile = () => {
+        if (!activeFile) {
+            return;
+        }
+
+        const currentFile = files[activeFile];
+        if (!currentFile) {
+            return;
+        }
+
+        // Create a blob from the file content
+        const blob = new Blob([currentFile.content], { type: 'text/plain' });
+        
+        // Create a download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = activeFile.split('/').pop(); // Get just the filename
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        
+        // Cleanup
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    };
+
+    // ── Chat Functions ────────────────────────────────────────────────────────
+    const sendChatMessage = () => {
+        if (!chatInput.trim() || !socketRef.current) return;
+        
+        const message = {
+            username: user?.username || 'Anonymous',
+            message: chatInput.trim(),
+            timestamp: new Date().toISOString()
+        };
+        
+        socketRef.current.emit('chat-message', { roomId, ...message });
+        setChatInput('');
+    };
+
+    // Auto-scroll chat to bottom
+    useEffect(() => {
+        if (chatEndRef.current) {
+            chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [chatMessages]);
+
 
 
     // ── File System Helpers ───────────────────────────────────────────────────
@@ -786,8 +860,12 @@ const EditorPage = () => {
 
     // ── Copy invite ───────────────────────────────────────────────────────────
     const copyInviteLink = async () => {
-        try { await navigator.clipboard.writeText(window.location.href); toast.success('Invite link copied!'); }
-        catch { toast.error('Failed to copy link'); }
+        try { 
+            await navigator.clipboard.writeText(window.location.href);
+        }
+        catch { 
+            // Silent fail
+        }
     };
 
     // ── AI Sentinel ──────────────────────────────────────────────────────────
@@ -1418,6 +1496,53 @@ const EditorPage = () => {
 
 
 
+            {/* ── END SESSION MODAL ──────────────────────────────────────────── */}
+            <AnimatePresence>
+                {showEndSessionModal && (
+                    <div className="custom-modal-overlay" onClick={() => setShowEndSessionModal(false)}>
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }} 
+                            animate={{ opacity: 1, scale: 1, y: 0 }} 
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="end-session-modal"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="end-modal-icon">
+                                <div className="warning-icon-circle">
+                                    <Plus size={40} style={{ transform: 'rotate(45deg)' }} />
+                                </div>
+                            </div>
+                            
+                            <h2 className="end-modal-title">End Session Permanently?</h2>
+                            <p className="end-modal-description">
+                                This will terminate the workspace for all users and cannot be undone. 
+                                All files and progress will be permanently lost.
+                            </p>
+
+                            <div className="end-modal-actions">
+                                <button 
+                                    className="end-modal-btn cancel-btn" 
+                                    onClick={() => setShowEndSessionModal(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    className="end-modal-btn confirm-btn" 
+                                    onClick={() => {
+                                        socketRef.current?.emit('end-session', { roomId });
+                                        setShowEndSessionModal(false);
+                                        navigate('/workspace');
+                                    }}
+                                >
+                                    <Plus size={18} style={{ transform: 'rotate(45deg)' }} />
+                                    End Session
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             {/* ── HOLOGRAM COMMS PiP ──────────────────────────────────────────── */}
 
             <AnimatePresence>
@@ -1592,7 +1717,7 @@ const EditorPage = () => {
             <header className="editor-nav">
 
                 <div className="nav-left">
-                    {/* Sidebar toggle moved to floating handle */}
+                    <CodeBrightLogo size="small" />
                 </div>
 
 
@@ -1614,11 +1739,15 @@ const EditorPage = () => {
                 <div className="nav-right">
                     <div className="editor-nav-actions">
 
-                        <button className="nav-icon-btn" onClick={toggleTerminal} title="Terminal">
+                        <button 
+                            className={`nav-icon-btn ${!isTerminalCollapsed ? 'active' : ''}`} 
+                            onClick={toggleTerminal} 
+                            title="Terminal"
+                        >
                             <TerminalIcon size={18} />
                         </button>
-                        <button className="export-btn">
-                            <Share2 size={16} /> Export
+                        <button className="export-btn" onClick={exportFile} disabled={!activeFile}>
+                            <Download size={16} /> Export
                         </button>
                         <button className={`nav-play-btn ${isRunning ? 'pulse' : ''}`} onClick={runCode} disabled={isRunning}>
                             <Play size={18} fill="currentColor" />
@@ -1649,102 +1778,136 @@ const EditorPage = () => {
 
                 <aside className="sidebar">
 
-                    <div className="sidebar-header">
-
-                        <div className="sidebar-header-top">
-                            {/* Header toggle removed */}
-                        </div>
-
-                    </div>
-
-
-
-
-
-
-
-
                     <div className="sidebar-content">
-                        <div className="sidebar-section">
-                            {/* Explorer title row */}
-                            <div className="explorer-header">
-                                <span className="explorer-title">EXPLORER</span>
-                            </div>
+                        {/* Header with title and navigation arrows */}
+                        <div className="sidebar-header-bar">
+                            {/* Left arrow - only show if not on first view */}
+                            {sidebarView !== 'files' && (
+                                <button className="sidebar-nav-btn" onClick={goToPreviousView} title="Go back">
+                                    <ChevronLeft size={16} />
+                                </button>
+                            )}
+                            
+                            <span className="sidebar-title">
+                                {sidebarView === 'files' && 'EXPLORER'}
+                                {sidebarView === 'collaborators' && 'COLLABORATORS'}
+                                {sidebarView === 'chat' && 'TEAM CHAT'}
+                            </span>
+                            
+                            {/* Right arrow - only show if not on last view */}
+                            {sidebarView !== 'chat' && (
+                                <button className="sidebar-nav-btn" onClick={goToNextView} title="Next">
+                                    <ChevronRight size={16} />
+                                </button>
+                            )}
+                        </div>
 
-                            <div className="file-list">
-                                <div className="folder-item root-folder">
-                                    <div className="folder-header root-folder-header" onClick={() => toggleFolder('/')}>
-                                        <span className="tree-arrow">{expandedFolders.has('/') ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</span>
-                                        {expandedFolders.has('/') ? <FolderOpen size={14} style={{ color: '#e2a04a', flexShrink: 0 }} /> : <Folder size={14} style={{ color: '#e2a04a', flexShrink: 0 }} />}
-                                        <span className="folder-name-text root-name" style={{ flex: 1 }}>{workspaceName}</span>
-                                        <div className="folder-actions" style={{ display: 'flex', gap: '4px' }}>
-                                            <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFile(''); }} title="New File in root"><FilePlus size={12} /></button>
-                                            <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFolder(''); }} title="New Folder in root"><FolderPlus size={12} /></button>
+                        {/* Files View */}
+                        {sidebarView === 'files' && (
+                            <div className="sidebar-section">
+                                <div className="file-list">
+                                    <div className="folder-item root-folder">
+                                        <div className="folder-header root-folder-header" onClick={() => toggleFolder('/')}>
+                                            <span className="tree-arrow">{expandedFolders.has('/') ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</span>
+                                            {expandedFolders.has('/') ? <FolderOpen size={14} style={{ color: '#e2a04a', flexShrink: 0 }} /> : <Folder size={14} style={{ color: '#e2a04a', flexShrink: 0 }} />}
+                                            <span className="folder-name-text root-name" style={{ flex: 1 }}>{workspaceName}</span>
+                                            <div className="folder-actions" style={{ display: 'flex', gap: '4px' }}>
+                                                <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFile(''); }} title="New File in root"><FilePlus size={12} /></button>
+                                                <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFolder(''); }} title="New Folder in root"><FolderPlus size={12} /></button>
+                                            </div>
                                         </div>
+                                        <AnimatePresence>
+                                            {expandedFolders.has('/') && (
+                                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
+                                                    {Object.keys(fileTree.children).length === 0 ? (
+                                                        <div className="empty-folder-hint">
+                                                            <span>No files yet.</span>
+                                                            <button onClick={() => createNewFile('')} className="hint-btn">+ New File</button>
+                                                        </div>
+                                                    ) : renderFileTree(fileTree, '')}
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
                                     </div>
-                                    <AnimatePresence>
-                                        {expandedFolders.has('/') && (
-                                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
-                                                {Object.keys(fileTree.children).length === 0 ? (
-                                                    <div className="empty-folder-hint">
-                                                        <span>No files yet.</span>
-                                                        <button onClick={() => createNewFile('')} className="hint-btn">+ New File</button>
-                                                    </div>
-                                                ) : renderFileTree(fileTree, '')}
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        )}
 
-                    <div className="sidebar-panels">
-                        <div className={`collapsible-panel ${activeTab === 'users' ? 'expanded' : ''}`}>
-                            <div className="panel-header" onClick={() => setActiveTab(activeTab === 'users' ? 'files' : 'users')}>
-                                <div className="panel-title">
-                                    <span className="panel-icon-badge">A</span>
-                                    <span>COLLABORATORS</span>
-                                </div>
-                                <ChevronUp size={16} className={`panel-arrow ${activeTab === 'users' ? 'rotated' : ''}`} />
-                            </div>
-                            <AnimatePresence>
-                                {activeTab === 'users' && (
-                                    <motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: 'auto', opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        className="panel-content"
-                                    >
-                                        <div className="user-list-mini">
-                                            {clients.map(c => (
-                                                <div key={c?.id} className="user-item-mini">
-                                                    <div className="user-status-dot online" />
-                                                    <span>{c?.username}</span>
-                                                    {c?.id === adminId && <span className="owner-tag">OWNER</span>}
-                                                </div>
-                                            ))}
+                        {/* Collaborators View */}
+                        {sidebarView === 'collaborators' && (
+                            <div className="sidebar-section">
+                                <div className="user-list-full">
+                                    {clients.map(c => (
+                                        <div key={c?.id} className="user-item-full">
+                                            <div className="user-status-dot online" />
+                                            <span className="user-name">{c?.username}</span>
+                                            {c?.id === adminId && <span className="owner-tag">OWNER</span>}
                                         </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Chat View */}
+                        {sidebarView === 'chat' && (
+                            <div className="sidebar-section chat-section">
+                                <div className="chat-messages">
+                                    {chatMessages.length === 0 ? (
+                                        <div className="chat-empty">
+                                            <Send size={32} style={{ opacity: 0.3 }} />
+                                            <p>No messages yet</p>
+                                            <span>Start the conversation!</span>
+                                        </div>
+                                    ) : (
+                                        chatMessages.map(msg => (
+                                            <div key={msg.id} className={`chat-message ${msg.username === user?.username ? 'own-message' : ''}`}>
+                                                <div className="chat-message-header">
+                                                    <span className="chat-username">{msg.username}</span>
+                                                    <span className="chat-time">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                </div>
+                                                <div className="chat-message-text">{msg.message}</div>
+                                            </div>
+                                        ))
+                                    )}
+                                    <div ref={chatEndRef} />
+                                </div>
+                                <div className="chat-input-container">
+                                    <input
+                                        type="text"
+                                        className="chat-input"
+                                        placeholder="Type a message..."
+                                        value={chatInput}
+                                        onChange={(e) => setChatInput(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
+                                    />
+                                    <button className="chat-send-btn" onClick={sendChatMessage}>
+                                        <Send size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="sidebar-action-bar">
                         <button className="action-btn-circle" onClick={copyInviteLink} title="Share Link">
                             <Share2 size={18} />
                         </button>
-                        <button className="action-btn-leave" onClick={() => navigate('/hub')}>
+                        <button className="action-btn-leave" onClick={() => {
+                            // Leave workspace but keep it active
+                            if (socketRef.current) {
+                                socketRef.current.emit('leave-workspace', { 
+                                    roomId, 
+                                    username: user?.username 
+                                });
+                                socketRef.current.disconnect();
+                            }
+                            navigate('/workspace');
+                        }}>
                             <LogOut size={16} />
                             <span>Leave</span>
                         </button>
                         {isAdmin && (
-                            <button className="action-btn-end" onClick={() => {
-                                if (window.confirm("Permanently end this session?")) {
-                                    socketRef.current?.emit('end-session', { roomId });
-                                }
-                            }}>
+                            <button className="action-btn-end" onClick={() => setShowEndSessionModal(true)}>
                                 <Plus size={18} style={{ transform: 'rotate(45deg)' }} />
                                 <span>End</span>
                             </button>
