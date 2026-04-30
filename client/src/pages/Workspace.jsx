@@ -91,7 +91,7 @@ const Workspace = () => {
     return date.toLocaleDateString();
   };
 
-  const handleCreateWorkspace = () => {
+  const handleCreateWorkspace = async () => {
     if (!workspaceName.trim()) return;
     
     // Generate unique workspace ID
@@ -100,27 +100,35 @@ const Workspace = () => {
     // Get current user info
     const currentUser = localStorage.getItem('username') || 'User-' + Math.random().toString(36).substr(2, 4);
     
-    // Store workspace info in localStorage
-    const workspaceData = {
-      id: workspaceId,
-      name: workspaceName,
-      createdAt: new Date().toISOString(),
-      admin: currentUser,
-      members: [currentUser]
-    };
-    
-    // Save to localStorage
-    const existingWorkspaces = JSON.parse(localStorage.getItem('workspaces') || '[]');
-    existingWorkspaces.push(workspaceData);
-    localStorage.setItem('workspaces', JSON.stringify(existingWorkspaces));
-    
-    // Set current workspace and admin status
-    localStorage.setItem('currentWorkspace', workspaceId);
-    localStorage.setItem(`workspace_${workspaceId}_isAdmin`, 'true');
-    localStorage.setItem(`workspace_${workspaceId}_userRole`, 'admin');
-    
-    // Show created workspace info
-    setCreatedWorkspace(workspaceData);
+    try {
+      // Create workspace on backend
+      const response = await fetch('http://localhost:5051/create-workspace', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workspaceId,
+          name: workspaceName,
+          admin: currentUser
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create workspace');
+      }
+      
+      const data = await response.json();
+      
+      // Set current workspace and admin status
+      localStorage.setItem('currentWorkspace', workspaceId);
+      localStorage.setItem(`workspace_${workspaceId}_isAdmin`, 'true');
+      localStorage.setItem(`workspace_${workspaceId}_userRole`, 'admin');
+      
+      // Show created workspace info
+      setCreatedWorkspace(data.workspace);
+    } catch (error) {
+      console.error('Error creating workspace:', error);
+      alert('Failed to create workspace. Please try again.');
+    }
   };
 
   const handleCopyId = () => {
@@ -141,31 +149,17 @@ const Workspace = () => {
   const handleJoinWorkspace = () => {
     if (!joinId.trim()) return;
     
-    // Check if workspace exists
-    const existingWorkspaces = JSON.parse(localStorage.getItem('workspaces') || '[]');
-    const workspace = existingWorkspaces.find(ws => ws.id === joinId.trim());
+    // Get current user
+    const currentUser = localStorage.getItem('username') || 'User-' + Math.random().toString(36).substr(2, 4);
     
-    if (workspace) {
-      // Get current user
-      const currentUser = localStorage.getItem('username') || 'User-' + Math.random().toString(36).substr(2, 4);
-      
-      // Add user to workspace members if not already present
-      if (!workspace.members.includes(currentUser)) {
-        workspace.members.push(currentUser);
-        localStorage.setItem('workspaces', JSON.stringify(existingWorkspaces));
-      }
-      
-      // Set current workspace and member status
-      localStorage.setItem('currentWorkspace', joinId.trim());
-      localStorage.setItem(`workspace_${joinId.trim()}_isAdmin`, 'false');
-      localStorage.setItem(`workspace_${joinId.trim()}_userRole`, 'member');
-      
-      // Navigate to editor
-      saveToHistory(workspace.id, workspace.name, false);
-      navigate(`/editor/${joinId.trim()}`);
-    } else {
-      alert('Workspace not found. Please check the ID and try again.');
-    }
+    // Set current workspace and member status (will be determined by backend)
+    localStorage.setItem('currentWorkspace', joinId.trim());
+    localStorage.setItem(`workspace_${joinId.trim()}_isAdmin`, 'false');
+    localStorage.setItem(`workspace_${joinId.trim()}_userRole`, 'member');
+    
+    // Navigate to editor - backend will handle room creation/joining
+    saveToHistory(joinId.trim(), `Workspace ${joinId.trim().slice(0, 12)}...`, false);
+    navigate(`/editor/${joinId.trim()}`);
   };
 
   return (

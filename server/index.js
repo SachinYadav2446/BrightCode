@@ -1547,6 +1547,51 @@ app.get('/active-rooms', (req, res) => {
     res.json(Array.from(rooms.keys()));
 });
 
+// Workspace metadata storage (in-memory for now)
+const workspaceMetadata = new Map();
+
+// Create workspace endpoint
+app.post('/create-workspace', (req, res) => {
+    const { workspaceId, name, admin } = req.body;
+    
+    if (!workspaceId || !name || !admin) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    workspaceMetadata.set(workspaceId, {
+        id: workspaceId,
+        name,
+        admin,
+        createdAt: new Date().toISOString(),
+        members: [admin]
+    });
+    
+    res.json({ success: true, workspace: workspaceMetadata.get(workspaceId) });
+});
+
+// Get workspace info endpoint
+app.get('/workspace/:id', (req, res) => {
+    const { id } = req.params;
+    const workspace = workspaceMetadata.get(id);
+    
+    if (!workspace) {
+        // If workspace doesn't exist in metadata but might exist as active room
+        if (rooms.has(id)) {
+            const room = rooms.get(id);
+            return res.json({
+                id,
+                name: `Workspace ${id.slice(0, 12)}...`,
+                admin: room.owner,
+                exists: true,
+                isActive: true
+            });
+        }
+        return res.status(404).json({ error: 'Workspace not found' });
+    }
+    
+    res.json({ ...workspace, exists: true, isActive: rooms.has(id) });
+});
+
 // Rooms Management
 const rooms = new Map();
 
