@@ -1,0 +1,26 @@
+{
+  "notes": [
+    {
+      "id": "c6fce05e-e050-4b2d-ba29-cfd55202f707",
+      "user_id": "edc9d6b9-ce68-4ecd-b255-dc306f3d7aa3",
+      "title": "Untitled Note",
+      "content": "<p>hgwxv</p>",
+      "folder_id": "49def026-ea6d-4a0b-8e4d-7f05c4da8ac5",
+      "tags": [],
+      "challenge_id": null,
+      "challenge_module": null,
+      "created_at": "2026-04-30T04:32:55.580Z",
+      "updated_at": "2026-04-30T04:33:46.674Z",
+      "deleted_at": null
+    }
+  ],
+  "folders": [
+    {
+      "id": "49def026-ea6d-4a0b-8e4d-7f05c4da8ac5",
+      "user_id": "edc9d6b9-ce68-4ecd-b255-dc306f3d7aa3",
+      "name": "huifkwe",
+      "parent_id": null,
+      "created_at": "2026-04-30T04:32:47.078Z"
+    }
+  ]
+}

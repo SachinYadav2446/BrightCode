@@ -39,10 +39,32 @@ let memoryStore = { users: [] };
 let useMemoryDB = false;
 
 // In-memory CodeVault store (used when PostgreSQL is unavailable)
-const notesMemoryStore = [];
-const foldersMemoryStore = [];
+let notesMemoryStore = [];
+let foldersMemoryStore = [];
 const { v4: uuidV4Notes } = require('uuid');
 const DB_FILE = path.join(__dirname, 'users_db.json');
+const NOTES_DB_FILE = path.join(__dirname, 'notes_db.json');
+
+const loadNotesStore = () => {
+    if (fs.existsSync(NOTES_DB_FILE)) {
+        try {
+            const data = JSON.parse(fs.readFileSync(NOTES_DB_FILE, 'utf8'));
+            notesMemoryStore.push(...(data.notes || []));
+            foldersMemoryStore.push(...(data.folders || []));
+            console.log(`[NOTES PERSISTENCE] Loaded ${notesMemoryStore.length} notes and ${foldersMemoryStore.length} folders from notes_db.json`);
+        } catch (e) {
+            console.error('[NOTES PERSISTENCE] Error loading notes DB file:', e);
+        }
+    }
+};
+
+const saveNotesStore = () => {
+    try {
+        fs.writeFileSync(NOTES_DB_FILE, JSON.stringify({ notes: notesMemoryStore, folders: foldersMemoryStore }, null, 2));
+    } catch (e) {
+        console.error('[NOTES PERSISTENCE] Error saving notes DB file:', e);
+    }
+};
 
 const loadStore = () => {
     if (fs.existsSync(DB_FILE)) {
@@ -206,9 +228,10 @@ const initDB = async () => {
         console.log('CodeVault Enhanced Features Migration Applied');
     } catch (err) {
         console.error('DATABASE INIT ERROR:', err.message);
-        console.log('--- SWAPPING TO MEMORY FALLBACK MODE (USING PERSISTENT users_db.json) ---');
+        console.log('--- SWAPPING TO MEMORY FALLBACK MODE (USING PERSISTENT users_db.json + notes_db.json) ---');
         useMemoryDB = true;
         loadStore();
+        loadNotesStore();
     }
 };
 initDB();
@@ -724,6 +747,7 @@ app.post('/api/notes', authenticateToken, async (req, res) => {
             deleted_at: null
         };
         notesMemoryStore.push(newNote);
+        saveNotesStore();
         const { deleted_at, user_id, ...safeNote } = newNote;
         return res.status(201).json(safeNote);
     }
@@ -756,6 +780,7 @@ app.put('/api/notes/:id', authenticateToken, async (req, res) => {
         if (tags !== undefined) notesMemoryStore[idx].tags = tags;
         if (folderId !== undefined) notesMemoryStore[idx].folder_id = folderId || null;
         notesMemoryStore[idx].updated_at = new Date().toISOString();
+        saveNotesStore();
         const { deleted_at, user_id, ...safeNote } = notesMemoryStore[idx];
         return res.json(safeNote);
     }
@@ -790,6 +815,7 @@ app.delete('/api/notes/:id', authenticateToken, async (req, res) => {
         const idx = notesMemoryStore.findIndex(n => n.id === req.params.id && n.user_id === req.user.id && !n.deleted_at);
         if (idx === -1) return res.status(404).json({ error: 'Note not found' });
         notesMemoryStore[idx].deleted_at = new Date().toISOString();
+        saveNotesStore();
         return res.json({ message: 'Note deleted successfully' });
     }
     try {
@@ -858,6 +884,7 @@ app.post('/api/folders', authenticateToken, async (req, res) => {
             created_at: now
         };
         foldersMemoryStore.push(newFolder);
+        saveNotesStore();
         const { user_id, ...safeFolder } = newFolder;
         return res.status(201).json(safeFolder);
     }
@@ -894,6 +921,7 @@ app.put('/api/folders/:id', authenticateToken, async (req, res) => {
         );
         if (duplicate) return res.status(400).json({ error: 'A folder with this name already exists in this location' });
         foldersMemoryStore[idx].name = name.trim();
+        saveNotesStore();
         const { user_id, ...safeFolder } = foldersMemoryStore[idx];
         return res.json(safeFolder);
     }
@@ -932,6 +960,7 @@ app.delete('/api/folders/:id', authenticateToken, async (req, res) => {
         // Move child folders to parent
         foldersMemoryStore.forEach(f => { if (f.parent_id === req.params.id) f.parent_id = parentId; });
         foldersMemoryStore.splice(idx, 1);
+        saveNotesStore();
         return res.json({ message: 'Folder deleted successfully' });
     }
     try {
@@ -1036,6 +1065,7 @@ app.post('/api/notes/from-challenge', authenticateToken, async (req, res) => {
             deleted_at: null
         };
         notesMemoryStore.push(newNote);
+        saveNotesStore();
         const { deleted_at, user_id, ...safeNote } = newNote;
         return res.status(201).json(safeNote);
     }
