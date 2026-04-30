@@ -41,6 +41,64 @@ The social and competitive layer of the platform.
 - **Tech Stack**: `PostgreSQL`, `Express`, `JWT`.
 - **How it Works**: Users join factions and compete for the top spot on global and faction-specific leaderboards. XP earned from coding activities translates directly into rank progression.
 
+### 8. 📝 CodeVault Notes System
+A comprehensive note-taking system with advanced features for developers.
+- **Tech Stack**: `React`, `@tiptap/react`, `PostgreSQL`, `Express`.
+- **How it Works**: 
+  - Create, edit, and organize notes in a VS Code-inspired interface
+  - Rich text editing with markdown support, code blocks, and formatting
+  - Folder-based organization with drag & drop support
+  - Real-time saving and synchronization
+  - Tag system for categorization
+  - Search functionality across all notes
+
+### 9. 🎨 Advanced Rich Text Editor
+Professional-grade text editor with extensive formatting options.
+- **Tech Stack**: `@tiptap/react`, `StarterKit`, `CodeBlock`, `Image`, `Link` extensions.
+- **Features**:
+  - Real-time WYSIWYG editing with markdown shortcuts
+  - Code syntax highlighting with language support
+  - Image upload and embedding (local files and URLs)
+  - Link insertion and management
+  - Text formatting (bold, italic, underline, strikethrough)
+  - Headings (H1-H6) with visual indicators
+  - Lists (bullet, numbered, task lists)
+  - Blockquotes and horizontal rules
+  - Text alignment (left, center, right, justify)
+  - Text and highlight color customization
+
+### 10. 🖼️ Visual Diagram Creation
+Integrated diagram editor for creating visual notes and documentation.
+- **Tech Stack**: `@excalidraw/excalidraw`, `React`, `Canvas API`.
+- **Features**:
+  - Create flowcharts, diagrams, and sketches directly in notes
+  - Dark mode optimized interface
+  - Export diagrams as PNG images embedded in notes
+  - Edit existing diagrams with full revision history
+  - Shape libraries and drawing tools
+  - Text annotations and connectors
+  - Zoom and pan controls
+
+### 11. 📄 Legal Documentation System
+Comprehensive legal pages for platform compliance.
+- **Features**:
+  - Terms of Service with acceptance tracking
+  - Privacy Policy with data handling transparency
+  - Cookie Policy with consent management
+  - Accessibility Statement (WCAG compliance)
+  - Responsive design for all screen sizes
+  - Easy updates through markdown-based content
+
+### 12. 🎯 Enhanced UI/UX Improvements
+Continuous interface refinements for better user experience.
+- **Improvements**:
+  - Home page about section with dynamic content
+  - Responsive design optimizations
+  - Performance enhancements for faster loading
+  - Accessibility improvements (ARIA labels, keyboard navigation)
+  - Consistent color scheme and typography
+  - Smooth animations and transitions
+
 ---
 
 ## 🛠️ Technology Stack
@@ -48,10 +106,15 @@ The social and competitive layer of the platform.
 ### Frontend
 - **Framework**: [React 19](https://react.dev/) + [Vite 8](https://vitejs.dev/)
 - **Editor**: [@monaco-editor/react](https://www.npmjs.com/package/@monaco-editor/react)
+- **Rich Text Editor**: [@tiptap/react](https://tiptap.dev/) + [StarterKit](https://tiptap.dev/docs/editor/getting-started/install)
+- **Diagram Editor**: [@excalidraw/excalidraw](https://excalidraw.com/)
 - **Animations**: [Framer Motion](https://www.framer.com/motion/)
 - **Icons**: [Lucide React](https://lucide.dev/)
 - **State Management**: React Hooks + Context API
 - **Form Handling**: React Hook Form + Zod
+- **Markdown Processing**: [marked](https://marked.js.org/)
+- **File Handling**: [file-saver](https://www.npmjs.com/package/file-saver), [jszip](https://stuk.github.io/jszip/)
+- **Terminal Emulation**: [@xterm/xterm](https://xtermjs.org/)
 
 ### Backend
 - **Runtime**: [Node.js](https://nodejs.org/)
@@ -98,7 +161,86 @@ CodeBright utilizes a **Cyber-Premium Design System**.
 - **Glassmorphism**: Layered transparency for depth.
 - **Glow-Based Feedback**: Subtle neon accents and micro-animations indicate system states.
 - **Performance First**: Optimized rendering for zero-latency real-time collaboration.
+- **Dark Mode First**: All components are optimized for dark theme with proper contrast ratios.
 
 ---
 
-Built with ❤️ by the CodeBright Team.
+## 📖 Using the New Features
+
+### CodeVault Notes System
+1. **Accessing Notes**: Navigate to the CodeVault section from the main dashboard
+2. **Creating Notes**: Click "New Note" button or use `Ctrl+N` shortcut
+3. **Organizing**: Create folders, drag & drop notes, use tags for categorization
+4. **Editing**: Use the rich text editor with toolbar or markdown shortcuts
+5. **Searching**: Use the search bar to find notes by title, content, or tags
+
+### Rich Text Editor Tips
+- Use `#` followed by space for H1 headings, `##` for H2, etc.
+- Use `**text**` for bold, `*text*` for italic
+- Use `-` or `*` for bullet lists, `1.` for numbered lists
+- Use `[ ]` for task lists (checkboxes)
+- Use `>` for blockquotes
+- Use \`code\` for inline code, \`\`\`language for code blocks
+- Use `---` for horizontal rules
+
+### Diagram Creation
+1. **Insert Diagram**: Click the diagram button in the editor toolbar
+2. **Create Shapes**: Use the toolbar to draw rectangles, circles, arrows, etc.
+3. **Add Text**: Click the text tool to add annotations
+4. **Connect Elements**: Use arrow tools to create flowcharts
+5. **Save**: Click "Save to Note" to embed the diagram as an image
+6. **Edit**: Click on existing diagram images and select "Edit diagram"
+
+### Legal Pages
+- **Terms of Service**: Accessible from footer or account settings
+- **Privacy Policy**: Details data collection and usage practices
+- **Cookie Policy**: Manages cookie consent preferences
+- **Accessibility**: Information on WCAG compliance and accessibility features
+
+### Keyboard Shortcuts
+- `Ctrl+N`: New note
+- `Ctrl+S`: Save note
+- `Ctrl+F`: Search notes
+- `Ctrl+B`: Bold text
+- `Ctrl+I`: Italic text
+- `Ctrl+K`: Insert link
+- `Ctrl+E`: Toggle preview mode
+- `Ctrl+/`: Show keyboard shortcuts help
+- `Esc`: Close modals/panels
+
+---
+
+## 🔧 Development Notes
+
+### Code Structure
+- **Components**: Located in `client/src/components/`
+- **Pages**: Located in `client/src/pages/`
+- **Services**: API calls and business logic in `client/src/services/`
+- **Context**: Global state management in `client/src/context/`
+- **Utils**: Helper functions and utilities in `client/src/utils/`
+
+### Specs and Documentation
+- **Feature Specs**: Detailed requirements in `.kiro/specs/`
+- **Design Documents**: UI/UX specifications in `.kiro/specs/*/design.md`
+- **Task Tracking**: Implementation tasks in `.kiro/specs/*/tasks.md`
+- **Bug Reports**: Issue tracking in `.kiro/specs/*/bugfix.md`
+
+### Styling Guidelines
+- Use CSS custom properties (variables) defined in `:root`
+- Follow BEM naming convention for complex components
+- Use responsive design principles (mobile-first approach)
+- Maintain consistent spacing using 4px/8px/16px/24px/32px increments
+- Use semantic HTML elements for accessibility
+
+---
+
+## 📚 Additional Documentation
+
+- **[USER_GUIDE.md](./USER_GUIDE.md)**: Comprehensive user guide with detailed instructions
+- **[API_DOCS.md](./API_DOCS.md)**: API documentation (if available)
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)**: Guidelines for contributors
+- **[CHANGELOG.md](./CHANGELOG.md)**: Version history and changes
+
+---
+
+
