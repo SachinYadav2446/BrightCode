@@ -4,13 +4,26 @@
       "id": "c6fce05e-e050-4b2d-ba29-cfd55202f707",
       "user_id": "edc9d6b9-ce68-4ecd-b255-dc306f3d7aa3",
       "title": "Untitled Note",
-      "content": "<p>hgwxv</p>",
+      "content": "<p></p><p></p>",
       "folder_id": "49def026-ea6d-4a0b-8e4d-7f05c4da8ac5",
       "tags": [],
       "challenge_id": null,
       "challenge_module": null,
       "created_at": "2026-04-30T04:32:55.580Z",
-      "updated_at": "2026-04-30T04:33:46.674Z",
+      "updated_at": "2026-04-30T04:45:55.762Z",
+      "deleted_at": "2026-04-30T04:54:24.316Z"
+    },
+    {
+      "id": "373a6eaa-60af-477c-88dc-1c01aeb4427e",
+      "user_id": "edc9d6b9-ce68-4ecd-b255-dc306f3d7aa3",
+      "title": "Untitled Note",
+      "content": "<p></p>",
+      "folder_id": "49def026-ea6d-4a0b-8e4d-7f05c4da8ac5",
+      "tags": [],
+      "challenge_id": null,
+      "challenge_module": null,
+      "created_at": "2026-04-30T04:54:26.177Z",
+      "updated_at": "2026-04-30T04:59:17.400Z",
       "deleted_at": null
     }
   ],

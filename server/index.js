@@ -30,7 +30,7 @@ const roomTerminals = new Map();
 const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '20mb' }));
 
 const JWT_SECRET = 'brightcode_secret_key_123';
 
@@ -729,7 +729,7 @@ app.post('/api/notes', authenticateToken, async (req, res) => {
         }
     }
     if (title.length > 200) return res.status(400).json({ error: 'Title too long (max 200 characters)' });
-    if (content && content.length > 1000000) return res.status(400).json({ error: 'Content too large (max 1MB)' });
+    if (content && content.length > 20000000) return res.status(400).json({ error: 'Content too large (max 20MB)' });
 
     if (useMemoryDB) {
         const now = new Date().toISOString();
@@ -770,7 +770,7 @@ app.post('/api/notes', authenticateToken, async (req, res) => {
 app.put('/api/notes/:id', authenticateToken, async (req, res) => {
     const { title, content, tags, folderId } = req.body;
     if (title && title.length > 200) return res.status(400).json({ error: 'Title too long (max 200 characters)' });
-    if (content && content.length > 1000000) return res.status(400).json({ error: 'Content too large (max 1MB)' });
+    if (content && content.length > 20000000) return res.status(400).json({ error: 'Content too large (max 20MB)' });
 
     if (useMemoryDB) {
         const idx = notesMemoryStore.findIndex(n => n.id === req.params.id && n.user_id === req.user.id && !n.deleted_at);
