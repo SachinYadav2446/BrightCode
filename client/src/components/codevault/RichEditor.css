@@ -11,12 +11,9 @@
 /* ── Toolbar ─────────────────────────────────────────────────── */
 .rich-toolbar {
   display: flex;
-  flex-wrap: nowrap;
-  /* Force single row */
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: center; /* Center the features */
   gap: 2px;
-  /* Minimal gap to save space */
   padding: 6px 12px;
   background: rgba(255, 255, 255, 0.02);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -24,14 +21,6 @@
   z-index: 50;
   position: sticky;
   top: 0;
-  overflow-x: auto;
-  /* Allow horizontal scroll if really tight */
-  scrollbar-width: none;
-  /* Hide scrollbar for clean look */
-}
-
-.rich-toolbar::-webkit-scrollbar {
-  display: none;
 }
 
 .toolbar-btn {
@@ -77,6 +66,14 @@
   flex-shrink: 0;
 }
 
+/* ── Heading color indicators on toolbar ─────────────────── */
+.h1-btn { color: #ef4444 !important; }
+.h2-btn { color: #fbbf24 !important; }
+.h3-btn { color: #34d399 !important; }
+.h4-btn { color: #60a5fa !important; }
+.h5-btn { color: #c084fc !important; }
+.h6-btn { color: #f472b6 !important; }
+
 /* ── Color Picker ─────────────────────────────────────────── */
 .color-picker-wrapper {
   position: relative;
@@ -102,10 +99,16 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   padding: 12px;
-  z-index: 200;
+  z-index: 1000;
   min-width: 160px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
   animation: dropdownIn 0.15s ease;
+}
+
+.color-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
 }
 
 @keyframes dropdownIn {
@@ -118,12 +121,6 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.color-picker-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 199;
 }
 
 .color-picker-title {
@@ -188,17 +185,10 @@
   font-size: 15px;
   line-height: 1.7;
   caret-color: #ef4444;
-  /* Vibrant red caret */
-}
-
-/* Focused line highlight to help tracking */
-.prose-editor .ProseMirror-focused .ProseMirror-selectednode,
-.prose-editor p.is-editor-empty:first-child {
-  /* optional styles */
 }
 
 .prose-editor:focus {
-  /* No outline, handled by caret */
+  outline: none;
 }
 
 /* Placeholder */
@@ -212,40 +202,61 @@
 }
 
 /* Headings */
-.prose-editor .ProseMirror h1 {
+.rich-editor-content .ProseMirror h1,
+.prose-editor h1 {
   font-size: 2.2rem;
   margin-top: 1rem;
-  /* Reduced from 2rem */
   margin-bottom: 0.5rem;
-  /* Reduced from 1rem */
   font-weight: 800;
   color: #ef4444 !important;
-  /* Force color */
   letter-spacing: -0.5px;
   border-bottom: 1px solid rgba(239, 68, 68, 0.2);
   padding-bottom: 0.3rem;
 }
 
-.prose-editor .ProseMirror h2 {
+.rich-editor-content .ProseMirror h2,
+.prose-editor h2 {
   font-size: 1.8rem;
   margin-top: 0.8rem;
-  /* Reduced from 1.8rem */
   margin-bottom: 0.4rem;
-  /* Reduced from 0.8rem */
   font-weight: 700;
   color: #fbbf24 !important;
-  /* Force color */
 }
 
-.prose-editor .ProseMirror h3 {
+.rich-editor-content .ProseMirror h3,
+.prose-editor h3 {
   font-size: 1.4rem;
   margin-top: 0.6rem;
-  /* Reduced from 1.5rem */
   margin-bottom: 0.3rem;
-  /* Reduced from 0.6rem */
   font-weight: 700;
   color: #34d399 !important;
-  /* Force color */
+}
+
+.rich-editor-content .ProseMirror h4,
+.prose-editor h4 {
+  font-size: 1.2rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.3rem;
+  font-weight: 600;
+  color: #60a5fa !important;
+}
+
+.rich-editor-content .ProseMirror h5,
+.prose-editor h5 {
+  font-size: 1.05rem;
+  margin-top: 0.4rem;
+  margin-bottom: 0.2rem;
+  font-weight: 600;
+  color: #c084fc !important;
+}
+
+.rich-editor-content .ProseMirror h6,
+.prose-editor h6 {
+  font-size: 0.95rem;
+  margin-top: 0.4rem;
+  margin-bottom: 0.2rem;
+  font-weight: 600;
+  color: #f472b6 !important;
 }
 
 /* Paragraph */
@@ -436,6 +447,121 @@
   border: 1px solid #222;
   margin: 1rem 0;
   display: block;
+}
+
+/* ── Custom Image Node ───────────────────────────────────────── */
+.image-node-wrapper {
+  display: block;
+  margin: 1rem 0;
+}
+
+.image-node-inner {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  border-radius: 8px;
+  overflow: visible;
+}
+
+.image-node-img {
+  display: block;
+  max-width: 100%;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: zoom-in;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.image-node-selected .image-node-img,
+.image-node-inner:hover .image-node-img {
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.image-node-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+  z-index: 10;
+}
+
+.image-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  backdrop-filter: blur(8px);
+}
+
+.image-zoom-btn {
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+}
+
+.image-zoom-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.image-delete-btn {
+  background: rgba(239, 68, 68, 0.85);
+  color: #fff;
+}
+
+.image-delete-btn:hover {
+  background: #ef4444;
+  transform: scale(1.1);
+}
+
+/* Lightbox */
+.image-lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(12px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  cursor: zoom-out;
+}
+
+.image-lightbox-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 10px;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.8);
+  cursor: default;
+  object-fit: contain;
+}
+
+.image-lightbox-close {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.image-lightbox-close:hover {
+  background: rgba(239, 68, 68, 0.6);
 }
 
 /* Selection */

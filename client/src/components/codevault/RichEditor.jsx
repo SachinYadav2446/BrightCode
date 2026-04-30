@@ -1,8 +1,10 @@
 import { useEditor, EditorContent, ReactNodeViewRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { Heading } from '@tiptap/extension-heading';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CodeBlock } from '@tiptap/extension-code-block';
 import CodeBlockComponent from './CodeBlockComponent';
+import ImageComponent from './ImageComponent';
 import { Underline } from '@tiptap/extension-underline';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
@@ -13,14 +15,14 @@ import { Link } from '@tiptap/extension-link';
 import { TaskList } from '@tiptap/extension-task-list';
 import { TaskItem } from '@tiptap/extension-task-item';
 import { Placeholder } from '@tiptap/extension-placeholder';
-import { useEffect, useCallback, useState, useMemo } from 'react';
+import { useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   Code, List, ListOrdered, CheckSquare, AlignLeft, AlignCenter,
   AlignRight, AlignJustify, Quote, Minus, Image as ImageIcon,
-  Link as LinkIcon, Heading1, Heading2, Heading3, Type,
+  Link as LinkIcon, Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, Type,
   Highlighter, Palette, ChevronDown, RotateCcw, RotateCw,
-  Code2, X as XIcon
+  Code2, X as XIcon, Upload, Globe
 } from 'lucide-react';
 import './RichEditor.css';
 
@@ -48,10 +50,10 @@ const HIGHLIGHT_COLORS = [
 ];
 
 // ── Small reusable toolbar button ──────────────────────────────
-const ToolbarButton = ({ onClick, isActive, title, children, disabled }) => (
+const ToolbarButton = ({ onClick, isActive, title, children, disabled, className }) => (
   <button
     onMouseDown={(e) => { e.preventDefault(); if (!disabled) onClick(); }}
-    className={`toolbar-btn ${isActive ? 'toolbar-btn-active' : ''} ${disabled ? 'toolbar-btn-disabled' : ''}`}
+    className={`toolbar-btn ${isActive ? 'toolbar-btn-active' : ''} ${disabled ? 'toolbar-btn-disabled' : ''} ${className || ''}`}
     title={title}
     type="button"
   >
@@ -127,9 +129,10 @@ const RichEditor = ({ content, onChange, editable = true }) => {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
+        heading: false,
         codeBlock: false,
       }),
+      Heading.configure({ levels: [1, 2, 3, 4, 5, 6] }),
       CodeBlock.extend({
         addNodeView() {
           return ReactNodeViewRenderer(CodeBlockComponent);
@@ -140,7 +143,11 @@ const RichEditor = ({ content, onChange, editable = true }) => {
       Color,
       Highlight.configure({ multicolor: true }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
-      Image.configure({ inline: false, allowBase64: true }),
+      Image.configure({ inline: false, allowBase64: true }).extend({
+        addNodeView() {
+          return ReactNodeViewRenderer(ImageComponent);
+        },
+      }),
       Link.configure({ openOnClick: false, autolink: true }),
       TaskList,
       TaskItem.configure({ nested: true }),
@@ -180,12 +187,29 @@ const RichEditor = ({ content, onChange, editable = true }) => {
   }, [editor]);
 
   const [modalConfig, setModalConfig] = useState({ show: false, title: '', placeholder: '', value: '', type: '' });
+  const fileInputRef = useRef(null);
 
+  // Handle local file upload — convert to base64 and insert
+  const handleImageFileUpload = useCallback((e) => {
+    const file = e.target.files?.[0];
+    if (!file || !editor) return;
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const src = ev.target.result;
+      editor.chain().focus().setImage({ src }).run();
+    };
+    reader.readAsDataURL(file);
+    // Reset so same file can be re-selected
+    e.target.value = '';
+  }, [editor]);
+
+  // Handle URL-based image insert
   const handleImageUpload = useCallback(() => {
     setModalConfig({
       show: true,
-      title: 'Insert Image',
-      placeholder: 'Enter image URL...',
+      title: 'Insert Image from URL',
+      placeholder: 'https://example.com/image.png',
       value: '',
       type: 'image'
     });
@@ -231,14 +255,23 @@ const RichEditor = ({ content, onChange, editable = true }) => {
           <ToolbarDivider />
 
           {/* Headings */}
-          <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} isActive={editor.isActive('heading', { level: 1 })} title="Heading 1">
+          <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} isActive={editor.isActive('heading', { level: 1 })} title="Heading 1 (red)" className="h1-btn">
             <Heading1 size={14} />
           </ToolbarButton>
-          <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} isActive={editor.isActive('heading', { level: 2 })} title="Heading 2">
+          <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} isActive={editor.isActive('heading', { level: 2 })} title="Heading 2 (amber)" className="h2-btn">
             <Heading2 size={14} />
           </ToolbarButton>
-          <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} isActive={editor.isActive('heading', { level: 3 })} title="Heading 3">
+          <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} isActive={editor.isActive('heading', { level: 3 })} title="Heading 3 (green)" className="h3-btn">
             <Heading3 size={14} />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()} isActive={editor.isActive('heading', { level: 4 })} title="Heading 4 (blue)" className="h4-btn">
+            <Heading4 size={14} />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 5 }).run()} isActive={editor.isActive('heading', { level: 5 })} title="Heading 5 (purple)" className="h5-btn">
+            <Heading5 size={14} />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 6 }).run()} isActive={editor.isActive('heading', { level: 6 })} title="Heading 6 (pink)" className="h6-btn">
+            <Heading6 size={14} />
           </ToolbarButton>
           <ToolbarButton onClick={() => editor.chain().focus().setParagraph().run()} isActive={editor.isActive('paragraph') && !editor.isActive('heading')} title="Paragraph">
             <Type size={14} />
@@ -274,7 +307,7 @@ const RichEditor = ({ content, onChange, editable = true }) => {
                 <Palette size={14} />
                 <div
                   className="color-bar"
-                  style={{ background: editor.getAttributes('textStyle').color || '#fff' }}
+                  style={{ background: editor.getAttributes('textStyle').color || '#e4e4e7' }}
                 />
               </>
             }
@@ -285,8 +318,16 @@ const RichEditor = ({ content, onChange, editable = true }) => {
           />
           <ColorPicker
             colors={HIGHLIGHT_COLORS}
-            title="Highlight"
-            triggerIcon={<Highlighter size={14} />}
+            title="Highlight Color"
+            triggerIcon={
+              <>
+                <Highlighter size={14} />
+                <div
+                  className="color-bar"
+                  style={{ background: '#fef08a' }}
+                />
+              </>
+            }
             onSelect={(color) => {
               if (color) editor.chain().focus().setHighlight({ color }).run();
               else editor.chain().focus().unsetHighlight().run();
@@ -341,9 +382,22 @@ const RichEditor = ({ content, onChange, editable = true }) => {
           <ToolbarButton onClick={handleLinkSet} isActive={editor.isActive('link')} title="Insert Link">
             <LinkIcon size={14} />
           </ToolbarButton>
-          <ToolbarButton onClick={handleImageUpload} title="Insert Image">
-            <ImageIcon size={14} />
+          {/* Upload image from PC */}
+          <ToolbarButton onClick={() => fileInputRef.current?.click()} title="Upload Image from PC">
+            <Upload size={14} />
           </ToolbarButton>
+          {/* Insert image by URL */}
+          <ToolbarButton onClick={handleImageUpload} title="Insert Image from URL">
+            <Globe size={14} />
+          </ToolbarButton>
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={handleImageFileUpload}
+          />
         </div>
       )}
 
