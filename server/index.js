@@ -1681,10 +1681,10 @@ io.on('connection', (socket) => {
             socket.to(roomId).emit('user-left', { id: staleId, username });
         }
 
-        // ── 3-Tier Role System: admin | writer | reviewer ──────────────
+        // ── 3-Tier Role System: admin | writer | viewer ──────────────
         const isCreator = room.owner === username;
         const role = isCreator ? 'admin' : 'viewer';
-        const permission = isCreator ? 'admin' : 'read';
+        const permission = isCreator ? 'admin' : 'viewer'; // Default to viewer
         room.permissions[socket.id] = permission;
 
         const userData = { id: socket.id, username, role, permission };
@@ -1707,7 +1707,7 @@ io.on('connection', (socket) => {
             if (targetId === room.adminId) return;   // Can't change own admin role
 
             // Map role to permission
-            const permMap = { 'writer': 'write', 'reviewer': 'read', 'admin': 'admin' };
+            const permMap = { 'writer': 'writer', 'viewer': 'viewer', 'admin': 'admin' };
             const newPermission = permMap[newRole] || 'read';
 
             // Enforce Single Writer Rule
@@ -1741,34 +1741,40 @@ io.on('connection', (socket) => {
             io.in(roomId).emit('user-role-updated', { targetId, role: newRole, permission: newPermission });
         });
 
+        // New permission system handler
+        socket.on('change-permission', ({ targetId, permission }) => {
+            if (socket.id !== room.adminId) return; // Only admin can change permissions
+            if (targetId === room.adminId) return;   // Can't change admin's permission
+
+            // Update permission
+            room.permissions[targetId] = permission;
+            const userInRoom = room.users.find(u => u.id === targetId);
+            if (userInRoom) {
+                userInRoom.permission = permission;
+                userInRoom.role = permission === 'admin' ? 'admin' : permission === 'writer' ? 'writer' : 'viewer';
+            }
+
+            // Notify the target user
+            io.to(targetId).emit('permission-changed', { permission });
+            // Notify all users in the room
+            io.in(roomId).emit('user-status-updated', { targetId, permission });
+        });
+
         // Legacy support — still works for toggle
         socket.on('update-permissions', ({ targetId, permission }) => {
             if (socket.id !== room.adminId) return;
 
-            // Enforce Single Writer Rule
-            if (permission === 'write') {
-                Object.keys(room.permissions).forEach(id => {
-                    if (id !== targetId && id !== room.adminId) {
-                        room.permissions[id] = 'read';
-                        const userToDowngrade = room.users.find(u => u.id === id);
-                        if (userToDowngrade) {
-                            userToDowngrade.role = 'reviewer';
-                            userToDowngrade.permission = 'read';
-                            io.to(id).emit('permission-changed', { permission: 'read' });
-                            io.in(roomId).emit('user-status-updated', { targetId: id, permission: 'read' });
-                        }
-                    }
-                });
-            }
+            // Map old permission names to new ones
+            const newPermission = permission === 'write' ? 'writer' : permission === 'read' ? 'viewer' : permission;
 
-            room.permissions[targetId] = permission;
+            room.permissions[targetId] = newPermission;
             const userInRoom = room.users.find(u => u.id === targetId);
             if (userInRoom) {
-                userInRoom.role = permission === 'write' ? 'writer' : 'reviewer';
-                userInRoom.permission = permission;
+                userInRoom.role = newPermission === 'writer' ? 'writer' : 'viewer';
+                userInRoom.permission = newPermission;
             }
-            io.to(targetId).emit('permission-changed', { permission });
-            io.in(roomId).emit('user-status-updated', { targetId, permission });
+            io.to(targetId).emit('permission-changed', { permission: newPermission });
+            io.in(roomId).emit('user-status-updated', { targetId, permission: newPermission });
         });
 
         socket.on('kick-user', ({ targetId }) => {
