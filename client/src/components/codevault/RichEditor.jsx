@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CodeBlock } from '@tiptap/extension-code-block';
 import CodeBlockComponent from './CodeBlockComponent';
 import ImageComponent from './ImageComponent';
+import DiagramModal from './DiagramModal';
 import { Underline } from '@tiptap/extension-underline';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
@@ -22,7 +23,7 @@ import {
   AlignRight, AlignJustify, Quote, Minus, Image as ImageIcon,
   Link as LinkIcon, Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, Type,
   Highlighter, Palette, ChevronDown, RotateCcw, RotateCw,
-  Code2, X as XIcon, Upload, Globe
+  Code2, X as XIcon, Upload, Globe, PenTool
 } from 'lucide-react';
 import './RichEditor.css';
 
@@ -187,7 +188,22 @@ const RichEditor = ({ content, onChange, editable = true }) => {
   }, [editor]);
 
   const [modalConfig, setModalConfig] = useState({ show: false, title: '', placeholder: '', value: '', type: '' });
+  const [diagramOpen, setDiagramOpen] = useState(false);
+  const [diagramInitialData, setDiagramInitialData] = useState(null);
+  const diagramEditCallbackRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  // Listen for edit-diagram events from ImageComponent
+  useEffect(() => {
+    const handler = (e) => {
+      const { diagramData, updateAttributes, deleteNode } = e.detail;
+      setDiagramInitialData(diagramData);
+      diagramEditCallbackRef.current = { updateAttributes, deleteNode };
+      setDiagramOpen(true);
+    };
+    document.addEventListener('edit-diagram', handler);
+    return () => document.removeEventListener('edit-diagram', handler);
+  }, []);
 
   // Handle local file upload — convert to base64 and insert
   const handleImageFileUpload = useCallback((e) => {
@@ -214,6 +230,26 @@ const RichEditor = ({ content, onChange, editable = true }) => {
       type: 'image'
     });
   }, []);
+
+  // Handle diagram save — insert exported PNG into editor, or update existing
+  const handleDiagramSave = useCallback((base64PNG, diagramJSON) => {
+    if (!editor) return;
+    const editCallback = diagramEditCallbackRef.current;
+    if (editCallback) {
+      // Editing existing diagram — update the image node in place
+      editCallback.updateAttributes({ src: base64PNG, title: diagramJSON });
+      diagramEditCallbackRef.current = null;
+    } else {
+      // New diagram — insert as image node
+      editor.chain().focus().setImage({
+        src: base64PNG,
+        alt: 'diagram',
+        title: diagramJSON,
+      }).run();
+    }
+    setDiagramOpen(false);
+    setDiagramInitialData(null);
+  }, [editor]);
 
   const handleLinkSet = useCallback(() => {
     if (!editor) return;
@@ -390,6 +426,10 @@ const RichEditor = ({ content, onChange, editable = true }) => {
           <ToolbarButton onClick={handleImageUpload} title="Insert Image from URL">
             <Globe size={14} />
           </ToolbarButton>
+          {/* Draw diagram */}
+          <ToolbarButton onClick={() => { setDiagramInitialData(null); setDiagramOpen(true); }} title="Insert Diagram">
+            <PenTool size={14} />
+          </ToolbarButton>
           {/* Hidden file input */}
           <input
             ref={fileInputRef}
@@ -448,6 +488,15 @@ const RichEditor = ({ content, onChange, editable = true }) => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Diagram editor modal */}
+      {diagramOpen && (
+        <DiagramModal
+          onSave={handleDiagramSave}
+          onClose={() => setDiagramOpen(false)}
+          initialData={diagramInitialData}
+        />
+      )}
     </div>
   );
 };

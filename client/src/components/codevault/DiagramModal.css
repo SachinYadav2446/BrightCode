@@ -1,0 +1,22 @@
+/* ── Excalidraw wrapper ──────────────────────────────────────── */
+.excalidraw-wrapper {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Force Excalidraw root to fill the wrapper */
+.excalidraw-wrapper .excalidraw {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Spin animation for loading state */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
