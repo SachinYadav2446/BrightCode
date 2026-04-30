@@ -16,10 +16,11 @@ import {
     CSS_LEVELS, LOGIC_LEVELS, REACT_LEVELS, 
     SUBJECT_PHASES, PHASE_THEORIES, ALL_QUOTES 
 } from '../data/arcadeData';
-import { MERN_LEVELS, MERN_PHASES, MERN_THEORIES } from '../data/mernQuestions';
+import { JAVA_LEVELS, CPP_LEVELS, PYTHON_LEVELS, GO_LEVELS, LANGUAGE_PHASES, LANGUAGE_THEORIES } from '../data/languageData';
 
 // ── SIDEBAR TABS CONFIG ───────────────────────────────────────────────
 const SIDEBAR_TABS = [
+    { id: 'language', label: 'Language', icon: Code2, active: true },
     { id: 'frontend', label: 'Frontend', icon: Layout, active: true },
     { id: 'backend', label: 'Backend', icon: Server, active: true },
     { id: 'curriculum', label: 'Curriculum', icon: GraduationCap, active: false },
@@ -31,10 +32,10 @@ const SIDEBAR_TABS = [
 // ── LIBRARY LOBBY (Sidebar + Content) ─────────────────────────────────
 const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentLvlIdx }) => {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState('frontend');
+    const [activeTab, setActiveTab] = useState('language');
 
     // Map sidebar tab id → sections array id
-    const tabToSection = { frontend: 'frontend', backend: 'backend' };
+    const tabToSection = { language: 'language', frontend: 'frontend', backend: 'backend' };
     const currentSection = sections.find(s => s.id === tabToSection[activeTab]);
     const hasContent = Boolean(currentSection && currentSection.games.length > 0);
 
@@ -111,10 +112,13 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                         >
                             {currentSection.games.map((game, idx) => {
                                 const solvedCount = (function() {
+                                    if (game.id === 'java-master') return user?.java_level || 0;
+                                    if (game.id === 'cpp-master') return user?.cpp_level || 0;
+                                    if (game.id === 'python-master') return user?.python_level || 0;
+                                    if (game.id === 'go-master') return user?.go_level || 0;
                                     if (game.id === 'css-odyssey') return user?.css_level || 0;
                                     if (game.id === 'logic-lab') return user?.logic_level || 0;
                                     if (game.id === 'react-quest') return user?.react_level || 0;
-                                    if (game.id === 'mern-mastery') return user?.mern_level || 0;
                                     return 0;
                                 })();
                                 
@@ -209,7 +213,7 @@ const Arcade = () => {
     const [answerRevealed, setAnswerRevealed] = useState(false);
     const [wrongSelection, setWrongSelection] = useState(null);
     const [cssInput, setCssInput] = useState('');
-    const [logicInput, setLogicInput] = useState('');
+    const [logicInput, setLogicInput] = useState('class Solution {\n    public static void main(String[] args) {\n        \n    }\n}');
     const [currentLvlIdx, setCurrentLvlIdx] = useState(0);
     const [showTheory, setShowTheory] = useState(false);
     const [viewingSections, setViewingSections] = useState(false);
@@ -231,13 +235,22 @@ const Arcade = () => {
     }, [activeGame, setNavbarHidden]);
 
     const gameMap = {
+        'java-master': JAVA_LEVELS,
+        'cpp-master': CPP_LEVELS,
+        'python-master': PYTHON_LEVELS,
+        'go-master': GO_LEVELS,
         'css-odyssey': CSS_LEVELS,
         'logic-lab': LOGIC_LEVELS,
-        'react-quest': REACT_LEVELS,
-        'mern-mastery': MERN_LEVELS
+        'react-quest': REACT_LEVELS
     };
 
     const sections = [
+        {
+            id: 'language',
+            name: 'Language Fundamentals',
+            description: 'Master core programming language concepts and syntax.',
+            games: []
+        },
         {
             id: 'frontend',
             name: 'Frontend Development',
@@ -252,9 +265,7 @@ const Arcade = () => {
             id: 'backend', 
             name: 'Backend Development', 
             description: 'Build robust server-side applications and APIs', 
-            games: [
-                { id: 'mern-mastery', title: 'MERN Mastery', subtitle: 'Fullstack Systems', desc: 'The ultimate deep-dive into MongoDB, Express, React, and Node.js.', icon: <Database />, progressKey: 'highest_mern_mastery_level', total: MERN_LEVELS.length }
-            ] 
+            games: [] 
         },
         { id: 'data-science', name: 'Data Science', description: 'Analyze data and build intelligent systems', games: [] }
     ];
@@ -266,10 +277,13 @@ const Arcade = () => {
         if (!activeGame || !user) return;
         setPhasePage(0); // Reset pagination when switching modules
         let dbLevel = 0;
-        if (activeGame === 'css-odyssey') dbLevel = user.css_level || 0;
+        if (activeGame === 'java-master') dbLevel = user.java_level || 0;
+        else if (activeGame === 'cpp-master') dbLevel = user.cpp_level || 0;
+        else if (activeGame === 'python-master') dbLevel = user.python_level || 0;
+        else if (activeGame === 'go-master') dbLevel = user.go_level || 0;
+        else if (activeGame === 'css-odyssey') dbLevel = user.css_level || 0;
         else if (activeGame === 'logic-lab') dbLevel = user.logic_level || 0;
         else if (activeGame === 'react-quest') dbLevel = user.react_level || 0;
-        else if (activeGame === 'mern-mastery') dbLevel = user.mern_level || 0;
 
         const hKey = `highest_${activeGame.replace(/-/g, '_')}_level`;
         const sKey = `${activeGame.replace(/-/g, '_')}_solutions`;
@@ -282,18 +296,32 @@ const Arcade = () => {
     const levels = gameMap[activeGame] || [];
     const levelData = levels[currentLvlIdx];
 
-    const activePhases = activeGame === 'mern-mastery' ? MERN_PHASES : (SUBJECT_PHASES[activeGame] || []);
+    const activePhases = (() => {
+        if (activeGame === 'java-master') return LANGUAGE_PHASES.java;
+        if (activeGame === 'cpp-master') return LANGUAGE_PHASES.cpp;
+        if (activeGame === 'python-master') return LANGUAGE_PHASES.python;
+        if (activeGame === 'go-master') return LANGUAGE_PHASES.go;
+        return SUBJECT_PHASES[activeGame] || [];
+    })();
     const currentPhase = activePhases.find(p => currentLvlIdx >= p.start && currentLvlIdx <= p.end);
     const relativeLvlIdx = currentPhase ? currentLvlIdx - currentPhase.start + 1 : currentLvlIdx + 1;
     const totalInPhase = currentPhase ? currentPhase.end - currentPhase.start + 1 : levels.length;
 
     useEffect(() => {
-        if (savedSolutions[currentLvlIdx]) {
+        // For Java, always load the universal template (ignore saved solutions that are just "0" or empty)
+        if (activeGame === 'java-master') {
+            const saved = savedSolutions[currentLvlIdx];
+            if (saved && saved.trim() !== '' && saved.trim() !== '0') {
+                setLogicInput(saved);
+            } else {
+                setLogicInput('class Solution {\n    public static void main(String[] args) {\n        \n    }\n}');
+            }
+        } else if (savedSolutions[currentLvlIdx]) {
             if (activeGame === 'css-odyssey') setCssInput(savedSolutions[currentLvlIdx]);
-            else if (activeGame === 'logic-lab') setLogicInput(savedSolutions[currentLvlIdx]);
+            else if (activeGame === 'logic-lab' || ['cpp-master', 'python-master', 'go-master'].includes(activeGame)) setLogicInput(savedSolutions[currentLvlIdx]);
         } else {
             setCssInput('');
-            setLogicInput(activeGame === 'logic-lab' && levelData?.syntax ? levelData.syntax : '');
+            setLogicInput((activeGame === 'logic-lab' || ['cpp-master', 'python-master', 'go-master'].includes(activeGame)) && levelData?.syntax ? levelData.syntax : '');
         }
         // Reset states for new level
         setSelectedOption(null);
@@ -315,14 +343,25 @@ const Arcade = () => {
 
     const isPhaseLocked = (phaseIdx) => {
         if (phaseIdx === 0) return false;
-        const phases = activeGame === 'mern-mastery' ? MERN_PHASES : (SUBJECT_PHASES[activeGame] || []);
+        let phases;
+        if (activeGame === 'java-master') phases = LANGUAGE_PHASES.java;
+        else if (activeGame === 'cpp-master') phases = LANGUAGE_PHASES.cpp;
+        else if (activeGame === 'python-master') phases = LANGUAGE_PHASES.python;
+        else if (activeGame === 'go-master') phases = LANGUAGE_PHASES.go;
+        else if (activeGame === 'mern-mastery') phases = MERN_PHASES;
+        else phases = SUBJECT_PHASES[activeGame] || [];
         const prevPhase = phases[phaseIdx - 1];
         if (!prevPhase) return false;
         return !isLevelSolved(prevPhase.end);
     };
 
     const startPhase = (phase) => {
-        const phases = activeGame === 'mern-mastery' ? MERN_PHASES : (SUBJECT_PHASES[activeGame] || []);
+        let phases;
+        if (activeGame === 'java-master') phases = LANGUAGE_PHASES.java;
+        else if (activeGame === 'cpp-master') phases = LANGUAGE_PHASES.cpp;
+        else if (activeGame === 'python-master') phases = LANGUAGE_PHASES.python;
+        else if (activeGame === 'go-master') phases = LANGUAGE_PHASES.go;
+        else phases = SUBJECT_PHASES[activeGame] || [];
         const pIdx = phases.findIndex(p => p.name === phase.name);
         if (!isPhaseLocked(pIdx)) {
             // Find first unsolved level in this phase
@@ -445,7 +484,45 @@ const Arcade = () => {
                 setCssStatus('wrong');
                 triggerModal('error', 'Check Requirements', 'Some design requirements are missing or incorrect. Keep trying!');
             }
-        } else if (activeGame === 'logic-lab' || (activeGame === 'mern-mastery' && levelData.type === 'CODING')) {
+        } else if (['java-master', 'cpp-master', 'python-master', 'go-master'].includes(activeGame)) {
+            // Language Module Compilation
+            const runLanguageTest = async () => {
+                setLogicStatus('neutral');
+                
+                try {
+                    const response = await axios.post('http://localhost:5051/compile-java', {
+                        code: code,
+                        testCases: levelData.testCases || []
+                    });
+
+                    const { success, results, error, type } = response.data;
+
+                    if (success) {
+                        setAnswerRevealed(true);
+                        setLogicStatus('correct');
+                        await saveProgress(code);
+                        triggerModal('success', 'Code Compiled +10 XP', 'Excellent! Your code compiled and ran successfully. You earned 10 XP!');
+                    } else {
+                        setLogicStatus('wrong');
+                        if (type === 'compilation') {
+                            // Check if it's a Java installation issue
+                            if (error && (error.includes('not installed') || error.includes('not in PATH'))) {
+                                triggerModal('error', 'Java JDK Required', error);
+                            } else {
+                                triggerModal('error', 'Compilation Error', error || 'Your code has compilation errors. Check syntax and try again.');
+                            }
+                        } else {
+                            triggerModal('error', 'Execution Failed', error || 'Your code failed to execute correctly.');
+                        }
+                    }
+                } catch (err) {
+                    setLogicStatus('wrong');
+                    triggerModal('error', 'Server Error', 'Failed to compile code. Make sure the server is running.');
+                }
+            };
+
+            runLanguageTest();
+        } else if (activeGame === 'logic-lab') {
             // Logic Lab & MERN Coding Validation
             const runLogicTest = async () => {
                 const isMernQuery = activeGame === 'mern-mastery';
@@ -672,7 +749,14 @@ const Arcade = () => {
 
                             {/* Pagination Controls */}
                             {(() => {
-                                const allPhases = activeGame === 'mern-mastery' ? MERN_PHASES : (SUBJECT_PHASES[activeGame] || []);
+                                const allPhases = (() => {
+                                    if (activeGame === 'java-master') return LANGUAGE_PHASES.java;
+                                    if (activeGame === 'cpp-master') return LANGUAGE_PHASES.cpp;
+                                    if (activeGame === 'python-master') return LANGUAGE_PHASES.python;
+                                    if (activeGame === 'go-master') return LANGUAGE_PHASES.go;
+                                    if (activeGame === 'mern-mastery') return MERN_PHASES;
+                                    return SUBJECT_PHASES[activeGame] || [];
+                                })();
                                 const totalPages = Math.ceil(allPhases.length / phasesPerPage);
                                 if (totalPages <= 1) return null;
                                 
@@ -703,7 +787,13 @@ const Arcade = () => {
 
                     <div className="phase-cards-grid">
                         {(() => {
-                            const allPhases = activeGame === 'mern-mastery' ? MERN_PHASES : (SUBJECT_PHASES[activeGame] || []);
+                            const allPhases = (() => {
+                                if (activeGame === 'java-master') return LANGUAGE_PHASES.java;
+                                if (activeGame === 'cpp-master') return LANGUAGE_PHASES.cpp;
+                                if (activeGame === 'python-master') return LANGUAGE_PHASES.python;
+                                if (activeGame === 'go-master') return LANGUAGE_PHASES.go;
+                                return SUBJECT_PHASES[activeGame] || [];
+                            })();
                             const visiblePhases = allPhases.slice(phasePage * phasesPerPage, (phasePage + 1) * phasesPerPage);
                             
                             return visiblePhases.map((phase, localIdx) => {
@@ -889,11 +979,11 @@ const Arcade = () => {
                                         );
                                     })()}
 
-                                    {(activeGame === 'logic-lab' || (activeGame === 'mern-mastery' && levelData.type === 'CODING')) && (
+                                    {(activeGame === 'logic-lab' || (activeGame === 'mern-mastery' && levelData.type === 'CODING') || (['java-master', 'cpp-master', 'python-master', 'go-master'].includes(activeGame) && levelData.type === 'CODING')) && (
                                         <div className="logic-forge-layout">
                                             <div className="logic-forge-editor">
                                                 <div className="game-code-label">
-                                                    <Zap size={13} /> JavaScript Logic
+                                                    <Zap size={13} /> {activeGame === 'java-master' ? 'Java Code' : activeGame === 'cpp-master' ? 'C++ Code' : activeGame === 'python-master' ? 'Python Code' : activeGame === 'go-master' ? 'Go Code' : 'JavaScript Logic'}
                                                 </div>
                                                 <textarea
                                                     className={`game-logic-input logic-forge-textarea ${logicStatus}`}
@@ -902,13 +992,13 @@ const Arcade = () => {
                                                         setLogicInput(e.target.value);
                                                         if (logicStatus === 'wrong') setLogicStatus('neutral');
                                                     }}
-                                                    placeholder={levelData.syntax || `function solution(${levelData.params}) {\n  // Your code here\n  return \n}`}
+                                                    placeholder={activeGame === 'java-master' ? 'class Solution {\n    public static void main(String[] args) {\n        \n    }\n}' : (levelData.syntax || `function solution(${levelData.params}) {\n  // Your code here\n  return \n}`)}
                                                     spellCheck={false}
                                                     disabled={answerRevealed}
                                                 />
                                                 <div className="logic-forge-hint">
                                                     <span>💡</span>
-                                                    <span>Click Submit to run test cases.</span>
+                                                    <span>Click Submit to compile and run your code.</span>
                                                 </div>
                                             </div>
 
