@@ -2855,6 +2855,13 @@ html {
   gap: 32px;
 }
 
+.skills-single-page {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  width: 100%;
+}
+
 .skills-carousel-wrapper {
   overflow: hidden;
   position: relative;
@@ -4448,4 +4455,17 @@ html {
   display: inline-block;
   margin-left: 8px;
   text-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
+}
+
+/* Responsive for single page skills */
+@media (max-width: 900px) {
+  .skills-single-page {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .skills-single-page {
+    gap: 16px;
+  }
 }

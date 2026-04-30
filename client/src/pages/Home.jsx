@@ -71,7 +71,6 @@ const Home = () => {
   const [isMonitorActive, setIsMonitorActive] = useState(false);
   const [topRankers, setTopRankers] = useState([]);
   const [selectedRanker, setSelectedRanker] = useState(null);
-  const [currentSkillPage, setCurrentSkillPage] = useState(0);
 
   useEffect(() => {
     const fetchTopRankers = async () => {
@@ -534,47 +533,31 @@ const Home = () => {
 
 
   const handleSupportSubmit = async (e) => {
-
     e.preventDefault();
 
     if (!supportForm.message.trim()) {
-
-      toast.error('Please enter a message');
-
       return;
-
     }
 
+    // Create mailto link with pre-filled content
+    const supportEmail = 'support@brightcode.com'; // Replace with your actual support email
+    const emailSubject = encodeURIComponent(supportForm.subject || 'Support Inquiry');
+    const emailBody = encodeURIComponent(
+      `From: ${user.username} (${user.email})\n\n` +
+      `Subject: ${supportForm.subject}\n\n` +
+      `Message:\n${supportForm.message}\n\n` +
+      `---\nUser ID: ${user.username}\nTimestamp: ${new Date().toISOString()}`
+    );
 
-
-    setSupportForm(prev => ({ ...prev, isSending: true }));
-
-    try {
-
-      const { data } = await axios.post('http://localhost:5050/support', {
-
-        email: user.email,
-
-        username: user.username,
-
-        subject: supportForm.subject,
-
-        message: supportForm.message
-
-      });
-
-      toast.success(data.message || 'Message sent successfully!');
-
+    const mailtoLink = `mailto:${supportEmail}?subject=${emailSubject}&body=${emailBody}`;
+    
+    // Open email client
+    window.location.href = mailtoLink;
+    
+    // Clear form after a short delay
+    setTimeout(() => {
       setSupportForm({ subject: '', message: '', isSending: false });
-
-    } catch (err) {
-
-      toast.error(err.response?.data?.error || 'Failed to send message');
-
-      setSupportForm(prev => ({ ...prev, isSending: false }));
-
-    }
-
+    }, 1000);
   };
 
 
@@ -1051,7 +1034,7 @@ const Home = () => {
               </motion.div>
             </div>
 
-            {/* Skill Progress Dashboard — Carousel */}
+            {/* Skill Progress Dashboard */}
             <div id="skill-dashboard" className="skill-dashboard-section">
               <div className="monitor-header-text">
                 <span className="hunt-label">SKILL PROGRESS</span>
@@ -1059,168 +1042,90 @@ const Home = () => {
               </div>
 
               <div className="skills-carousel-container">
-                <div className="skills-carousel-wrapper">
-                  <div 
-                    className="skills-carousel-track"
-                    style={{ transform: `translateX(-${(currentSkillPage * 100)}%)` }}
-                  >
-                    {/* Page 1: CSS, Logic, React */}
-                    <div className="skills-page">
-                      {/* CSS */}
-                      <div className="skill-card">
-                        <div className="skill-header">
-                          <div className="skill-icon css-icon">CSS</div>
-                          <div className="skill-level-badge">
-                            {getSkillLevel(calculateSkillProgress(skillDistribution.css, 'css'))}
-                          </div>
-                        </div>
-                        <div className="skill-progress-container">
-                          <div className="skill-progress-bar">
-                            <div
-                              className="skill-progress-fill css-fill"
-                              style={{ width: `${calculateSkillProgress(skillDistribution.css, 'css')}%` }}
-                            />
-                          </div>
-                          <div className="skill-progress-labels">
-                            <span className="skill-percentage">
-                              {Math.round(calculateSkillProgress(skillDistribution.css, 'css'))}%
-                            </span>
-                            <span className="skill-count">{skillDistribution.css}/50</span>
-                          </div>
-                        </div>
-                        <div className="skill-xp">
-                          <Zap size={14} className="zap-icon" />
-                          <span>{skillDistribution.css * 10} XP</span>
-                        </div>
-                      </div>
-
-                      {/* Logic */}
-                      <div className="skill-card">
-                        <div className="skill-header">
-                          <div className="skill-icon logic-icon">LOGIC</div>
-                          <div className="skill-level-badge">
-                            {getSkillLevel(calculateSkillProgress(skillDistribution.logic, 'logic'))}
-                          </div>
-                        </div>
-                        <div className="skill-progress-container">
-                          <div className="skill-progress-bar">
-                            <div
-                              className="skill-progress-fill logic-fill"
-                              style={{ width: `${calculateSkillProgress(skillDistribution.logic, 'logic')}%` }}
-                            />
-                          </div>
-                          <div className="skill-progress-labels">
-                            <span className="skill-percentage">
-                              {Math.round(calculateSkillProgress(skillDistribution.logic, 'logic'))}%
-                            </span>
-                            <span className="skill-count">{skillDistribution.logic}/150</span>
-                          </div>
-                        </div>
-                        <div className="skill-xp">
-                          <Zap size={14} className="zap-icon" />
-                          <span>{skillDistribution.logic * 10} XP</span>
-                        </div>
-                      </div>
-
-                      {/* React */}
-                      <div className="skill-card">
-                        <div className="skill-header">
-                          <div className="skill-icon react-icon">REACT</div>
-                          <div className="skill-level-badge">
-                            {getSkillLevel(calculateSkillProgress(skillDistribution.react, 'react'))}
-                          </div>
-                        </div>
-                        <div className="skill-progress-container">
-                          <div className="skill-progress-bar">
-                            <div
-                              className="skill-progress-fill react-fill"
-                              style={{ width: `${calculateSkillProgress(skillDistribution.react, 'react')}%` }}
-                            />
-                          </div>
-                          <div className="skill-progress-labels">
-                            <span className="skill-percentage">
-                              {Math.round(calculateSkillProgress(skillDistribution.react, 'react'))}%
-                            </span>
-                            <span className="skill-count">{skillDistribution.react}/500</span>
-                          </div>
-                        </div>
-                        <div className="skill-xp">
-                          <Zap size={14} className="zap-icon" />
-                          <span>{skillDistribution.react * 10} XP</span>
-                        </div>
+                <div className="skills-single-page">
+                  {/* CSS */}
+                  <div className="skill-card">
+                    <div className="skill-header">
+                      <div className="skill-icon css-icon">CSS</div>
+                      <div className="skill-level-badge">
+                        {getSkillLevel(calculateSkillProgress(skillDistribution.css, 'css'))}
                       </div>
                     </div>
-
-                    {/* Page 2: Java + placeholders */}
-                    <div className="skills-page">
-                      {/* Java */}
-                      <div className="skill-card">
-                        <div className="skill-header">
-                          <div className="skill-icon java-icon">JAVA</div>
-                          <div className="skill-level-badge">
-                            {getSkillLevel(calculateSkillProgress(skillDistribution.java, 'java'))}
-                          </div>
-                        </div>
-                        <div className="skill-progress-container">
-                          <div className="skill-progress-bar">
-                            <div
-                              className="skill-progress-fill java-fill"
-                              style={{ width: `${calculateSkillProgress(skillDistribution.java, 'java')}%` }}
-                            />
-                          </div>
-                          <div className="skill-progress-labels">
-                            <span className="skill-percentage">
-                              {Math.round(calculateSkillProgress(skillDistribution.java, 'java'))}%
-                            </span>
-                            <span className="skill-count">{skillDistribution.java}/400</span>
-                          </div>
-                        </div>
-                        <div className="skill-xp">
-                          <Zap size={14} className="zap-icon" />
-                          <span>{skillDistribution.java * 10} XP</span>
-                        </div>
+                    <div className="skill-progress-container">
+                      <div className="skill-progress-bar">
+                        <div
+                          className="skill-progress-fill css-fill"
+                          style={{ width: `${calculateSkillProgress(skillDistribution.css, 'css')}%` }}
+                        />
                       </div>
-
-                      {/* Placeholder 1 */}
-                      <div className="skill-card skill-card-placeholder">
-                        <div className="placeholder-content">
-                          <Shield size={32} className="placeholder-icon" />
-                          <span className="placeholder-text">More modules coming soon</span>
-                        </div>
-                      </div>
-
-                      {/* Placeholder 2 */}
-                      <div className="skill-card skill-card-placeholder">
-                        <div className="placeholder-content">
-                          <Shield size={32} className="placeholder-icon" />
-                          <span className="placeholder-text">More modules coming soon</span>
-                        </div>
+                      <div className="skill-progress-labels">
+                        <span className="skill-percentage">
+                          {Math.round(calculateSkillProgress(skillDistribution.css, 'css'))}%
+                        </span>
+                        <span className="skill-count">{skillDistribution.css}/50</span>
                       </div>
                     </div>
+                    <div className="skill-xp">
+                      <Zap size={14} className="zap-icon" />
+                      <span>{skillDistribution.css * 10} XP</span>
+                    </div>
                   </div>
-                </div>
 
-                {/* Navigation */}
-                <div className="skills-nav">
-                  <button 
-                    className="skills-nav-btn"
-                    onClick={() => setCurrentSkillPage(0)}
-                    disabled={currentSkillPage === 0}
-                  >
-                    <ChevronLeft size={20} />
-                  </button>
-                  <div className="skills-page-indicator">
-                    <span className="current-page">{currentSkillPage + 1}</span>
-                    <span className="page-divider">/</span>
-                    <span className="total-pages">2</span>
+                  {/* Logic */}
+                  <div className="skill-card">
+                    <div className="skill-header">
+                      <div className="skill-icon logic-icon">LOGIC</div>
+                      <div className="skill-level-badge">
+                        {getSkillLevel(calculateSkillProgress(skillDistribution.logic, 'logic'))}
+                      </div>
+                    </div>
+                    <div className="skill-progress-container">
+                      <div className="skill-progress-bar">
+                        <div
+                          className="skill-progress-fill logic-fill"
+                          style={{ width: `${calculateSkillProgress(skillDistribution.logic, 'logic')}%` }}
+                        />
+                      </div>
+                      <div className="skill-progress-labels">
+                        <span className="skill-percentage">
+                          {Math.round(calculateSkillProgress(skillDistribution.logic, 'logic'))}%
+                        </span>
+                        <span className="skill-count">{skillDistribution.logic}/150</span>
+                      </div>
+                    </div>
+                    <div className="skill-xp">
+                      <Zap size={14} className="zap-icon" />
+                      <span>{skillDistribution.logic * 10} XP</span>
+                    </div>
                   </div>
-                  <button 
-                    className="skills-nav-btn"
-                    onClick={() => setCurrentSkillPage(1)}
-                    disabled={currentSkillPage === 1}
-                  >
-                    <ChevronRight size={20} />
-                  </button>
+
+                  {/* React */}
+                  <div className="skill-card">
+                    <div className="skill-header">
+                      <div className="skill-icon react-icon">REACT</div>
+                      <div className="skill-level-badge">
+                        {getSkillLevel(calculateSkillProgress(skillDistribution.react, 'react'))}
+                      </div>
+                    </div>
+                    <div className="skill-progress-container">
+                      <div className="skill-progress-bar">
+                        <div
+                          className="skill-progress-fill react-fill"
+                          style={{ width: `${calculateSkillProgress(skillDistribution.react, 'react')}%` }}
+                        />
+                      </div>
+                      <div className="skill-progress-labels">
+                        <span className="skill-percentage">
+                          {Math.round(calculateSkillProgress(skillDistribution.react, 'react'))}%
+                        </span>
+                        <span className="skill-count">{skillDistribution.react}/500</span>
+                      </div>
+                    </div>
+                    <div className="skill-xp">
+                      <Zap size={14} className="zap-icon" />
+                      <span>{skillDistribution.react * 10} XP</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
