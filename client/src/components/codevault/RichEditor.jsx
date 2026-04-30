@@ -16,7 +16,7 @@ import { Link } from '@tiptap/extension-link';
 import { TaskList } from '@tiptap/extension-task-list';
 import { TaskItem } from '@tiptap/extension-task-item';
 import { Placeholder } from '@tiptap/extension-placeholder';
-import { useEffect, useCallback, useState, useMemo, useRef } from 'react';
+import { useEffect, useCallback, useState, useMemo, useRef, useLayoutEffect } from 'react';
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   Code, List, ListOrdered, CheckSquare, AlignLeft, AlignCenter,
@@ -111,6 +111,63 @@ const ColorPicker = ({ colors, onSelect, triggerIcon, title }) => {
   );
 };
 
+// ── Heading active class manager (adds heading-active to the DOM node under cursor) ──
+const HeadingPicker = ({ editor }) => {
+  const activeNodeRef = useRef(null);
+
+  useEffect(() => {
+    if (!editor) return;
+
+    const update = () => {
+      // Remove class from previous node
+      if (activeNodeRef.current) {
+        activeNodeRef.current.classList.remove('heading-active');
+        activeNodeRef.current = null;
+      }
+
+      // Check if cursor is inside a heading
+      let level = null;
+      for (let l = 1; l <= 6; l++) {
+        if (editor.isActive('heading', { level: l })) { level = l; break; }
+      }
+      if (!level) return;
+
+      // Find the heading DOM node at cursor position
+      const { from } = editor.state.selection;
+      const domAtPos = editor.view.domAtPos(from);
+      let node = domAtPos.node;
+      while (node && node.nodeType !== 1) node = node.parentNode;
+      while (node && !['H1','H2','H3','H4','H5','H6'].includes(node.tagName)) {
+        node = node.parentNode;
+      }
+      if (!node) return;
+
+      node.classList.add('heading-active');
+      activeNodeRef.current = node;
+    };
+
+    const clear = () => {
+      if (activeNodeRef.current) {
+        activeNodeRef.current.classList.remove('heading-active');
+        activeNodeRef.current = null;
+      }
+    };
+
+    editor.on('selectionUpdate', update);
+    editor.on('transaction', update);
+    editor.on('blur', clear);
+
+    return () => {
+      editor.off('selectionUpdate', update);
+      editor.off('transaction', update);
+      editor.off('blur', clear);
+      clear();
+    };
+  }, [editor]);
+
+  return null; // no UI rendered
+};
+
 // ── Main RichEditor component ────────────────────────────────────
 const RichEditor = ({ content, onChange, editable = true }) => {
 
@@ -133,7 +190,28 @@ const RichEditor = ({ content, onChange, editable = true }) => {
         heading: false,
         codeBlock: false,
       }),
-      Heading.configure({ levels: [1, 2, 3, 4, 5, 6] }),
+      Heading.configure({ levels: [1, 2, 3, 4, 5, 6] }).extend({
+        // Add paste rules so pasted markdown headings (# H1, ## H2 etc.) are converted
+        addPasteRules() {
+          return [1, 2, 3, 4, 5, 6].map((level) => ({
+            find: new RegExp(`^(#{${level}})\\s(.+)$`, 'gm'),
+            handler: ({ state, range, match }) => {
+              const { tr } = state;
+              const start = range.from;
+              const end = range.to;
+              const headingText = match[2];
+              tr.replaceWith(
+                start,
+                end,
+                state.schema.nodes.heading.create(
+                  { level },
+                  state.schema.text(headingText)
+                )
+              );
+            },
+          }));
+        },
+      }),
       CodeBlock.extend({
         addNodeView() {
           return ReactNodeViewRenderer(CodeBlockComponent);
@@ -164,6 +242,21 @@ const RichEditor = ({ content, onChange, editable = true }) => {
     editorProps: {
       attributes: {
         class: 'prose-editor',
+      },
+      // Transform plain-text paste: convert markdown headings to HTML headings
+      transformPastedText(text) {
+        return text
+          .split('\n')
+          .map((line) => {
+            const match = line.match(/^(#{1,6})\s+(.+)$/);
+            if (match) {
+              const level = match[1].length;
+              const content = match[2];
+              return `<h${level}>${content}</h${level}>`;
+            }
+            return line;
+          })
+          .join('\n');
       },
     },
   });
@@ -442,6 +535,7 @@ const RichEditor = ({ content, onChange, editable = true }) => {
       )}
 
       <div className="rich-editor-scroll">
+        <HeadingPicker editor={editor} />
         <EditorContent editor={editor} className="rich-editor-content" />
       </div>
 

@@ -74,6 +74,14 @@
 .h5-btn { color: #c084fc !important; }
 .h6-btn { color: #f472b6 !important; }
 
+/* ── # prefix — only on the heading where cursor currently is ── */
+.rich-editor-content .ProseMirror h1.heading-active::before { content: '#'; color: rgba(239,68,68,0.55); margin-right: 8px; font-weight: 400; font-size: 0.7em; vertical-align: middle; font-family: 'Fira Code', monospace; }
+.rich-editor-content .ProseMirror h2.heading-active::before { content: '##'; color: rgba(251,191,36,0.55); margin-right: 8px; font-weight: 400; font-size: 0.7em; vertical-align: middle; font-family: 'Fira Code', monospace; }
+.rich-editor-content .ProseMirror h3.heading-active::before { content: '###'; color: rgba(52,211,153,0.55); margin-right: 8px; font-weight: 400; font-size: 0.7em; vertical-align: middle; font-family: 'Fira Code', monospace; }
+.rich-editor-content .ProseMirror h4.heading-active::before { content: '####'; color: rgba(96,165,250,0.55); margin-right: 8px; font-weight: 400; font-size: 0.7em; vertical-align: middle; font-family: 'Fira Code', monospace; }
+.rich-editor-content .ProseMirror h5.heading-active::before { content: '#####'; color: rgba(192,132,252,0.55); margin-right: 8px; font-weight: 400; font-size: 0.7em; vertical-align: middle; font-family: 'Fira Code', monospace; }
+.rich-editor-content .ProseMirror h6.heading-active::before { content: '######'; color: rgba(244,114,182,0.55); margin-right: 8px; font-weight: 400; font-size: 0.7em; vertical-align: middle; font-family: 'Fira Code', monospace; }
+
 /* ── Color Picker ─────────────────────────────────────────── */
 .color-picker-wrapper {
   position: relative;
@@ -157,6 +165,7 @@
   flex: 1;
   overflow-y: auto;
   scroll-behavior: smooth;
+  position: relative; /* needed for HeadingPicker absolute positioning */
 }
 
 .rich-editor-scroll::-webkit-scrollbar {
