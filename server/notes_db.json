@@ -17,13 +17,13 @@
       "id": "373a6eaa-60af-477c-88dc-1c01aeb4427e",
       "user_id": "edc9d6b9-ce68-4ecd-b255-dc306f3d7aa3",
       "title": "Untitled Note",
-      "content": "<p></p>",
+      "content": "<h2>Instance-Based Learning</h2><p></p><p></p><p>How model learns we classify them.</p><h1>Instance-Based Learning</h1><p></p><h2>Instance-Based Learning</h2><p>Instance-Based Learning stores training data and makes predictions by comparing new data with stored instances.</p><p>How It Works:</p><ul><li><p>Stores all training examples</p></li><li><p>When new input comes → finds similar data</p></li><li><p>Predicts output based on similarity</p></li></ul><p>Example:<br>Predict taxi demand for Zone 4 at 8 AM by comparing with: Past data of Zone 4 at 8 AM on similar days.</p><p>Algorithm:</p><ul><li><p>K-Nearest Neighbors (KNN)</p></li></ul><h2></h2><p></p>",
       "folder_id": "49def026-ea6d-4a0b-8e4d-7f05c4da8ac5",
       "tags": [],
       "challenge_id": null,
       "challenge_module": null,
       "created_at": "2026-04-30T04:54:26.177Z",
-      "updated_at": "2026-04-30T05:25:28.823Z",
+      "updated_at": "2026-04-30T05:41:47.198Z",
       "deleted_at": null
     }
   ],
