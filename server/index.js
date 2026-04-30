@@ -15,6 +15,7 @@ const nodemailer = require('nodemailer');
 const pty = require('node-pty');
 const os = require('os');
 const FileSystem = require('./fileSystem');
+const { compileAndRunJava } = require('./javaCompiler');
 
 const app = express();
 const server = http.createServer(app);
@@ -177,6 +178,11 @@ const initDB = async () => {
                 css_level INTEGER DEFAULT 0,
                 logic_level INTEGER DEFAULT 0,
                 react_level INTEGER DEFAULT 0,
+                mern_level INTEGER DEFAULT 0,
+                java_level INTEGER DEFAULT 0,
+                cpp_level INTEGER DEFAULT 0,
+                python_level INTEGER DEFAULT 0,
+                go_level INTEGER DEFAULT 0,
                 level TEXT DEFAULT 'Apprentice',
                 activity JSONB DEFAULT '{}',
                 created_count INTEGER DEFAULT 0,
@@ -411,7 +417,7 @@ app.post('/register', async (req, res) => {
 
             memoryStore.users.push({
                 id, username, email, password: hashedPassword,
-                xp: 0, css_level: 0, logic_level: 0, react_level: 0,
+                xp: 0, css_level: 0, logic_level: 0, react_level: 0, mern_level: 0,
                 activity: {},
                 joinedAt: new Date().toISOString()
             });
@@ -419,7 +425,7 @@ app.post('/register', async (req, res) => {
             return res.status(201).json({
                 message: "Registered in Persistent Memory Mode",
                 mode: 'memory',
-                xp: 0, css_level: 0, logic_level: 0, react_level: 0
+                xp: 0, css_level: 0, logic_level: 0, react_level: 0, mern_level: 0
             });
         }
 
@@ -437,7 +443,8 @@ app.post('/register', async (req, res) => {
             xp: 0,
             css_level: 0,
             logic_level: 0,
-            react_level: 0
+            react_level: 0,
+            mern_level: 0
         });
     } catch (err) {
         console.error('SERVER REGISTER ERROR:', err);
@@ -472,6 +479,7 @@ app.post('/login', async (req, res) => {
             css_level: user.css_level || 0,
             logic_level: user.logic_level || 0,
             react_level: user.react_level || 0,
+            mern_level: user.mern_level || 0,
             activity,
             streak: computeStreakFromActivity(activity),
             createdCount: user.created_count || 0,
@@ -563,7 +571,7 @@ app.get('/me', authenticateToken, async (req, res) => {
                     username: req.user.username,
                     email: `${req.user.username}@brightcode.memory`,
                     password: 'memory_migrated',
-                    xp: 0, css_level: 0, logic_level: 0, react_level: 0
+                    xp: 0, css_level: 0, logic_level: 0, react_level: 0, mern_level: 0
                 };
                 memoryStore.users.push(u);
             }
@@ -576,6 +584,7 @@ app.get('/me', authenticateToken, async (req, res) => {
                 css_level: u.css_level || 0,
                 logic_level: u.logic_level || 0,
                 react_level: u.react_level || 0,
+                mern_level: u.mern_level || 0,
                 joinedAt: u.joinedAt || null,
                 activity: u.activity || {},
                 streak: computeStreakFromActivity(u.activity || {}),
@@ -584,7 +593,7 @@ app.get('/me', authenticateToken, async (req, res) => {
             });
         }
         const result = await pool.query(
-            'SELECT id, username, email, xp, css_level, logic_level, react_level, activity, created_count, joined_count, bio, stack, created_at FROM users WHERE id = $1',
+            'SELECT id, username, email, xp, css_level, logic_level, react_level, mern_level, activity, created_count, joined_count, bio, stack, created_at FROM users WHERE id = $1',
             [req.user.id]
         );
         if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
@@ -1341,7 +1350,7 @@ app.post('/add-xp', authenticateToken, async (req, res) => {
                     username: req.user.username,
                     email: `${req.user.username}@codesight.memory`,
                     password: 'memory_migrated',
-                    xp: 0, css_level: 0, logic_level: 0, react_level: 0
+                    xp: 0, css_level: 0, logic_level: 0, react_level: 0, mern_level: 0
                 });
                 userIndex = memoryStore.users.length - 1;
             }
@@ -1352,7 +1361,12 @@ app.post('/add-xp', authenticateToken, async (req, res) => {
             if (module && level !== undefined) {
                 const key = module === 'css-odyssey' ? 'css_level' :
                     module === 'logic-lab' ? 'logic_level' :
-                        module === 'react-quest' ? 'react_level' : null;
+                        module === 'react-quest' ? 'react_level' :
+                            module === 'mern-mastery' ? 'mern_level' :
+                                module === 'java-master' ? 'java_level' :
+                                    module === 'cpp-master' ? 'cpp_level' :
+                                        module === 'python-master' ? 'python_level' :
+                                            module === 'go-master' ? 'go_level' : null;
                 if (key) user[key] = Math.max(user[key] || 0, level);
             }
 
@@ -1376,7 +1390,12 @@ app.post('/add-xp', authenticateToken, async (req, res) => {
                 streak: computeStreakFromActivity(user.activity || {}),
                 css_level: user.css_level || 0,
                 logic_level: user.logic_level || 0,
-                react_level: user.react_level || 0
+                react_level: user.react_level || 0,
+                mern_level: user.mern_level || 0,
+                java_level: user.java_level || 0,
+                cpp_level: user.cpp_level || 0,
+                python_level: user.python_level || 0,
+                go_level: user.go_level || 0
             });
         }
 
@@ -1397,23 +1416,28 @@ app.post('/add-xp', authenticateToken, async (req, res) => {
         if (module && level !== undefined) {
             const col = module === 'css-odyssey' ? 'css_level' :
                 module === 'logic-lab' ? 'logic_level' :
-                    module === 'react-quest' ? 'react_level' : null;
+                    module === 'react-quest' ? 'react_level' :
+                        module === 'mern-mastery' ? 'mern_level' :
+                            module === 'java-master' ? 'java_level' :
+                                module === 'cpp-master' ? 'cpp_level' :
+                                    module === 'python-master' ? 'python_level' :
+                                        module === 'go-master' ? 'go_level' : null;
             if (col) {
                 query += `, ${col} = GREATEST(${col}, $4) `;
                 params.push(level);
             }
         }
 
-        query += 'WHERE id = $2 RETURNING xp, css_level, logic_level, react_level, activity';
+        query += 'WHERE id = $2 RETURNING xp, css_level, logic_level, react_level, mern_level, java_level, cpp_level, python_level, go_level, activity';
 
         const result = await pool.query(query, params);
 
         if (result.rows.length === 0) {
             // Self-healing: Create user in SQL with full stats if they exist in JWT but not in DB
             const selfHealRes = await pool.query(
-                `INSERT INTO users (id, username, email, password, xp, activity, css_level, logic_level, react_level) 
-                 VALUES ($1, $2, $3, $4, $5, jsonb_build_object($9::text, $5), $6, $7, $8)
-                 RETURNING xp, activity, css_level, logic_level, react_level`,
+                `INSERT INTO users (id, username, email, password, xp, activity, css_level, logic_level, react_level, mern_level) 
+                 VALUES ($1, $2, $3, $4, $5, jsonb_build_object($10::text, $5), $6, $7, $8, $9)
+                 RETURNING xp, activity, css_level, logic_level, react_level, mern_level`,
                 [
                     req.user.id,
                     req.user.username,
@@ -1423,6 +1447,7 @@ app.post('/add-xp', authenticateToken, async (req, res) => {
                     module === 'css-odyssey' ? level : 0,
                     module === 'logic-lab' ? level : 0,
                     module === 'react-quest' ? level : 0,
+                    module === 'mern-mastery' ? level : 0,
                     today
                 ]
             );
@@ -1433,7 +1458,12 @@ app.post('/add-xp', authenticateToken, async (req, res) => {
                 streak: computeStreakFromActivity(selfHealRes.rows[0].activity || {}),
                 css_level: selfHealRes.rows[0].css_level,
                 logic_level: selfHealRes.rows[0].logic_level,
-                react_level: selfHealRes.rows[0].react_level
+                react_level: selfHealRes.rows[0].react_level,
+                mern_level: selfHealRes.rows[0].mern_level,
+                java_level: selfHealRes.rows[0].java_level || 0,
+                cpp_level: selfHealRes.rows[0].cpp_level || 0,
+                python_level: selfHealRes.rows[0].python_level || 0,
+                go_level: selfHealRes.rows[0].go_level || 0
             });
         }
 
@@ -1454,7 +1484,12 @@ app.post('/add-xp', authenticateToken, async (req, res) => {
             streak: computeStreakFromActivity(result.rows[0].activity || {}),
             css_level: result.rows[0].css_level,
             logic_level: result.rows[0].logic_level,
-            react_level: result.rows[0].react_level
+            react_level: result.rows[0].react_level,
+            mern_level: result.rows[0].mern_level,
+            java_level: result.rows[0].java_level,
+            cpp_level: result.rows[0].cpp_level,
+            python_level: result.rows[0].python_level,
+            go_level: result.rows[0].go_level
         });
 
     } catch (err) {
@@ -2018,3 +2053,23 @@ app.post('/execute', async (req, res) => {
 
 const PORT = process.env.PORT || 5051;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+
+// ── Java Compilation & Execution Endpoint ─────────────────────────────────────
+app.post('/compile-java', async (req, res) => {
+    const { code, testCases } = req.body;
+    
+    if (!code) {
+        return res.status(400).json({ error: 'No code provided' });
+    }
+
+    try {
+        const result = await compileAndRunJava(code, testCases);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ 
+            success: false, 
+            error: error.message || 'Compilation failed' 
+        });
+    }
+});
