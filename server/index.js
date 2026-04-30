@@ -1544,7 +1544,26 @@ app.get('/activity', authenticateToken, async (req, res) => {
 });
 
 app.get('/active-rooms', (req, res) => {
-    res.json(Array.from(rooms.keys()));
+    const roomsList = Array.from(rooms.keys());
+    console.log('[ACTIVE ROOMS] Current active rooms:', roomsList);
+    res.json(roomsList);
+});
+
+// Debug endpoint to check room details
+app.get('/room-status/:roomId', (req, res) => {
+    const { roomId } = req.params;
+    const room = rooms.get(roomId);
+    if (room) {
+        res.json({
+            exists: true,
+            userCount: room.users.length,
+            users: room.users.map(u => u.username),
+            adminId: room.adminId,
+            owner: room.owner
+        });
+    } else {
+        res.json({ exists: false });
+    }
 });
 
 // Workspace metadata storage (in-memory for now)
@@ -1828,6 +1847,12 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Chat message handler
+    socket.on('chat-message', ({ roomId, username, message, timestamp }) => {
+        // Broadcast chat message to all users in the room including sender
+        io.in(roomId).emit('chat-message', { username, message, timestamp });
+    });
+
     socket.on('cursor-change', ({ roomId, fileName, cursor, username }) => {
         socket.to(roomId).emit('cursor-update', { socketId: socket.id, fileName, cursor, username });
     });
@@ -1949,8 +1974,37 @@ io.on('connection', (socket) => {
     socket.on('end-session', ({ roomId }) => {
         const room = rooms.get(roomId);
         if (room && socket.id === room.adminId) {
-            io.in(roomId).emit('session-ended', { message: 'The workspace owner has ended this session permanently.' });
+            // Notify all users that the session is ending permanently
+            io.in(roomId).emit('session-ended', { 
+                message: '⚠️ Workspace Terminated\n\nThe workspace owner has permanently ended this session.\nAll unsaved work will be lost.' 
+            });
+            
+            // Delete the room from active rooms
             rooms.delete(roomId);
+            
+            // Optionally delete workspace metadata
+            workspaceMetadata.delete(roomId);
+            
+            console.log(`[SESSION ENDED] Room ${roomId} permanently terminated by admin`);
+        } else if (room && socket.id !== room.adminId) {
+            // Non-admin tried to end session
+            socket.emit('error', { message: 'Only the workspace owner can end the session.' });
+        }
+    });
+
+    // Handle explicit leave (keeps room active)
+    socket.on('leave-workspace', ({ roomId, username }) => {
+        const room = rooms.get(roomId);
+        if (room) {
+            const userIndex = room.users.findIndex(u => u.id === socket.id);
+            if (userIndex !== -1) {
+                room.users.splice(userIndex, 1);
+                socket.to(roomId).emit('user-left', { id: socket.id, username });
+                socket.leave(roomId);
+                console.log(`[USER LEFT] ${username} left room ${roomId} (room still active, ${room.users.length} users remaining)`);
+            }
+            // IMPORTANT: Do NOT delete the room even if empty
+            // Room should persist until explicitly ended by admin
         }
     });
 
@@ -1958,16 +2012,21 @@ io.on('connection', (socket) => {
 
     socket.on('disconnecting', () => {
         socket.rooms.forEach(roomId => {
+            // Skip the default socket.id room
+            if (roomId === socket.id) return;
+            
             const room = rooms.get(roomId);
             if (room) {
-                // If the admin is leaving, we keep the room alive so they can resume later
-                // Only removing from users list
+                // Remove user from room but keep room alive
                 const userIndex = room.users.findIndex(u => u.id === socket.id);
                 if (userIndex !== -1) {
                     const user = room.users[userIndex];
                     room.users.splice(userIndex, 1);
                     socket.to(roomId).emit('user-left', { id: socket.id, username: user.username });
+                    console.log(`[USER DISCONNECTED] ${user.username} disconnected from room ${roomId} (room still active, ${room.users.length} users remaining)`);
                 }
+                // IMPORTANT: Do NOT delete the room
+                // Room persists for resume functionality
             }
         });
     });
