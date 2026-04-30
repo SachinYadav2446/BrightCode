@@ -1690,13 +1690,18 @@ io.on('connection', (socket) => {
         const userData = { id: socket.id, username, role, permission };
         room.users.push(userData);
 
+        // Get workspace name from metadata
+        const workspaceMeta = workspaceMetadata.get(roomId);
+        const workspaceName = workspaceMeta?.name || room.owner;
+
         socket.emit('initial-data', {
             files: room.files,
             users: room.users,
             adminId: room.adminId,
             yourId: socket.id,
             snapshots: room.snapshots,
-            workspaceOwner: room.owner
+            workspaceOwner: room.owner,
+            workspaceName: workspaceName
         });
 
         socket.to(roomId).emit('user-joined', { socketId: socket.id, username, role, permission });
