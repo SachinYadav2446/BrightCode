@@ -42,6 +42,7 @@ const Factions = () => {
     const [hqTab, setHqTab] = useState('roster'); // 'roster', 'chat', 'intel'
     const [socket, setSocket] = useState(null);
     const [chatMessages, setChatMessages] = useState([]);
+    const [kickConfirmModal, setKickConfirmModal] = useState({ show: false, member: null });
 
     useEffect(() => {
         let s = null;
@@ -187,13 +188,13 @@ const Factions = () => {
     };
 
     const kickMember = async (userId) => {
-        if (!window.confirm('Remove this member from the syndicate?')) return;
         try {
             const token = localStorage.getItem('token');
             await axios.post(`http://localhost:5051/factions/${myFactionId}/kick`, { userId }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success('Operative removed.');
+            setKickConfirmModal({ show: false, member: null });
             fetchFactions();
         } catch (err) {
             toast.error(err.response?.data?.error || 'Failed to remove member.');
@@ -642,7 +643,7 @@ const Factions = () => {
                                                             {user?.username === factions.find(f => f.id === myFactionId)?.ownerName && member.username !== user?.username && (
                                                                 <button 
                                                                     className="hq-kick-direct-btn"
-                                                                    onClick={() => kickMember(member.id)}
+                                                                    onClick={() => setKickConfirmModal({ show: true, member })}
                                                                     title="Remove from Syndicate"
                                                                 >
                                                                     <UserMinus size={16} />
@@ -683,6 +684,47 @@ const Factions = () => {
                                     exit={{ opacity: 0, y: -10 }}
                                     className="hq-tab-content"
                                 >
+                                    {/* Privacy Toggle Section */}
+                                    <div className="hq-privacy-section">
+                                        <h3 className="hq-sub-title">Syndicate Privacy Settings</h3>
+                                        <div className="privacy-control-card">
+                                            <div className="privacy-info">
+                                                <div className="privacy-icon-wrapper">
+                                                    {factions.find(f => f.id === myFactionId)?.isPublic === false ? (
+                                                        <Lock size={24} color="#ef4444" />
+                                                    ) : (
+                                                        <Globe size={24} color="#22c55e" />
+                                                    )}
+                                                </div>
+                                                <div className="privacy-text">
+                                                    <h4>Current Status: {factions.find(f => f.id === myFactionId)?.isPublic === false ? 'Private' : 'Public'}</h4>
+                                                    <p>
+                                                        {factions.find(f => f.id === myFactionId)?.isPublic === false 
+                                                            ? 'Only approved members can join. New recruits must request access.'
+                                                            : 'Anyone can join your syndicate instantly without approval.'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button 
+                                                className="privacy-toggle-action-btn"
+                                                onClick={togglePrivacy}
+                                            >
+                                                {factions.find(f => f.id === myFactionId)?.isPublic === false ? (
+                                                    <>
+                                                        <Globe size={16} />
+                                                        Make Public
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Lock size={16} />
+                                                        Make Private
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Pending Members Section */}
                                     {(factions.find(f => f.id === myFactionId)?.pendingMembers || []).length > 0 ? (
                                         <div className="hq-pending-section">
                                             <h3 className="hq-sub-title">Intelligence Report: Pending Assets</h3>
@@ -711,6 +753,23 @@ const Factions = () => {
                                             <p>Your syndicate borders are secure. No pending recruitment requests at this time.</p>
                                         </div>
                                     )}
+
+                                    {/* Danger Zone */}
+                                    <div className="hq-danger-zone">
+                                        <h3 className="hq-sub-title danger-title">Danger Zone</h3>
+                                        <div className="danger-card">
+                                            <div className="danger-info">
+                                                <Trash2 size={20} color="#ef4444" />
+                                                <div>
+                                                    <h4>Disband Syndicate</h4>
+                                                    <p>Permanently delete this faction. All members will be removed and progress lost.</p>
+                                                </div>
+                                            </div>
+                                            <button className="danger-action-btn" onClick={disbandFaction}>
+                                                Disband
+                                            </button>
+                                        </div>
+                                    </div>
                                 </motion.div>
                             )}
                         </AnimatePresence>
@@ -852,6 +911,60 @@ const Factions = () => {
                     )}
                 </main>
             </section>
+
+            {/* Kick Member Confirmation Modal */}
+            <AnimatePresence>
+                {kickConfirmModal.show && (
+                    <motion.div 
+                        className="kick-modal-overlay" 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0 }}
+                        onClick={() => setKickConfirmModal({ show: false, member: null })}
+                    >
+                        <motion.div 
+                            className="kick-modal-box"
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="kick-modal-header">
+                                <div className="kick-modal-icon">
+                                    <UserMinus size={24} />
+                                </div>
+                                <h3>Remove Operative</h3>
+                            </div>
+                            
+                            <div className="kick-modal-body">
+                                <p>
+                                    Remove <span className="kick-username">{kickConfirmModal.member?.username}</span> from the syndicate?
+                                </p>
+                                <div className="kick-warning">
+                                    <Shield size={16} />
+                                    <span>This action cannot be undone. The member will lose access to all faction resources.</span>
+                                </div>
+                            </div>
+
+                            <div className="kick-modal-footer">
+                                <button 
+                                    className="kick-cancel-btn" 
+                                    onClick={() => setKickConfirmModal({ show: false, member: null })}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    className="kick-confirm-btn"
+                                    onClick={() => kickMember(kickConfirmModal.member?.id)}
+                                >
+                                    <UserMinus size={16} />
+                                    Remove Member
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
