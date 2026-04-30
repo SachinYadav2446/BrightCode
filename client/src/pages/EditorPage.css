@@ -439,16 +439,21 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 8px 10px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    border-left: 3px solid rgba(239, 68, 68, 0.3);
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    max-width: 75%;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
 }
 
 .chat-message.own-message {
-    background: rgba(239, 68, 68, 0.08);
-    border-left-color: var(--workspace-accent);
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 12px;
 }
 
 .chat-message-header {
@@ -462,6 +467,10 @@
     font-size: 0.75rem;
     font-weight: 700;
     color: var(--workspace-accent);
+}
+
+.chat-message.own-message .chat-username {
+    color: #ef4444;
 }
 
 .chat-time {
@@ -567,6 +576,7 @@
 .user-item-full {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
     padding: 10px 12px;
     background: rgba(255, 255, 255, 0.03);
@@ -578,6 +588,39 @@
 .user-item-full:hover {
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(255, 255, 255, 0.1);
+}
+
+.user-info-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.kick-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ef4444;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.kick-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+    transform: scale(1.05);
+}
+
+.kick-btn:active {
+    transform: scale(0.95);
 }
 
 .user-name {
@@ -608,6 +651,79 @@
     font-weight: 700;
     color: var(--workspace-accent);
     letter-spacing: 0.5px;
+}
+
+.you-tag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+    margin-left: 4px;
+}
+
+.role-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.role-badge.admin {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+.role-badge.writer {
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #22c55e;
+}
+
+.role-badge.viewer {
+    background: rgba(148, 163, 184, 0.15);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    color: #94a3b8;
+}
+
+.user-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.role-toggle-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    background: rgba(148, 163, 184, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.role-toggle-btn:hover {
+    background: rgba(148, 163, 184, 0.2);
+    border-color: #94a3b8;
+}
+
+.role-toggle-btn.active {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.4);
+    color: #22c55e;
+}
+
+.role-toggle-btn.active:hover {
+    background: rgba(34, 197, 94, 0.25);
+    border-color: #22c55e;
 }
 
 
