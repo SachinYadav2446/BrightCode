@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronRight,
   Code2,
@@ -13,7 +13,6 @@ import {
   Cpu,
   ArrowRight,
   ExternalLink,
-  Mail,
   BookOpen,
   Rocket,
   Gamepad2,
@@ -27,55 +26,6 @@ import './Landing.css';
 const Landing = () => {
   const navigate = useNavigate();
   const [currentCard, setCurrentCard] = useState(0);
-  const [activeFeature, setActiveFeature] = useState(0);
-
-  // 3D Sphere Interaction Logic
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const mouseXSpring = useSpring(x);
-  const mouseYSpring = useSpring(y);
-
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["17.5deg", "-17.5deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-17.5deg", "17.5deg"]);
-
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const xPct = mouseX / width - 0.5;
-    const yPct = mouseY / height - 0.5;
-    x.set(xPct);
-    y.set(yPct);
-
-    // Update custom properties for the glow effect
-    e.currentTarget.style.setProperty('--mouse-x', `${(mouseX / width) * 100}%`);
-    e.currentTarget.style.setProperty('--mouse-y', `${(mouseY / height) * 100}%`);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
-
-  const userModuleFeatures = [
-    { icon: <BookOpen size={24} />, text: "Project Overview", desc: "Understand the core architecture and vision." },
-    { icon: <Rocket size={24} />, text: "Getting Started", desc: "Launch your first workspace in seconds." },
-    { icon: <Gamepad2 size={24} />, text: "Code Arena", desc: "Compete in high-stakes engineering challenges." },
-    { icon: <Trophy size={24} />, text: "Hall of Fame", desc: "Where the elite engineers are immortalized." },
-    { icon: <Layout size={24} />, text: "Workspace", desc: "Experience the next-gen collaborative IDE." },
-    { icon: <Sword size={24} />, text: "Factions", desc: "Join forces with specialized developer groups." },
-    { icon: <HelpCircle size={24} />, text: "Starter FAQ", desc: "Quick answers to get you up and running." }
-  ];
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveFeature((prev) => (prev + 1) % userModuleFeatures.length);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, []);
 
   const exploreCards = [
     {
@@ -328,15 +278,7 @@ const Landing = () => {
                     <p>Execute complex architectures in secure, isolated environments.</p>
                   </div>
                 </div>
-                <div className="about-feature-item">
-                  <div className="feat-icon">
-                    <Users size={20} />
-                  </div>
-                  <div className="feat-content">
-                    <h4>Elite Network</h4>
-                    <p>Join a community of top-tier engineers pushing technical boundaries.</p>
-                  </div>
-                </div>
+
               </div>
             </div>
 
@@ -376,97 +318,101 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* User Module Section */}
+      {/* User Guide Section */}
       <section className="user-module-section" id="guide">
         <div className="user-module-container">
+
+          {/* Top label row */}
           <motion.div
-            className="user-module-sphere-wrapper"
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            style={{
-              rotateX,
-              rotateY,
-              transformStyle: "preserve-3d",
-            }}
+            className="module-top-row"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
           >
+            <div className="module-eyebrow">
+              <span className="module-eyebrow-line" />
+              <span className="module-eyebrow-text">User Guide</span>
+            </div>
+            <div className="module-live-tag">
+              <span className="pulse-dot" />
+              Live Docs
+            </div>
+          </motion.div>
+
+          {/* Two-column body */}
+          <div className="module-body">
+
+            {/* Left — headline + CTA */}
             <motion.div
-              className="user-module-card sphere-effect"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              className="module-left"
+              initial={{ opacity: 0, x: -24 }}
+              whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 0.6 }}
             >
-              <div className="sphere-glow-inner"></div>
-
-              <div className="module-live-tag" style={{ transform: "translateZ(50px)" }}>
-                <span className="pulse-dot"></span>
-                LIVE DOCS
-              </div>
-
-              <div className="module-header-inside" style={{ transform: "translateZ(40px)" }}>
-                <div className="module-badge">User Guide</div>
-                <h2>Explore the Documentation</h2>
-                <p>New here? Dive into our comprehensive guides and master the ecosystem.</p>
-              </div>
-
-              <div className="module-main-row" style={{ transform: "translateZ(60px)" }}>
-                <div className="module-content">
-                  <div className="module-slider-container">
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={activeFeature}
-                        className="slider-item"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.5 }}
-                      >
-                        <div className="slider-icon-box">
-                          {userModuleFeatures[activeFeature].icon}
-                        </div>
-                        <div className="slider-text-content">
-                          <h3>{userModuleFeatures[activeFeature].text}</h3>
-                          <p>{userModuleFeatures[activeFeature].desc}</p>
-                        </div>
-                      </motion.div>
-                    </AnimatePresence>
-                    <div className="slider-dots">
-                      {userModuleFeatures.map((_, idx) => (
-                        <div
-                          key={idx}
-                          className={`slider-dot ${idx === activeFeature ? 'active' : ''}`}
-                        ></div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="module-footer-inside">
-                  <motion.button
-                    className="premium-module-btn"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate('/user-module')}
-                    style={{ transform: "translateZ(40px)" }}
-                  >
-                    <span className="btn-glow"></span>
-                    <span className="btn-content">
-                      Enter User Guide
-                    </span>
-                  </motion.button>
-                </div>
-              </div>
-
-              <div className="module-visual" style={{ transform: "translateZ(30px)" }}>
-                <div className="box-surface"></div>
-                <div className="floating-elements-bg">
-                  <div className="float-element e1"></div>
-                  <div className="float-element e2"></div>
-                  <div className="float-element e3"></div>
-                </div>
+              <h2>
+                Everything you need<br />
+                to <em>master</em> the<br />
+                ecosystem.
+              </h2>
+              <p>
+                From first login to faction domination — our comprehensive
+                guides cover every feature, shortcut, and workflow inside
+                BrightCode.
+              </p>
+              <div className="module-cta-row">
+                <button
+                  className="premium-module-btn"
+                  onClick={() => navigate('/user-module')}
+                >
+                  <span className="btn-content">
+                    Enter User Guide <ArrowRight size={16} />
+                  </span>
+                </button>
+                <button
+                  className="module-secondary-link"
+                  onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  View changelog →
+                </button>
               </div>
             </motion.div>
-          </motion.div>
+
+            {/* Right — feature list */}
+            <motion.div
+              className="module-right"
+              initial={{ opacity: 0, x: 24 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              {[
+                { icon: <Rocket size={16} />, title: "Getting Started", desc: "Account setup, dashboard tour, and first workspace." },
+                { icon: <Layout size={16} />, title: "Collaborative Workspace", desc: "Real-time editing, file sharing, and version control." },
+                { icon: <Gamepad2 size={16} />, title: "Code Arena", desc: "Timed challenges, leaderboards, and XP rewards." },
+                { icon: <BookOpen size={16} />, title: "CodeVault & Rich Editor", desc: "Notes, markdown, diagrams, and media embeds." },
+                { icon: <Sword size={16} />, title: "Factions & Competition", desc: "Join groups, compete in sprints, climb rankings." },
+                { icon: <HelpCircle size={16} />, title: "Keyboard Shortcuts", desc: "Full reference for power-user navigation." },
+              ].map((f, i) => (
+                <motion.div
+                  key={i}
+                  className="module-feature-row"
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: i * 0.07 }}
+                >
+                  <div className="mf-icon">{f.icon}</div>
+                  <div className="mf-text">
+                    <span className="mf-title">{f.title}</span>
+                    <span className="mf-desc">{f.desc}</span>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+
+          </div>
         </div>
       </section>
 

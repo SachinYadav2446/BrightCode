@@ -8,7 +8,8 @@
       "xp": 0,
       "css_level": 0,
       "logic_level": 0,
-      "react_level": 0
+      "react_level": 0,
+      "mern_level": 0
     },
     {
       "id": "61f817b3-810f-48fa-b1bf-639d65034e97",
@@ -19,6 +20,7 @@
       "css_level": 0,
       "logic_level": 0,
       "react_level": 2,
+      "mern_level": 0,
       "activity": {
         "2026-04-20": 150
       }
@@ -32,6 +34,7 @@
       "css_level": 1,
       "logic_level": 0,
       "react_level": 21,
+      "mern_level": 0,
       "activity": {
         "2026-04-20": 80,
         "2026-04-21": 90,
@@ -47,7 +50,8 @@
       "xp": 1500,
       "css_level": 0,
       "logic_level": 2,
-      "react_level": 0
+      "react_level": 0,
+      "mern_level": 0
     },
     {
       "id": "5cbba4f1-63a8-445f-be5f-75e982fa7627",
@@ -57,7 +61,8 @@
       "xp": 1500,
       "css_level": 0,
       "logic_level": 2,
-      "react_level": 0
+      "react_level": 0,
+      "mern_level": 0
     },
     {
       "id": "b0cafd5a-915f-49fa-8593-445740eb39ca",
@@ -67,7 +72,8 @@
       "xp": 0,
       "css_level": 0,
       "logic_level": 0,
-      "react_level": 0
+      "react_level": 0,
+      "mern_level": 0
     },
     {
       "id": "7dbf7376-7700-45b4-8e9f-26fc0df9eee7",
@@ -77,7 +83,8 @@
       "xp": 0,
       "css_level": 0,
       "logic_level": 0,
-      "react_level": 0
+      "react_level": 0,
+      "mern_level": 0
     },
     {
       "id": "a918cbd8-3cff-473a-a9f0-137906c5e5cd",
@@ -88,6 +95,7 @@
       "css_level": 1,
       "logic_level": 0,
       "react_level": 10,
+      "mern_level": 0,
       "activity": {
         "2026-04-21": 110
       },
@@ -104,6 +112,7 @@
       "css_level": 0,
       "logic_level": 0,
       "react_level": 0,
+      "mern_level": 0,
       "activity": {},
       "joinedAt": "2026-04-21T16:04:05.179Z"
     },
@@ -112,19 +121,21 @@
       "username": "Sachin",
       "email": "yadavsachin123411@gmail.com",
       "password": "$2b$10$JcCvBpz7.Fzu37eh5qxib.Ev9mCKeWCjbQRAfXoHMYrshmhUsZSvG",
-      "xp": 910,
-      "css_level": 6,
-      "logic_level": 1,
-      "react_level": 56,
+      "xp": 1870,
+      "css_level": 8,
+      "logic_level": 6,
+      "react_level": 72,
+      "mern_level": 14,
       "activity": {
         "2026-04-26": 15,
         "2026-04-27": 645,
         "2026-04-28": 40,
         "2026-04-29": 30,
-        "2026-04-30": 180
+        "2026-04-30": 1140
       },
       "joinedAt": "2026-04-25T11:35:08.241Z",
-      "created_count": 1
+      "created_count": 1,
+      "java_level": 81
     }
   ]
 }

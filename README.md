@@ -130,6 +130,9 @@ Continuous interface refinements for better user experience.
 ### Prerequisites
 - Node.js (v18+)
 - PostgreSQL
+- **Java JDK 17+** (Required for Java Master module in Code Arena)
+  - ⚠️ **If you see "javac is not recognized" error**: See [QUICK_START.md](./QUICK_START.md) for immediate fix
+  - 📖 **Detailed setup**: See [JAVA_SETUP.md](./JAVA_SETUP.md) for installation instructions
 
 ### Installation
 
@@ -237,6 +240,7 @@ CodeBright utilizes a **Cyber-Premium Design System**.
 ## 📚 Additional Documentation
 
 - **[USER_GUIDE.md](./USER_GUIDE.md)**: Comprehensive user guide with detailed instructions
+- **[JAVA_SETUP.md](./JAVA_SETUP.md)**: Java JDK installation guide for Code Arena Java modules
 - **[API_DOCS.md](./API_DOCS.md)**: API documentation (if available)
 - **[CONTRIBUTING.md](./CONTRIBUTING.md)**: Guidelines for contributors
 - **[CHANGELOG.md](./CHANGELOG.md)**: Version history and changes
