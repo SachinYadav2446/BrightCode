@@ -5,8 +5,9 @@
   left: 0;
   width: 100%;
   z-index: 1000;
-  padding: 0 40px;
-  height: 50px;
+  padding: 0 15px;
+  height: auto;
+  min-height: 50px;
   background: rgba(15, 15, 15, 0.95);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
@@ -21,18 +22,21 @@
   justify-content: space-between;
   width: 100%;
   max-width: 1400px;
+  padding: 10px 0;
+  flex-wrap: wrap;
 }
 
 .logo-section {
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .nav-links {
-  flex: 2;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 5px;
 }
 
 .nav-link-hover {
@@ -89,4 +93,25 @@
   color: #ef4444;
   font-weight: 700;
   font-size: 1rem;
+}
+
+/* Mobile Fixes */
+@media (max-width: 600px) {
+  .nav-container {
+    justify-content: center;
+    gap: 10px;
+  }
+  .nav-links {
+    justify-content: center;
+    width: 100%;
+    gap: 8px;
+  }
+  .nav-link-hover {
+    font-size: 0.75rem;
+  }
+  .logo-section {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
 }
