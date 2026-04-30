@@ -10,6 +10,8 @@ import Editor from '@monaco-editor/react';
 
 import { motion, AnimatePresence } from 'framer-motion';
 
+import JSZip from 'jszip';
+
 import {
 
     Users, FileCode, Play, LogOut, FilePlus, Terminal as TerminalIcon,
@@ -112,6 +114,15 @@ const EditorPage = () => {
 
     const [snapshot, setSnapshot] = useState(null);
 
+    // Undo/Redo states
+    const [undoStack, setUndoStack] = useState([]);
+    const [redoStack, setRedoStack] = useState([]);
+
+    // Text tool states
+    const [isAddingText, setIsAddingText] = useState(false);
+    const [textInput, setTextInput] = useState('');
+    const [textPosition, setTextPosition] = useState({ x: 0, y: 0 });
+
 
 
     // ── Terminal States ──────────────────────────────────────────────────────
@@ -136,14 +147,15 @@ const EditorPage = () => {
     const [myId, setMyId] = useState(null);
     const [myPermission, setMyPermission] = useState('viewer'); // Default to viewer
     const [workspaceOwner, setWorkspaceOwner] = useState('');
+    const [workspaceName, setWorkspaceName] = useState('');
     const [showEndSessionModal, setShowEndSessionModal] = useState(false);
 
     const isAdmin = adminId === myId;
     const canWrite = isAdmin || myPermission === 'writer';
     const isViewer = myPermission === 'viewer' && !isAdmin;
 
-    // Workspace folder name: from server-sent owner, or fallback to current user
-    const workspaceName = (workspaceOwner || user?.username || 'WORKSPACE').toUpperCase();
+    // Workspace folder name: use workspace name if available, otherwise fallback to owner username
+    const workspaceFolderName = (workspaceName || workspaceOwner || user?.username || 'WORKSPACE').toUpperCase();
 
 
 
@@ -323,7 +335,7 @@ const EditorPage = () => {
 
 
 
-                socket.on('initial-data', ({ files, users, adminId, yourId, snapshots, workspaceOwner }) => {
+                socket.on('initial-data', ({ files, users, adminId, yourId, snapshots, workspaceOwner, workspaceName }) => {
                     if (isStopped) return;
                     setFiles(files);
                     setClients(users);
@@ -331,6 +343,7 @@ const EditorPage = () => {
                     setMyId(yourId);
                     setSnapshots(snapshots || []);
                     if (workspaceOwner) setWorkspaceOwner(workspaceOwner);
+                    if (workspaceName) setWorkspaceName(workspaceName);
                     // Don't auto-open any file — let user pick from tree
                 });
 
@@ -597,6 +610,23 @@ const EditorPage = () => {
 
     }, [roomId, user?.username, navigate]);
 
+    // ── Auto-refresh Preview ──────────────────────────────────────────────────
+    useEffect(() => {
+        if (viewMode === 'preview') {
+            // If no frontend files exist, switch back to editor mode
+            if (!hasFrontendFiles()) {
+                setViewMode('editor');
+                toast('Switched to IDE mode - no frontend files available', { icon: '📝' });
+                return;
+            }
+            
+            const iframe = document.getElementById('preview-iframe');
+            if (iframe) {
+                iframe.srcdoc = generatePreview();
+            }
+        }
+    }, [files, viewMode]);
+
 
 
     // ── Core Handlers ─────────────────────────────────────────────────────────
@@ -716,6 +746,135 @@ const EditorPage = () => {
         // Cleanup
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
+    };
+
+    // ── Download Single File Function ────────────────────────────────────────
+    const downloadFile = (e, filePath) => {
+        e.stopPropagation();
+        
+        const fileData = files[filePath];
+        if (!fileData) {
+            toast.error('File not found');
+            return;
+        }
+
+        const blob = new Blob([fileData.content], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filePath.split('/').pop();
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        toast.success(`Downloaded ${filePath.split('/').pop()}`);
+    };
+
+    // ── Download Folder as ZIP Function ───────────────────────────────────────
+    const downloadFolder = async (e, folderPath) => {
+        e.stopPropagation();
+        
+        const zip = new JSZip();
+        const folderName = folderPath.split('/').pop() || 'workspace';
+        
+        // Get all files in this folder
+        const folderFiles = Object.entries(files).filter(([path]) => {
+            if (folderPath === '') {
+                // Root folder - include all files
+                return true;
+            }
+            return path.startsWith(folderPath + '/') && !path.endsWith('/.keep');
+        });
+
+        if (folderFiles.length === 0) {
+            toast.error('Folder is empty');
+            return;
+        }
+
+        // Add files to zip
+        folderFiles.forEach(([filePath, fileData]) => {
+            // Remove the folder prefix to maintain relative structure
+            const relativePath = folderPath === '' ? filePath : filePath.replace(folderPath + '/', '');
+            zip.file(relativePath, fileData.content || '');
+        });
+
+        try {
+            toast.loading('Creating ZIP file...', { id: 'zip-download' });
+            const content = await zip.generateAsync({ type: 'blob' });
+            
+            const url = window.URL.createObjectURL(content);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${folderName}.zip`;
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            
+            toast.success(`Downloaded ${folderName}.zip`, { id: 'zip-download' });
+        } catch (error) {
+            console.error('ZIP creation failed:', error);
+            toast.error('Failed to create ZIP file', { id: 'zip-download' });
+        }
+    };
+
+    // ── Check if Frontend Files Exist ─────────────────────────────────────────
+    const hasFrontendFiles = () => {
+        const frontendExtensions = ['html', 'htm', 'css', 'scss', 'js', 'jsx', 'ts', 'tsx'];
+        return Object.keys(files).some(fileName => {
+            const ext = fileName.split('.').pop()?.toLowerCase();
+            return frontendExtensions.includes(ext);
+        });
+    };
+
+    // ── Preview Generation Function ───────────────────────────────────────────
+    const generatePreview = () => {
+        // Collect HTML, CSS, and JS files
+        let htmlContent = '';
+        let cssContent = '';
+        let jsContent = '';
+
+        Object.entries(files).forEach(([fileName, fileData]) => {
+            const ext = fileName.split('.').pop()?.toLowerCase();
+            
+            if (ext === 'html' || ext === 'htm') {
+                htmlContent += fileData.content || '';
+            } else if (ext === 'css' || ext === 'scss') {
+                cssContent += fileData.content || '';
+            } else if (ext === 'js' || ext === 'jsx') {
+                jsContent += fileData.content || '';
+            }
+        });
+
+        // If no HTML file, create a basic structure
+        if (!htmlContent) {
+            htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview</title>
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>`;
+        }
+
+        // Inject CSS and JS into HTML
+        const previewHTML = htmlContent.replace(
+            '</head>',
+            `<style>${cssContent}</style></head>`
+        ).replace(
+            '</body>',
+            `<script>${jsContent}</script></body>`
+        );
+
+        return previewHTML;
     };
 
     // ── Chat Functions ────────────────────────────────────────────────────────
@@ -1274,6 +1433,81 @@ const EditorPage = () => {
 
                     ctx.stroke();
 
+                } else if (drawTool === 'diamond') {
+                    // Diamond shape for decision nodes
+                    const centerX = startPos.x + dx / 2;
+                    const centerY = startPos.y + dy / 2;
+                    ctx.moveTo(centerX, startPos.y);
+                    ctx.lineTo(startPos.x + dx, centerY);
+                    ctx.lineTo(centerX, startPos.y + dy);
+                    ctx.lineTo(startPos.x, centerY);
+                    ctx.closePath();
+                    ctx.stroke();
+
+                } else if (drawTool === 'cylinder') {
+                    // Cylinder shape for databases
+                    const ellipseHeight = Math.abs(dy) * 0.15;
+                    ctx.ellipse(startPos.x + dx / 2, startPos.y + ellipseHeight, Math.abs(dx) / 2, ellipseHeight, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(startPos.x, startPos.y + ellipseHeight);
+                    ctx.lineTo(startPos.x, startPos.y + dy - ellipseHeight);
+                    ctx.moveTo(startPos.x + dx, startPos.y + ellipseHeight);
+                    ctx.lineTo(startPos.x + dx, startPos.y + dy - ellipseHeight);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.ellipse(startPos.x + dx / 2, startPos.y + dy - ellipseHeight, Math.abs(dx) / 2, ellipseHeight, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                } else if (drawTool === 'hexagon') {
+                    // Hexagon shape for processes
+                    const w = dx;
+                    const h = dy;
+                    const offset = w * 0.2;
+                    ctx.moveTo(startPos.x + offset, startPos.y);
+                    ctx.lineTo(startPos.x + w - offset, startPos.y);
+                    ctx.lineTo(startPos.x + w, startPos.y + h / 2);
+                    ctx.lineTo(startPos.x + w - offset, startPos.y + h);
+                    ctx.lineTo(startPos.x + offset, startPos.y + h);
+                    ctx.lineTo(startPos.x, startPos.y + h / 2);
+                    ctx.closePath();
+                    ctx.stroke();
+
+                } else if (drawTool === 'parallelogram') {
+                    // Parallelogram for data/input
+                    const offset = dx * 0.2;
+                    ctx.moveTo(startPos.x + offset, startPos.y);
+                    ctx.lineTo(startPos.x + dx, startPos.y);
+                    ctx.lineTo(startPos.x + dx - offset, startPos.y + dy);
+                    ctx.lineTo(startPos.x, startPos.y + dy);
+                    ctx.closePath();
+                    ctx.stroke();
+
+                } else if (drawTool === 'doubleArrow') {
+                    // Double-headed arrow for relationships
+                    const headLength = 15;
+                    const angle = Math.atan2(dy, dx);
+                    
+                    // Main line
+                    ctx.moveTo(startPos.x, startPos.y);
+                    ctx.lineTo(startPos.x + dx, startPos.y + dy);
+                    ctx.stroke();
+                    
+                    // First arrowhead
+                    ctx.beginPath();
+                    ctx.moveTo(startPos.x + dx, startPos.y + dy);
+                    ctx.lineTo(startPos.x + dx - headLength * Math.cos(angle - Math.PI / 6), startPos.y + dy - headLength * Math.sin(angle - Math.PI / 6));
+                    ctx.moveTo(startPos.x + dx, startPos.y + dy);
+                    ctx.lineTo(startPos.x + dx - headLength * Math.cos(angle + Math.PI / 6), startPos.y + dy - headLength * Math.sin(angle + Math.PI / 6));
+                    ctx.stroke();
+                    
+                    // Second arrowhead (at start)
+                    ctx.beginPath();
+                    ctx.moveTo(startPos.x, startPos.y);
+                    ctx.lineTo(startPos.x + headLength * Math.cos(angle - Math.PI / 6), startPos.y + headLength * Math.sin(angle - Math.PI / 6));
+                    ctx.moveTo(startPos.x, startPos.y);
+                    ctx.lineTo(startPos.x + headLength * Math.cos(angle + Math.PI / 6), startPos.y + headLength * Math.sin(angle + Math.PI / 6));
+                    ctx.stroke();
                 }
 
             }
@@ -1439,18 +1673,22 @@ const EditorPage = () => {
 
                             <div className="custom-modal-header">
                                 <h3>
-                                    {modalConfig.type === 'create' ? '📄 New File' :
-                                     modalConfig.type === 'create-folder' ? '📁 New Folder' :
-                                     (modalConfig.type === 'rename' || modalConfig.type === 'rename-folder') ? '✏️ Rename' :
-                                     '🗑️ Delete'}
+                                    {modalConfig.type === 'create' ? 'New File' :
+                                     modalConfig.type === 'create-folder' ? 'New Folder' :
+                                     (modalConfig.type === 'rename' || modalConfig.type === 'rename-folder') ? 'Rename' :
+                                     'Delete'}
                                 </h3>
                             </div>
 
                             <div className="custom-modal-body">
                                 {(modalConfig.type === 'delete' || modalConfig.type === 'delete-folder') ? (
                                     <div>
-                                        <p>Delete <span className="highlight-file">{modalConfig.targetFile.split('/').pop()}</span>?</p>
-                                        {modalConfig.type === 'delete-folder' && <p style={{ color: '#f87171', fontSize: '0.8rem', marginTop: '8px' }}>⚠️ All files inside will be deleted.</p>}
+                                        <p>Are you sure you want to delete <span className="highlight-file">{modalConfig.targetFile.split('/').pop()}</span>?</p>
+                                        {modalConfig.type === 'delete-folder' && (
+                                            <div className="warning-message">
+                                                <p>All files and subfolders inside will be permanently deleted.</p>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="modal-field">
@@ -1733,7 +1971,12 @@ const EditorPage = () => {
                         <button className={`view-btn ${viewMode === 'editor' ? 'active' : ''}`} onClick={() => setViewMode('editor')}>
                             <FileCode size={14} /> IDE
                         </button>
-                        <button className={`view-btn ${viewMode === 'preview' ? 'active' : ''}`} onClick={() => setViewMode('preview')}>
+                        <button 
+                            className={`view-btn ${viewMode === 'preview' ? 'active' : ''}`} 
+                            onClick={() => hasFrontendFiles() && setViewMode('preview')}
+                            disabled={!hasFrontendFiles()}
+                            title={!hasFrontendFiles() ? 'Preview only available for HTML/CSS/JS files' : 'Preview'}
+                        >
                             <Monitor size={14} /> Preview
                         </button>
                         <button className={`view-btn ${viewMode === 'whiteboard' ? 'active' : ''}`} onClick={() => setViewMode('whiteboard')}>
@@ -1816,7 +2059,7 @@ const EditorPage = () => {
                                         <div className="folder-header root-folder-header" onClick={() => toggleFolder('/')}>
                                             <span className="tree-arrow">{expandedFolders.has('/') ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</span>
                                             {expandedFolders.has('/') ? <FolderOpen size={14} style={{ color: '#e2a04a', flexShrink: 0 }} /> : <Folder size={14} style={{ color: '#e2a04a', flexShrink: 0 }} />}
-                                            <span className="folder-name-text root-name" style={{ flex: 1 }}>{workspaceName}</span>
+                                            <span className="folder-name-text root-name" style={{ flex: 1 }}>{workspaceFolderName}</span>
                                             {canWrite && (
                                                 <div className="folder-actions" style={{ display: 'flex', gap: '4px' }}>
                                                     <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFile(''); }} title="New File in root"><FilePlus size={12} /></button>
@@ -2056,6 +2299,41 @@ const EditorPage = () => {
 
                     </div>
 
+                    {/* ── PREVIEW CONTAINER ──────────────────────────────────────────── */}
+                    <div className="preview-container" style={{ display: viewMode === 'preview' ? 'flex' : 'none', minHeight: 0, overflow: 'hidden' }}>
+                        <div className="preview-main">
+                            <div className="preview-toolbar">
+                                <div className="preview-info">
+                                    <Monitor size={16} />
+                                    <span>Live Preview</span>
+                                </div>
+                                <button 
+                                    className="preview-refresh-btn"
+                                    onClick={() => {
+                                        const iframe = document.getElementById('preview-iframe');
+                                        if (iframe) {
+                                            iframe.srcdoc = generatePreview();
+                                        }
+                                    }}
+                                    title="Refresh Preview"
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div className="preview-frame-wrapper">
+                                <iframe
+                                    id="preview-iframe"
+                                    className="preview-iframe"
+                                    title="Preview"
+                                    sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
+                                    srcDoc={generatePreview()}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
 
 
                     <div className="whiteboard-container" style={{ display: viewMode === 'whiteboard' ? 'flex' : 'none', minHeight: 0, overflow: 'hidden' }}>
@@ -2086,6 +2364,17 @@ const EditorPage = () => {
                                     <button className={`icon-tool ${drawTool === 'line' ? 'active' : ''}`} onClick={() => setDrawTool('line')} title="Line"><div className="mini-shape line"></div></button>
                                     <button className={`icon-tool ${drawTool === 'triangle' ? 'active' : ''}`} onClick={() => setDrawTool('triangle')} title="Triangle"><div className="mini-shape triangle"></div></button>
                                     <button className={`icon-tool ${drawTool === 'arrow' ? 'active' : ''}`} onClick={() => setDrawTool('arrow')} title="Arrow"><ChevronRight size={16} /></button>
+                                </div>
+
+                                <div className="toolbar-divider" />
+
+                                {/* Advanced Diagram Shapes */}
+                                <div className="toolbar-group">
+                                    <button className={`icon-tool ${drawTool === 'diamond' ? 'active' : ''}`} onClick={() => setDrawTool('diamond')} title="Diamond (Decision)"><div className="mini-shape diamond"></div></button>
+                                    <button className={`icon-tool ${drawTool === 'cylinder' ? 'active' : ''}`} onClick={() => setDrawTool('cylinder')} title="Cylinder (Database)"><div className="mini-shape cylinder"></div></button>
+                                    <button className={`icon-tool ${drawTool === 'hexagon' ? 'active' : ''}`} onClick={() => setDrawTool('hexagon')} title="Hexagon (Process)"><div className="mini-shape hexagon"></div></button>
+                                    <button className={`icon-tool ${drawTool === 'parallelogram' ? 'active' : ''}`} onClick={() => setDrawTool('parallelogram')} title="Parallelogram (Data)"><div className="mini-shape parallelogram"></div></button>
+                                    <button className={`icon-tool ${drawTool === 'doubleArrow' ? 'active' : ''}`} onClick={() => setDrawTool('doubleArrow')} title="Double Arrow (Relationship)"><div className="mini-shape double-arrow"></div></button>
                                 </div>
 
 
