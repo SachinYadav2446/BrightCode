@@ -20,7 +20,7 @@ import {
 
     Mic, MicOff, Video, VideoOff, PhoneOff, Phone, Plus,
     ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Share2, Download,
-    Folder, FolderOpen, FolderPlus, File as FileIcon
+    Folder, FolderOpen, FolderPlus, File as FileIcon, X
 } from 'lucide-react';
 
 import axios from 'axios';
@@ -134,11 +134,13 @@ const EditorPage = () => {
 
     const [adminId, setAdminId] = useState(null);
     const [myId, setMyId] = useState(null);
-    const [myPermission, setMyPermission] = useState('write');
+    const [myPermission, setMyPermission] = useState('viewer'); // Default to viewer
     const [workspaceOwner, setWorkspaceOwner] = useState('');
     const [showEndSessionModal, setShowEndSessionModal] = useState(false);
 
     const isAdmin = adminId === myId;
+    const canWrite = isAdmin || myPermission === 'writer';
+    const isViewer = myPermission === 'viewer' && !isAdmin;
 
     // Workspace folder name: from server-sent owner, or fallback to current user
     const workspaceName = (workspaceOwner || user?.username || 'WORKSPACE').toUpperCase();
@@ -1373,12 +1375,14 @@ const EditorPage = () => {
                                     ? <FolderOpen size={14} style={{ color: '#e2a04a', flexShrink: 0 }} />
                                     : <Folder size={14} style={{ color: '#e2a04a', flexShrink: 0 }} />}
                                 <span className="folder-name-text" style={{ flex: 1, fontSize: '0.85rem' }}>{name}</span>
-                                <div className="folder-actions" style={{ display: 'flex', gap: '4px' }}>
-                                    <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFile(currentPath); }} title="New File"><FilePlus size={12} /></button>
-                                    <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFolder(currentPath); }} title="New Folder"><FolderPlus size={12} /></button>
-                                    <button className="icon-btn-ghost" onClick={(e) => renameFolder(e, currentPath)} title="Rename"><Edit2 size={12} /></button>
-                                    <button className="icon-btn-ghost" onClick={(e) => deleteFolder(e, currentPath)} title="Delete"><Trash2 size={12} /></button>
-                                </div>
+                                {canWrite && (
+                                    <div className="folder-actions" style={{ display: 'flex', gap: '4px' }}>
+                                        <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFile(currentPath); }} title="New File"><FilePlus size={12} /></button>
+                                        <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFolder(currentPath); }} title="New Folder"><FolderPlus size={12} /></button>
+                                        <button className="icon-btn-ghost" onClick={(e) => renameFolder(e, currentPath)} title="Rename"><Edit2 size={12} /></button>
+                                        <button className="icon-btn-ghost" onClick={(e) => deleteFolder(e, currentPath)} title="Delete"><Trash2 size={12} /></button>
+                                    </div>
+                                )}
                             </div>
                             <AnimatePresence>
                                 {isExpanded && (
@@ -1410,10 +1414,12 @@ const EditorPage = () => {
                             <FileIcon size={13} style={{ color: getFileColor(name), flexShrink: 0 }} />
                             <span className="file-name-text">{name}</span>
                         </div>
-                        <div className="file-actions" style={{ display: 'flex', gap: '4px' }}>
-                            <button className="icon-btn-ghost" onClick={(e) => renameFile(e, currentPath)} title="Rename"><Edit2 size={12} /></button>
-                            <button className="icon-btn-ghost" onClick={(e) => deleteFile(e, currentPath)} title="Delete"><Trash2 size={12} /></button>
-                        </div>
+                        {canWrite && (
+                            <div className="file-actions" style={{ display: 'flex', gap: '4px' }}>
+                                <button className="icon-btn-ghost" onClick={(e) => renameFile(e, currentPath)} title="Rename"><Edit2 size={12} /></button>
+                                <button className="icon-btn-ghost" onClick={(e) => deleteFile(e, currentPath)} title="Delete"><Trash2 size={12} /></button>
+                            </div>
+                        )}
                     </div>
                 );
             });
@@ -1811,10 +1817,12 @@ const EditorPage = () => {
                                             <span className="tree-arrow">{expandedFolders.has('/') ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</span>
                                             {expandedFolders.has('/') ? <FolderOpen size={14} style={{ color: '#e2a04a', flexShrink: 0 }} /> : <Folder size={14} style={{ color: '#e2a04a', flexShrink: 0 }} />}
                                             <span className="folder-name-text root-name" style={{ flex: 1 }}>{workspaceName}</span>
-                                            <div className="folder-actions" style={{ display: 'flex', gap: '4px' }}>
-                                                <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFile(''); }} title="New File in root"><FilePlus size={12} /></button>
-                                                <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFolder(''); }} title="New Folder in root"><FolderPlus size={12} /></button>
-                                            </div>
+                                            {canWrite && (
+                                                <div className="folder-actions" style={{ display: 'flex', gap: '4px' }}>
+                                                    <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFile(''); }} title="New File in root"><FilePlus size={12} /></button>
+                                                    <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFolder(''); }} title="New Folder in root"><FolderPlus size={12} /></button>
+                                                </div>
+                                            )}
                                         </div>
                                         <AnimatePresence>
                                             {expandedFolders.has('/') && (
@@ -1822,7 +1830,7 @@ const EditorPage = () => {
                                                     {Object.keys(fileTree.children).length === 0 ? (
                                                         <div className="empty-folder-hint">
                                                             <span>No files yet.</span>
-                                                            <button onClick={() => createNewFile('')} className="hint-btn">+ New File</button>
+                                                            {canWrite && <button onClick={() => createNewFile('')} className="hint-btn">+ New File</button>}
                                                         </div>
                                                     ) : renderFileTree(fileTree, '')}
                                                 </motion.div>
@@ -1837,13 +1845,56 @@ const EditorPage = () => {
                         {sidebarView === 'collaborators' && (
                             <div className="sidebar-section">
                                 <div className="user-list-full">
-                                    {clients.map(c => (
-                                        <div key={c?.id} className="user-item-full">
-                                            <div className="user-status-dot online" />
-                                            <span className="user-name">{c?.username}</span>
-                                            {c?.id === adminId && <span className="owner-tag">OWNER</span>}
-                                        </div>
-                                    ))}
+                                    {clients.map(c => {
+                                        const userRole = c?.id === adminId ? 'admin' : (c?.permission || 'viewer');
+                                        return (
+                                            <div key={c?.id} className="user-item-full">
+                                                <div className="user-info-group">
+                                                    <div className="user-status-dot online" />
+                                                    <span className="user-name">
+                                                        {c?.username}
+                                                        {c?.id === myId && <span className="you-tag"> (You)</span>}
+                                                    </span>
+                                                    <span className={`role-badge ${userRole}`}>
+                                                        {userRole === 'admin' ? 'ADMIN' : userRole === 'writer' ? 'WRITER' : 'VIEWER'}
+                                                    </span>
+                                                </div>
+                                                <div className="user-actions">
+                                                    {isAdmin && c?.id !== myId && c?.id !== adminId && (
+                                                        <>
+                                                            <button 
+                                                                className={`role-toggle-btn ${c?.permission === 'writer' ? 'active' : ''}`}
+                                                                onClick={() => {
+                                                                    if (socketRef.current) {
+                                                                        const newPermission = c?.permission === 'writer' ? 'viewer' : 'writer';
+                                                                        socketRef.current.emit('change-permission', { 
+                                                                            roomId, 
+                                                                            targetId: c?.id, 
+                                                                            permission: newPermission 
+                                                                        });
+                                                                    }
+                                                                }}
+                                                                title={c?.permission === 'writer' ? 'Revoke write access' : 'Grant write access'}
+                                                            >
+                                                                <Edit2 size={14} />
+                                                            </button>
+                                                            <button 
+                                                                className="kick-btn" 
+                                                                onClick={() => {
+                                                                    if (socketRef.current) {
+                                                                        socketRef.current.emit('kick-user', { roomId, targetId: c?.id });
+                                                                    }
+                                                                }}
+                                                                title="Remove user"
+                                                            >
+                                                                <X size={14} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -1859,15 +1910,18 @@ const EditorPage = () => {
                                             <span>Start the conversation!</span>
                                         </div>
                                     ) : (
-                                        chatMessages.map(msg => (
-                                            <div key={msg.id} className={`chat-message ${msg.username === user?.username ? 'own-message' : ''}`}>
-                                                <div className="chat-message-header">
-                                                    <span className="chat-username">{msg.username}</span>
-                                                    <span className="chat-time">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                        chatMessages.map(msg => {
+                                            const isOwnMessage = msg.username === user?.username;
+                                            return (
+                                                <div key={msg.id} className={`chat-message ${isOwnMessage ? 'own-message' : ''}`}>
+                                                    <div className="chat-message-header">
+                                                        <span className="chat-username">{isOwnMessage ? 'You' : msg.username}</span>
+                                                        <span className="chat-time">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                    </div>
+                                                    <div className="chat-message-text">{msg.message}</div>
                                                 </div>
-                                                <div className="chat-message-text">{msg.message}</div>
-                                            </div>
-                                        ))
+                                            );
+                                        })
                                     )}
                                     <div ref={chatEndRef} />
                                 </div>
@@ -1951,7 +2005,7 @@ const EditorPage = () => {
 
                                         minimap: { enabled: true },
 
-                                        readOnly: myPermission === 'read',
+                                        readOnly: !canWrite,
 
                                         scrollBeyondLastLine: false,
 
@@ -1982,11 +2036,13 @@ const EditorPage = () => {
                                         </div>
                                         <h2>No file selected</h2>
                                         <p>Select a file from the explorer to start building your vision.</p>
-                                        <div className="empty-state-actions">
-                                            <button onClick={() => createNewFile('')} className="empty-action-btn">
-                                                <FilePlus size={16} /> New File
-                                            </button>
-                                        </div>
+                                        {canWrite && (
+                                            <div className="empty-state-actions">
+                                                <button onClick={() => createNewFile('')} className="empty-action-btn">
+                                                    <FilePlus size={16} /> New File
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
