@@ -186,7 +186,22 @@ const Workspace = () => {
       {showCreateModal && (
         <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowCreateModal(false)}>
+            <button 
+              className="modal-close" 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (createdWorkspace) {
+                  // If on success screen, go back to name input
+                  setCreatedWorkspace(null);
+                  setWorkspaceName('');
+                } else {
+                  // If on name input screen, close modal
+                  setShowCreateModal(false);
+                }
+              }}
+              type="button"
+            >
               <X size={20} />
             </button>
             {!createdWorkspace ? (
@@ -206,6 +221,7 @@ const Workspace = () => {
                   className="modal-button primary" 
                   onClick={handleCreateWorkspace}
                   disabled={!workspaceName.trim()}
+                  type="button"
                 >
                   Create Workspace
                 </button>
@@ -219,11 +235,24 @@ const Workspace = () => {
                 <p className="modal-desc">Share this ID with your team to collaborate</p>
                 <div className="workspace-id-box">
                   <code className="workspace-id">{createdWorkspace.id}</code>
-                  <button className="copy-button" onClick={handleCopyId}>
+                  <button 
+                    className="copy-button workspace-copy-btn" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleCopyId();
+                    }}
+                    type="button"
+                    title="Copy workspace ID"
+                  >
                     {copied ? <Check size={16} /> : <Copy size={16} />}
                   </button>
                 </div>
-                <button className="modal-button primary" onClick={handleEnterWorkspace}>
+                <button 
+                  className="modal-button primary" 
+                  onClick={handleEnterWorkspace}
+                  type="button"
+                >
                   Enter Workspace <ArrowRight size={18} />
                 </button>
               </>

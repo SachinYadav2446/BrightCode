@@ -150,6 +150,7 @@
   position: relative;
   animation: slideUp 0.3s ease;
   box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(239, 68, 68, 0.1);
+  pointer-events: auto;
 }
 
 @keyframes slideUp {
@@ -178,11 +179,18 @@
   color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
   transition: all 0.2s ease;
+  z-index: 10;
+  pointer-events: auto;
+  padding: 0;
 }
 
 .modal-close:hover {
   background: rgba(239, 68, 68, 0.2);
   color: #ef4444;
+}
+
+.modal-close:active {
+  transform: scale(0.95);
 }
 
 .modal-title {
@@ -280,12 +288,15 @@
 .workspace-id-box {
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  gap: 16px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 16px;
-  padding: 16px 20px;
+  padding: 20px 24px;
   margin-bottom: 24px;
+  justify-content: space-between;
+  pointer-events: auto;
+  position: relative;
 }
 
 .workspace-id {
@@ -294,24 +305,81 @@
   font-size: 1rem;
   color: #ef4444;
   font-weight: 600;
+  word-break: break-all;
+  line-height: 1.5;
 }
 
 .copy-button {
-  background: rgba(239, 68, 68, 0.15);
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ef4444;
-  cursor: pointer;
+  background: #ef4444 !important;
+  border: 2px solid #ff6b6b !important;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
   transition: all 0.2s ease;
+  flex-shrink: 0 !important;
+  padding: 0 !important;
+  font-size: 0;
+  pointer-events: auto !important;
+  z-index: 100 !important;
+  position: relative !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
-.copy-button:hover {
-  background: rgba(239, 68, 68, 0.3);
+.workspace-copy-btn {
+  background: #ef4444 !important;
+  border: 2px solid #ff6b6b !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  border-radius: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease;
+  flex-shrink: 0 !important;
+  padding: 0 !important;
+  font-size: 0;
+  pointer-events: auto !important;
+  z-index: 100 !important;
+  position: relative !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  top: auto !important;
+  right: auto !important;
+  left: auto !important;
+  bottom: auto !important;
+}
+
+.copy-button svg,
+.workspace-copy-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  stroke-width: 2 !important;
+  color: #ffffff !important;
+  fill: none !important;
+  display: block !important;
+}
+
+.copy-button:hover,
+.workspace-copy-btn:hover {
+  background: #ff6b6b !important;
+  border-color: #ff8787 !important;
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+}
+
+.copy-button:active,
+.workspace-copy-btn:active {
+  transform: scale(0.95);
 }
 
 @media (max-width: 768px) {
