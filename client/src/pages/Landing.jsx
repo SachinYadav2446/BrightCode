@@ -364,17 +364,17 @@ const Landing = () => {
               <div className="module-cta-row">
                 <button
                   className="premium-module-btn"
-                  onClick={() => navigate('/user-module')}
+                  onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   <span className="btn-content">
-                    Enter User Guide <ArrowRight size={16} />
+                    Learn More <ArrowRight size={16} />
                   </span>
                 </button>
                 <button
                   className="module-secondary-link"
-                  onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
+                  onClick={() => navigate('/hub')}
                 >
-                  View changelog →
+                  Go to Dashboard →
                 </button>
               </div>
             </motion.div>
