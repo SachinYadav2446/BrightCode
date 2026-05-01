@@ -2740,6 +2740,30 @@ app.get('/code-wars/debug/room/:roomId', authenticateToken, (req, res) => {
     }
 });
 
+// Debug endpoint to get question history stats
+app.get('/code-wars/debug/question-history/:factionId', authenticateToken, (req, res) => {
+    const { factionId } = req.params;
+    
+    try {
+        const stats = intraFactionArena.getQuestionHistoryStats(factionId);
+        res.json(stats);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint to clear question history
+app.post('/code-wars/debug/clear-history/:factionId', authenticateToken, (req, res) => {
+    const { factionId } = req.params;
+    
+    try {
+        const result = intraFactionArena.clearQuestionHistory(factionId);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ── INTER-FACTION BATTLES (Original System) ────────────────────────────────
 
 // Join game queue
