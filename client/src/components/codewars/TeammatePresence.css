@@ -1,0 +1,264 @@
+/* ============================================================================
+   TEAMMATE PRESENCE STYLES
+   ============================================================================ */
+
+.teammate-presence {
+  background: #252526;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  border: 1px solid #3e3e42;
+}
+
+/* ============================================================================
+   PRESENCE HEADER
+   ============================================================================ */
+
+.presence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #3e3e42;
+}
+
+.presence-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #cccccc;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.presence-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: #667eea;
+  color: white;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ============================================================================
+   PRESENCE LIST
+   ============================================================================ */
+
+.presence-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.presence-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.presence-item:hover {
+  background: #2d2d30;
+}
+
+.presence-item.current-user {
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.presence-item.offline {
+  opacity: 0.5;
+}
+
+/* ============================================================================
+   STATUS INDICATOR
+   ============================================================================ */
+
+.presence-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.presence-item.offline .presence-indicator {
+  animation: none;
+  box-shadow: none;
+}
+
+/* ============================================================================
+   PRESENCE INFO
+   ============================================================================ */
+
+.presence-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0; /* Allow text truncation */
+}
+
+.presence-username {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.you-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #667eea;
+  margin-left: 4px;
+}
+
+.presence-status {
+  font-size: 11px;
+  color: #888;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ============================================================================
+   TYPING INDICATOR
+   ============================================================================ */
+
+.presence-status.typing {
+  color: #667eea;
+  font-weight: 500;
+}
+
+.typing-dots {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.typing-dots span {
+  width: 4px;
+  height: 4px;
+  background: #667eea;
+  border-radius: 50%;
+  animation: typing-bounce 1.4s ease-in-out infinite;
+}
+
+.typing-dots span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing-bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+  30% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+   EMPTY STATE
+   ============================================================================ */
+
+.presence-empty {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.presence-empty p {
+  margin: 0;
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .teammate-presence {
+    padding: 10px;
+    margin-bottom: 12px;
+  }
+  
+  .presence-header {
+    margin-bottom: 10px;
+  }
+  
+  .presence-title {
+    font-size: 12px;
+  }
+  
+  .presence-item {
+    padding: 6px;
+  }
+  
+  .presence-username {
+    font-size: 12px;
+  }
+  
+  .presence-status {
+    font-size: 10px;
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .presence-indicator {
+    animation: none;
+  }
+  
+  .typing-dots span {
+    animation: none;
+  }
+  
+  .presence-item {
+    transition: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .teammate-presence {
+    border: 2px solid currentColor;
+  }
+  
+  .presence-item.current-user {
+    border: 2px solid #667eea;
+  }
+}
