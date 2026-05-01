@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { initSocket } from '../socket';
+import CollaborativeCodeEditor from '../components/codewars/CollaborativeCodeEditor';
 import './CodeWarsArena.css';
 
 const GAME_MODES = {
@@ -77,22 +78,62 @@ const CodeWarsArena = () => {
             return;
         }
         
+        console.log('🎮 CodeWarsArena mounting, user:', user.username);
+        
         // Setup socket first
         const s = setupSocketConnection();
         setSocket(s);
         
-        // Then initialize arena
-        initializeArena(s);
+        // Wait for socket to connect before initializing
+        const initTimeout = setTimeout(() => {
+            console.log('⏰ Socket connection timeout, initializing anyway...');
+            initializeArena(s);
+        }, 3000); // Wait 3 seconds for socket
+        
+        const handleConnect = () => {
+            console.log('✅ Socket connected, initializing arena...');
+            clearTimeout(initTimeout);
+            initializeArena(s);
+        };
+        
+        if (s.connected) {
+            // Already connected
+            handleConnect();
+        } else {
+            // Wait for connection
+            s.once('connect', handleConnect);
+        }
         
         return () => {
+            clearTimeout(initTimeout);
             if (s) {
+                s.off('connect', handleConnect);
                 s.disconnect();
             }
         };
     }, [user]);
 
     const setupSocketConnection = () => {
+        console.log('🔌 Setting up socket connection...');
         const s = initSocket();
+        
+        // Connection status logging
+        s.on('connect', () => {
+            console.log('✅ Socket connected successfully');
+        });
+        
+        s.on('connect_error', (error) => {
+            console.error('❌ Socket connection error:', error);
+            toast.error('Failed to connect to server. Please check if the server is running.');
+        });
+        
+        s.on('disconnect', (reason) => {
+            console.warn('⚠️ Socket disconnected:', reason);
+            if (reason === 'io server disconnect') {
+                // Server disconnected, try to reconnect
+                s.connect();
+            }
+        });
         
         // Socket-based room events (like workspace system)
         s.on('cw-room-created', (data) => {
@@ -106,6 +147,8 @@ const CodeWarsArena = () => {
                 if (data.room.factionId) {
                     loadFactionRoomsViaSocket(s, data.room.factionId);
                 }
+            } else {
+                toast.error(data.error || 'Failed to create room');
             }
         });
 
@@ -116,6 +159,8 @@ const CodeWarsArena = () => {
                 setCurrentRoom(data.room);
                 setGameState('room');
                 toast.success(`Joined as ${data.role}!`);
+            } else {
+                toast.error(data.error || 'Failed to join room');
             }
         });
 
@@ -208,6 +253,7 @@ const CodeWarsArena = () => {
             toast.success(`${data.username} solved a problem! (+${data.points} points)`);
         });
         
+        console.log('✅ Socket event listeners registered');
         return s;
     };
 
@@ -231,14 +277,23 @@ const CodeWarsArena = () => {
 
     const initializeArena = async (socketInstance) => {
         try {
+            console.log('🎮 Initializing Code Wars Arena...');
+            console.log('👤 User:', user?.username, 'ID:', user?.id);
+            console.log('🔌 Socket connected:', socketInstance?.connected);
+            
             // Get user's faction
+            console.log('📡 Fetching factions from server...');
             const factionsRes = await axios.get('http://localhost:5051/factions');
+            console.log('✅ Factions response:', factionsRes.data);
+            
             const userFaction = factionsRes.data.find(f => 
                 f.members?.some(m => m.username === user.username)
             );
             
             if (!userFaction) {
+                console.error('❌ User not in any faction');
                 toast.error('You must join a faction to participate in Code Wars!');
+                setLoading(false);
                 navigate('/factions');
                 return;
             }
@@ -252,9 +307,12 @@ const CodeWarsArena = () => {
             
             // Check if already in a room
             try {
+                console.log('🔍 Checking if user is already in a room...');
                 const roomRes = await axios.get('http://localhost:5051/code-wars/my-room', {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
                 });
+                
+                console.log('✅ User is in room:', roomRes.data.id);
                 
                 // Validate that the room actually exists on the server
                 try {
@@ -263,6 +321,7 @@ const CodeWarsArena = () => {
                     });
                     
                     if (roomValidation.data.roomExists) {
+                        console.log('✅ Room validated on server');
                         setCurrentRoom(roomRes.data);
                         setGameState(roomRes.data.status === 'active' ? 'game' : 'room');
                         
@@ -288,20 +347,36 @@ const CodeWarsArena = () => {
                 }
             } catch (err) {
                 // Not in a room, that's fine
+                console.log('ℹ️ User not in any room (this is normal)');
             }
             
             // Get faction rooms via socket - PASS FACTION ID DIRECTLY
-            if (socketInstance) {
+            if (socketInstance && socketInstance.connected) {
                 console.log('📋 Loading faction rooms for:', userFaction.id);
                 loadFactionRoomsViaSocket(socketInstance, userFaction.id);
-            }
-            if (socketInstance) {
-                loadFactionRoomsViaSocket(socketInstance);
+            } else {
+                console.warn('⚠️ Socket not connected, cannot load faction rooms');
+                toast.error('Socket not connected. Some features may not work.');
             }
             
+            console.log('✅ Arena initialization complete');
+            
         } catch (error) {
-            console.error('Failed to initialize arena:', error);
-            toast.error('Failed to load Code Wars Arena');
+            console.error('❌ Failed to initialize arena:', error);
+            console.error('Error details:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
+            
+            if (error.response?.status === 401) {
+                toast.error('Authentication failed. Please log in again.');
+                navigate('/auth');
+            } else if (error.message.includes('Network Error')) {
+                toast.error('Cannot connect to server. Please check if the server is running.');
+            } else {
+                toast.error(`Failed to load Code Wars Arena: ${error.message}`);
+            }
         } finally {
             setLoading(false);
         }
@@ -312,11 +387,6 @@ const CodeWarsArena = () => {
     };
 
     const createRoom = async () => {
-        if (!socket) {
-            toast.error('Socket not connected. Please refresh the page.');
-            return;
-        }
-        
         if (!user || !user.id) {
             toast.error('User authentication error. Please log in again.');
             navigate('/auth');
@@ -325,22 +395,36 @@ const CodeWarsArena = () => {
 
         try {
             setLoading(true);
-            console.log('🏗️ Creating room via socket...', {
+            console.log('🏗️ Creating room...', {
                 userId: user.id,
                 username: user.username,
-                factionId: myFaction.id,
-                roomConfig: createForm
-            });
-            
-            // Emit socket event (like workspace system)
-            socket.emit('cw-create-room', {
+                factionId: myFaction?.id,
                 roomConfig: createForm,
-                userId: user.id,
-                username: user.username,
-                factionId: myFaction.id
+                socketConnected: socket?.connected
             });
             
-            // Response will come via 'cw-room-created' event
+            // Try socket first if connected
+            if (socket && socket.connected) {
+                console.log('📡 Using socket to create room...');
+                socket.emit('cw-create-room', {
+                    roomConfig: createForm,
+                    userId: user.id,
+                    username: user.username,
+                    factionId: myFaction.id
+                });
+                
+                // Set timeout in case socket doesn't respond
+                setTimeout(() => {
+                    if (loading) {
+                        console.warn('⏰ Socket timeout, falling back to HTTP...');
+                        createRoomViaHTTP();
+                    }
+                }, 5000);
+            } else {
+                // Fallback to HTTP if socket not connected
+                console.log('📡 Socket not connected, using HTTP...');
+                await createRoomViaHTTP();
+            }
             
         } catch (error) {
             console.error('Create room error:', error);
@@ -348,13 +432,57 @@ const CodeWarsArena = () => {
             setLoading(false);
         }
     };
+    
+    const createRoomViaHTTP = async () => {
+        try {
+            const response = await axios.post('http://localhost:5051/code-wars/create-room', {
+                name: createForm.name,
+                isPrivate: createForm.isPrivate,
+                password: createForm.password,
+                teamSize: createForm.teamSize,
+                maxTeams: createForm.maxTeams,
+                questionCount: createForm.questionCount,
+                timeLimit: createForm.timeLimit,
+                difficulty: createForm.difficulty,
+                allowSpectators: createForm.allowSpectators,
+                factionId: myFaction.id
+            }, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            console.log('✅ Room created via HTTP:', response.data);
+            setCurrentRoom(response.data.room);
+            setGameState('room');
+            setLoading(false);
+            toast.success(`Room ${response.data.room.id} created!`);
+            
+            // Join socket room if socket is available
+            if (socket && socket.connected) {
+                socket.emit('join-code-wars-room', {
+                    roomId: response.data.room.id,
+                    userId: user.id
+                });
+            }
+            
+            // Refresh room list
+            loadFactionRooms();
+            
+        } catch (error) {
+            console.error('HTTP create room error:', error);
+            setLoading(false);
+            
+            if (error.response?.status === 401) {
+                toast.error('Authentication failed. Please log in again.');
+                navigate('/auth');
+            } else if (error.message.includes('Network Error')) {
+                toast.error('Cannot connect to server. Please check if the server is running on port 5051.');
+            } else {
+                toast.error(error.response?.data?.error || 'Failed to create room');
+            }
+        }
+    };
 
     const joinRoom = async (roomId, password = '') => {
-        if (!socket) {
-            toast.error('Socket not connected. Please refresh the page.');
-            return;
-        }
-        
         if (!user || !user.id) {
             toast.error('User authentication error. Please log in again.');
             navigate('/auth');
@@ -378,35 +506,83 @@ const CodeWarsArena = () => {
                 return;
             }
             
-            console.log('🚪 Joining room via socket:', {
+            console.log('🚪 Joining room...', {
                 roomId: actualRoomId.toUpperCase().trim(),
                 userId: user.id,
                 username: user.username,
                 factionId: myFaction.id,
-                hasPassword: !!actualPassword
+                hasPassword: !!actualPassword,
+                socketConnected: socket?.connected
             });
             
-            // Emit socket event (like workspace system)
-            socket.emit('cw-join-room', {
-                roomId: actualRoomId.toUpperCase().trim(),
-                userId: user.id,
-                username: user.username,
-                factionId: myFaction.id,
-                password: actualPassword
-            });
-            
-            // Set a timeout in case socket doesn't respond
-            setTimeout(() => {
-                if (loading) {
-                    setLoading(false);
-                    toast.error('Join request timed out. Room may not exist.');
-                }
-            }, 10000); // 10 second timeout
+            // Try socket first if connected
+            if (socket && socket.connected) {
+                console.log('📡 Using socket to join room...');
+                socket.emit('cw-join-room', {
+                    roomId: actualRoomId.toUpperCase().trim(),
+                    userId: user.id,
+                    username: user.username,
+                    factionId: myFaction.id,
+                    password: actualPassword
+                });
+                
+                // Set timeout in case socket doesn't respond
+                setTimeout(() => {
+                    if (loading) {
+                        console.warn('⏰ Socket timeout, falling back to HTTP...');
+                        joinRoomViaHTTP(actualRoomId, actualPassword);
+                    }
+                }, 5000);
+            } else {
+                // Fallback to HTTP if socket not connected
+                console.log('📡 Socket not connected, using HTTP...');
+                await joinRoomViaHTTP(actualRoomId, actualPassword);
+            }
             
         } catch (error) {
             console.error('Join room error:', error);
             toast.error('Failed to join room');
             setLoading(false);
+        }
+    };
+    
+    const joinRoomViaHTTP = async (roomId, password) => {
+        try {
+            const response = await axios.post('http://localhost:5051/code-wars/join-room', {
+                roomId: roomId.toUpperCase().trim(),
+                password: password || ''
+            }, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            console.log('✅ Joined room via HTTP:', response.data);
+            setCurrentRoom(response.data.room);
+            setGameState('room');
+            setLoading(false);
+            toast.success('Joined room successfully!');
+            
+            // Join socket room if socket is available
+            if (socket && socket.connected) {
+                socket.emit('join-code-wars-room', {
+                    roomId: response.data.room.id,
+                    userId: user.id
+                });
+            }
+            
+        } catch (error) {
+            console.error('HTTP join room error:', error);
+            setLoading(false);
+            
+            if (error.response?.status === 401) {
+                toast.error('Authentication failed. Please log in again.');
+                navigate('/auth');
+            } else if (error.response?.status === 404) {
+                toast.error('Room not found. Please check the room code.');
+            } else if (error.message.includes('Network Error')) {
+                toast.error('Cannot connect to server. Please check if the server is running on port 5051.');
+            } else {
+                toast.error(error.response?.data?.error || 'Failed to join room');
+            }
         }
     };
 
@@ -590,6 +766,7 @@ const CodeWarsArena = () => {
                         <GameInterface 
                             room={currentRoom} 
                             user={user}
+                            socket={socket}
                             playerFinished={playerFinished}
                             onEndContest={endContest}
                         />
@@ -1564,7 +1741,7 @@ const ResultsScreen = ({ room, results, user, onBackToMenu }) => {
 };
 
 // Game Interface Component
-const GameInterface = ({ room, user, playerFinished, onEndContest }) => {
+const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [code, setCode] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -1791,44 +1968,62 @@ const GameInterface = ({ room, user, playerFinished, onEndContest }) => {
                     <span>Java Solution</span>
                 </div>
                 
-                <textarea
-                    className="code-editor"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    placeholder={currentQuestion.starterCode || "// Write your solution here"}
-                    spellCheck={false}
-                    disabled={isFinished}
-                />
-                
-                <div className="editor-actions">
-                    <button 
-                        className="submit-btn"
-                        onClick={submitSolution}
-                        disabled={submitting || !code.trim() || isFinished}
-                    >
-                        {submitting ? (
-                            <>
-                                <Loader className="spin" size={16} />
-                                Submitting...
-                            </>
-                        ) : (
-                            <>
-                                <Play size={16} />
-                                Submit Solution
-                            </>
-                        )}
-                    </button>
-                    
-                    {!isFinished && (
-                        <button 
-                            className="end-contest-btn"
-                            onClick={() => setShowEndConfirm(true)}
-                        >
-                            <LogOut size={16} />
-                            End Contest
-                        </button>
-                    )}
-                </div>
+                {/* Conditional rendering: Collaborative editor for team mode, standard editor for solo */}
+                {room.teamSize > 1 ? (
+                    <CollaborativeCodeEditor
+                        roomId={room.id}
+                        teamId={myTeam.id}
+                        questionId={currentQuestion.id}
+                        userId={user.id}
+                        username={user.username}
+                        socket={socket}
+                        initialCode={currentQuestion.starterCode || ''}
+                        language="java"
+                        onSubmit={submitSolution}
+                        disabled={isFinished || submitting}
+                    />
+                ) : (
+                    <>
+                        <textarea
+                            className="code-editor"
+                            value={code}
+                            onChange={(e) => setCode(e.target.value)}
+                            placeholder={currentQuestion.starterCode || "// Write your solution here"}
+                            spellCheck={false}
+                            disabled={isFinished}
+                        />
+                        
+                        <div className="editor-actions">
+                            <button 
+                                className="submit-btn"
+                                onClick={submitSolution}
+                                disabled={submitting || !code.trim() || isFinished}
+                            >
+                                {submitting ? (
+                                    <>
+                                        <Loader className="spin" size={16} />
+                                        Submitting...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Play size={16} />
+                                        Submit Solution
+                                    </>
+                                )}
+                            </button>
+                            
+                            {!isFinished && (
+                                <button 
+                                    className="end-contest-btn"
+                                    onClick={() => setShowEndConfirm(true)}
+                                >
+                                    <LogOut size={16} />
+                                    End Contest
+                                </button>
+                            )}
+                        </div>
+                    </>
+                )}
             </div>
             
             {/* End Contest Confirmation Modal */}
