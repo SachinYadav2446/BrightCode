@@ -38,7 +38,7 @@ const NavbarWrapper = () => {
   const location = useLocation();
   const { navbarHidden } = useAuth();
   
-  const hideOnPaths = ['/auth', '/editor'];
+  const hideOnPaths = ['/auth', '/editor', '/code-wars'];
   const isLanding = location.pathname === '/';
   const shouldHide = navbarHidden || isLanding || hideOnPaths.some(p => location.pathname.startsWith(p));
   
