@@ -115,6 +115,14 @@ loadFactions();
 const codeWarsArena = new CodeWarsArena(io, factions);
 const intraFactionArena = new IntraFactionArena(io, factions);
 
+// Prefetch popular LeetCode problems on server start
+const { prefetchLeetCodeProblems } = require('./codeWarQuestions');
+prefetchLeetCodeProblems().then(() => {
+    console.log('[LEETCODE] Prefetch complete - ready for battles!');
+}).catch(err => {
+    console.error('[LEETCODE] Prefetch failed:', err.message);
+});
+
 // ── XP → Level computation (matches client-side) ─────────────
 const computeLevel = (xp) => {
     if (xp >= 10000) return 'Grandmaster';
@@ -2060,7 +2068,7 @@ io.on('connection', (socket) => {
             
             const room = intraFactionArena.createRoom(userId, username, factionId, roomConfig);
             
-            // Join the socket room (use simple roomId like workspace)
+            // Join the socket room immediately
             socket.join(room.id);
             
             console.log(`✅ [CW Socket] Room ${room.id} created and joined`);
@@ -2071,8 +2079,17 @@ io.on('connection', (socket) => {
                 isPrivate: room.isPrivate,
                 factionId: room.factionId,
                 creatorId: room.creatorId,
+                status: room.status,
                 teams: room.teams.map(t => ({ id: t.id, players: t.players.length }))
             });
+            
+            // Verify room was stored
+            const verifyRoom = intraFactionArena.getRoomById(room.id);
+            if (verifyRoom) {
+                console.log(`✅ [CW Socket] Room ${room.id} verified in storage`);
+            } else {
+                console.error(`❌ [CW Socket] Room ${room.id} NOT found in storage after creation!`);
+            }
             
             // Send success response
             socket.emit('cw-room-created', {
@@ -2089,14 +2106,33 @@ io.on('connection', (socket) => {
             
         } catch (error) {
             console.error(`❌ [CW Socket] Create room error:`, error.message);
+            console.error(`❌ [CW Socket] Stack:`, error.stack);
             socket.emit('cw-error', { error: error.message });
         }
     });
 
     socket.on('cw-join-room', async ({ roomId, userId, username, factionId, password }) => {
         try {
-            console.log(`🚪 [CW Socket] User ${username} (ID: ${userId}) joining room ${roomId}`);
+            console.log(`🚪 [CW Socket] User ${username} (ID: ${userId}) attempting to join room ${roomId}`);
             console.log(`🚪 [CW Socket] Faction: ${factionId}, Has password: ${!!password}`);
+            console.log(`📊 [CW Socket] Current active rooms: ${intraFactionArena.activeRooms.size}`);
+            
+            // Debug: List all room IDs
+            if (intraFactionArena.activeRooms.size > 0) {
+                const roomIds = Array.from(intraFactionArena.activeRooms.keys());
+                console.log(`📊 [CW Socket] Available room IDs:`, roomIds);
+            }
+            
+            // Check if room exists
+            const roomExists = intraFactionArena.getRoomById(roomId);
+            if (!roomExists) {
+                console.error(`❌ [CW Socket] Room ${roomId} not found!`);
+                console.log(`📊 [CW Socket] Searched for: "${roomId}" (length: ${roomId.length})`);
+                socket.emit('cw-error', { error: `Room ${roomId} not found. It may have expired or been deleted.` });
+                return;
+            }
+            
+            console.log(`✅ [CW Socket] Room ${roomId} found! Status: ${roomExists.status}, Players: ${roomExists.teams.reduce((sum, t) => sum + t.players.length, 0)}`);
             
             const result = intraFactionArena.joinRoom(userId, username, factionId, roomId, password);
             
@@ -2128,6 +2164,7 @@ io.on('connection', (socket) => {
             
         } catch (error) {
             console.error(`❌ [CW Socket] Join room error:`, error.message);
+            console.error(`❌ [CW Socket] Stack:`, error.stack);
             socket.emit('cw-error', { error: error.message });
         }
     });
@@ -2182,6 +2219,38 @@ io.on('connection', (socket) => {
             
         } catch (error) {
             console.error(`❌ [CW Socket] Start game error:`, error.message);
+            socket.emit('cw-error', { error: error.message });
+        }
+    });
+    
+    // End player's contest early
+    socket.on('cw-end-contest', ({ roomId, userId, username }) => {
+        try {
+            console.log(`🏁 [CW Socket] User ${username} ending contest in room ${roomId}`);
+            
+            const result = intraFactionArena.endPlayerContest(roomId, userId);
+            
+            console.log(`✅ [CW Socket] Player finished: ${result.finishedCount}/${result.totalPlayers}`);
+            
+            // Notify the player
+            socket.emit('cw-contest-ended', {
+                success: true,
+                ...result
+            });
+            
+            // If all players finished, game will end automatically
+            // Otherwise, just update room state
+            if (!result.allFinished) {
+                const room = intraFactionArena.getRoomById(roomId);
+                if (room) {
+                    io.to(roomId).emit('cw-room-update', {
+                        room: intraFactionArena.sanitizeRoomForClient(room)
+                    });
+                }
+            }
+            
+        } catch (error) {
+            console.error(`❌ [CW Socket] End contest error:`, error.message);
             socket.emit('cw-error', { error: error.message });
         }
     });
