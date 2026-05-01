@@ -1,7 +1,7 @@
 // Intra-Faction Code Wars Arena - Custom Rooms System
 const { v4: uuidv4 } = require('uuid');
 const { compileAndRunJava } = require('./javaCompiler');
-const { getRandomQuestions, getQuestionById, GAME_MODES, DIFFICULTY_LEVELS } = require('./codeWarQuestions');
+const { getRandomQuestions, getQuestionById, GAME_MODES, DIFFICULTY_LEVELS, getRandomQuestionsWithGitHub } = require('./codeWarQuestions');
 
 class IntraFactionArena {
     constructor(io, factions) {
@@ -47,6 +47,7 @@ class IntraFactionArena {
             endTime: null,
             submissions: new Map(), // playerId -> submissions array
             scores: new Map(), // teamId -> score
+            finishedPlayers: new Set(), // Players who ended their contest early
             
             // Settings
             settings: {
@@ -287,8 +288,14 @@ class IntraFactionArena {
     async generateQuestionsForRoom(room) {
         const questions = [];
         
+        // Enable LeetCode by default (3000+ problems!)
+        const includeLeetCode = true;
+        const includeGitHub = false; // Can enable if you have GitHub sources
+        
+        console.log(`[ARENA] Generating ${room.questionCount} questions (difficulty: ${room.difficulty})`);
+        
         if (room.difficulty === 'mixed') {
-            // Mixed difficulty based on question count
+            // Calculate difficulty distribution
             const difficulties = [];
             const count = room.questionCount;
             
@@ -311,17 +318,42 @@ class IntraFactionArena {
                 [difficulties[i], difficulties[j]] = [difficulties[j], difficulties[i]];
             }
             
+            // Fetch questions for each difficulty
             for (const difficulty of difficulties) {
-                const randomQuestions = getRandomQuestions(1, difficulty);
+                const randomQuestions = await getRandomQuestionsWithGitHub(
+                    1, 
+                    difficulty, 
+                    includeGitHub,
+                    includeLeetCode
+                );
                 if (randomQuestions.length > 0) {
                     questions.push(randomQuestions[0]);
+                    console.log(`[ARENA] Added ${difficulty} question: ${randomQuestions[0].title}`);
                 }
             }
         } else {
             // Single difficulty
-            const randomQuestions = getRandomQuestions(room.questionCount, room.difficulty);
+            const randomQuestions = await getRandomQuestionsWithGitHub(
+                room.questionCount, 
+                room.difficulty,
+                includeGitHub,
+                includeLeetCode
+            );
             questions.push(...randomQuestions);
+            console.log(`[ARENA] Added ${randomQuestions.length} ${room.difficulty} questions`);
         }
+        
+        if (questions.length === 0) {
+            console.warn('[ARENA] No questions found! Falling back to local questions.');
+            // Fallback to local questions if LeetCode fails
+            const fallbackQuestions = getRandomQuestions(room.questionCount, room.difficulty);
+            questions.push(...fallbackQuestions);
+        }
+        
+        console.log(`[ARENA] Final question set: ${questions.length} questions`);
+        questions.forEach((q, i) => {
+            console.log(`  ${i + 1}. ${q.title} (${q.difficulty}) - ${q.source || 'local'}`);
+        });
         
         room.questions = questions;
     }
@@ -436,6 +468,62 @@ class IntraFactionArena {
             this.deleteRoom(roomId);
         }, 5 * 60 * 1000);
     }
+    
+    // ═══ PLAYER END CONTEST ═══
+    
+    endPlayerContest(roomId, userId) {
+        const room = this.activeRooms.get(roomId);
+        if (!room || room.status !== 'active') {
+            throw new Error('Game is not active');
+        }
+        
+        const player = this.findPlayerInRoom(room, userId);
+        if (!player || player.role !== 'player') {
+            throw new Error('Player not found in game');
+        }
+        
+        // Mark player as finished
+        if (!room.finishedPlayers) {
+            room.finishedPlayers = new Set();
+        }
+        room.finishedPlayers.add(userId);
+        
+        console.log(`[ARENA] Player ${player.player.username} ended their contest early`);
+        console.log(`[ARENA] Finished players: ${room.finishedPlayers.size}/${room.teams.reduce((sum, t) => sum + t.players.length, 0)}`);
+        
+        // Check if all players have finished
+        const totalPlayers = room.teams.reduce((sum, team) => sum + team.players.length, 0);
+        const allFinished = room.finishedPlayers.size >= totalPlayers;
+        
+        if (allFinished) {
+            console.log(`[ARENA] All players finished - ending game`);
+            this.endGame(roomId);
+        } else {
+            // Just notify that this player finished
+            this.notifyRoomUpdate(room, 'player-finished', {
+                userId,
+                username: player.player.username,
+                teamId: player.teamId,
+                finishedCount: room.finishedPlayers.size,
+                totalPlayers: totalPlayers
+            });
+        }
+        
+        this.activeRooms.set(roomId, room);
+        
+        return {
+            finished: true,
+            allFinished: allFinished,
+            finishedCount: room.finishedPlayers.size,
+            totalPlayers: totalPlayers
+        };
+    }
+    
+    isPlayerFinished(roomId, userId) {
+        const room = this.activeRooms.get(roomId);
+        if (!room || !room.finishedPlayers) return false;
+        return room.finishedPlayers.has(userId);
+    }
 
     // ═══ UTILITY METHODS ═══
     
@@ -506,6 +594,11 @@ class IntraFactionArena {
         }
         if (sanitized.submissions instanceof Map) {
             sanitized.submissions = Object.fromEntries(sanitized.submissions);
+        }
+        
+        // Convert Set to Array for finishedPlayers
+        if (sanitized.finishedPlayers instanceof Set) {
+            sanitized.finishedPlayers = Array.from(sanitized.finishedPlayers);
         }
         
         return sanitized;
