@@ -50,6 +50,7 @@ const CodeWarsArena = () => {
     const [socket, setSocket] = useState(null);
     const [loading, setLoading] = useState(true);
     const [playerFinished, setPlayerFinished] = useState(false); // Track if current player finished
+    const [gameResults, setGameResults] = useState(null); // Store final game results
     
     // Create room form state
     const [createForm, setCreateForm] = useState({
@@ -142,6 +143,7 @@ const CodeWarsArena = () => {
             setCurrentRoom(data.room);
             setGameState('game');
             setPlayerFinished(false); // Reset finished state
+            setGameResults(null); // Reset results
             toast.success('🎮 Game Started! Good luck!');
         });
 
@@ -158,9 +160,13 @@ const CodeWarsArena = () => {
             if (data.success) {
                 setPlayerFinished(true);
                 if (data.allFinished) {
-                    toast.success('All players finished! Game ending...');
+                    // All players finished - go to results immediately
+                    toast.success('All players finished! Showing results...');
+                    setGameState('results');
                 } else {
-                    toast.success(`You finished! ${data.finishedCount}/${data.totalPlayers} players done. Others can continue.`);
+                    // This player finished, waiting for others
+                    toast.success(`You finished! ${data.finishedCount}/${data.totalPlayers} players done. Waiting for others...`);
+                    setGameState('waiting'); // New waiting state
                 }
             }
         });
@@ -192,6 +198,7 @@ const CodeWarsArena = () => {
         // Legacy events for backward compatibility
         s.on('game-ended', (data) => {
             console.log('🏁 Game ended:', data);
+            setGameResults(data.results);
             setGameState('results');
             toast.success('Game completed!');
         });
@@ -575,6 +582,28 @@ const CodeWarsArena = () => {
                             user={user}
                             playerFinished={playerFinished}
                             onEndContest={endContest}
+                        />
+                    )}
+                    
+                    {gameState === 'waiting' && currentRoom && (
+                        <WaitingForPlayers 
+                            room={currentRoom}
+                            user={user}
+                        />
+                    )}
+                    
+                    {gameState === 'results' && currentRoom && (
+                        <ResultsScreen 
+                            room={currentRoom}
+                            results={gameResults}
+                            user={user}
+                            onBackToMenu={() => {
+                                setCurrentRoom(null);
+                                setGameState('menu');
+                                setPlayerFinished(false);
+                                setGameResults(null);
+                                loadFactionRooms();
+                            }}
                         />
                     )}
                 </AnimatePresence>
@@ -1302,6 +1331,290 @@ const TeamPanel = ({ team, room, user, isMyTeam, onSwitchTeam }) => {
         </div>
     );
 };
+// Waiting For Players Component (After ending contest early)
+const WaitingForPlayers = ({ room, user }) => {
+    const finishedCount = room.finishedPlayers ? room.finishedPlayers.length : 0;
+    const totalPlayers = room.teams.reduce((sum, team) => sum + team.players.length, 0);
+    
+    // Find player's info
+    let myPlayer = null;
+    let myTeam = null;
+    for (const team of room.teams) {
+        const player = team.players.find(p => p.id === user.id);
+        if (player) {
+            myPlayer = player;
+            myTeam = team;
+            break;
+        }
+    }
+    
+    return (
+        <motion.div
+            key="waiting"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="waiting-for-players"
+        >
+            <div className="waiting-content">
+                <div className="waiting-animation">
+                    <div className="pulse-ring"></div>
+                    <div className="pulse-ring delay-1"></div>
+                    <div className="pulse-ring delay-2"></div>
+                    <Clock size={64} className="waiting-icon" />
+                </div>
+                
+                <h2>Waiting for Other Players</h2>
+                <p>You've finished your contest! Great job!</p>
+                
+                <div className="waiting-stats">
+                    <div className="stat-card">
+                        <div className="stat-icon">
+                            <CheckCircle size={32} />
+                        </div>
+                        <div className="stat-info">
+                            <div className="stat-value">{finishedCount}/{totalPlayers}</div>
+                            <div className="stat-label">Players Finished</div>
+                        </div>
+                    </div>
+                    
+                    <div className="stat-card">
+                        <div className="stat-icon">
+                            <Trophy size={32} />
+                        </div>
+                        <div className="stat-info">
+                            <div className="stat-value">{myPlayer?.score || 0}</div>
+                            <div className="stat-label">Your Score</div>
+                        </div>
+                    </div>
+                    
+                    <div className="stat-card">
+                        <div className="stat-icon">
+                            <Target size={32} />
+                        </div>
+                        <div className="stat-info">
+                            <div className="stat-value">{myPlayer?.questionsCompleted || 0}/{room.questions.length}</div>
+                            <div className="stat-label">Questions Solved</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="players-status">
+                    <h3>Player Status</h3>
+                    <div className="players-grid">
+                        {room.teams.map(team => (
+                            team.players.map(player => {
+                                const isFinished = room.finishedPlayers && room.finishedPlayers.includes(player.id);
+                                return (
+                                    <div key={player.id} className={`player-status-card ${isFinished ? 'finished' : 'playing'}`}>
+                                        <div className="player-avatar">
+                                            {player.username.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="player-details">
+                                            <div className="player-name">{player.username}</div>
+                                            <div className="player-team">{team.name}</div>
+                                        </div>
+                                        <div className="player-status-badge">
+                                            {isFinished ? (
+                                                <>
+                                                    <CheckCircle size={16} />
+                                                    <span>Finished</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Loader className="spin" size={16} />
+                                                    <span>Playing</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ))}
+                    </div>
+                </div>
+                
+                <div className="waiting-message">
+                    <AlertCircle size={20} />
+                    <p>The game will end automatically when all players finish or time runs out.</p>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
+// Results Screen Component
+const ResultsScreen = ({ room, results, user, onBackToMenu }) => {
+    // Calculate results if not provided
+    const gameResults = results || calculateResults(room);
+    
+    function calculateResults(room) {
+        const teamResults = room.teams.map(team => ({
+            teamId: team.id,
+            teamName: team.name,
+            totalScore: room.scores?.[team.id] || 0,
+            questionsCompleted: team.questionsCompleted || 0,
+            players: team.players.map(p => ({
+                id: p.id,
+                username: p.username,
+                score: p.score || 0,
+                questionsCompleted: p.questionsCompleted || 0
+            }))
+        }));
+        
+        // Sort by score
+        teamResults.sort((a, b) => b.totalScore - a.totalScore);
+        
+        return {
+            winner: teamResults[0],
+            rankings: teamResults,
+            gameStats: {
+                totalQuestions: room.questions.length,
+                gameDuration: room.timeLimit,
+                totalPlayers: room.teams.reduce((sum, team) => sum + team.players.length, 0)
+            }
+        };
+    }
+    
+    const myTeam = room.teams.find(team => 
+        team.players.some(p => p.id === user.id)
+    );
+    
+    const myPlayer = myTeam?.players.find(p => p.id === user.id);
+    const isWinner = myTeam?.id === gameResults.winner.teamId;
+    
+    return (
+        <motion.div
+            key="results"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="results-screen"
+        >
+            <div className="results-header">
+                <div className="results-title">
+                    {isWinner ? (
+                        <>
+                            <Trophy size={48} className="trophy-icon gold" />
+                            <h1>Victory!</h1>
+                            <p>Your team won the battle!</p>
+                        </>
+                    ) : (
+                        <>
+                            <Award size={48} className="trophy-icon silver" />
+                            <h1>Battle Complete!</h1>
+                            <p>Well fought, warrior!</p>
+                        </>
+                    )}
+                </div>
+            </div>
+            
+            <div className="results-content">
+                {/* Personal Stats */}
+                <div className="personal-stats">
+                    <h2>Your Performance</h2>
+                    <div className="stats-grid">
+                        <div className="stat-box">
+                            <div className="stat-icon">
+                                <Star size={24} />
+                            </div>
+                            <div className="stat-value">{myPlayer?.score || 0}</div>
+                            <div className="stat-label">Points Earned</div>
+                        </div>
+                        
+                        <div className="stat-box">
+                            <div className="stat-icon">
+                                <CheckCircle size={24} />
+                            </div>
+                            <div className="stat-value">{myPlayer?.questionsCompleted || 0}/{gameResults.gameStats.totalQuestions}</div>
+                            <div className="stat-label">Questions Solved</div>
+                        </div>
+                        
+                        <div className="stat-box">
+                            <div className="stat-icon">
+                                <Users size={24} />
+                            </div>
+                            <div className="stat-value">{myTeam?.name}</div>
+                            <div className="stat-label">Your Team</div>
+                        </div>
+                    </div>
+                </div>
+                
+                {/* Team Rankings */}
+                <div className="team-rankings">
+                    <h2>Final Rankings</h2>
+                    <div className="rankings-list">
+                        {gameResults.rankings.map((team, index) => (
+                            <div 
+                                key={team.teamId} 
+                                className={`ranking-card ${team.teamId === myTeam?.id ? 'my-team' : ''} ${index === 0 ? 'winner' : ''}`}
+                            >
+                                <div className="rank-badge">
+                                    {index === 0 ? <Crown size={24} /> : `#${index + 1}`}
+                                </div>
+                                
+                                <div className="team-info">
+                                    <h3>{team.teamName}</h3>
+                                    <div className="team-score">
+                                        <Trophy size={16} />
+                                        <span>{team.totalScore} points</span>
+                                    </div>
+                                    <div className="team-progress">
+                                        <Target size={14} />
+                                        <span>{team.questionsCompleted} questions solved</span>
+                                    </div>
+                                </div>
+                                
+                                <div className="team-players">
+                                    {team.players.map(player => (
+                                        <div key={player.id} className="player-result">
+                                            <div className="player-avatar-small">
+                                                {player.username.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div className="player-result-info">
+                                                <div className="player-result-name">{player.username}</div>
+                                                <div className="player-result-score">
+                                                    {player.score} pts • {player.questionsCompleted} solved
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                
+                {/* Game Stats */}
+                <div className="game-stats-summary">
+                    <h3>Battle Statistics</h3>
+                    <div className="stats-row">
+                        <div className="stat-item">
+                            <Clock size={20} />
+                            <span>{Math.floor(gameResults.gameStats.gameDuration / 60)} minutes</span>
+                        </div>
+                        <div className="stat-item">
+                            <Target size={20} />
+                            <span>{gameResults.gameStats.totalQuestions} questions</span>
+                        </div>
+                        <div className="stat-item">
+                            <Users size={20} />
+                            <span>{gameResults.gameStats.totalPlayers} players</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="results-actions">
+                <button className="back-to-menu-btn" onClick={onBackToMenu}>
+                    <ArrowLeft size={20} />
+                    Back to Arena
+                </button>
+            </div>
+        </motion.div>
+    );
+};
+
 // Game Interface Component
 const GameInterface = ({ room, user, playerFinished, onEndContest }) => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
