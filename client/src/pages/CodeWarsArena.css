@@ -634,9 +634,18 @@
 /* ── Game Interface ── */
 .game-interface {
     display: grid;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto minmax(300px, 1fr);
     height: calc(100vh - 140px);
     gap: 20px;
+    overflow: hidden;
+}
+
+.game-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .game-header {
@@ -647,6 +656,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 16px 24px;
+    flex-shrink: 0;
 }
 
 .game-timer {
@@ -716,7 +726,9 @@
     border-radius: 12px;
     padding: 24px;
     overflow-y: auto;
-    max-height: 40vh;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .question-header {
@@ -811,16 +823,77 @@
     border-radius: 12px;
     display: flex;
     flex-direction: column;
-    min-height: 0; /* Important for flex children */
-    overflow: hidden; /* Prevent overflow from breaking layout */
+    min-height: 0;
+    overflow: hidden;
+    height: 100%;
 }
 
 /* Ensure CollaborativeCodeEditor fills the panel properly */
 .code-editor-panel .collaborative-code-editor {
     flex: 1;
-    min-height: 0; /* Allow shrinking */
+    min-height: 400px;
     display: flex;
     flex-direction: column;
+}
+
+/* Make sure Monaco editor container has proper height */
+.code-editor-panel .editor-container {
+    flex: 1;
+    min-height: 300px;
+    position: relative;
+}
+
+/* Ensure Monaco editor itself fills the container */
+.code-editor-panel .monaco-editor {
+    height: 100% !important;
+}
+
+/* Team members panel styling */
+.team-members-panel {
+    padding: 12px 16px;
+    background: #252526;
+    border-top: 1px solid #3e3e42;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: #cccccc;
+}
+
+.team-members-panel h4 {
+    margin: 0;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #888;
+}
+
+.team-member-list {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.team-member-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #3e3e42;
+    border-radius: 12px;
+    font-size: 11px;
+}
+
+.team-member-badge.online {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4caf50;
+}
+
+.team-member-badge .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
 }
 
 .editor-header {
@@ -831,6 +904,7 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     color: #f5f0e8;
     font-weight: 700;
+    background: rgba(0, 0, 0, 0.2);
 }
 
 .code-editor {
@@ -895,6 +969,20 @@
     
     .game-interface {
         height: calc(100vh - 120px);
+    }
+    
+    .game-content {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        gap: 16px;
+    }
+    
+    .question-panel {
+        max-height: 300px;
+    }
+    
+    .code-editor-panel .collaborative-code-editor {
+        min-height: 350px;
     }
     
     .game-modes {

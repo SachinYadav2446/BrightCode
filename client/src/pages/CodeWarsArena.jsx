@@ -1918,8 +1918,10 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
                 </div>
             )}
 
-            {/* Question Panel */}
-            <div className="question-panel">
+            {/* Game Content - Question and Editor Side by Side */}
+            <div className="game-content">
+                {/* Question Panel */}
+                <div className="question-panel">
                 <div className="question-header">
                     <h3>{currentQuestion.title}</h3>
                     <div className="question-meta">
