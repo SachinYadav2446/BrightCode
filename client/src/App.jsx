@@ -11,6 +11,7 @@ import Factions from './pages/Factions';
 import Library from './pages/Library';
 import Workspace from './pages/Workspace';
 import CodeVault from './pages/CodeVault';
+import CodeWarsArena from './pages/CodeWarsArena';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -128,6 +129,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <CodeVault />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/code-wars" 
+              element={
+                <ProtectedRoute>
+                  <CodeWarsArena />
                 </ProtectedRoute>
               } 
             />

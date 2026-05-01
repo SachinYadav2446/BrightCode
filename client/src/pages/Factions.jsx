@@ -399,6 +399,14 @@ const Factions = () => {
                                     <Shield size={16} />
                                     {showHQ ? 'Close Command Center' : 'Enter Command Center'}
                                 </button>
+
+                                <button
+                                    className="code-wars-btn"
+                                    onClick={() => navigate('/code-wars')}
+                                >
+                                    <Swords size={16} />
+                                    Code Wars Arena
+                                </button>
                             </div>
                         ) : (
                             <>

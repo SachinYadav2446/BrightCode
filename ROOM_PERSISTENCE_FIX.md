@@ -1,222 +1,152 @@
-# Room Persistence Fix - Quick Guide
+# Room Persistence & Visibility Fix 🔧
 
-## Problem
-When users leave a workspace, it shows "Session Ended" instead of "Resume" button, even though they didn't terminate the session.
+## Issues Identified ✅
 
-## Root Cause
-The server was not properly keeping rooms alive when users disconnected.
+### 1. **Room Not Found Error**
+- **Cause**: Server restart cleared in-memory room data
+- **Symptom**: "Room not found" when clicking Start Game
+- **Debug Info**: `roomExists: false`, `allActiveRooms: []`
 
-## Changes Made
+### 2. **Public Rooms Not Showing**
+- **Cause**: No active rooms in server memory after restart
+- **Symptom**: "No active rooms" message despite rooms existing in frontend
+- **Debug Info**: Empty faction rooms list
 
-### 1. Server Side (server/index.js)
+## Root Cause Analysis 🔍
 
-#### Updated `leave-workspace` Handler
+### **In-Memory Storage Limitation**
 ```javascript
-socket.on('leave-workspace', ({ roomId, username }) => {
-    const room = rooms.get(roomId);
-    if (room) {
-        const userIndex = room.users.findIndex(u => u.id === socket.id);
-        if (userIndex !== -1) {
-            room.users.splice(userIndex, 1);
-            socket.to(roomId).emit('user-left', { id: socket.id, username });
-            socket.leave(roomId);
-            console.log(`[USER LEFT] ${username} left room ${roomId} (room still active, ${room.users.length} users remaining)`);
-        }
-        // IMPORTANT: Do NOT delete the room even if empty
-        // Room should persist until explicitly ended by admin
-    }
-});
+// Server stores rooms in memory (lost on restart)
+this.activeRooms = new Map(); // roomId -> roomData
+this.playerRooms = new Map(); // userId -> roomId
 ```
 
-#### Updated `disconnecting` Handler
+### **Frontend-Backend Desync**
+- Frontend: Still has room data from before restart
+- Backend: All room data cleared
+- Result: Frontend shows rooms that don't exist on server
+
+## Solutions Applied ✅
+
+### 1. **Enhanced Room Validation**
 ```javascript
-socket.on('disconnecting', () => {
-    socket.rooms.forEach(roomId => {
-        // Skip the default socket.id room
-        if (roomId === socket.id) return;
-        
-        const room = rooms.get(roomId);
-        if (room) {
-            // Remove user from room but keep room alive
-            const userIndex = room.users.findIndex(u => u.id === socket.id);
-            if (userIndex !== -1) {
-                const user = room.users[userIndex];
-                room.users.splice(userIndex, 1);
-                socket.to(roomId).emit('user-left', { id: socket.id, username: user.username });
-                console.log(`[USER DISCONNECTED] ${user.username} disconnected from room ${roomId} (room still active, ${room.users.length} users remaining)`);
-            }
-            // IMPORTANT: Do NOT delete the room
-            // Room persists for resume functionality
-        }
+// Auto-validate room existence on page load
+const roomValidation = await axios.get(`/code-wars/debug/room/${roomId}`);
+if (!roomValidation.data.roomExists) {
+    // Clear stale room data and return to menu
+    setCurrentRoom(null);
+    setGameState('menu');
+}
+```
+
+### 2. **Better Error Handling**
+```javascript
+// Improved start game with room existence check
+if (!room) {
+    console.log(`❌ Room ${roomId} not found in active rooms`);
+    return res.status(404).json({ 
+        error: 'Room not found. The room may have expired or been deleted.' 
     });
-});
+}
 ```
 
-#### Added Debug Endpoints
-```javascript
-// Enhanced active-rooms endpoint with logging
-app.get('/active-rooms', (req, res) => {
-    const roomsList = Array.from(rooms.keys());
-    console.log('[ACTIVE ROOMS] Current active rooms:', roomsList);
-    res.json(roomsList);
-});
+### 3. **Debug Tools Added**
+- **🔄 Check Room** button in room lobby
+- **🔍 Debug Rooms** button in main menu
+- Server-side logging for room operations
 
-// New debug endpoint to check room status
-app.get('/room-status/:roomId', (req, res) => {
-    const { roomId } = req.params;
-    const room = rooms.get(roomId);
-    if (room) {
-        res.json({
-            exists: true,
-            userCount: room.users.length,
-            users: room.users.map(u => u.username),
-            adminId: room.adminId,
-            owner: room.owner
-        });
-    } else {
-        res.json({ exists: false });
-    }
-});
-```
+## 🧪 **Testing Steps**
 
-## 🚨 CRITICAL: Restart Server
-
-**The changes won't take effect until you restart the server!**
-
-### How to Restart
-
-#### Option 1: Stop and Start
-```bash
-# Stop the server (Ctrl+C in the terminal running it)
-# Then start it again:
-cd server
-npm start
-```
-
-#### Option 2: Using nodemon (if installed)
-```bash
-# nodemon will auto-restart on file changes
-cd server
-npx nodemon index.js
-```
-
-#### Option 3: Kill and Restart
-```bash
-# Find the process
-lsof -i :5051
-
-# Kill it
-kill -9 <PID>
-
-# Start again
-cd server
-npm start
-```
-
-## Testing After Restart
-
-### 1. Create a New Workspace
-- Go to /workspace
-- Create a new workspace
-- Enter it
-
-### 2. Check Active Rooms
-Open: `http://localhost:5051/active-rooms`
-
-Should see: `["ws-your-workspace-id"]`
-
-### 3. Leave the Workspace
-- Click "Leave" button
-- Should see toast: "Left workspace. You can resume anytime from workspace history."
-
-### 4. Verify Room Still Active
-Open: `http://localhost:5051/active-rooms`
-
-Should STILL see: `["ws-your-workspace-id"]`
-
-### 5. Check Workspace History
-- On /workspace page
-- Look at "Recent Workspaces" table
-- Should see "Resume" button (NOT "Session Ended")
-
-### 6. Test Resume
-- Click "Resume" button
-- Should rejoin the workspace successfully
-
-## Expected Behavior
-
-### When User Leaves
-✅ Room stays in `rooms` Map
-✅ Room ID stays in active-rooms list
-✅ User removed from room.users array
-✅ Other users can continue working
-✅ Files and state preserved
-✅ "Resume" button shows in history
-
-### When Admin Ends Session
-❌ Room deleted from `rooms` Map
-❌ Room ID removed from active-rooms list
-❌ All users kicked out
-❌ Files and state lost
-❌ "Session Ended" label shows in history
-
-## Troubleshooting
-
-### Still Showing "Session Ended"
-
-1. **Check server is restarted**
-   ```bash
-   # Look for this in server console:
-   # "Server running on port 5051"
+### **Step 1: Check Current State**
+1. **Click "🔍 Debug Rooms"** in the main menu
+2. **Check browser console** for:
    ```
-
-2. **Clear old workspaces**
-   - Old workspaces created before the fix won't work
-   - Create a NEW workspace after restarting server
-
-3. **Check active-rooms endpoint**
-   ```bash
-   curl http://localhost:5051/active-rooms
+   🏠 Faction rooms response: []
+   🔍 All rooms debug: { totalRooms: 0, ... }
    ```
+3. **Expected**: Should show 0 rooms (server restarted)
 
-4. **Check browser console**
-   - Open DevTools (F12)
-   - Look for fetch errors
+### **Step 2: Create Fresh Room**
+1. **Click "Create Room"**
+2. **Fill room details** (name, settings)
+3. **Click "Create Battle Room"**
+4. **Expected**: New room created successfully
 
-5. **Check server console**
-   - Should see: `[USER LEFT] username left room ws-xxx (room still active, 0 users remaining)`
-   - Should see: `[ACTIVE ROOMS] Current active rooms: [...]`
+### **Step 3: Verify Room Visibility**
+1. **Have second player go to main menu**
+2. **Check "Active Faction Rooms" section**
+3. **Expected**: Should see the newly created room
+4. **Click "🔍 Debug Rooms"** to verify
 
-### Room Not Persisting
+### **Step 4: Test Game Start**
+1. **Second player joins the room**
+2. **Room creator clicks "Start Game"**
+3. **Expected**: Game should start successfully
 
-If room is still being deleted:
+## 🔧 **Manual Recovery Steps**
 
-1. **Verify code changes**
-   - Open server/index.js
-   - Search for "rooms.delete"
-   - Should ONLY appear in `end-session` handler
+### **If Stuck in Invalid Room:**
+1. **Click "🔄 Check Room"** → Auto-returns to menu
+2. **Or click "Leave"** → Manual return to menu
+3. **Or refresh page** → Auto-validation clears stale data
 
-2. **Check for multiple server instances**
-   ```bash
-   lsof -i :5051
-   # Should show only ONE process
-   ```
+### **If No Rooms Showing:**
+1. **Click "🔍 Debug Rooms"** → Check server state
+2. **Create new room** → Fresh room in server memory
+3. **Refresh faction rooms** → Should show new room
 
-3. **Clear node cache**
-   ```bash
-   cd server
-   rm -rf node_modules
-   npm install
-   npm start
-   ```
+## 🎯 **Expected Behavior Now**
 
-## Summary
+### **Room Creation:**
+- ✅ Creates room in server memory
+- ✅ Appears in faction rooms list immediately
+- ✅ Other players can see and join
 
-The fix ensures that:
-1. Rooms persist when users leave
-2. Rooms only deleted when admin explicitly ends session
-3. Users can resume from workspace history
-4. "Resume" button shows for active workspaces
-5. "Session Ended" only shows for terminated workspaces
+### **Room Validation:**
+- ✅ Auto-detects expired/invalid rooms
+- ✅ Clears stale frontend data
+- ✅ Returns user to menu gracefully
 
-**Remember: You MUST restart the server for changes to take effect!**
+### **Error Handling:**
+- ✅ Clear error messages for all scenarios
+- ✅ Automatic recovery from invalid states
+- ✅ Debug tools for troubleshooting
+
+## 🚨 **If Issues Persist**
+
+### **Server Console Logs:**
+Look for:
+```
+📋 Getting faction rooms for faction: [FACTION_NAME]
+📊 Total active rooms: 0
+🏠 Found 0 public rooms for faction [FACTION_NAME]
+```
+
+### **Browser Console Logs:**
+Look for:
+```
+🔍 Checking faction rooms...
+🏠 Faction rooms response: []
+🔍 All rooms debug: { totalRooms: 0 }
+```
+
+### **Recovery Actions:**
+1. **Create new room** (will be stored in server memory)
+2. **Both players join fresh room**
+3. **Test start game functionality**
+
+## 💡 **Long-term Solution**
+
+For production, consider:
+- **Database persistence** instead of in-memory storage
+- **Room expiration/cleanup** logic
+- **Heartbeat system** to detect disconnected players
+- **Automatic room recovery** mechanisms
+
+---
+
+**Status**: ✅ **DEBUGGING TOOLS ADDED - READY FOR TESTING**  
+**Next Steps**: 
+1. Click "🔍 Debug Rooms" to check current state
+2. Create fresh room if needed
+3. Test room visibility and game start

@@ -16,6 +16,8 @@ const pty = require('node-pty');
 const os = require('os');
 const FileSystem = require('./fileSystem');
 const { compileAndRunJava } = require('./javaCompiler');
+const CodeWarsArena = require('./codeWarsArena');
+const IntraFactionArena = require('./intraFactionArena');
 
 const app = express();
 const server = http.createServer(app);
@@ -108,6 +110,10 @@ const saveFactions = () => {
 };
 
 loadFactions();
+
+// ── Initialize Code Wars Arena ──────────────────────────────────────────────
+const codeWarsArena = new CodeWarsArena(io, factions);
+const intraFactionArena = new IntraFactionArena(io, factions);
 
 // ── XP → Level computation (matches client-side) ─────────────
 const computeLevel = (xp) => {
@@ -2046,6 +2052,183 @@ io.on('connection', (socket) => {
         // Basic cleanup handled by disconnecting but kept for consistency
     });
 
+    // ── Code Wars Arena Socket Handlers ──────────────────────────────────
+    socket.on('cw-create-room', async ({ roomConfig, userId, username, factionId }) => {
+        try {
+            console.log(`🏗️ [CW Socket] Creating room - User: ${username} (ID: ${userId}), Faction: ${factionId}`);
+            console.log(`🏗️ [CW Socket] Room config:`, roomConfig);
+            
+            const room = intraFactionArena.createRoom(userId, username, factionId, roomConfig);
+            
+            // Join the socket room (use simple roomId like workspace)
+            socket.join(room.id);
+            
+            console.log(`✅ [CW Socket] Room ${room.id} created and joined`);
+            console.log(`📊 [CW Socket] Total active rooms: ${intraFactionArena.activeRooms.size}`);
+            console.log(`📊 [CW Socket] Room details:`, {
+                id: room.id,
+                name: room.name,
+                isPrivate: room.isPrivate,
+                factionId: room.factionId,
+                creatorId: room.creatorId,
+                teams: room.teams.map(t => ({ id: t.id, players: t.players.length }))
+            });
+            
+            // Send success response
+            socket.emit('cw-room-created', {
+                success: true,
+                room: intraFactionArena.sanitizeRoomForClient(room)
+            });
+            
+            // Broadcast to faction that a new room is available (if public)
+            if (!room.isPrivate) {
+                io.emit('cw-room-list-updated', {
+                    factionId: room.factionId
+                });
+            }
+            
+        } catch (error) {
+            console.error(`❌ [CW Socket] Create room error:`, error.message);
+            socket.emit('cw-error', { error: error.message });
+        }
+    });
+
+    socket.on('cw-join-room', async ({ roomId, userId, username, factionId, password }) => {
+        try {
+            console.log(`🚪 [CW Socket] User ${username} (ID: ${userId}) joining room ${roomId}`);
+            console.log(`🚪 [CW Socket] Faction: ${factionId}, Has password: ${!!password}`);
+            
+            const result = intraFactionArena.joinRoom(userId, username, factionId, roomId, password);
+            
+            // Join the socket room (use simple roomId like workspace)
+            socket.join(roomId);
+            
+            console.log(`✅ [CW Socket] User ${username} joined room ${roomId} as ${result.role}`);
+            console.log(`✅ [CW Socket] Team: ${result.teamId || 'spectator'}`);
+            
+            // Notify everyone in the room
+            socket.to(roomId).emit('cw-player-joined', {
+                userId,
+                username,
+                role: result.role,
+                teamId: result.teamId
+            });
+            
+            // Send success response to joiner
+            socket.emit('cw-room-joined', {
+                success: true,
+                room: intraFactionArena.sanitizeRoomForClient(result.room),
+                role: result.role
+            });
+            
+            // Broadcast updated room to all players
+            io.to(roomId).emit('cw-room-update', {
+                room: intraFactionArena.sanitizeRoomForClient(result.room)
+            });
+            
+        } catch (error) {
+            console.error(`❌ [CW Socket] Join room error:`, error.message);
+            socket.emit('cw-error', { error: error.message });
+        }
+    });
+
+    socket.on('cw-leave-room', ({ roomId, userId, username }) => {
+        try {
+            console.log(`🚪 [CW Socket] User ${username} (ID: ${userId}) leaving room ${roomId}`);
+            
+            const room = intraFactionArena.getRoomById(roomId);
+            const success = intraFactionArena.leaveRoom(userId);
+            
+            if (success && room) {
+                // Leave the socket room
+                socket.leave(roomId);
+                
+                console.log(`✅ [CW Socket] User ${username} left room ${roomId}`);
+                
+                // Notify others
+                socket.to(roomId).emit('cw-player-left', { userId, username });
+                
+                // Broadcast updated room
+                const updatedRoom = intraFactionArena.getRoomById(roomId);
+                if (updatedRoom) {
+                    io.to(roomId).emit('cw-room-update', {
+                        room: intraFactionArena.sanitizeRoomForClient(updatedRoom)
+                    });
+                } else {
+                    console.log(`ℹ️ [CW Socket] Room ${roomId} was deleted (no players left)`);
+                }
+            }
+            
+            socket.emit('cw-left-room', { success: true });
+            
+        } catch (error) {
+            console.error(`❌ [CW Socket] Leave room error:`, error.message);
+            socket.emit('cw-error', { error: error.message });
+        }
+    });
+
+    socket.on('cw-start-game', async ({ roomId, userId }) => {
+        try {
+            console.log(`🎮 [CW Socket] Starting game - Room: ${roomId}, User: ${userId}`);
+            
+            const room = await intraFactionArena.startGame(roomId, userId);
+            
+            console.log(`✅ [CW Socket] Game started for room ${roomId}`);
+            
+            // Notify all players
+            io.to(roomId).emit('cw-game-started', {
+                room: intraFactionArena.sanitizeRoomForClient(room)
+            });
+            
+        } catch (error) {
+            console.error(`❌ [CW Socket] Start game error:`, error.message);
+            socket.emit('cw-error', { error: error.message });
+        }
+    });
+    
+    // Get faction rooms (for refreshing room list)
+    socket.on('cw-get-faction-rooms', ({ factionId }) => {
+        try {
+            console.log(`📋 [CW Socket] Getting rooms for faction ${factionId}`);
+            const rooms = intraFactionArena.getRoomsByFaction(factionId);
+            console.log(`📋 [CW Socket] Found ${rooms.length} public rooms for faction ${factionId}`);
+            
+            // Debug: Show all active rooms
+            console.log(`📊 [CW Socket] Total active rooms in system: ${intraFactionArena.activeRooms.size}`);
+            if (intraFactionArena.activeRooms.size > 0) {
+                console.log(`📊 [CW Socket] All rooms:`, Array.from(intraFactionArena.activeRooms.values()).map(r => ({
+                    id: r.id,
+                    name: r.name,
+                    factionId: r.factionId,
+                    isPrivate: r.isPrivate,
+                    status: r.status,
+                    players: r.teams.reduce((sum, t) => sum + t.players.length, 0)
+                })));
+            }
+            
+            socket.emit('cw-faction-rooms', { rooms });
+        } catch (error) {
+            console.error(`❌ [CW Socket] Get faction rooms error:`, error.message);
+            socket.emit('cw-error', { error: error.message });
+        }
+    });
+
+    socket.on('join-code-wars-room', ({ roomId, userId }) => {
+        console.log(`🎮 User ${userId} joining Code Wars room ${roomId}`);
+        socket.join(`room_${roomId}`);
+        
+        // Notify room about socket connection
+        socket.to(`room_${roomId}`).emit('player-connected', { userId });
+    });
+
+    socket.on('leave-code-wars-room', ({ roomId, userId }) => {
+        console.log(`🚪 User ${userId} leaving Code Wars room ${roomId}`);
+        socket.leave(`room_${roomId}`);
+        
+        // Notify room about socket disconnection
+        socket.to(`room_${roomId}`).emit('player-disconnected', { userId });
+    });
+
     // ── Chat Real-Time Handlers ──────────────────────────────────────────
     socket.on('join-chat-room', ({ roomId }) => {
         socket.join(roomId);
@@ -2074,6 +2257,17 @@ io.on('connection', (socket) => {
 
         // Standardized broadcast to all in room
         io.to(roomId).emit('new-chat-message', fullMessage);
+    });
+
+    // ── Code Wars Room Handlers ──────────────────────────────────────────
+    socket.on('join-code-wars-room', ({ roomId }) => {
+        socket.join(`room_${roomId}`);
+        console.log(`[CODE WARS] User joined room ${roomId}`);
+    });
+
+    socket.on('leave-code-wars-room', ({ roomId }) => {
+        socket.leave(`room_${roomId}`);
+        console.log(`[CODE WARS] User left room ${roomId}`);
     });
 });
 
@@ -2163,6 +2357,564 @@ app.post('/execute', async (req, res) => {
     } catch (err) {
         console.error('EXECUTION ERROR:', err.message);
         res.status(500).json({ run: { stdout: '', stderr: `Server error: ${err.message}`, code: 1 } });
+    }
+});
+
+// ═══ CODE WARS ARENA API ═══════════════════════════════════════════════════
+
+// ── INTRA-FACTION BATTLES ──────────────────────────────────────────────────
+
+// Create a custom room
+app.post('/code-wars/create-room', authenticateToken, async (req, res) => {
+    const { 
+        name, 
+        isPrivate = false,
+        password, 
+        gameMode = 'QUICK_BATTLE',
+        teamSize = 1, 
+        maxTeams = 2,
+        questionCount = 3,
+        timeLimit = 600,
+        difficulty = 'mixed',
+        allowSpectators = true,
+        autoStart = false,
+        showLeaderboard = true
+    } = req.body;
+    
+    console.log(`🏗️ Creating room - User: ${req.user.username} (${req.user.id}), Name: ${name}, Private: ${isPrivate}`);
+    
+    try {
+        // Get user's faction
+        const userFaction = Array.from(factions.values()).find(f => 
+            f.members?.some(m => m.id === req.user.id)
+        );
+        
+        if (!userFaction) {
+            console.log(`❌ User ${req.user.username} not in any faction`);
+            return res.status(400).json({ error: 'You must be in a faction to create a room' });
+        }
+        
+        console.log(`✅ User is in faction: ${userFaction.name} (${userFaction.id})`);
+        
+        // Validate private room requirements
+        if (isPrivate && (!password || password.trim().length === 0)) {
+            console.log(`❌ Private room without password`);
+            return res.status(400).json({ error: 'Private rooms must have a password' });
+        }
+        
+        const roomConfig = {
+            name,
+            password: isPrivate ? password.trim() : null,
+            gameMode,
+            teamSize: Math.min(Math.max(teamSize, 1), 5), // 1-5 players per team
+            maxTeams: Math.min(Math.max(maxTeams, 2), 4), // 2-4 teams max
+            questionCount: Math.min(Math.max(questionCount, 1), 10), // 1-10 questions
+            timeLimit: Math.min(Math.max(timeLimit, 300), 3600), // 5min - 1hour
+            difficulty,
+            allowSpectators,
+            autoStart,
+            showLeaderboard
+        };
+        
+        const room = intraFactionArena.createRoom(
+            req.user.id,
+            req.user.username,
+            userFaction.id,
+            roomConfig
+        );
+        
+        console.log(`✅ Room created successfully: ${room.id}`);
+        console.log(`📊 Total active rooms now: ${intraFactionArena.activeRooms.size}`);
+        console.log(`📋 Active room IDs:`, Array.from(intraFactionArena.activeRooms.keys()));
+        
+        res.json({
+            success: true,
+            room: room,
+            message: `${isPrivate ? 'Private' : 'Public'} room ${room.id} created successfully!`
+        });
+        
+    } catch (error) {
+        console.error(`❌ Error creating room:`, error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Join a room
+app.post('/code-wars/join-room', authenticateToken, async (req, res) => {
+    const { roomId, password } = req.body;
+    
+    if (!roomId) {
+        return res.status(400).json({ error: 'Room ID is required' });
+    }
+    
+    try {
+        // Get user's faction
+        const userFaction = Array.from(factions.values()).find(f => 
+            f.members?.some(m => m.id === req.user.id)
+        );
+        
+        if (!userFaction) {
+            return res.status(400).json({ error: 'You must be in a faction to join a room' });
+        }
+        
+        const result = intraFactionArena.joinRoom(
+            req.user.id,
+            req.user.username,
+            userFaction.id,
+            roomId.toUpperCase(),
+            password
+        );
+        
+        // Notify other players in the room about the new player
+        intraFactionArena.notifyRoomUpdate(result.room, 'player-joined', {
+            userId: req.user.id,
+            username: req.user.username,
+            role: result.role,
+            teamId: result.teamId
+        });
+        
+        res.json({
+            success: true,
+            ...result,
+            message: `Joined room ${roomId} as ${result.role}`
+        });
+        
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Leave current room
+app.post('/code-wars/leave-room', authenticateToken, (req, res) => {
+    try {
+        // Get the room before leaving to notify other players
+        const room = intraFactionArena.getPlayerRoom(req.user.id);
+        const success = intraFactionArena.leaveRoom(req.user.id);
+        
+        if (success && room) {
+            // Notify other players in the room about the player leaving
+            intraFactionArena.notifyRoomUpdate(room, 'player-left', {
+                userId: req.user.id,
+                username: req.user.username
+            });
+            
+            res.json({ success: true, message: 'Left room successfully' });
+        } else {
+            res.status(404).json({ error: 'Not in any room' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Start game (room creator only)
+app.post('/code-wars/start-game', authenticateToken, async (req, res) => {
+    const { roomId } = req.body;
+    
+    console.log(`🎮 Start game request - Room: ${roomId}, User: ${req.user.id} (${req.user.username})`);
+    
+    try {
+        // Check if room exists first
+        const room = intraFactionArena.getRoomById(roomId);
+        if (!room) {
+            console.log(`❌ Room ${roomId} not found in active rooms`);
+            console.log(`📊 Active rooms:`, Array.from(intraFactionArena.activeRooms.keys()));
+            return res.status(404).json({ error: 'Room not found. The room may have expired or been deleted.' });
+        }
+        
+        console.log(`✅ Room ${roomId} found, attempting to start game`);
+        const startedRoom = await intraFactionArena.startGame(roomId, req.user.id);
+        
+        res.json({
+            success: true,
+            room: startedRoom,
+            message: 'Game started!'
+        });
+    } catch (error) {
+        console.error(`❌ Start game error for room ${roomId}:`, error.message);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Submit solution (updated for rooms)
+app.post('/code-wars/submit-solution', authenticateToken, async (req, res) => {
+    const { questionId, code } = req.body;
+    
+    if (!questionId || !code) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    try {
+        const playerRoom = intraFactionArena.getPlayerRoom(req.user.id);
+        if (!playerRoom) {
+            return res.status(404).json({ error: 'Not in any active game' });
+        }
+        
+        const result = await intraFactionArena.submitSolution(
+            playerRoom.id,
+            req.user.id,
+            questionId,
+            code
+        );
+        
+        res.json(result);
+        
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Get my current room
+app.get('/code-wars/my-room', authenticateToken, (req, res) => {
+    const room = intraFactionArena.getPlayerRoom(req.user.id);
+    if (room) {
+        res.json(room);
+    } else {
+        res.status(404).json({ error: 'Not in any room' });
+    }
+});
+
+// Get faction rooms (public rooms in my faction)
+app.get('/code-wars/faction-rooms', authenticateToken, (req, res) => {
+    try {
+        // Get user's faction
+        const userFaction = Array.from(factions.values()).find(f => 
+            f.members?.some(m => m.id === req.user.id)
+        );
+        
+        if (!userFaction) {
+            return res.status(400).json({ error: 'You must be in a faction' });
+        }
+        
+        console.log(`📋 Getting faction rooms for faction: ${userFaction.name} (${userFaction.id})`);
+        console.log(`📊 Total active rooms: ${intraFactionArena.activeRooms.size}`);
+        
+        const rooms = intraFactionArena.getRoomsByFaction(userFaction.id);
+        console.log(`🏠 Found ${rooms.length} public rooms for faction ${userFaction.name}`);
+        
+        res.json(rooms);
+        
+    } catch (error) {
+        console.error('❌ Error getting faction rooms:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Switch team in room
+app.post('/code-wars/switch-team', authenticateToken, (req, res) => {
+    const { teamId } = req.body;
+    
+    try {
+        const playerRoom = intraFactionArena.getPlayerRoom(req.user.id);
+        if (!playerRoom) {
+            return res.status(404).json({ error: 'Not in any room' });
+        }
+        
+        const updatedRoom = intraFactionArena.switchTeam(req.user.id, playerRoom.id, teamId);
+        res.json({
+            success: true,
+            room: updatedRoom,
+            message: `Switched to ${teamId}`
+        });
+        
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Debug endpoint to check all rooms (including private) - for testing
+app.get('/code-wars/debug/all-rooms', authenticateToken, (req, res) => {
+    try {
+        // Get user's faction
+        const userFaction = Array.from(factions.values()).find(f => 
+            f.members?.some(m => m.id === req.user.id)
+        );
+        
+        if (!userFaction) {
+            return res.status(400).json({ error: 'You must be in a faction' });
+        }
+        
+        const allRooms = intraFactionArena.getAllRoomsForFaction(userFaction.id, true);
+        res.json({
+            factionId: userFaction.id,
+            factionName: userFaction.name,
+            totalRooms: allRooms.length,
+            publicRooms: allRooms.filter(r => !r.isPrivate).length,
+            privateRooms: allRooms.filter(r => r.isPrivate).length,
+            rooms: allRooms
+        });
+        
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint to check room status
+app.get('/code-wars/debug/room/:roomId', authenticateToken, (req, res) => {
+    const { roomId } = req.params;
+    
+    try {
+        const room = intraFactionArena.getRoomById(roomId);
+        const playerRoom = intraFactionArena.getPlayerRoom(req.user.id);
+        
+        res.json({
+            roomExists: !!room,
+            room: room ? intraFactionArena.sanitizeRoomForClient(room) : null,
+            userInRoom: !!playerRoom,
+            userRoomId: playerRoom?.id || null,
+            allActiveRooms: Array.from(intraFactionArena.activeRooms.keys()),
+            playerRoomMappings: Array.from(intraFactionArena.playerRooms.entries())
+        });
+        
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ── INTER-FACTION BATTLES (Original System) ────────────────────────────────
+
+// Join game queue
+app.post('/code-wars/create-room', authenticateToken, async (req, res) => {
+    const { factionId, settings } = req.body;
+    
+    if (!factionId) {
+        return res.status(400).json({ error: 'Faction ID is required' });
+    }
+    
+    try {
+        // Verify user is member of the faction
+        const faction = factions.get(factionId);
+        if (!faction || !faction.members.find(m => m.id === req.user.id)) {
+            return res.status(403).json({ error: 'You must be a member of this faction' });
+        }
+        
+        const room = codeWarsArena.createPrivateRoom(
+            req.user.id,
+            req.user.username,
+            factionId,
+            settings || {}
+        );
+        
+        res.json({
+            success: true,
+            room: codeWarsArena.sanitizeRoomForClient(room),
+            message: `Room ${room.id} created successfully`
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Join private room
+app.post('/code-wars/join-room', authenticateToken, async (req, res) => {
+    const { roomId, password, asSpectator = false } = req.body;
+    
+    if (!roomId) {
+        return res.status(400).json({ error: 'Room ID is required' });
+    }
+    
+    try {
+        const room = codeWarsArena.joinPrivateRoom(
+            roomId,
+            req.user.id,
+            req.user.username,
+            password,
+            asSpectator
+        );
+        
+        res.json({
+            success: true,
+            room: codeWarsArena.sanitizeRoomForClient(room),
+            message: 'Joined room successfully'
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Leave private room (Inter-faction system - different endpoint)
+app.post('/code-wars/leave-private-room', authenticateToken, (req, res) => {
+    const { roomId } = req.body;
+    
+    if (!roomId) {
+        return res.status(400).json({ error: 'Room ID is required' });
+    }
+    
+    try {
+        const success = codeWarsArena.leavePrivateRoom(roomId, req.user.id);
+        res.json({
+            success,
+            message: success ? 'Left room successfully' : 'Room not found'
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Toggle ready status
+app.post('/code-wars/toggle-ready', authenticateToken, (req, res) => {
+    const { roomId } = req.body;
+    
+    if (!roomId) {
+        return res.status(400).json({ error: 'Room ID is required' });
+    }
+    
+    try {
+        const room = codeWarsArena.togglePlayerReady(roomId, req.user.id);
+        res.json({
+            success: true,
+            room: codeWarsArena.sanitizeRoomForClient(room)
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Get room details
+app.get('/code-wars/room/:roomId', authenticateToken, (req, res) => {
+    const { roomId } = req.params;
+    
+    try {
+        const room = codeWarsArena.getPrivateRoom(roomId);
+        if (!room) {
+            return res.status(404).json({ error: 'Room not found' });
+        }
+        
+        // Check if user has access to this room
+        const isPlayer = room.players.some(p => p.userId === req.user.id);
+        const isSpectator = room.spectators.some(s => s.userId === req.user.id);
+        const isFactionMember = factions.get(room.factionId)?.members.some(m => m.id === req.user.id);
+        
+        if (!isPlayer && !isSpectator && !isFactionMember) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+        
+        res.json({
+            success: true,
+            room: codeWarsArena.sanitizeRoomForClient(room)
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Get faction rooms
+app.get('/code-wars/faction-rooms/:factionId', authenticateToken, (req, res) => {
+    const { factionId } = req.params;
+    
+    try {
+        // Verify user is member of the faction
+        const faction = factions.get(factionId);
+        if (!faction || !faction.members.find(m => m.id === req.user.id)) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+        
+        const rooms = codeWarsArena.getFactionRooms(factionId);
+        res.json({
+            success: true,
+            rooms
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Join game queue (for inter-faction battles - keeping this for future use)
+app.post('/code-wars/join-queue', authenticateToken, async (req, res) => {
+    const { factionId, gameMode = 'QUICK_BATTLE' } = req.body;
+    
+    try {
+        const result = await codeWarsArena.joinQueue(
+            factionId, 
+            req.user.id, 
+            req.user.username, 
+            gameMode
+        );
+        res.json(result);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Leave game queue
+app.post('/code-wars/leave-queue', authenticateToken, (req, res) => {
+    const { factionId } = req.body;
+    
+    try {
+        codeWarsArena.leaveQueue(factionId, req.user.id);
+        res.json({ success: true, message: 'Left queue successfully' });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Get active games
+app.get('/code-wars/active-games', (req, res) => {
+    const activeGames = codeWarsArena.getActiveGames();
+    res.json(activeGames);
+});
+
+// Get player's current game
+app.get('/code-wars/my-game', authenticateToken, (req, res) => {
+    const game = codeWarsArena.getPlayerGame(req.user.id);
+    if (game) {
+        res.json(game);
+    } else {
+        res.status(404).json({ error: 'Not in any active game' });
+    }
+});
+
+// Get game details
+app.get('/code-wars/game/:gameId', authenticateToken, (req, res) => {
+    const game = codeWarsArena.getGameById(req.params.gameId);
+    if (game) {
+        // Only return game if user is a participant
+        const isParticipant = game.participants.some(p => p.userId === req.user.id);
+        if (isParticipant) {
+            res.json(game);
+        } else {
+            res.status(403).json({ error: 'Not authorized to view this game' });
+        }
+    } else {
+        res.status(404).json({ error: 'Game not found' });
+    }
+});
+
+// Submit solution
+app.post('/code-wars/submit', authenticateToken, async (req, res) => {
+    const { gameId, questionId, code } = req.body;
+    
+    if (!gameId || !questionId || !code) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    try {
+        const result = await codeWarsArena.submitSolution(
+            gameId, 
+            req.user.id, 
+            questionId, 
+            code
+        );
+        res.json(result);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Start a custom game (admin only for testing)
+app.post('/code-wars/create-game', authenticateToken, async (req, res) => {
+    const { factionIds, gameMode = 'QUICK_BATTLE', questionSource = 'builtin' } = req.body;
+    
+    if (!factionIds || factionIds.length < 2) {
+        return res.status(400).json({ error: 'Need at least 2 factions' });
+    }
+    
+    try {
+        const gameSession = codeWarsArena.createGameSession(factionIds, gameMode, questionSource);
+        await codeWarsArena.generateQuestionsForGame(gameSession);
+        res.json(gameSession);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 

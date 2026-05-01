@@ -5,6 +5,21 @@ const AuthContext = createContext({});
 
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 1 week in milliseconds
 
+// Helper function to decode JWT token
+const decodeJWT = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error('Error decoding JWT:', error);
+    return null;
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   console.log('[AuthContext] Provider rendering');
   const [user, setUser] = useState(null);
@@ -31,12 +46,17 @@ export const AuthProvider = ({ children }) => {
     const sessionStart = localStorage.getItem('session_start');
 
     if (token) {
+      // Decode JWT to get user ID
+      const decodedToken = decodeJWT(token);
+      const userId = decodedToken?.id;
+      
       // Check if session is still valid (within 1 week)
       const isSessionValid = sessionStart && (Date.now() - parseInt(sessionStart)) < SESSION_DURATION;
       setSessionValid(isSessionValid);
 
       // Set from localStorage immediately (avoids flash of unauthenticated UI)
       setUser({ 
+        id: userId, // Add user ID from JWT token
         token, username, email, 
         xp: parseInt(xp || '0'),
         css_level: parseInt(css || '0'),
@@ -74,6 +94,7 @@ export const AuthProvider = ({ children }) => {
           
           setUser(prev => prev ? { 
             ...prev, 
+            id: d.id, // Add user ID from server response
             xp: d.xp, 
             css_level: d.css_level, 
             logic_level: d.logic_level, 
@@ -98,6 +119,11 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const { data } = await axios.post('http://localhost:5051/login', { email, password });
+      
+      // Decode JWT to get user ID
+      const decodedToken = decodeJWT(data.token);
+      const userId = decodedToken?.id;
+      
       localStorage.setItem('token', data.token);
       localStorage.setItem('username', data.username);
       localStorage.setItem('email', data.email);
@@ -116,6 +142,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('session_start', String(Date.now())); // Set session start time
 
       setUser({ 
+        id: userId, // Add user ID from JWT token
         token: data.token, 
         username: data.username, 
         email: data.email, 
