@@ -514,15 +514,25 @@ const CodeWarsArena = () => {
 
             {/* Header */}
             <header className="arena-header">
-                <button className="back-btn" onClick={() => navigate('/factions')}>
+                <button className="back-btn" onClick={() => {
+                    if (gameState === 'create' || gameState === 'join') {
+                        setGameState('menu');
+                    } else {
+                        navigate(-1);
+                    }
+                }}>
                     <ArrowLeft size={20} />
-                    Back to Factions
+                    Back
                 </button>
                 
                 <div className="arena-title">
                     <Swords size={32} />
                     <h1>Code Wars Arena</h1>
-                    <div className="arena-subtitle">Intra-Faction Coding Battles</div>
+                    {(gameState === 'create' || gameState === 'join') && (
+                        <div className="arena-subtitle">
+                            {gameState === 'create' ? 'Create Battle Room' : 'Join Battle Room'}
+                        </div>
+                    )}
                 </div>
 
                 {myFaction && (
@@ -651,58 +661,16 @@ const MenuScreen = ({ factionRooms, onCreateRoom, onJoinRoom, onJoinRoomDirect, 
         {/* Active Faction Rooms */}
         <div className="faction-rooms-section">
             <div className="section-header">
-                <h3>🔥 Active Faction Rooms</h3>
+                <h3>Active Faction Rooms</h3>
                 <div className="section-actions">
                     <div className="rooms-info">
                         <span className="rooms-count">
                             {factionRooms.length} public room{factionRooms.length !== 1 ? 's' : ''}
                         </span>
-                        <span className="private-rooms-note">
-                            🔒 Private rooms hidden
-                        </span>
                     </div>
                     <button className="refresh-btn" onClick={onRefresh}>
                         <RotateCcw size={16} />
                         Refresh
-                    </button>
-                    {/* Debug button for development */}
-                    <button 
-                        className="debug-btn" 
-                        onClick={async () => {
-                            try {
-                                console.log('🔍 Manual Debug Check...');
-                                console.log('🔍 Current myFaction:', window.myFactionDebug);
-                                console.log('🔍 Socket connected:', !!window.socketDebug);
-                                
-                                // Try HTTP fallback
-                                const response = await axios.get('http://localhost:5051/code-wars/faction-rooms', {
-                                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                                });
-                                console.log('🏠 HTTP Faction rooms response:', response.data);
-                                
-                                const debugResponse = await axios.get('http://localhost:5051/code-wars/debug/all-rooms', {
-                                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                                });
-                                console.log('🔍 All rooms debug:', debugResponse.data);
-                                
-                                toast.success(`Found ${response.data.length} public rooms. Check console for details.`);
-                            } catch (error) {
-                                console.error('Debug error:', error);
-                                toast.error('Debug request failed: ' + error.message);
-                            }
-                        }}
-                        style={{
-                            background: '#8b5cf6',
-                            color: 'white',
-                            border: 'none',
-                            padding: '8px 12px',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            marginLeft: '8px'
-                        }}
-                    >
-                        🔍 Debug Rooms
                     </button>
                 </div>
             </div>
@@ -801,11 +769,7 @@ const CreateRoomScreen = ({ form, setForm, onSubmit, onBack, loading }) => (
         exit={{ opacity: 0, x: -20 }}
         className="create-room-screen"
     >
-        <div className="screen-header">
-            <button className="back-btn" onClick={onBack}>
-                <ArrowLeft size={20} />
-                Back
-            </button>
+        <div className="screen-header" style={{ display: 'none' }}>
             <h2>Create Battle Room</h2>
         </div>
         
@@ -820,57 +784,6 @@ const CreateRoomScreen = ({ form, setForm, onSubmit, onBack, loading }) => (
                     maxLength={30}
                 />
             </div>
-            
-            {/* Room Privacy Selection */}
-            <div className="form-group">
-                <label>Room Privacy</label>
-                <div className="privacy-toggle-group">
-                    <button
-                        type="button"
-                        className={`privacy-option ${!form.isPrivate ? 'active' : ''}`}
-                        onClick={() => setForm({...form, isPrivate: false, password: ''})}
-                    >
-                        <Globe size={16} />
-                        <div className="privacy-info">
-                            <span className="privacy-title">Public</span>
-                            <span className="privacy-desc">Visible to all faction members</span>
-                        </div>
-                    </button>
-                    <button
-                        type="button"
-                        className={`privacy-option ${form.isPrivate ? 'active' : ''}`}
-                        onClick={() => setForm({...form, isPrivate: true})}
-                    >
-                        <Lock size={16} />
-                        <div className="privacy-info">
-                            <span className="privacy-title">Private</span>
-                            <span className="privacy-desc">Requires password to join</span>
-                        </div>
-                    </button>
-                </div>
-            </div>
-            
-            {/* Password Field (only show if private) */}
-            {form.isPrivate && (
-                <motion.div 
-                    className="form-group"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                >
-                    <label>Room Password <span className="required">*</span></label>
-                    <input
-                        type="password"
-                        value={form.password}
-                        onChange={(e) => setForm({...form, password: e.target.value})}
-                        placeholder="Enter a secure password"
-                        maxLength={20}
-                    />
-                    <div className="form-hint">
-                        Password will be required for others to join this room
-                    </div>
-                </motion.div>
-            )}
             
             <div className="form-row">
                 <div className="form-group">
@@ -898,9 +811,7 @@ const CreateRoomScreen = ({ form, setForm, onSubmit, onBack, loading }) => (
                         <option value={4}>4 Teams</option>
                     </select>
                 </div>
-            </div>
-            
-            <div className="form-row">
+                
                 <div className="form-group">
                     <label>Questions</label>
                     <select
@@ -942,15 +853,52 @@ const CreateRoomScreen = ({ form, setForm, onSubmit, onBack, loading }) => (
                 </select>
             </div>
             
-            <div className="form-group checkbox-group">
-                <label className="checkbox-label">
-                    <input
-                        type="checkbox"
-                        checked={form.allowSpectators}
-                        onChange={(e) => setForm({...form, allowSpectators: e.target.checked})}
-                    />
-                    <span>Allow spectators</span>
-                </label>
+            {/* Privacy Row with inline password */}
+            <div className="privacy-row">
+                <div className="privacy-buttons-inline">
+                    <label>Room Privacy</label>
+                    <div className="privacy-button-group">
+                        <button
+                            type="button"
+                            className={`privacy-btn ${!form.isPrivate ? 'active' : ''}`}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setForm({...form, isPrivate: false, password: ''});
+                            }}
+                        >
+                            <Globe size={14} />
+                            Public
+                        </button>
+                        <button
+                            type="button"
+                            className={`privacy-btn ${form.isPrivate ? 'active' : ''}`}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setForm({...form, isPrivate: true});
+                            }}
+                        >
+                            <Lock size={14} />
+                            Private
+                        </button>
+                    </div>
+                </div>
+                
+                {form.isPrivate && (
+                    <motion.div 
+                        className="password-inline"
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: 'auto' }}
+                        exit={{ opacity: 0, width: 0 }}
+                    >
+                        <input
+                            type="password"
+                            value={form.password}
+                            onChange={(e) => setForm({...form, password: e.target.value})}
+                            placeholder="Enter password"
+                            maxLength={20}
+                        />
+                    </motion.div>
+                )}
             </div>
             
             <button 
