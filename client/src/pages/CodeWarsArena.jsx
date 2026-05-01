@@ -49,6 +49,7 @@ const CodeWarsArena = () => {
     const [factionRooms, setFactionRooms] = useState([]);
     const [socket, setSocket] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [playerFinished, setPlayerFinished] = useState(false); // Track if current player finished
     
     // Create room form state
     const [createForm, setCreateForm] = useState({
@@ -140,6 +141,7 @@ const CodeWarsArena = () => {
             console.log('🎮 Game started:', data);
             setCurrentRoom(data.room);
             setGameState('game');
+            setPlayerFinished(false); // Reset finished state
             toast.success('🎮 Game Started! Good luck!');
         });
 
@@ -147,7 +149,25 @@ const CodeWarsArena = () => {
             console.log('🚪 Left room:', data);
             setCurrentRoom(null);
             setGameState('menu');
+            setPlayerFinished(false);
             loadFactionRoomsViaSocket(s);
+        });
+        
+        s.on('cw-contest-ended', (data) => {
+            console.log('🏁 Contest ended for player:', data);
+            if (data.success) {
+                setPlayerFinished(true);
+                if (data.allFinished) {
+                    toast.success('All players finished! Game ending...');
+                } else {
+                    toast.success(`You finished! ${data.finishedCount}/${data.totalPlayers} players done. Others can continue.`);
+                }
+            }
+        });
+        
+        s.on('player-finished', (data) => {
+            console.log('👤 Player finished:', data);
+            toast.info(`${data.username} finished their contest! (${data.finishedCount}/${data.totalPlayers})`);
         });
 
         s.on('cw-error', (data) => {
@@ -333,6 +353,11 @@ const CodeWarsArena = () => {
             navigate('/auth');
             return;
         }
+        
+        if (!myFaction || !myFaction.id) {
+            toast.error('Faction not loaded. Please refresh the page.');
+            return;
+        }
 
         try {
             setLoading(true);
@@ -340,8 +365,14 @@ const CodeWarsArena = () => {
             const actualRoomId = roomId || joinForm.roomId;
             const actualPassword = password || joinForm.password;
             
+            if (!actualRoomId || actualRoomId.trim().length === 0) {
+                toast.error('Please enter a room code');
+                setLoading(false);
+                return;
+            }
+            
             console.log('🚪 Joining room via socket:', {
-                roomId: actualRoomId,
+                roomId: actualRoomId.toUpperCase().trim(),
                 userId: user.id,
                 username: user.username,
                 factionId: myFaction.id,
@@ -350,14 +381,20 @@ const CodeWarsArena = () => {
             
             // Emit socket event (like workspace system)
             socket.emit('cw-join-room', {
-                roomId: actualRoomId,
+                roomId: actualRoomId.toUpperCase().trim(),
                 userId: user.id,
                 username: user.username,
                 factionId: myFaction.id,
                 password: actualPassword
             });
             
-            // Response will come via 'cw-room-joined' event
+            // Set a timeout in case socket doesn't respond
+            setTimeout(() => {
+                if (loading) {
+                    setLoading(false);
+                    toast.error('Join request timed out. Room may not exist.');
+                }
+            }, 10000); // 10 second timeout
             
         } catch (error) {
             console.error('Join room error:', error);
@@ -429,6 +466,20 @@ const CodeWarsArena = () => {
         } catch (error) {
             toast.error(error.response?.data?.error || 'Failed to switch team');
         }
+    };
+    
+    const endContest = () => {
+        if (!socket || !currentRoom || !user) {
+            return;
+        }
+        
+        console.log('🏁 Ending contest for player...');
+        
+        socket.emit('cw-end-contest', {
+            roomId: currentRoom.id,
+            userId: user.id,
+            username: user.username
+        });
     };
 
     const copyRoomId = () => {
@@ -522,6 +573,8 @@ const CodeWarsArena = () => {
                         <GameInterface 
                             room={currentRoom} 
                             user={user}
+                            playerFinished={playerFinished}
+                            onEndContest={endContest}
                         />
                     )}
                 </AnimatePresence>
@@ -1250,11 +1303,12 @@ const TeamPanel = ({ team, room, user, isMyTeam, onSwitchTeam }) => {
     );
 };
 // Game Interface Component
-const GameInterface = ({ room, user }) => {
+const GameInterface = ({ room, user, playerFinished, onEndContest }) => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [code, setCode] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [timeLeft, setTimeLeft] = useState(0);
+    const [showEndConfirm, setShowEndConfirm] = useState(false);
 
     useEffect(() => {
         // Calculate time left
@@ -1283,8 +1337,20 @@ const GameInterface = ({ room, user }) => {
             break;
         }
     }
+    
+    // Check if player is finished
+    const isFinished = playerFinished || (room.finishedPlayers && room.finishedPlayers.includes(user.id));
+    
+    // Count finished players
+    const finishedCount = room.finishedPlayers ? room.finishedPlayers.length : 0;
+    const totalPlayers = room.teams.reduce((sum, team) => sum + team.players.length, 0);
 
     const submitSolution = async () => {
+        if (isFinished) {
+            toast.error('You have already ended your contest!');
+            return;
+        }
+        
         if (!code.trim()) {
             toast.error('Please write some code before submitting');
             return;
@@ -1314,6 +1380,11 @@ const GameInterface = ({ room, user }) => {
         } finally {
             setSubmitting(false);
         }
+    };
+    
+    const handleEndContest = () => {
+        setShowEndConfirm(false);
+        onEndContest();
     };
 
     const formatTime = (seconds) => {
@@ -1363,7 +1434,8 @@ const GameInterface = ({ room, user }) => {
                             className={`question-tab ${index === currentQuestionIndex ? 'active' : ''} ${
                                 myPlayer.questionsCompleted > index ? 'completed' : ''
                             }`}
-                            onClick={() => setCurrentQuestionIndex(index)}
+                            onClick={() => !isFinished && setCurrentQuestionIndex(index)}
+                            disabled={isFinished}
                         >
                             {myPlayer.questionsCompleted > index ? (
                                 <CheckCircle size={16} />
@@ -1382,7 +1454,31 @@ const GameInterface = ({ room, user }) => {
                         </div>
                     ))}
                 </div>
+                
+                {/* Finished Players Indicator */}
+                {finishedCount > 0 && (
+                    <div className="finished-indicator">
+                        <CheckCircle size={16} />
+                        <span>{finishedCount}/{totalPlayers} finished</span>
+                    </div>
+                )}
             </div>
+            
+            {/* Player Finished Overlay */}
+            {isFinished && (
+                <div className="player-finished-overlay">
+                    <div className="finished-message">
+                        <CheckCircle size={48} />
+                        <h2>Contest Ended!</h2>
+                        <p>You have finished your contest.</p>
+                        <p>Waiting for other players... ({finishedCount}/{totalPlayers} done)</p>
+                        <div className="final-score">
+                            <h3>Your Score: {myPlayer.score} points</h3>
+                            <p>Questions Completed: {myPlayer.questionsCompleted}/{room.questions.length}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Question Panel */}
             <div className="question-panel">
@@ -1393,6 +1489,9 @@ const GameInterface = ({ room, user }) => {
                             {currentQuestion.difficulty}
                         </span>
                         <span className="points">{currentQuestion.points} pts</span>
+                        {currentQuestion.source && (
+                            <span className="source">from {currentQuestion.source}</span>
+                        )}
                     </div>
                 </div>
                 
@@ -1437,13 +1536,14 @@ const GameInterface = ({ room, user }) => {
                     onChange={(e) => setCode(e.target.value)}
                     placeholder={currentQuestion.starterCode || "// Write your solution here"}
                     spellCheck={false}
+                    disabled={isFinished}
                 />
                 
                 <div className="editor-actions">
                     <button 
                         className="submit-btn"
                         onClick={submitSolution}
-                        disabled={submitting || !code.trim()}
+                        disabled={submitting || !code.trim() || isFinished}
                     >
                         {submitting ? (
                             <>
@@ -1457,8 +1557,37 @@ const GameInterface = ({ room, user }) => {
                             </>
                         )}
                     </button>
+                    
+                    {!isFinished && (
+                        <button 
+                            className="end-contest-btn"
+                            onClick={() => setShowEndConfirm(true)}
+                        >
+                            <LogOut size={16} />
+                            End Contest
+                        </button>
+                    )}
                 </div>
             </div>
+            
+            {/* End Contest Confirmation Modal */}
+            {showEndConfirm && (
+                <div className="modal-overlay" onClick={() => setShowEndConfirm(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3>End Contest?</h3>
+                        <p>Are you sure you want to end your contest?</p>
+                        <p className="warning">You won't be able to submit more solutions, but others can continue playing.</p>
+                        <div className="modal-actions">
+                            <button className="cancel-btn" onClick={() => setShowEndConfirm(false)}>
+                                Cancel
+                            </button>
+                            <button className="confirm-btn" onClick={handleEndContest}>
+                                Yes, End Contest
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
