@@ -6,3 +6,12 @@ build/
 *.log
 temp_exec/
 server/tmp_builds/
+
+# Database files (local development data)
+server/*_db.json
+
+# Video files
+*.mp4
+*.avi
+*.mov
+*.wmv
