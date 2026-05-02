@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const { compileAndRunJava } = require('./javaCompiler');
 const { getRandomQuestions, getQuestionById, GAME_MODES, DIFFICULTY_LEVELS, getRandomQuestionsWithGitHub } = require('./codeWarQuestions');
 const { getAITestCaseGenerator } = require('./aiTestCaseGenerator');
+const { getTestCaseManager } = require('./testCaseManager');
 
 class IntraFactionArena {
     constructor(io, factions) {
@@ -13,8 +14,11 @@ class IntraFactionArena {
         this.questionHistory = new Map(); // factionId -> Set of recent question IDs
         this.maxHistorySize = 50; // Remember last 50 questions per faction
         
-        // AI Test Case Generator
+        // AI Test Case Generator (for new questions)
         this.aiTestCaseGenerator = getAITestCaseGenerator();
+        
+        // Enterprise Test Case Manager (LeetCode-style storage)
+        this.testCaseManager = getTestCaseManager();
         
         // ═══ COLLABORATIVE EDITOR STATE ═══
         // Editor state: roomId -> teamId -> questionId -> EditorState
@@ -94,6 +98,9 @@ class IntraFactionArena {
         
         this.activeRooms.set(roomId, room);
         this.playerRooms.set(creatorId, roomId);
+        
+        // Broadcast updated room list
+        this.broadcastFactionRooms(factionId);
         
         return room;
     }
@@ -176,6 +183,9 @@ class IntraFactionArena {
         this.addPlayerToTeam(room, userId, username, availableTeam.id);
         this.playerRooms.set(userId, roomId);
         
+        // Broadcast updated room list
+        this.broadcastFactionRooms(factionId);
+        
         return { role: 'player', room, teamId: availableTeam.id };
     }
 
@@ -227,6 +237,8 @@ class IntraFactionArena {
         // If creator left and room is waiting, delete room
         if (room.creatorId === userId && room.status === 'waiting') {
             this.deleteRoom(roomId);
+            // Broadcast updated room list
+            this.broadcastFactionRooms(room.factionId);
             return true;
         }
         
@@ -234,7 +246,12 @@ class IntraFactionArena {
         const totalPlayers = room.teams.reduce((sum, team) => sum + team.players.length, 0);
         if (totalPlayers === 0) {
             this.deleteRoom(roomId);
+        } else {
+            this.activeRooms.set(roomId, room);
         }
+        
+        // Broadcast updated room list
+        this.broadcastFactionRooms(room.factionId);
         
         return true;
     }
@@ -470,28 +487,70 @@ class IntraFactionArena {
             // Generate test cases for all questions in parallel
             const promises = questions.map(async (question, index) => {
                 try {
-                    // Skip if question already has valid test cases
+                    // 1. FIRST: Check our LeetCode-style TestCaseManager library
+                    let testCases = await this.testCaseManager.getTestCases(question.id);
+                    
+                    if (testCases && testCases.length > 0) {
+                        console.log(`[ARENA] 💾 Loaded ${testCases.length} test cases from library for: ${question.title}`);
+                        question.testCases = testCases;
+                        
+                        // Update room
+                        const currentRoom = this.activeRooms.get(roomId);
+                        if (currentRoom) {
+                            currentRoom.questions[index] = question;
+                            this.activeRooms.set(roomId, currentRoom);
+                        }
+                        return question;
+                    }
+                    
+                    // 2. SECOND: Check if question already has valid test cases
                     const hasValidTestCases = question.testCases && 
                         question.testCases.length > 0 && 
                         !question.testCases[0].expected.includes('visit problem page');
                     
                     if (hasValidTestCases) {
-                        console.log(`[ARENA] ✅ Question ${index + 1} already has valid test cases`);
+                        console.log(`[ARENA] ✅ Question ${index + 1} already has valid test cases, storing in library...`);
+                        
+                        // Store existing test cases in our library for next time
+                        const sampleCount = Math.min(3, question.testCases.length);
+                        const sampleCases = question.testCases.slice(0, sampleCount);
+                        const hiddenCases = question.testCases.slice(sampleCount);
+                        
+                        if (sampleCases.length > 0) {
+                            await this.testCaseManager.storeTestCases(question, sampleCases, 'sample');
+                        }
+                        if (hiddenCases.length > 0) {
+                            await this.testCaseManager.storeTestCases(question, hiddenCases, 'hidden');
+                        }
+                        
                         return question;
                     }
                     
-                    console.log(`[ARENA] 🤖 Generating test cases for question ${index + 1}: ${question.title}`);
-                    const testCases = await this.aiTestCaseGenerator.generateTestCases(question);
+                    // 3. THIRD: Generate NEW test cases with AI
+                    console.log(`[ARENA] 🤖 Generating NEW test cases for question ${index + 1}: ${question.title}`);
+                    const aiTestCases = await this.aiTestCaseGenerator.generateTestCases(question);
+                    
+                    // Store in our LeetCode-style library for future use!
+                    const sampleCount = Math.min(3, aiTestCases.length);
+                    const sampleCases = aiTestCases.slice(0, sampleCount);
+                    const hiddenCases = aiTestCases.slice(sampleCount);
+                    
+                    if (sampleCases.length > 0) {
+                        await this.testCaseManager.storeTestCases(question, sampleCases, 'sample');
+                    }
+                    if (hiddenCases.length > 0) {
+                        await this.testCaseManager.storeTestCases(question, hiddenCases, 'hidden');
+                    }
                     
                     // Update question with generated test cases
-                    question.testCases = testCases;
+                    question.testCases = aiTestCases;
                     
                     // Update room
                     const currentRoom = this.activeRooms.get(roomId);
                     if (currentRoom) {
                         currentRoom.questions[index] = question;
                         this.activeRooms.set(roomId, currentRoom);
-                        console.log(`[ARENA] ✅ Updated question ${index + 1} with ${testCases.length} test cases`);
+                        console.log(`[ARENA] ✅ Updated question ${index + 1} with ${aiTestCases.length} test cases (and stored in library!)`);
                     }
                     
                     return question;
@@ -503,6 +562,10 @@ class IntraFactionArena {
             
             await Promise.all(promises);
             console.log(`[ARENA] ✅ Test case generation complete for room ${roomId}`);
+            
+            // Show library stats
+            const stats = this.testCaseManager.getStats();
+            console.log(`[ARENA] 📊 Test Case Library Stats: ${stats.problems} problems, ${stats.totalTestCases} total test cases`);
             
         } catch (error) {
             console.error(`[ARENA] ❌ Error in pregenerateTestCasesForRoom:`, error.message);
@@ -534,8 +597,12 @@ class IntraFactionArena {
         }
         
         try {
-            // Get test cases (AI-generated or original)
-            const testCases = await this.aiTestCaseGenerator.getTestCases(question);
+            // Get test cases (PRIMARY: from our library, FALLBACK: AI generator)
+            let testCases = await this.testCaseManager.getAllTestCasesForSubmission(question.id);
+            
+            if (!testCases || testCases.length === 0) {
+                testCases = await this.aiTestCaseGenerator.getTestCases(question);
+            }
             
             console.log(`[ARENA] Running solution with ${testCases.length} test cases`);
             
@@ -758,6 +825,15 @@ class IntraFactionArena {
         }
         
         return sanitized;
+    }
+
+    broadcastFactionRooms(factionId) {
+        // Broadcast updated room list to everyone in this faction
+        const rooms = this.getRoomsByFaction(factionId);
+        console.log(`📡 [ARENA] Broadcasting ${rooms.length} rooms to faction ${factionId}`);
+        
+        // Emit to all connected clients
+        this.io.emit('cw-faction-rooms', { rooms, factionId });
     }
 
     // ═══ PUBLIC API METHODS ═══

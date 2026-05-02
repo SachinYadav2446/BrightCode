@@ -28,8 +28,8 @@ class AITestCaseGenerator {
             gemini: {
                 enabled: !!process.env.GEMINI_API_KEY,
                 apiKey: process.env.GEMINI_API_KEY,
-                model: 'gemini-1.5-flash-latest', // Updated model name
-                endpoint: 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent',
+                model: 'gemini-1.5-flash',
+                endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
                 priority: 3
             },
             groq: {
