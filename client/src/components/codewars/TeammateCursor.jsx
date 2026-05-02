@@ -47,8 +47,8 @@ const TeammateCursor = ({ username, position, color, isVisible = true }) => {
     };
   }, [position]);
   
-  // Don't render if not visible
-  if (!isVisible) {
+  // Don't render if not visible or position is invalid
+  if (!isVisible || !position || typeof position.line !== 'number' || typeof position.ch !== 'number') {
     return null;
   }
   

@@ -1,205 +1,170 @@
 /* ============================================================================
-   TEAMMATE PRESENCE STYLES
+   TEAMMATE PRESENCE STYLES - Horizontal Compact Layout
    ============================================================================ */
 
 .teammate-presence {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
   background: #252526;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 16px;
-  border: 1px solid #3e3e42;
+  border-bottom: 1px solid #3e3e42;
+  font-size: 12px;
+  color: #cccccc;
+  flex-shrink: 0;
 }
-
-/* ============================================================================
-   PRESENCE HEADER
-   ============================================================================ */
 
 .presence-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #3e3e42;
-}
-
-.presence-title {
-  font-size: 13px;
+  gap: 6px;
   font-weight: 600;
-  color: #cccccc;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  color: #888;
+  font-size: 11px;
 }
 
 .presence-count {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  background: #667eea;
-  color: white;
+  background: #3e3e42;
   border-radius: 10px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
+  color: #667eea;
 }
-
-/* ============================================================================
-   PRESENCE LIST
-   ============================================================================ */
 
 .presence-list {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.presence-list::-webkit-scrollbar {
+  height: 4px;
+}
+
+.presence-list::-webkit-scrollbar-thumb {
+  background: #3e3e42;
+  border-radius: 2px;
 }
 
 .presence-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px;
-  border-radius: 6px;
-  transition: background-color 0.2s ease;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #1e1e1e;
+  border-radius: 16px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  border: 1px solid transparent;
 }
 
-.presence-item:hover {
-  background: #2d2d30;
+.presence-item.online {
+  border-color: rgba(102, 126, 234, 0.3);
 }
 
 .presence-item.current-user {
   background: rgba(102, 126, 234, 0.1);
-  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-color: rgba(102, 126, 234, 0.5);
 }
-
-.presence-item.offline {
-  opacity: 0.5;
-}
-
-/* ============================================================================
-   STATUS INDICATOR
-   ============================================================================ */
 
 .presence-indicator {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
   box-shadow: 0 0 8px currentColor;
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
 }
 
 .presence-item.offline .presence-indicator {
-  animation: none;
+  opacity: 0.3;
   box-shadow: none;
 }
 
-/* ============================================================================
-   PRESENCE INFO
-   ============================================================================ */
-
 .presence-info {
-  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 0; /* Allow text truncation */
+  min-width: 0;
 }
 
 .presence-username {
-  font-size: 13px;
   font-weight: 600;
+  font-size: 12px;
   color: #e0e0e0;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .you-label {
-  font-size: 11px;
-  font-weight: 500;
+  font-weight: 400;
   color: #667eea;
-  margin-left: 4px;
+  font-size: 10px;
 }
 
 .presence-status {
-  font-size: 11px;
+  font-size: 10px;
   color: #888;
+  white-space: nowrap;
+}
+
+.presence-status.typing {
+  color: #667eea;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-/* ============================================================================
-   TYPING INDICATOR
-   ============================================================================ */
-
-.presence-status.typing {
-  color: #667eea;
-  font-weight: 500;
-}
-
 .typing-dots {
-  display: inline-flex;
+  display: flex;
   gap: 3px;
-  align-items: center;
 }
 
 .typing-dots span {
-  width: 4px;
-  height: 4px;
+  width: 3px;
+  height: 3px;
   background: #667eea;
   border-radius: 50%;
-  animation: typing-bounce 1.4s ease-in-out infinite;
+  animation: typingBounce 1.4s infinite ease-in-out;
 }
 
 .typing-dots span:nth-child(1) {
-  animation-delay: 0s;
+  animation-delay: -0.32s;
 }
 
 .typing-dots span:nth-child(2) {
-  animation-delay: 0.2s;
+  animation-delay: -0.16s;
 }
 
-.typing-dots span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes typing-bounce {
-  0%, 60%, 100% {
-    transform: translateY(0);
-    opacity: 0.7;
+@keyframes typingBounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.5;
   }
-  30% {
-    transform: translateY(-6px);
+  40% {
+    transform: scale(1);
     opacity: 1;
   }
 }
 
-/* ============================================================================
-   EMPTY STATE
-   ============================================================================ */
-
 .presence-empty {
-  text-align: center;
-  padding: 20px;
+  padding: 8px 16px;
   color: #666;
+  font-size: 11px;
+  font-style: italic;
 }
 
 .presence-empty p {
   margin: 0;
-  font-size: 13px;
-  font-style: italic;
 }
 
 /* ============================================================================
@@ -208,57 +173,20 @@
 
 @media (max-width: 768px) {
   .teammate-presence {
-    padding: 10px;
-    margin-bottom: 12px;
-  }
-  
-  .presence-header {
-    margin-bottom: 10px;
-  }
-  
-  .presence-title {
-    font-size: 12px;
+    padding: 6px 12px;
+    gap: 12px;
   }
   
   .presence-item {
-    padding: 6px;
+    padding: 4px 10px;
+    gap: 6px;
   }
   
   .presence-username {
-    font-size: 12px;
+    font-size: 11px;
   }
   
   .presence-status {
-    font-size: 10px;
-  }
-}
-
-/* ============================================================================
-   ACCESSIBILITY
-   ============================================================================ */
-
-/* Reduce motion for users who prefer it */
-@media (prefers-reduced-motion: reduce) {
-  .presence-indicator {
-    animation: none;
-  }
-  
-  .typing-dots span {
-    animation: none;
-  }
-  
-  .presence-item {
-    transition: none;
-  }
-}
-
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  .teammate-presence {
-    border: 2px solid currentColor;
-  }
-  
-  .presence-item.current-user {
-    border: 2px solid #667eea;
+    font-size: 9px;
   }
 }
