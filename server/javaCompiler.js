@@ -34,75 +34,22 @@ async function compileAndRunJava(userCode, testCases = []) {
             return {
                 success: false,
                 error: 'Please write some code before submitting.',
-                type: 'validation'
+                type: 'validation',
+                testsPassed: 0,
+                totalTests: 0
             };
         }
 
         // Check if test cases exist
         if (!testCases || testCases.length === 0) {
-            // No test cases - just compile and run (legacy support)
-            const javaCode = userCode.includes('class ') ? 
-                userCode.replace(/class\s+\w+/, `class ${className}`) :
-                `public class ${className} {\n    public static void main(String[] args) {\n        ${userCode}\n    }\n}`;
-
-            await fs.writeFile(javaFile, javaCode, 'utf8');
-
-            const compileResult = await new Promise((resolve) => {
-                exec(`javac "${javaFile}"`, { timeout: 5000 }, (error, stdout, stderr) => {
-                    if (error) {
-                        if (error.message.includes('not recognized') || error.message.includes('command not found')) {
-                            resolve({ 
-                                success: false, 
-                                error: 'Java JDK is not installed. Please install Java JDK and restart the server.',
-                                type: 'system'
-                            });
-                        } else {
-                            const errorMsg = stderr || error.message;
-                            let cleanError = 'Compilation failed. Check your syntax.';
-                            
-                            if (errorMsg.includes("';' expected")) {
-                                cleanError = 'Syntax Error: Missing semicolon (;)';
-                            } else if (errorMsg.includes('cannot find symbol')) {
-                                cleanError = 'Error: Undefined variable or method';
-                            } else if (errorMsg.includes('incompatible types')) {
-                                cleanError = 'Type Error: Return type mismatch';
-                            }
-                            
-                            resolve({ success: false, error: cleanError, type: 'compilation' });
-                        }
-                    } else {
-                        resolve({ success: true });
-                    }
-                });
-            });
-
-            if (!compileResult.success) {
-                return compileResult;
-            }
-
-            // Run the program
-            const runResult = await new Promise((resolve) => {
-                exec(
-                    `java -cp "${TEMP_DIR}" ${className}`,
-                    { timeout: 3000 },
-                    (error, stdout, stderr) => {
-                        if (error) {
-                            resolve({
-                                success: false,
-                                error: 'Runtime error occurred',
-                                type: 'runtime'
-                            });
-                        } else {
-                            resolve({
-                                success: true,
-                                message: 'Code compiled and ran successfully!'
-                            });
-                        }
-                    }
-                );
-            });
-
-            return runResult;
+            console.warn('⚠️ No test cases provided for this question!');
+            return {
+                success: false,
+                error: 'This question has no test cases configured. Please contact support.',
+                type: 'validation',
+                testsPassed: 0,
+                totalTests: 0
+            };
         }
 
         // Check if this is a complete program (has main method) or just a method
@@ -198,7 +145,7 @@ async function compileAndRunJava(userCode, testCases = []) {
         }
 
         // Module 2+ style - method with test harness
-        // Extract method signature
+        // Extract method signature from user code
         const methodMatch = userCode.match(/public\s+static\s+(\w+)\s+(\w+)\s*\(([^)]*)\)/);
         if (!methodMatch) {
             return {
@@ -211,6 +158,9 @@ async function compileAndRunJava(userCode, testCases = []) {
         const returnType = methodMatch[1];
         const methodName = methodMatch[2];
         const params = methodMatch[3];
+        
+        // Log method info for debugging
+        console.log(`📝 Detected method: ${returnType} ${methodName}(${params})`);
 
         // Build complete Java program with test harness
         const javaCode = `
@@ -346,11 +296,32 @@ ${testCases.map((tc, idx) => {
         }
 
         const allPassed = results.every(r => r.passed);
+        const testsPassed = results.filter(r => r.passed).length;
+        const totalTests = results.length;
+        
+        // Create detailed error message if tests failed
+        let detailedMessage = allPassed ? 'All test cases passed!' : 'Some test cases failed';
+        if (!allPassed) {
+            const failedTests = results.filter(r => !r.passed);
+            const firstFailed = failedTests[0];
+            const failedIndex = results.indexOf(firstFailed);
+            
+            detailedMessage = `Test case ${failedIndex + 1} failed:\n`;
+            detailedMessage += `Input: ${JSON.stringify(firstFailed.input)}\n`;
+            detailedMessage += `Expected: ${firstFailed.expected}\n`;
+            detailedMessage += `Got: ${firstFailed.actual || 'error'}\n`;
+            if (firstFailed.error) {
+                detailedMessage += `Error: ${firstFailed.error}`;
+            }
+        }
         
         return {
             success: allPassed,
             results,
-            message: allPassed ? 'All test cases passed!' : 'Some test cases failed'
+            message: detailedMessage,
+            methodName: methodName, // Include method name for debugging
+            testsPassed: results.filter(r => r.passed).length,
+            totalTests: results.length
         };
 
     } catch (error) {
