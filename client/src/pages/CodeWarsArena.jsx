@@ -683,41 +683,36 @@ const CodeWarsArena = () => {
 
     return (
         <div className="code-wars-arena">
-            <div className="arena-background">
-                <div className="arena-grid"></div>
-                <div className="arena-glow"></div>
-            </div>
-
-            {/* Header */}
-            <header className="arena-header">
-                <button className="back-btn" onClick={() => {
-                    if (gameState === 'create' || gameState === 'join') {
-                        setGameState('menu');
-                    } else {
-                        navigate(-1);
-                    }
-                }}>
-                    <ArrowLeft size={20} />
-                    Back
-                </button>
-                
-                <div className="arena-title">
-                    <Swords size={32} />
-                    <h1>Code Wars Arena</h1>
-                    {(gameState === 'create' || gameState === 'join') && (
-                        <div className="arena-subtitle">
-                            {gameState === 'create' ? 'Create Battle Room' : 'Join Battle Room'}
+            {/* Custom Arena Header - Show for menu/create/join/room states, hide during game/waiting/results */}
+            {(gameState === 'menu' || gameState === 'create' || gameState === 'join' || gameState === 'room') && (
+                <header className="arena-header">
+                    <div className="arena-header-left">
+                        <button className="back-btn" onClick={() => {
+                            if (gameState === 'create' || gameState === 'join') {
+                                setGameState('menu');
+                            } else if (gameState === 'room') {
+                                leaveRoom();
+                            } else {
+                                navigate(-1);
+                            }
+                        }}>
+                            <ArrowLeft size={20} />
+                        </button>
+                        <div className="arena-title">
+                            <Swords size={24} />
+                            <h1>Code Wars Arena</h1>
                         </div>
-                    )}
-                </div>
-
-                {myFaction && (
-                    <div className="faction-badge">
-                        <span className="faction-emblem">{myFaction.emblem}</span>
-                        <span className="faction-name">{myFaction.name}</span>
                     </div>
-                )}
-            </header>
+                    <div className="arena-header-right">
+                        {myFaction && (
+                            <div className="faction-badge">
+                                <Shield size={18} />
+                                <span>{myFaction.name}</span>
+                            </div>
+                        )}
+                    </div>
+                </header>
+            )}
 
             <main className="arena-content">
                 <AnimatePresence mode="wait">
@@ -1251,124 +1246,24 @@ const RoomLobby = ({ room, user, onLeave, onStart, onSwitchTeam, onCopyId }) => 
                             )}
                         </span>
                     </div>
-                    
-                    {/* Debug info for development */}
-                    {process.env.NODE_ENV === 'development' && (
-                        <div className="debug-info" style={{ 
-                            fontSize: '12px', 
-                            color: '#666', 
-                            marginTop: '8px',
-                            fontFamily: 'monospace'
-                        }}>
-                            Creator: {room.creatorId} | You: {user.id} | IsCreator: {isCreator ? 'YES' : 'NO'} | Players: {totalPlayers}
-                            <br />
-                            <button 
-                                style={{ 
-                                    fontSize: '10px', 
-                                    padding: '2px 6px', 
-                                    marginTop: '4px',
-                                    background: '#333',
-                                    color: '#fff',
-                                    border: '1px solid #555',
-                                    borderRadius: '3px',
-                                    cursor: 'pointer'
-                                }}
-                                onClick={async () => {
-                                    try {
-                                        const response = await axios.get(`http://localhost:5051/code-wars/debug/room/${room.id}`, {
-                                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                                        });
-                                        console.log('🔍 Room Debug Info:', response.data);
-                                        toast.success('Check console for room debug info');
-                                    } catch (error) {
-                                        console.error('Debug error:', error);
-                                        toast.error('Debug request failed');
-                                    }
-                                }}
-                            >
-                                🔍 Debug Room
-                            </button>
-                        </div>
-                    )}
                 </div>
                 
                 <div className="lobby-actions">
-                    {canStart && (
-                        <button className="start-game-btn" onClick={onStart}>
+                    {isCreator && (
+                        <button 
+                            className="start-game-btn" 
+                            onClick={onStart}
+                            disabled={!canStart}
+                            title={!canStart ? `Need at least ${minPlayers} players to start` : 'Start the game'}
+                        >
                             <Play size={16} />
                             Start Game
-                        </button>
-                    )}
-                    {!canStart && isCreator && (
-                        <div className="start-requirements">
-                            <AlertCircle size={16} />
-                            Need at least {minPlayers} players to start
-                        </div>
-                    )}
-                    
-                    {/* Room Recovery Button */}
-                    {process.env.NODE_ENV === 'development' && (
-                        <button 
-                            className="refresh-room-btn"
-                            onClick={async () => {
-                                try {
-                                    const response = await axios.get(`http://localhost:5051/code-wars/debug/room/${room.id}`, {
-                                        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                                    });
-                                    
-                                    if (!response.data.roomExists) {
-                                        toast.error('🔄 Room expired. Returning to menu to create a new room.');
-                                        setCurrentRoom(null);
-                                        setGameState('menu');
-                                        await loadFactionRooms();
-                                    } else {
-                                        toast.success('✅ Room is valid');
-                                    }
-                                } catch (error) {
-                                    toast.error('Failed to check room status');
-                                }
-                            }}
-                            style={{
-                                background: '#f59e0b',
-                                color: 'white',
-                                border: 'none',
-                                padding: '8px 12px',
-                                borderRadius: '6px',
-                                fontSize: '12px',
-                                cursor: 'pointer',
-                                marginLeft: '8px'
-                            }}
-                        >
-                            🔄 Check Room
                         </button>
                     )}
                     
                     <button className="leave-room-btn" onClick={onLeave}>
                         <LogOut size={16} />
                         Leave
-                    </button>
-                    
-                    {/* Emergency New Room Button */}
-                    <button 
-                        className="new-room-btn"
-                        onClick={() => {
-                            // Force return to menu and go to create room
-                            setCurrentRoom(null);
-                            setGameState('create');
-                            toast.info('🆕 Creating new room...');
-                        }}
-                        style={{
-                            background: '#ef4444',
-                            color: 'white',
-                            border: 'none',
-                            padding: '8px 12px',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            marginLeft: '8px'
-                        }}
-                    >
-                        🆕 New Room
                     </button>
                 </div>
             </div>
@@ -1386,7 +1281,14 @@ const RoomLobby = ({ room, user, onLeave, onStart, onSwitchTeam, onCopyId }) => 
                 ))}
             </div>
             
-            {room.spectators.length > 0 && (
+            {!canStart && isCreator && (
+                <div className="start-requirements-banner">
+                    <AlertCircle size={20} />
+                    <span>Need at least {minPlayers} players to start the game</span>
+                </div>
+            )}
+            
+            {room.spectators && room.spectators.length > 0 && (
                 <div className="spectators-section">
                     <h4>👁️ Spectators ({room.spectators.length})</h4>
                     <div className="spectators-list">
@@ -1396,13 +1298,6 @@ const RoomLobby = ({ room, user, onLeave, onStart, onSwitchTeam, onCopyId }) => 
                             </div>
                         ))}
                     </div>
-                </div>
-            )}
-            
-            {!canStart && isCreator && (
-                <div className="start-requirements">
-                    <AlertCircle size={16} />
-                    Need at least {minPlayers} players to start the game
                 </div>
             )}
         </motion.div>
@@ -1529,7 +1424,7 @@ const WaitingForPlayers = ({ room, user }) => {
                     <div className="players-grid">
                         {room.teams.map(team => (
                             team.players.map(player => {
-                                const isFinished = room.finishedPlayers && room.finishedPlayers.includes(player.id);
+                                const isFinished = Array.isArray(room.finishedPlayers) && room.finishedPlayers.includes(player.id);
                                 return (
                                     <div key={player.id} className={`player-status-card ${isFinished ? 'finished' : 'playing'}`}>
                                         <div className="player-avatar">
@@ -1745,8 +1640,10 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [code, setCode] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [testing, setTesting] = useState(false);
     const [timeLeft, setTimeLeft] = useState(0);
     const [showEndConfirm, setShowEndConfirm] = useState(false);
+    const [testResults, setTestResults] = useState(null);
 
     useEffect(() => {
         // Calculate time left
@@ -1777,19 +1674,22 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
     }
     
     // Check if player is finished
-    const isFinished = playerFinished || (room.finishedPlayers && room.finishedPlayers.includes(user.id));
+    const isFinished = playerFinished || (Array.isArray(room.finishedPlayers) && room.finishedPlayers.includes(user.id));
     
     // Count finished players
-    const finishedCount = room.finishedPlayers ? room.finishedPlayers.length : 0;
+    const finishedCount = Array.isArray(room.finishedPlayers) ? room.finishedPlayers.length : 0;
     const totalPlayers = room.teams.reduce((sum, team) => sum + team.players.length, 0);
 
-    const submitSolution = async () => {
+    const submitSolution = async (submittedCode) => {
         if (isFinished) {
             toast.error('You have already ended your contest!');
             return;
         }
         
-        if (!code.trim()) {
+        // Use submitted code from collaborative editor, or local code state for solo mode
+        const codeToSubmit = submittedCode || code;
+        
+        if (!codeToSubmit || !codeToSubmit.trim()) {
             toast.error('Please write some code before submitting');
             return;
         }
@@ -1798,25 +1698,84 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
         try {
             const response = await axios.post('http://localhost:5051/code-wars/submit-solution', {
                 questionId: currentQuestion.id,
-                code
+                code: codeToSubmit
             }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
 
             if (response.data.success) {
                 toast.success(`✅ Correct! +${response.data.points} points`);
+                setTestResults(null); // Clear test results on success
                 // Move to next question if available
                 if (currentQuestionIndex < room.questions.length - 1) {
                     setCurrentQuestionIndex(currentQuestionIndex + 1);
                     setCode('');
                 }
             } else {
-                toast.error('❌ Solution failed tests. Try again!');
+                // Show detailed error message
+                const result = response.data.result;
+                if (result && result.message) {
+                    // Multi-line error message
+                    const lines = result.message.split('\n');
+                    toast.error(
+                        <div style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '12px' }}>
+                            {lines.map((line, i) => <div key={i}>{line}</div>)}
+                        </div>,
+                        { duration: 8000 }
+                    );
+                } else {
+                    toast.error('❌ Solution failed tests. Try again!');
+                }
+                
+                // Store test results for display
+                if (result && result.results) {
+                    setTestResults(result);
+                    console.log('📊 Test Results:', result.results);
+                    console.log(`✅ Passed: ${result.testsPassed || 0}/${result.totalTests || 0}`);
+                    if (result.methodName) {
+                        console.log(`🔧 Method detected: ${result.methodName}`);
+                    }
+                }
             }
         } catch (error) {
-            toast.error(error.response?.data?.error || 'Submission failed');
+            console.error('Submission error:', error);
+            const errorMsg = error.response?.data?.error || 'Submission failed';
+            toast.error(errorMsg);
         } finally {
             setSubmitting(false);
+        }
+    };
+    
+    const runTests = async (codeToTest) => {
+        const testCode = codeToTest || code;
+        
+        if (!testCode || !testCode.trim()) {
+            toast.error('Please write some code before testing');
+            return;
+        }
+        
+        setTesting(true);
+        setTestResults(null);
+        
+        try {
+            // Use the compile endpoint to test without submitting
+            const response = await axios.post('http://localhost:5051/compile-java', {
+                code: testCode,
+                testCases: currentQuestion.testCases
+            });
+            
+            setTestResults(response.data);
+            
+            if (response.data.success) {
+                toast.success(`✅ All ${response.data.totalTests} test cases passed!`);
+            } else {
+                toast.error(`❌ ${response.data.testsPassed || 0}/${response.data.totalTests || 0} tests passed`);
+            }
+        } catch (error) {
+            console.error('Test error:', error);
+            toast.error('Failed to run tests');
+        } finally {
+            setTesting(false);
         }
     };
     
@@ -1858,50 +1817,53 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
 
     return (
         <div className="game-interface">
-            {/* Game Header */}
-            <div className="game-header">
-                <div className="game-timer">
-                    <Timer size={20} />
-                    <span className={timeLeft < 300 ? 'urgent' : ''}>{formatTime(timeLeft)}</span>
+            {/* Top Navigation Bar */}
+            <div className="game-navbar">
+                <div className="navbar-left">
+                    <button className="leave-contest-btn" onClick={() => {
+                        if (window.confirm('Are you sure you want to leave this contest? Your progress will be saved.')) {
+                            leaveRoom();
+                        }
+                    }}>
+                        <LogOut size={18} />
+                        Leave Contest
+                    </button>
                 </div>
                 
-                <div className="question-nav">
-                    {room.questions.map((q, index) => (
-                        <button
-                            key={q.id}
-                            className={`question-tab ${index === currentQuestionIndex ? 'active' : ''} ${
-                                myPlayer.questionsCompleted > index ? 'completed' : ''
-                            }`}
-                            onClick={() => !isFinished && setCurrentQuestionIndex(index)}
-                            disabled={isFinished}
-                        >
-                            {myPlayer.questionsCompleted > index ? (
-                                <CheckCircle size={16} />
-                            ) : (
-                                <span>{index + 1}</span>
-                            )}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="team-scores">
-                    {room.teams.map(team => (
-                        <div key={team.id} className={`team-score ${team.id === myTeam.id ? 'my-team' : ''}`}>
-                            <span className="team-name">{team.name}</span>
-                            <span className="score">{room.scores?.[team.id] || 0}</span>
-                        </div>
-                    ))}
-                </div>
-                
-                {/* Finished Players Indicator */}
-                {finishedCount > 0 && (
-                    <div className="finished-indicator">
-                        <CheckCircle size={16} />
-                        <span>{finishedCount}/{totalPlayers} finished</span>
+                <div className="navbar-center">
+                    <div className="room-info">
+                        <span className="room-name">{room.name}</span>
+                        <span className="room-id">#{room.id}</span>
                     </div>
-                )}
+                    <div className="question-tabs">
+                        {room.questions.map((q, index) => (
+                            <button
+                                key={q.id}
+                                className={`question-tab ${index === currentQuestionIndex ? 'active' : ''} ${
+                                    myPlayer.questionsCompleted > index ? 'completed' : ''
+                                }`}
+                                onClick={() => !isFinished && setCurrentQuestionIndex(index)}
+                                disabled={isFinished}
+                            >
+                                {index + 1}
+                                {myPlayer.questionsCompleted > index && <CheckCircle size={12} className="check-icon" />}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                
+                <div className="navbar-right">
+                    <div className="timer-display">
+                        <Timer size={18} />
+                        <span className={timeLeft < 300 ? 'urgent' : ''}>{formatTime(timeLeft)}</span>
+                    </div>
+                    <div className="score-display">
+                        <Trophy size={18} />
+                        <span>{myPlayer.score} pts</span>
+                    </div>
+                </div>
             </div>
-            
+
             {/* Player Finished Overlay */}
             {isFinished && (
                 <div className="player-finished-overlay">
@@ -1918,136 +1880,238 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
                 </div>
             )}
 
-            {/* Game Content - Question and Editor Side by Side */}
-            <div className="game-content">
-                {/* Question Panel */}
-                <div className="question-panel">
-                <div className="question-header">
-                    <h3>{currentQuestion.title}</h3>
-                    <div className="question-meta">
-                        <span className={`difficulty ${currentQuestion.difficulty}`}>
-                            {currentQuestion.difficulty}
-                        </span>
-                        <span className="points">{currentQuestion.points} pts</span>
-                        {currentQuestion.source && (
-                            <span className="source">from {currentQuestion.source}</span>
+            {/* Main Split View - LeetCode Style */}
+            <div className="split-view">
+                {/* Left Panel - Problem Description */}
+                <div className="problem-panel">
+                    <div className="problem-header">
+                        <h2 className="problem-title">{currentQuestion.title}</h2>
+                        <div className="problem-meta">
+                            <span className={`difficulty-badge ${currentQuestion.difficulty}`}>
+                                {currentQuestion.difficulty}
+                            </span>
+                            <span className="points-badge">
+                                <Star size={14} />
+                                {currentQuestion.points} pts
+                            </span>
+                            {currentQuestion.source && (
+                                <span className="source-badge">{currentQuestion.source}</span>
+                            )}
+                        </div>
+                    </div>
+                    
+                    <div className="problem-content">
+                        <div className="problem-description">
+                            {currentQuestion.description}
+                        </div>
+                        
+                        {currentQuestion.examples && currentQuestion.examples.length > 0 && (
+                            <div className="problem-examples">
+                                <h3>Examples</h3>
+                                {currentQuestion.examples.map((example, index) => (
+                                    <div key={index} className="example-box">
+                                        <div className="example-label">Example {index + 1}:</div>
+                                        <div className="example-io">
+                                            <div className="io-item">
+                                                <strong>Input:</strong>
+                                                <code>{example.input}</code>
+                                            </div>
+                                            <div className="io-item">
+                                                <strong>Output:</strong>
+                                                <code>{example.output}</code>
+                                            </div>
+                                        </div>
+                                        {example.explanation && (
+                                            <div className="example-explanation">
+                                                <strong>Explanation:</strong> {example.explanation}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        
+                        {currentQuestion.constraints && (
+                            <div className="problem-constraints">
+                                <h3>Constraints</h3>
+                                <ul>
+                                    {currentQuestion.constraints.map((constraint, index) => (
+                                        <li key={index}>{constraint}</li>
+                                    ))}
+                                </ul>
+                            </div>
                         )}
                     </div>
                 </div>
-                
-                <div className="question-content">
-                    <div className="description">
-                        {currentQuestion.description}
+
+                {/* Right Panel - Code Editor */}
+                <div className="editor-panel">
+                    <div className="editor-toolbar">
+                        <div className="toolbar-left">
+                            <Code size={16} />
+                            <span className="language-label">Java</span>
+                        </div>
+                        <div className="toolbar-right">
+                            {room.teamSize > 1 && (
+                                <div className="team-indicator">
+                                    <Users size={14} />
+                                    <span>{myTeam.name}</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                     
-                    {currentQuestion.examples && (
-                        <div className="examples">
-                            <h4>Examples:</h4>
-                            {currentQuestion.examples.map((example, index) => (
-                                <div key={index} className="example">
-                                    <div className="example-input">
-                                        <strong>Input:</strong> {example.input}
-                                    </div>
-                                    <div className="example-output">
-                                        <strong>Output:</strong> {example.output}
-                                    </div>
-                                    {example.explanation && (
-                                        <div className="example-explanation">
-                                            <strong>Explanation:</strong> {example.explanation}
+                    {/* Conditional rendering: Collaborative editor for team mode, standard editor for solo */}
+                    {room.teamSize > 1 ? (
+                        <CollaborativeCodeEditor
+                            roomId={room.id}
+                            teamId={myTeam.id}
+                            questionId={currentQuestion.id}
+                            userId={user.id}
+                            username={user.username}
+                            socket={socket}
+                            initialCode={currentQuestion.starterCode || ''}
+                            language="java"
+                            onSubmit={submitSolution}
+                            disabled={isFinished || submitting}
+                        />
+                    ) : (
+                        <div className="solo-editor-container">
+                            <textarea
+                                className="code-editor-textarea"
+                                value={code}
+                                onChange={(e) => setCode(e.target.value)}
+                                placeholder={currentQuestion.starterCode || "// Write your solution here"}
+                                spellCheck={false}
+                                disabled={isFinished}
+                            />
+                            
+                            {/* Test Results Display */}
+                            {/* LeetCode-Style Test Results Panel */}
+                            {testResults && testResults.results && (
+                                <div className="leetcode-test-results">
+                                    <div className="test-results-header">
+                                        <div className="test-results-title">
+                                            {testResults.testsPassed === testResults.totalTests ? (
+                                                <>
+                                                    <CheckCircle size={20} className="success-icon" />
+                                                    <span className="success-text">Accepted</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <XCircle size={20} className="error-icon" />
+                                                    <span className="error-text">Wrong Answer</span>
+                                                </>
+                                            )}
                                         </div>
-                                    )}
+                                        <div className="test-results-summary">
+                                            {testResults.testsPassed}/{testResults.totalTests} test cases passed
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="test-cases-tabs">
+                                        {testResults.results.map((result, index) => (
+                                            <div 
+                                                key={index} 
+                                                className={`test-case-tab ${result.passed ? 'passed' : 'failed'}`}
+                                            >
+                                                <div className="test-case-header">
+                                                    <div className="test-case-title">
+                                                        {result.passed ? (
+                                                            <CheckCircle size={14} className="tab-icon success" />
+                                                        ) : (
+                                                            <XCircle size={14} className="tab-icon error" />
+                                                        )}
+                                                        <span>Case {index + 1}</span>
+                                                    </div>
+                                                    {!result.passed && (
+                                                        <span className="failed-badge">Failed</span>
+                                                    )}
+                                                </div>
+                                                
+                                                <div className="test-case-content">
+                                                    <div className="test-case-section">
+                                                        <div className="section-label">Input</div>
+                                                        <div className="section-value">
+                                                            <code>{JSON.stringify(result.input)}</code>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="test-case-section">
+                                                        <div className="section-label">Expected Output</div>
+                                                        <div className="section-value expected">
+                                                            <code>{result.expected}</code>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {!result.passed && (
+                                                        <div className="test-case-section">
+                                                            <div className="section-label">Your Output</div>
+                                                            <div className="section-value actual-error">
+                                                                <code>{result.actual || result.error || 'Runtime Error'}</code>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {result.passed && (
+                                                        <div className="test-case-section">
+                                                            <div className="section-label">Your Output</div>
+                                                            <div className="section-value actual-success">
+                                                                <code>{result.actual || result.expected}</code>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            ))}
+                            )}
+                            
+                            <div className="editor-footer">
+                                <button 
+                                    className="run-tests-btn"
+                                    onClick={() => runTests()}
+                                    disabled={testing || !code.trim() || isFinished}
+                                >
+                                    {testing ? (
+                                        <>
+                                            <Loader className="spin" size={16} />
+                                            Testing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Play size={16} />
+                                            Run Tests
+                                        </>
+                                    )}
+                                </button>
+                                
+                                <button 
+                                    className="submit-solution-btn"
+                                    onClick={() => submitSolution()}
+                                    disabled={submitting || !code.trim() || isFinished}
+                                >
+                                    {submitting ? (
+                                        <>
+                                            <Loader className="spin" size={16} />
+                                            Submitting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CheckCircle size={16} />
+                                            Submit Solution
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
             </div>
-
-            {/* Code Editor */}
-            <div className="code-editor-panel">
-                <div className="editor-header">
-                    <Code size={20} />
-                    <span>Java Solution</span>
-                </div>
-                
-                {/* Conditional rendering: Collaborative editor for team mode, standard editor for solo */}
-                {room.teamSize > 1 ? (
-                    <CollaborativeCodeEditor
-                        roomId={room.id}
-                        teamId={myTeam.id}
-                        questionId={currentQuestion.id}
-                        userId={user.id}
-                        username={user.username}
-                        socket={socket}
-                        initialCode={currentQuestion.starterCode || ''}
-                        language="java"
-                        onSubmit={submitSolution}
-                        disabled={isFinished || submitting}
-                    />
-                ) : (
-                    <>
-                        <textarea
-                            className="code-editor"
-                            value={code}
-                            onChange={(e) => setCode(e.target.value)}
-                            placeholder={currentQuestion.starterCode || "// Write your solution here"}
-                            spellCheck={false}
-                            disabled={isFinished}
-                        />
-                        
-                        <div className="editor-actions">
-                            <button 
-                                className="submit-btn"
-                                onClick={submitSolution}
-                                disabled={submitting || !code.trim() || isFinished}
-                            >
-                                {submitting ? (
-                                    <>
-                                        <Loader className="spin" size={16} />
-                                        Submitting...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Play size={16} />
-                                        Submit Solution
-                                    </>
-                                )}
-                            </button>
-                            
-                            {!isFinished && (
-                                <button 
-                                    className="end-contest-btn"
-                                    onClick={() => setShowEndConfirm(true)}
-                                >
-                                    <LogOut size={16} />
-                                    End Contest
-                                </button>
-                            )}
-                        </div>
-                    </>
-                )}
-            </div>
-            
-            {/* End Contest Confirmation Modal */}
-            {showEndConfirm && (
-                <div className="modal-overlay" onClick={() => setShowEndConfirm(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h3>End Contest?</h3>
-                        <p>Are you sure you want to end your contest?</p>
-                        <p className="warning">You won't be able to submit more solutions, but others can continue playing.</p>
-                        <div className="modal-actions">
-                            <button className="cancel-btn" onClick={() => setShowEndConfirm(false)}>
-                                Cancel
-                            </button>
-                            <button className="confirm-btn" onClick={handleEndContest}>
-                                Yes, End Contest
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
+
 
 export default CodeWarsArena;
