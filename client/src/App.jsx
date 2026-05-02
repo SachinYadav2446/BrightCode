@@ -12,7 +12,7 @@ import Library from './pages/Library';
 import Workspace from './pages/Workspace';
 import CodeVault from './pages/CodeVault';
 import CodeWarsArena from './pages/CodeWarsArena';
-import { Toaster } from 'react-hot-toast';
+import BattleArena from './pages/BattleArena';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
@@ -38,7 +38,7 @@ const NavbarWrapper = () => {
   const location = useLocation();
   const { navbarHidden } = useAuth();
   
-  const hideOnPaths = ['/auth', '/editor', '/code-wars'];
+  const hideOnPaths = ['/auth', '/editor', '/code-wars', '/battle-arena'];
   const isLanding = location.pathname === '/';
   const shouldHide = navbarHidden || isLanding || hideOnPaths.some(p => location.pathname.startsWith(p));
   
@@ -50,15 +50,6 @@ function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <div>
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              success: { theme: { primary: '#4aed88' } },
-              error: { theme: { primary: '#ff4b4b' } }
-            }}
-          />
-        </div>
         <BrowserRouter>
           <NavbarWrapper />
           <Routes>
@@ -129,6 +120,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <CodeVault />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/battle-arena" 
+              element={
+                <ProtectedRoute>
+                  <BattleArena />
                 </ProtectedRoute>
               } 
             />
