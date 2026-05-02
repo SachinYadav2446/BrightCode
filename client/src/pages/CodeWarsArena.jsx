@@ -4,7 +4,8 @@ import {
     ArrowLeft, Swords, Trophy, Clock, Users, Zap, Play, 
     Code, Target, Shield, Crown, Timer, CheckCircle, XCircle,
     Loader, AlertCircle, Star, Award, Plus, Lock, Globe,
-    Settings, Copy, Eye, EyeOff, UserPlus, LogOut, RotateCcw
+    Settings, Copy, Eye, EyeOff, UserPlus, LogOut, RotateCcw,
+    ChevronUp, ChevronDown, MessageSquare
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -12,6 +13,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { initSocket } from '../socket';
 import CollaborativeCodeEditor from '../components/codewars/CollaborativeCodeEditor';
+import ChatPanel from '../components/ChatPanel';
 import './CodeWarsArena.css';
 
 const GAME_MODES = {
@@ -45,13 +47,19 @@ const CodeWarsArena = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [myFaction, setMyFaction] = useState(null);
-    const [gameState, setGameState] = useState('menu'); // menu, create, join, room, game, results
+    const [gameState, setGameState] = useState('menu'); // menu, room, game, results
     const [currentRoom, setCurrentRoom] = useState(null);
     const [factionRooms, setFactionRooms] = useState([]);
     const [socket, setSocket] = useState(null);
     const [loading, setLoading] = useState(true);
     const [playerFinished, setPlayerFinished] = useState(false); // Track if current player finished
     const [gameResults, setGameResults] = useState(null); // Store final game results
+    const [leftPanelWidth, setLeftPanelWidth] = useState(40); // Percentage width for problem panel
+    const [isResizing, setIsResizing] = useState(false);
+    
+    // Modal states
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showJoinModal, setShowJoinModal] = useState(false);
     
     // Create room form state
     const [createForm, setCreateForm] = useState({
@@ -193,10 +201,23 @@ const CodeWarsArena = () => {
         });
 
         s.on('cw-left-room', (data) => {
-            console.log('🚪 Left room:', data);
-            setCurrentRoom(null);
-            setGameState('menu');
-            setPlayerFinished(false);
+            console.log('🚪 Left room event received:', data);
+            
+            // If we're already on results page, don't navigate away
+            // This happens when game ended due to forfeit
+            setGameState(prevState => {
+                if (prevState === 'results') {
+                    console.log('📊 Already on results page, staying here');
+                    return prevState;
+                }
+                
+                // Otherwise, go back to menu
+                console.log('📊 Going to menu');
+                setCurrentRoom(null);
+                setPlayerFinished(false);
+                return 'menu';
+            });
+            
             loadFactionRoomsViaSocket(s);
         });
         
@@ -237,7 +258,48 @@ const CodeWarsArena = () => {
         s.on('cw-faction-rooms', (data) => {
             console.log('📋 Received faction rooms:', data.rooms);
             console.log('📋 Number of rooms:', data.rooms.length);
-            setFactionRooms(data.rooms);
+            
+            // Only update if this is for our faction
+            if (!data.factionId || data.factionId === myFaction?.id) {
+                setFactionRooms(data.rooms);
+            }
+        });
+
+        // Forfeit handling - this takes priority over everything
+        s.on('cw-game-ended', (data) => {
+            console.log('🏁 Game ended event received:', data);
+            console.log('🏁 Reason:', data.reason);
+            console.log('🏁 Results:', data.results);
+            
+            // Immediately set results and navigate to results page
+            // This prevents any other navigation from happening
+            setCurrentRoom(data.room);
+            setGameResults(data.results);
+            setGameState('results');
+            
+            // Clear the current room from socket since game is over
+            if (data.room?.id) {
+                s.emit('cw-leave-room', {
+                    roomId: data.room.id,
+                    userId: user.id,
+                    username: user.username
+                });
+            }
+            
+            if (data.reason === 'forfeit') {
+                toast.success(`🏆 ${data.results.forfeitedTeam} forfeited the match!`, {
+                    duration: 5000
+                });
+            } else {
+                toast.success('Game completed!');
+            }
+        });
+
+        s.on('cw-team-forfeited', (data) => {
+            console.log('📢 Team forfeited:', data);
+            toast.info(`Team ${data.teamName} has left the match. ${data.remainingTeams} teams remaining.`, {
+                duration: 4000
+            });
         });
 
         // Legacy events for backward compatibility
@@ -360,6 +422,7 @@ const CodeWarsArena = () => {
             }
             
             console.log('✅ Arena initialization complete');
+            setLoading(false);
             
         } catch (error) {
             console.error('❌ Failed to initialize arena:', error);
@@ -368,6 +431,8 @@ const CodeWarsArena = () => {
                 response: error.response?.data,
                 status: error.response?.status
             });
+            
+            setLoading(false);
             
             if (error.response?.status === 401) {
                 toast.error('Authentication failed. Please log in again.');
@@ -698,10 +763,9 @@ const CodeWarsArena = () => {
                         }}>
                             <ArrowLeft size={20} />
                         </button>
-                        <div className="arena-title">
-                            <Swords size={24} />
-                            <h1>Code Wars Arena</h1>
-                        </div>
+                    </div>
+                    <div className="arena-title">
+                        <h1>Syntax Showdown</h1>
                     </div>
                     <div className="arena-header-right">
                         {myFaction && (
@@ -719,30 +783,10 @@ const CodeWarsArena = () => {
                     {gameState === 'menu' && (
                         <MenuScreen 
                             factionRooms={factionRooms}
-                            onCreateRoom={() => setGameState('create')}
-                            onJoinRoom={() => setGameState('join')}
+                            onCreateRoom={() => setShowCreateModal(true)}
+                            onJoinRoom={() => setShowJoinModal(true)}
                             onJoinRoomDirect={joinRoom}
                             onRefresh={loadFactionRooms}
-                        />
-                    )}
-
-                    {gameState === 'create' && (
-                        <CreateRoomScreen 
-                            form={createForm}
-                            setForm={setCreateForm}
-                            onSubmit={createRoom}
-                            onBack={() => setGameState('menu')}
-                            loading={loading}
-                        />
-                    )}
-
-                    {gameState === 'join' && (
-                        <JoinRoomScreen 
-                            form={joinForm}
-                            setForm={setJoinForm}
-                            onSubmit={() => joinRoom()}
-                            onBack={() => setGameState('menu')}
-                            loading={loading}
                         />
                     )}
 
@@ -764,6 +808,7 @@ const CodeWarsArena = () => {
                             socket={socket}
                             playerFinished={playerFinished}
                             onEndContest={endContest}
+                            onLeaveRoom={leaveRoom}
                         />
                     )}
                     
@@ -790,83 +835,177 @@ const CodeWarsArena = () => {
                     )}
                 </AnimatePresence>
             </main>
+
+            {/* Create Room Modal */}
+            {showCreateModal && (
+                <ModalOverlay onClose={() => setShowCreateModal(false)}>
+                    <CreateRoomScreen 
+                        form={createForm}
+                        setForm={setCreateForm}
+                        onSubmit={(e) => {
+                            createRoom(e);
+                            setShowCreateModal(false);
+                        }}
+                        onBack={() => setShowCreateModal(false)}
+                        loading={loading}
+                    />
+                </ModalOverlay>
+            )}
+
+            {/* Join Room Modal */}
+            {showJoinModal && (
+                <ModalOverlay onClose={() => setShowJoinModal(false)}>
+                    <JoinRoomScreen 
+                        form={joinForm}
+                        setForm={setJoinForm}
+                        onSubmit={() => {
+                            joinRoom();
+                            setShowJoinModal(false);
+                        }}
+                        onBack={() => setShowJoinModal(false)}
+                        loading={loading}
+                    />
+                </ModalOverlay>
+            )}
         </div>
     );
 };
 
-// Menu Screen Component
-const MenuScreen = ({ factionRooms, onCreateRoom, onJoinRoom, onJoinRoomDirect, onRefresh }) => (
-    <motion.div
-        key="menu"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        className="arena-menu"
-    >
-        <div className="menu-section">
-            <h2>Faction Battle Arena</h2>
-            <p>Create custom rooms or join existing battles within your faction!</p>
-            
-            <div className="menu-actions">
-                <motion.button
-                    className="create-room-btn"
-                    onClick={onCreateRoom}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                >
-                    <Plus size={20} />
-                    Create Room
-                </motion.button>
-                
-                <motion.button
-                    className="join-room-btn"
-                    onClick={onJoinRoom}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                >
-                    <UserPlus size={20} />
-                    Join with Code
-                </motion.button>
-            </div>
-        </div>
+// Modal Overlay Component
+const ModalOverlay = ({ children, onClose }) => {
+    return (
+        <motion.div
+            className="modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+        >
+            <motion.div
+                className="modal-content"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                {children}
+            </motion.div>
+        </motion.div>
+    );
+};
 
-        {/* Active Faction Rooms */}
-        <div className="faction-rooms-section">
-            <div className="section-header">
-                <h3>Active Faction Rooms</h3>
-                <div className="section-actions">
-                    <div className="rooms-info">
-                        <span className="rooms-count">
-                            {factionRooms.length} public room{factionRooms.length !== 1 ? 's' : ''}
-                        </span>
-                    </div>
-                    <button className="refresh-btn" onClick={onRefresh}>
-                        <RotateCcw size={16} />
-                        Refresh
-                    </button>
+// Menu Screen Component
+const MenuScreen = ({ factionRooms, onCreateRoom, onJoinRoom, onJoinRoomDirect, onRefresh }) => {
+    const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
+
+    const handleMouseMove = (e) => {
+        setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    return (
+        <motion.div
+            key="menu"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="arena-menu-rebuilt"
+            onMouseMove={handleMouseMove}
+        >
+            {/* Video Background */}
+            <div className="video-background">
+                <video autoPlay loop muted playsInline className="background-video">
+                    <source src="/4990246-hd_1920_1080_30fps.mp4" type="video/mp4" />
+                </video>
+                <div className="video-overlay"></div>
+            </div>
+
+            {/* Grid Background with Cursor Spotlight */}
+            <div className="grid-background">
+                <div 
+                    className="cursor-spotlight"
+                    style={{
+                        left: `${mousePosition.x}px`,
+                        top: `${mousePosition.y}px`,
+                    }}
+                />
+            </div>
+
+            {/* Hero Content Section */}
+            <div className="hero-content-wrapper">
+                {/* Content Section - Full Width with Blur */}
+                <div className="hero-content-section">
+                    <h1 className="hero-title">Join the Battle</h1>
+                    <p className="hero-subtitle">Create custom rooms or join existing battles within your faction</p>
+                </div>
+                
+                {/* Buttons Section - Transparent */}
+                <div className="hero-buttons-section">
+                    <motion.button
+                        className="hero-btn create-btn"
+                        onClick={onCreateRoom}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                    >
+                        <Plus size={20} />
+                        Create Room
+                    </motion.button>
+                    
+                    <motion.button
+                        className="hero-btn join-btn"
+                        onClick={onJoinRoom}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                    >
+                        <UserPlus size={20} />
+                        Join with Code
+                    </motion.button>
                 </div>
             </div>
-            
-            {factionRooms.length === 0 ? (
-                <div className="no-rooms">
-                    <Swords size={48} className="no-rooms-icon" />
-                    <h4>No active rooms</h4>
-                    <p>Be the first to create a battle room for your faction!</p>
+
+            {/* Active Faction Rooms Section */}
+            <div className="floating-table-container">
+                <div className="table-header-row">
+                    <h2 className="table-title">Active Faction Rooms</h2>
+                    <div className="table-header-actions">
+                        <span className="rooms-count">{factionRooms.length} public rooms</span>
+                        <button className="refresh-table-btn" onClick={onRefresh}>
+                            <RotateCcw size={16} />
+                            Refresh
+                        </button>
+                    </div>
                 </div>
-            ) : (
-                <div className="rooms-grid">
-                    {factionRooms.map(room => (
-                        <RoomCard 
-                            key={room.id} 
-                            room={room} 
-                            onJoin={() => onJoinRoomDirect(room.id)}
-                        />
-                    ))}
-                </div>
-            )}
-        </div>
-    </motion.div>
-);
+
+                {factionRooms.length === 0 ? (
+                    <div className="empty-table-state">
+                        <Swords size={48} className="empty-icon" />
+                        <h3>No active rooms</h3>
+                        <p>Be the first to create a battle room for your faction!</p>
+                    </div>
+                ) : (
+                    <div className="rooms-table">
+                        <div className="table-header-columns">
+                            <div className="col-room">ROOM</div>
+                            <div className="col-mode">MODE</div>
+                            <div className="col-players">PLAYERS</div>
+                            <div className="col-map">MAP</div>
+                            <div className="col-status">STATUS</div>
+                        </div>
+                        
+                        <div className="table-body">
+                            {factionRooms.map(room => (
+                                <RoomCard 
+                                    key={room.id} 
+                                    room={room} 
+                                    onJoin={() => onJoinRoomDirect(room.id)}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </motion.div>
+    );
+};
 
 // Room Card Component
 const RoomCard = ({ room, onJoin }) => {
@@ -875,60 +1014,35 @@ const RoomCard = ({ room, onJoin }) => {
     const isFull = totalPlayers >= maxPlayers;
     
     return (
-        <motion.div
-            className="room-card"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-        >
-            <div className="room-header">
-                <h4>{room.name}</h4>
-                <div className="room-id">#{room.id}</div>
+        <div className="room-card-row" onClick={!isFull ? onJoin : undefined}>
+            <div className="col-room">
+                <div className="room-name-main">{room.name}</div>
+                <div className="room-id-badge">#{room.id}</div>
             </div>
-            
-            <div className="room-info">
-                <div className="room-config">
-                    <span className="config-item">
-                        <Users size={14} />
-                        {room.teamSize}v{room.teamSize} ({room.maxTeams} teams)
-                    </span>
-                    <span className="config-item">
-                        <Target size={14} />
-                        {room.questionCount} questions
-                    </span>
-                    <span className="config-item">
-                        <Clock size={14} />
-                        {Math.floor(room.timeLimit / 60)}m
-                    </span>
-                </div>
-                
-                <div className="room-status">
-                    <div className="players-count">
-                        {totalPlayers}/{maxPlayers} players
-                    </div>
-                    <div className="room-privacy-status">
-                        {room.isPrivate ? (
-                            <div className="private-indicator">
-                                <Lock size={12} />
-                                Private
-                            </div>
-                        ) : (
-                            <div className="public-indicator">
-                                <Globe size={12} />
-                                Public
-                            </div>
-                        )}
-                    </div>
-                </div>
+            <div className="col-mode">
+                {room.teamSize}v{room.teamSize}
             </div>
-            
-            <button 
-                className={`join-room-card-btn ${isFull ? 'full' : ''}`}
-                onClick={onJoin}
-                disabled={isFull}
-            >
-                {isFull ? 'Full' : room.isPrivate ? 'Join Private' : 'Join Battle'}
-            </button>
-        </motion.div>
+            <div className="col-players">
+                <Users size={14} />
+                {totalPlayers}/{maxPlayers}
+            </div>
+            <div className="col-map">
+                <Target size={14} />
+                {room.questionCount}Q
+            </div>
+            <div className="col-status">
+                {isFull ? (
+                    <span className="status-full-badge">FULL</span>
+                ) : room.isPrivate ? (
+                    <span className="status-private-badge">
+                        <Lock size={14} />
+                        PRIVATE
+                    </span>
+                ) : (
+                    <span className="status-open-badge">OPEN</span>
+                )}
+            </div>
+        </div>
     );
 };
 
@@ -941,7 +1055,11 @@ const CreateRoomScreen = ({ form, setForm, onSubmit, onBack, loading }) => (
         exit={{ opacity: 0, x: -20 }}
         className="create-room-screen"
     >
-        <div className="screen-header" style={{ display: 'none' }}>
+        <div className="screen-header">
+            <button className="back-btn" onClick={onBack}>
+                <ArrowLeft size={20} />
+                Back
+            </button>
             <h2>Create Battle Room</h2>
         </div>
         
@@ -1025,71 +1143,72 @@ const CreateRoomScreen = ({ form, setForm, onSubmit, onBack, loading }) => (
                 </select>
             </div>
             
-            {/* Privacy Row with inline password */}
-            <div className="privacy-row">
-                <div className="privacy-buttons-inline">
-                    <label>Room Privacy</label>
-                    <div className="privacy-button-group">
-                        <button
-                            type="button"
-                            className={`privacy-btn ${!form.isPrivate ? 'active' : ''}`}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setForm({...form, isPrivate: false, password: ''});
-                            }}
-                        >
-                            <Globe size={14} />
-                            Public
-                        </button>
-                        <button
-                            type="button"
-                            className={`privacy-btn ${form.isPrivate ? 'active' : ''}`}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setForm({...form, isPrivate: true});
-                            }}
-                        >
-                            <Lock size={14} />
-                            Private
-                        </button>
+            {/* Privacy Row with Create Button */}
+            <div className="privacy-row-with-button">
+                <div className="privacy-controls-row">
+                    <div className="privacy-controls-horizontal">
+                        <div className="privacy-button-group">
+                            <button
+                                type="button"
+                                className={`privacy-btn ${!form.isPrivate ? 'active' : ''}`}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setForm({...form, isPrivate: false, password: ''});
+                                }}
+                            >
+                                <Globe size={14} />
+                                Public
+                            </button>
+                            <button
+                                type="button"
+                                className={`privacy-btn ${form.isPrivate ? 'active' : ''}`}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setForm({...form, isPrivate: true});
+                                }}
+                            >
+                                <Lock size={14} />
+                                Private
+                            </button>
+                        </div>
+                        
+                        {form.isPrivate && (
+                            <motion.div 
+                                className="password-inline-horizontal"
+                                initial={{ opacity: 0, width: 0 }}
+                                animate={{ opacity: 1, width: 'auto' }}
+                                exit={{ opacity: 0, width: 0 }}
+                            >
+                                <input
+                                    type="password"
+                                    value={form.password}
+                                    onChange={(e) => setForm({...form, password: e.target.value})}
+                                    placeholder="Enter password"
+                                    maxLength={20}
+                                />
+                            </motion.div>
+                        )}
                     </div>
-                </div>
-                
-                {form.isPrivate && (
-                    <motion.div 
-                        className="password-inline"
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: 'auto' }}
-                        exit={{ opacity: 0, width: 0 }}
+                    
+                    <button 
+                        className="create-submit-btn-inline"
+                        onClick={onSubmit}
+                        disabled={loading || !form.name.trim() || (form.isPrivate && !form.password.trim())}
                     >
-                        <input
-                            type="password"
-                            value={form.password}
-                            onChange={(e) => setForm({...form, password: e.target.value})}
-                            placeholder="Enter password"
-                            maxLength={20}
-                        />
-                    </motion.div>
-                )}
+                        {loading ? (
+                            <>
+                                <Loader className="spin" size={16} />
+                                Creating...
+                            </>
+                        ) : (
+                            <>
+                                <Swords size={16} />
+                                Create Battle Room
+                            </>
+                        )}
+                    </button>
+                </div>
             </div>
-            
-            <button 
-                className="create-submit-btn"
-                onClick={onSubmit}
-                disabled={loading || !form.name.trim() || (form.isPrivate && !form.password.trim())}
-            >
-                {loading ? (
-                    <>
-                        <Loader className="spin" size={16} />
-                        Creating...
-                    </>
-                ) : (
-                    <>
-                        <Swords size={16} />
-                        Create Battle Room
-                    </>
-                )}
-            </button>
         </div>
     </motion.div>
 );
@@ -1176,9 +1295,7 @@ const JoinRoomScreen = ({ form, setForm, onSubmit, onBack, loading }) => {
 
 // Room Lobby Component
 const RoomLobby = ({ room, user, onLeave, onStart, onSwitchTeam, onCopyId }) => {
-    // Ensure user object is valid
     if (!user || !user.id) {
-        console.error('❌ User object is invalid:', user);
         return (
             <div className="room-lobby-error">
                 <AlertCircle size={24} />
@@ -1193,23 +1310,7 @@ const RoomLobby = ({ room, user, onLeave, onStart, onSwitchTeam, onCopyId }) => 
     const totalPlayers = room.teams.reduce((sum, team) => sum + team.players.length, 0);
     const minPlayers = 2;
     const canStart = isCreator && totalPlayers >= minPlayers;
-    
-    // Debug logging
-    console.log('🏟️ Room Lobby Debug:', {
-        roomCreatorId: room.creatorId,
-        currentUserId: user.id,
-        currentUsername: user.username,
-        isCreator,
-        totalPlayers,
-        minPlayers,
-        canStart,
-        roomStatus: room.status,
-        userObject: user
-    });
-    
-    const myTeam = room.teams.find(team => 
-        team.players.some(p => p.id === user.id)
-    );
+    const myTeam = room.teams.find(team => team.players.some(p => p.id === user.id));
     
     return (
         <motion.div
@@ -1219,87 +1320,64 @@ const RoomLobby = ({ room, user, onLeave, onStart, onSwitchTeam, onCopyId }) => 
             exit={{ opacity: 0, scale: 0.95 }}
             className="room-lobby"
         >
-            <div className="lobby-header">
-                <div className="room-info">
-                    <h2>{room.name}</h2>
-                    <div className="room-details">
-                        <span className="room-id-display">
+            <div className="lobby-card">
+                {/* Top Section: Room Info */}
+                <div className="lobby-top">
+                    <div className="room-title-section">
+                        <h2>{room.name}</h2>
+                        <span className="room-code">
                             Room: {room.id}
-                            <button className="copy-id-btn" onClick={onCopyId}>
-                                <Copy size={14} />
-                            </button>
-                        </span>
-                        <span className="room-config">
-                            {room.teamSize}v{room.teamSize} • {room.questionCount} questions • {Math.floor(room.timeLimit / 60)}m
-                        </span>
-                        <span className="room-privacy">
-                            {room.isPrivate ? (
-                                <div className="privacy-badge private">
-                                    <Lock size={12} />
-                                    Private Room
-                                </div>
-                            ) : (
-                                <div className="privacy-badge public">
-                                    <Globe size={12} />
-                                    Public Room
-                                </div>
-                            )}
+                            <button onClick={onCopyId}><Copy size={14} /></button>
                         </span>
                     </div>
+                    <div className="room-config">
+                        <span>{room.teamSize}v{room.teamSize}</span>
+                        <span>•</span>
+                        <span>{room.questionCount} questions</span>
+                        <span>•</span>
+                        <span>{Math.floor(room.timeLimit / 60)}m</span>
+                    </div>
+                    <span className={`badge-privacy ${room.isPrivate ? 'private' : 'public'}`}>
+                        {room.isPrivate ? <><Lock size={12} /> PRIVATE</> : <><Globe size={12} /> PUBLIC</>}
+                    </span>
                 </div>
-                
-                <div className="lobby-actions">
-                    {isCreator && (
-                        <button 
-                            className="start-game-btn" 
-                            onClick={onStart}
-                            disabled={!canStart}
-                            title={!canStart ? `Need at least ${minPlayers} players to start` : 'Start the game'}
-                        >
-                            <Play size={16} />
-                            Start Game
-                        </button>
+
+                {/* Middle Section: Teams Side by Side */}
+                <div className="lobby-teams">
+                    {room.teams.map(team => (
+                        <TeamPanel 
+                            key={team.id}
+                            team={team}
+                            room={room}
+                            user={user}
+                            isMyTeam={myTeam?.id === team.id}
+                            onSwitchTeam={() => onSwitchTeam(team.id)}
+                        />
+                    ))}
+                </div>
+
+                {/* Bottom Section: Actions */}
+                <div className="lobby-bottom">
+                    {!canStart && isCreator && (
+                        <div className="warning-text">
+                            <AlertCircle size={18} />
+                            Need at least {minPlayers} players to start
+                        </div>
                     )}
-                    
-                    <button className="leave-room-btn" onClick={onLeave}>
-                        <LogOut size={16} />
-                        Leave
-                    </button>
-                </div>
-            </div>
-            
-            <div className="teams-container">
-                {room.teams.map(team => (
-                    <TeamPanel 
-                        key={team.id}
-                        team={team}
-                        room={room}
-                        user={user}
-                        isMyTeam={myTeam?.id === team.id}
-                        onSwitchTeam={() => onSwitchTeam(team.id)}
-                    />
-                ))}
-            </div>
-            
-            {!canStart && isCreator && (
-                <div className="start-requirements-banner">
-                    <AlertCircle size={20} />
-                    <span>Need at least {minPlayers} players to start the game</span>
-                </div>
-            )}
-            
-            {room.spectators && room.spectators.length > 0 && (
-                <div className="spectators-section">
-                    <h4>👁️ Spectators ({room.spectators.length})</h4>
-                    <div className="spectators-list">
-                        {room.spectators.map(spectator => (
-                            <div key={spectator.id} className="spectator-item">
-                                {spectator.username}
-                            </div>
-                        ))}
+                    <div className="lobby-actions">
+                        {isCreator && (
+                            <button className="btn-start" onClick={onStart} disabled={!canStart}>
+                                <Play size={16} />
+                                Start Game
+                            </button>
+                        )}
+                        <button className="btn-leave" onClick={onLeave}>
+                            <LogOut size={16} />
+                            Leave
+                        </button>
                     </div>
                 </div>
-            )}
+            </div>
         </motion.div>
     );
 };
@@ -1309,46 +1387,42 @@ const TeamPanel = ({ team, room, user, isMyTeam, onSwitchTeam }) => {
     const canJoinTeam = team.players.length < room.teamSize && !isMyTeam && room.status === 'waiting';
     
     return (
-        <div className={`team-panel ${isMyTeam ? 'my-team' : ''}`}>
-            <div className="team-header">
+        <article className={`team-panel ${isMyTeam ? 'my-team' : ''}`}>
+            <header className="team-header">
                 <h3>{team.name}</h3>
-                <div className="team-count">
-                    {team.players.length}/{room.teamSize}
-                </div>
-            </div>
+                <span className="team-count">{team.players.length}/{room.teamSize}</span>
+            </header>
             
-            <div className="team-players">
+            <ul className="team-players">
                 {team.players.map(player => (
-                    <div key={player.id} className={`player-item ${player.id === user.id ? 'me' : ''}`}>
-                        <div className="player-avatar">
+                    <li key={player.id} className={`player ${player.id === user.id ? 'me' : ''}`}>
+                        <span className="player-avatar">
                             {player.username.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="player-info">
-                            <span className="player-name">{player.username}</span>
-                            {player.id === room.creatorId && (
-                                <Crown size={12} className="creator-icon" />
-                            )}
-                        </div>
-                    </div>
+                        </span>
+                        <span className="player-name">
+                            {player.username}
+                            {player.id === room.creatorId && <Crown size={12} className="creator-icon" />}
+                        </span>
+                    </li>
                 ))}
                 
                 {/* Empty slots */}
-                {Array.from({ length: room.teamSize - team.players.length }).map((_, index) => (
-                    <div key={`empty-${index}`} className="player-item empty">
-                        <div className="player-avatar empty">
+                {Array.from({ length: room.teamSize - team.players.length }).map((_, i) => (
+                    <li key={`empty-${i}`} className="player empty">
+                        <span className="player-avatar empty">
                             <UserPlus size={16} />
-                        </div>
+                        </span>
                         <span className="player-name">Waiting...</span>
-                    </div>
+                    </li>
                 ))}
-            </div>
+            </ul>
             
             {canJoinTeam && (
-                <button className="switch-team-btn" onClick={onSwitchTeam}>
+                <button className="btn-join-team" onClick={onSwitchTeam}>
                     Join Team
                 </button>
             )}
-        </div>
+        </article>
     );
 };
 // Waiting For Players Component (After ending contest early)
@@ -1513,7 +1587,13 @@ const ResultsScreen = ({ room, results, user, onBackToMenu }) => {
         >
             <div className="results-header">
                 <div className="results-title">
-                    {isWinner ? (
+                    {gameResults.reason === 'forfeit' ? (
+                        <>
+                            <Trophy size={48} className="trophy-icon gold" />
+                            <h1>{isWinner ? 'Victory by Forfeit!' : 'Match Ended'}</h1>
+                            <p>{gameResults.forfeitedTeam} left the match</p>
+                        </>
+                    ) : isWinner ? (
                         <>
                             <Trophy size={48} className="trophy-icon gold" />
                             <h1>Victory!</h1>
@@ -1636,7 +1716,7 @@ const ResultsScreen = ({ room, results, user, onBackToMenu }) => {
 };
 
 // Game Interface Component
-const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => {
+const GameInterface = ({ room, user, socket, playerFinished, onEndContest, onLeaveRoom }) => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [code, setCode] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -1644,6 +1724,14 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
     const [timeLeft, setTimeLeft] = useState(0);
     const [showEndConfirm, setShowEndConfirm] = useState(false);
     const [testResults, setTestResults] = useState(null);
+    const [testResultsCollapsed, setTestResultsCollapsed] = useState(false);
+    const [showCustomInput, setShowCustomInput] = useState(false);
+    const [customInput, setCustomInput] = useState('');
+    const [leftPanelWidth, setLeftPanelWidth] = useState(40); // Percentage width for problem panel
+    const [isResizing, setIsResizing] = useState(false);
+    const [activeTab, setActiveTab] = useState('statement'); // 'statement' or 'chat'
+    const [chatMessages, setChatMessages] = useState([]);
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
     useEffect(() => {
         // Calculate time left
@@ -1790,6 +1878,71 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
+    // Resize handler for split view
+    const handleMouseDown = (e) => {
+        e.preventDefault();
+        setIsResizing(true);
+    };
+
+    useEffect(() => {
+        const handleMouseMove = (e) => {
+            if (!isResizing) return;
+            
+            const container = document.querySelector('.split-view');
+            if (!container) return;
+            
+            const containerRect = container.getBoundingClientRect();
+            const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+            
+            // Limit between 20% and 80%
+            if (newWidth >= 20 && newWidth <= 80) {
+                setLeftPanelWidth(newWidth);
+            }
+        };
+
+        const handleMouseUp = () => {
+            setIsResizing(false);
+        };
+
+        if (isResizing) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isResizing]);
+
+    // Chat handlers
+    useEffect(() => {
+        if (!socket || !myTeam) return;
+
+        const handleTeamChat = (data) => {
+            setChatMessages(prev => [...prev, data]);
+        };
+
+        socket.on('cw-team-chat', handleTeamChat);
+
+        return () => {
+            socket.off('cw-team-chat', handleTeamChat);
+        };
+    }, [socket, myTeam]);
+
+    const handleSendMessage = (message) => {
+        if (!socket || !myTeam || !message.trim()) return;
+
+        socket.emit('cw-team-chat', {
+            roomId: room.id,
+            teamId: myTeam.id,
+            userId: user.id,
+            username: user.username,
+            message: message.trim(),
+            timestamp: Date.now()
+        });
+    };
+
     if (!myPlayer) {
         // Spectator view
         return (
@@ -1820,21 +1973,13 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
             {/* Top Navigation Bar */}
             <div className="game-navbar">
                 <div className="navbar-left">
-                    <button className="leave-contest-btn" onClick={() => {
-                        if (window.confirm('Are you sure you want to leave this contest? Your progress will be saved.')) {
-                            leaveRoom();
-                        }
-                    }}>
-                        <LogOut size={18} />
-                        Leave Contest
+                    <button className="leave-contest-btn" onClick={() => setShowLeaveConfirm(true)}>
+                        <LogOut size={16} />
+                        Leave
                     </button>
                 </div>
                 
                 <div className="navbar-center">
-                    <div className="room-info">
-                        <span className="room-name">{room.name}</span>
-                        <span className="room-id">#{room.id}</span>
-                    </div>
                     <div className="question-tabs">
                         {room.questions.map((q, index) => (
                             <button
@@ -1881,29 +2026,64 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
             )}
 
             {/* Main Split View - LeetCode Style */}
+            {/* Unified Header for both panels */}
+            <div className="unified-header">
+                <div className="unified-header-left">
+                    <button 
+                        className={`problem-tab ${activeTab === 'statement' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('statement')}
+                    >
+                        Statement
+                    </button>
+                    {room.teamSize > 1 && (
+                        <button 
+                            className={`problem-tab ${activeTab === 'chat' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('chat')}
+                        >
+                            <MessageSquare size={14} />
+                            Team Chat
+                        </button>
+                    )}
+                </div>
+                <div className="unified-header-right">
+                    <Code size={16} />
+                    <select className="language-dropdown">
+                        <option value="java">Java</option>
+                    </select>
+                    {room.teamSize > 1 && (
+                        <div className="team-indicator">
+                            <Users size={14} />
+                            <span>{myTeam.name}</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+            
             <div className="split-view">
-                {/* Left Panel - Problem Description */}
-                <div className="problem-panel">
-                    <div className="problem-header">
-                        <h2 className="problem-title">{currentQuestion.title}</h2>
-                        <div className="problem-meta">
-                            <span className={`difficulty-badge ${currentQuestion.difficulty}`}>
-                                {currentQuestion.difficulty}
-                            </span>
-                            <span className="points-badge">
-                                <Star size={14} />
-                                {currentQuestion.points} pts
-                            </span>
-                            {currentQuestion.source && (
-                                <span className="source-badge">{currentQuestion.source}</span>
-                            )}
-                        </div>
-                    </div>
-                    
-                    <div className="problem-content">
-                        <div className="problem-description">
-                            {currentQuestion.description}
-                        </div>
+                {/* Left Panel - Problem Description or Chat */}
+                <div className="problem-panel" style={{ width: `${leftPanelWidth}%` }}>
+                    {activeTab === 'statement' ? (
+                        <>
+                            <div className="problem-header">
+                                <h2 className="problem-title">{currentQuestion.title}</h2>
+                                <div className="problem-meta">
+                                    <span className={`difficulty-badge ${currentQuestion.difficulty}`}>
+                                        {currentQuestion.difficulty}
+                                    </span>
+                                    <span className="points-badge">
+                                        <Star size={14} />
+                                        {currentQuestion.points} pts
+                                    </span>
+                                    {currentQuestion.source && (
+                                        <span className="source-badge">{currentQuestion.source}</span>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            <div className="problem-content">
+                                <div className="problem-description">
+                                    {currentQuestion.description}
+                                </div>
                         
                         {currentQuestion.examples && currentQuestion.examples.length > 0 && (
                             <div className="problem-examples">
@@ -1941,26 +2121,30 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
                                 </ul>
                             </div>
                         )}
-                    </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="team-chat-container">
+                            <ChatPanel
+                                socket={socket}
+                                roomId={`team_${room.id}_${myTeam.id}`}
+                                user={user}
+                                title={`${myTeam.name} Chat`}
+                                messages={chatMessages}
+                                onSend={handleSendMessage}
+                            />
+                        </div>
+                    )}
                 </div>
 
+                {/* Resizer */}
+                <div 
+                    className={`panel-resizer ${isResizing ? 'resizing' : ''}`}
+                    onMouseDown={handleMouseDown}
+                />
+
                 {/* Right Panel - Code Editor */}
-                <div className="editor-panel">
-                    <div className="editor-toolbar">
-                        <div className="toolbar-left">
-                            <Code size={16} />
-                            <span className="language-label">Java</span>
-                        </div>
-                        <div className="toolbar-right">
-                            {room.teamSize > 1 && (
-                                <div className="team-indicator">
-                                    <Users size={14} />
-                                    <span>{myTeam.name}</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    
+                <div className="editor-panel" style={{ width: `${100 - leftPanelWidth}%` }}>
                     {/* Conditional rendering: Collaborative editor for team mode, standard editor for solo */}
                     {room.teamSize > 1 ? (
                         <CollaborativeCodeEditor
@@ -1989,7 +2173,7 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
                             {/* Test Results Display */}
                             {/* LeetCode-Style Test Results Panel */}
                             {testResults && testResults.results && (
-                                <div className="leetcode-test-results">
+                                <div className={`leetcode-test-results ${testResultsCollapsed ? 'collapsed' : ''}`}>
                                     <div className="test-results-header">
                                         <div className="test-results-title">
                                             {testResults.testsPassed === testResults.totalTests ? (
@@ -2007,9 +2191,26 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
                                         <div className="test-results-summary">
                                             {testResults.testsPassed}/{testResults.totalTests} test cases passed
                                         </div>
+                                        <button 
+                                            className="collapse-btn"
+                                            onClick={() => setTestResultsCollapsed(!testResultsCollapsed)}
+                                        >
+                                            {testResultsCollapsed ? (
+                                                <>
+                                                    <ChevronUp size={16} />
+                                                    Expand
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <ChevronDown size={16} />
+                                                    Collapse
+                                                </>
+                                            )}
+                                        </button>
                                     </div>
                                     
-                                    <div className="test-cases-tabs">
+                                    <div className="test-results-body">
+                                        <div className="test-cases-tabs">
                                         {testResults.results.map((result, index) => (
                                             <div 
                                                 key={index} 
@@ -2065,9 +2266,35 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
                                             </div>
                                         ))}
                                     </div>
+                                    </div>
                                 </div>
                             )}
                             
+                            {/* Custom Test Input Section */}
+                            <div className="custom-test-section">
+                                <button 
+                                    className="custom-test-toggle"
+                                    onClick={() => setShowCustomInput(!showCustomInput)}
+                                >
+                                    <Eye size={14} />
+                                    Test against Custom Input
+                                    <ChevronUp size={14} className={showCustomInput ? 'rotated' : ''} />
+                                </button>
+                                
+                                {showCustomInput && (
+                                    <div className="custom-input-area">
+                                        <textarea
+                                            className="custom-input-textarea"
+                                            value={customInput}
+                                            onChange={(e) => setCustomInput(e.target.value)}
+                                            placeholder="Enter custom test input here..."
+                                            rows={4}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* Action Buttons */}
                             <div className="editor-footer">
                                 <button 
                                     className="run-tests-btn"
@@ -2082,7 +2309,7 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
                                     ) : (
                                         <>
                                             <Play size={16} />
-                                            Run Tests
+                                            Run
                                         </>
                                     )}
                                 </button>
@@ -2100,15 +2327,83 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
                                     ) : (
                                         <>
                                             <CheckCircle size={16} />
-                                            Submit Solution
+                                            Submit
                                         </>
                                     )}
+                                </button>
+                                
+                                <button 
+                                    className="prev-question-btn"
+                                    onClick={() => {
+                                        if (currentQuestionIndex > 0) {
+                                            setCurrentQuestionIndex(currentQuestionIndex - 1);
+                                            setCode('');
+                                            setTestResults(null);
+                                        }
+                                    }}
+                                    disabled={isFinished || currentQuestionIndex === 0}
+                                >
+                                    Previous
+                                </button>
+                                
+                                <button 
+                                    className="next-question-btn"
+                                    onClick={() => {
+                                        if (currentQuestionIndex < room.questions.length - 1) {
+                                            setCurrentQuestionIndex(currentQuestionIndex + 1);
+                                            setCode('');
+                                            setTestResults(null);
+                                        }
+                                    }}
+                                    disabled={isFinished || currentQuestionIndex >= room.questions.length - 1}
+                                >
+                                    Next
                                 </button>
                             </div>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Leave Confirmation Modal */}
+            {showLeaveConfirm && (
+                <div className="modal-overlay" onClick={() => setShowLeaveConfirm(false)}>
+                    <motion.div 
+                        className="confirm-modal"
+                        onClick={(e) => e.stopPropagation()}
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                    >
+                        <div className="confirm-modal-header">
+                            <AlertCircle size={48} color="#ef4444" />
+                            <h2>Leave Contest?</h2>
+                        </div>
+                        <div className="confirm-modal-body">
+                            <p>Are you sure you want to leave this contest?</p>
+                            <p className="confirm-modal-note">Your progress will be saved and you can rejoin later.</p>
+                        </div>
+                        <div className="confirm-modal-actions">
+                            <button 
+                                className="confirm-cancel-btn"
+                                onClick={() => setShowLeaveConfirm(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                className="confirm-leave-btn"
+                                onClick={() => {
+                                    setShowLeaveConfirm(false);
+                                    onLeaveRoom();
+                                }}
+                            >
+                                <LogOut size={16} />
+                                Leave Contest
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </div>
     );
 };
