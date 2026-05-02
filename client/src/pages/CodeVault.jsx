@@ -21,6 +21,7 @@ import { useAuth } from '../context/AuthContext';
 import NoteEditor from '../components/codevault/NoteEditor';
 import Sidebar from '../components/codevault/Sidebar';
 import Navbar from '../components/Navbar';
+import Chatbot from '../components/Chatbot';
 import CommandPalette from '../components/codevault/CommandPalette';
 import {
   fetchNotes,
@@ -669,6 +670,7 @@ const CodeVault = () => {
         onClose={() => setModalConfig(null)}
         config={modalConfig}
       />
+      <Chatbot />
     </div>
   );
 };

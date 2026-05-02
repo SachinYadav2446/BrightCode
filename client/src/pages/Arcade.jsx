@@ -11,6 +11,7 @@ import './Arcade.css';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
+import Chatbot from '../components/Chatbot';
 
 import { 
     CSS_LEVELS, LOGIC_LEVELS, REACT_LEVELS, 
@@ -1245,6 +1246,7 @@ const Arcade = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+            <Chatbot />
         </div>
     );
 };

@@ -16,6 +16,7 @@ import axios from 'axios';
 
 import CodeBrightLogo from '../components/CodeBrightLogo';
 import Navbar from '../components/Navbar';
+import Chatbot from '../components/Chatbot';
 import './Home.css';
 
 
@@ -355,17 +356,11 @@ const Home = () => {
 
 
   const getLevelInfo = (xp) => {
-
-    if (xp >= 10000) return { label: 'Grandmaster', color: '#fbbf24' };
-
-    if (xp >= 5000) return { label: 'Expert', color: '#818cf8' };
-
-    if (xp >= 2000) return { label: 'Advanced', color: '#34d399' };
-
-    if (xp >= 500) return { label: 'Apprentice', color: '#60a5fa' };
-
-    return { label: 'Initiate', color: '#9ca3af' };
-
+    if (xp >= 10000) return { label: 'Grandmaster', color: '#ffd700' };
+    if (xp >= 5000)  return { label: 'Expert',      color: '#daa520' };
+    if (xp >= 2000)  return { label: 'Advanced',    color: '#cd853f' };
+    if (xp >= 500)   return { label: 'Apprentice',  color: '#d2b48c' };
+    return             { label: 'Initiate',    color: '#8b4513' };
   };
 
 
@@ -539,25 +534,22 @@ const Home = () => {
       return;
     }
 
-    // Create mailto link with pre-filled content
-    const supportEmail = 'support@brightcode.com'; // Replace with your actual support email
-    const emailSubject = encodeURIComponent(supportForm.subject || 'Support Inquiry');
-    const emailBody = encodeURIComponent(
-      `From: ${user.username} (${user.email})\n\n` +
-      `Subject: ${supportForm.subject}\n\n` +
-      `Message:\n${supportForm.message}\n\n` +
-      `---\nUser ID: ${user.username}\nTimestamp: ${new Date().toISOString()}`
-    );
+    setSupportForm(prev => ({ ...prev, isSending: true }));
 
-    const mailtoLink = `mailto:${supportEmail}?subject=${emailSubject}&body=${emailBody}`;
-    
-    // Open email client
-    window.location.href = mailtoLink;
-    
-    // Clear form after a short delay
-    setTimeout(() => {
+    try {
+      const response = await axios.post('http://localhost:5051/support', {
+        email: user.email,
+        username: user.username,
+        subject: supportForm.subject || 'Support Inquiry',
+        message: supportForm.message
+      });
+
+      // Clear form on success
       setSupportForm({ subject: '', message: '', isSending: false });
-    }, 1000);
+    } catch (error) {
+      console.error('Support submission error:', error);
+      setSupportForm(prev => ({ ...prev, isSending: false }));
+    }
   };
 
 
@@ -850,78 +842,9 @@ const Home = () => {
 
                 </div>
 
-
-
-                {/* Profile Details Grid */}
-
-                <div className="dev-details-grid">
-
-                  <div className="detail-item">
-
-                    <span className="detail-label">Bio</span>
-
-                    <p className="detail-content">{user.bio || 'No bio set yet.'}</p>
-
-                  </div>
-
-                  <div className="detail-item">
-
-                    <span className="detail-label">Stack</span>
-
-                    <div className="tech-tags">
-
-                      {user.skills && user.skills.length > 0 ? (
-
-                        user.skills.map((skill, idx) => (
-
-                          <span key={idx} className="tech-tag">{skill}</span>
-
-                        ))
-
-                      ) : (
-
-                        <span className="tech-tag empty">No skills added</span>
-
-                      )}
-
-                    </div>
-
-                  </div>
-
-                  <div className="detail-item">
-
-                    <span className="detail-label">Streak</span>
-
-                    <span className="detail-content">
-
-                      {user.streak || 0} Days
-
-                    </span>
-
-                  </div>
-
-                  <div className="detail-item">
-
-                    <span className="detail-label">Active Days</span>
-
-                    <span className="detail-content">{activeDays} Days</span>
-
-                  </div>
-
-                  <div className="detail-item">
-
-                    <span className="detail-label">Today's XP</span>
-
-                    <span className="detail-content">+{todaysXp} XP</span>
-
-                  </div>
-
-                </div>
-
               </div>
 
             </div>
-
 
 
             {/* Motivational Live Strip */}
@@ -1451,6 +1374,8 @@ const Home = () => {
 
       )}
 
+      {/* AI Chatbot */}
+      <Chatbot />
     </div>
 
   );

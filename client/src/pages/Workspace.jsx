@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight, Plus, Users, X, Copy, Check, Clock, Crown, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import Chatbot from '../components/Chatbot';
 import { useAuth } from '../context/AuthContext';
 import './Workspace.css';
 
@@ -98,7 +99,7 @@ const Workspace = () => {
     const workspaceId = generateWorkspaceId();
     
     // Get current user info
-    const currentUser = localStorage.getItem('username') || 'User-' + Math.random().toString(36).substr(2, 4);
+    const currentUser = user?.username || 'User-' + Math.random().toString(36).substr(2, 4);
     
     try {
       // Create workspace on backend
@@ -113,7 +114,8 @@ const Workspace = () => {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to create workspace');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create workspace');
       }
       
       const data = await response.json();
@@ -124,10 +126,11 @@ const Workspace = () => {
       localStorage.setItem(`workspace_${workspaceId}_userRole`, 'admin');
       
       // Show created workspace info
-      setCreatedWorkspace(data.workspace);
+      console.log('Created workspace:', data);
+      setCreatedWorkspace({ id: workspaceId, name: workspaceName, ...data.workspace });
     } catch (error) {
       console.error('Error creating workspace:', error);
-      alert('Failed to create workspace. Please try again.');
+      alert('Failed to create workspace: ' + error.message);
     }
   };
 
@@ -351,7 +354,7 @@ const Workspace = () => {
           )}
         </div>
       </section>
-
+      <Chatbot />
     </div>
   );
 };

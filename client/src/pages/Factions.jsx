@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import Navbar from '../components/Navbar';
+import Chatbot from '../components/Chatbot';
 import ChatPanel from '../components/ChatPanel';
 import { initSocket } from '../socket';
 import './Factions.css';
@@ -399,14 +400,6 @@ const Factions = () => {
                                     <Shield size={16} />
                                     {showHQ ? 'Close Command Center' : 'Enter Command Center'}
                                 </button>
-
-                                <button
-                                    className="code-wars-btn"
-                                    onClick={() => navigate('/code-wars')}
-                                >
-                                    <Swords size={16} />
-                                    Code Wars Arena
-                                </button>
                             </div>
                         ) : (
                             <>
@@ -584,17 +577,26 @@ const Factions = () => {
 
                         {/* HQ Internal Navigation */}
                         <div className="hq-nav-bar">
-                            <button className={`hq-nav-item ${hqTab === 'roster' ? 'active' : ''}`} onClick={() => setHqTab('roster')}>
-                                <Users size={16} /> Roster
-                            </button>
-                            <button className={`hq-nav-item ${hqTab === 'chat' ? 'active' : ''}`} onClick={() => setHqTab('chat')}>
-                                <MessageSquare size={16} /> Comm Center
-                            </button>
-                            {user?.username === factions.find(f => f.id === myFactionId)?.ownerName && (
-                                <button className={`hq-nav-item ${hqTab === 'intel' ? 'active' : ''}`} onClick={() => setHqTab('intel')}>
-                                    <Shield size={16} /> Intel {(factions.find(f => f.id === myFactionId)?.pendingMembers || []).length > 0 && <span className="intel-count">{(factions.find(f => f.id === myFactionId)?.pendingMembers || []).length}</span>}
+                            <div className="hq-nav-left">
+                                <button className={`hq-nav-item ${hqTab === 'roster' ? 'active' : ''}`} onClick={() => setHqTab('roster')}>
+                                    <Users size={16} /> Roster
                                 </button>
-                            )}
+                                <button className={`hq-nav-item ${hqTab === 'chat' ? 'active' : ''}`} onClick={() => setHqTab('chat')}>
+                                    <MessageSquare size={16} /> Comm Center
+                                </button>
+                                {user?.username === factions.find(f => f.id === myFactionId)?.ownerName && (
+                                    <button className={`hq-nav-item ${hqTab === 'intel' ? 'active' : ''}`} onClick={() => setHqTab('intel')}>
+                                        <Shield size={16} /> Intel {(factions.find(f => f.id === myFactionId)?.pendingMembers || []).length > 0 && <span className="intel-count">{(factions.find(f => f.id === myFactionId)?.pendingMembers || []).length}</span>}
+                                    </button>
+                                )}
+                            </div>
+                            <button 
+                                className="hq-arena-btn"
+                                onClick={() => navigate('/battle-arena')}
+                            >
+                                <Swords size={16} />
+                                <span>Battle Arena</span>
+                            </button>
                         </div>
 
                         <AnimatePresence mode="wait">
@@ -973,6 +975,7 @@ const Factions = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+            <Chatbot />
         </div>
     );
 };
