@@ -19,6 +19,7 @@ const { compileAndRunJava } = require('./javaCompiler');
 const CodeWarsArena = require('./codeWarsArena');
 const IntraFactionArena = require('./intraFactionArena');
 const rateLimiter = require('./utils/rateLimiter');
+const chatbotAPI = require('./chatbotAPI');
 
 const app = express();
 const server = http.createServer(app);
@@ -35,6 +36,9 @@ const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
+
+// ── Mount Chatbot API ───────────────────────────────────────
+app.use('/api/chat', chatbotAPI);
 
 const JWT_SECRET = 'brightcode_secret_key_123';
 
@@ -2175,25 +2179,148 @@ io.on('connection', (socket) => {
             console.log(`🚪 [CW Socket] User ${username} (ID: ${userId}) leaving room ${roomId}`);
             
             const room = intraFactionArena.getRoomById(roomId);
+            
+            if (!room) {
+                socket.emit('cw-left-room', { success: true });
+                return;
+            }
+
+            // Check if game is in progress BEFORE removing player
+            const isGameInProgress = room.status === 'in-progress';
+            
+            // Find which team the user belongs to BEFORE removing
+            let leavingTeam = null;
+            let leavingTeamCopy = null;
+            for (const team of room.teams) {
+                if (team.players.some(p => p.id === userId)) {
+                    leavingTeam = team;
+                    // Make a copy of team data before removal
+                    leavingTeamCopy = {
+                        id: team.id,
+                        name: team.name,
+                        players: [...team.players]
+                    };
+                    break;
+                }
+            }
+            
+            // Count teams BEFORE removing player
+            const totalTeams = room.teams.length;
+            const teamsWithPlayers = room.teams.filter(t => t.players.length > 0).length;
+            
+            console.log(`📊 [CW Socket] Before leave - Total teams: ${totalTeams}, Teams with players: ${teamsWithPlayers}, Game in progress: ${isGameInProgress}`);
+            
+            // If game is in progress and this is a 2-team match, handle forfeit BEFORE removing
+            if (isGameInProgress && leavingTeamCopy && totalTeams === 2) {
+                const winningTeam = room.teams.find(t => t.id !== leavingTeamCopy.id);
+                
+                if (winningTeam) {
+                    console.log(`🏆 [CW Socket] Team ${leavingTeamCopy.name} forfeiting. Team ${winningTeam.name} wins!`);
+                    
+                    // Create game results
+                    const gameResults = {
+                        winner: {
+                            teamId: winningTeam.id,
+                            teamName: winningTeam.name,
+                            score: room.scores?.[winningTeam.id] || 0
+                        },
+                        rankings: [
+                            {
+                                teamId: winningTeam.id,
+                                teamName: winningTeam.name,
+                                score: room.scores?.[winningTeam.id] || 0,
+                                players: winningTeam.players
+                            },
+                            {
+                                teamId: leavingTeamCopy.id,
+                                teamName: leavingTeamCopy.name,
+                                score: room.scores?.[leavingTeamCopy.id] || 0,
+                                players: leavingTeamCopy.players,
+                                forfeited: true
+                            }
+                        ],
+                        gameStats: {
+                            totalQuestions: room.questions?.length || 0,
+                            gameDuration: room.timeLimit || 0,
+                            totalPlayers: room.teams.reduce((sum, team) => sum + team.players.length, 0)
+                        },
+                        reason: 'forfeit',
+                        forfeitedTeam: leavingTeamCopy.name
+                    };
+                    
+                    // Update room status
+                    room.status = 'completed';
+                    room.gameResults = gameResults;
+                    
+                    console.log(`📤 [CW Socket] Sending game-ended event to all players in room ${roomId}`);
+                    
+                    // Notify ALL players in the room FIRST (including the one leaving)
+                    io.to(roomId).emit('cw-game-ended', {
+                        room: intraFactionArena.sanitizeRoomForClient(room),
+                        results: gameResults,
+                        reason: 'forfeit'
+                    });
+                    
+                    // Also send to the leaving player's socket directly to ensure they get it
+                    socket.emit('cw-game-ended', {
+                        room: intraFactionArena.sanitizeRoomForClient(room),
+                        results: gameResults,
+                        reason: 'forfeit'
+                    });
+                    
+                    console.log(`📤 [CW Socket] Game-ended event sent, now cleaning up player`);
+                    
+                    // Now remove the player from the room
+                    socket.leave(roomId);
+                    intraFactionArena.leaveRoom(userId);
+                    
+                    // DON'T send cw-left-room here - let the client handle navigation after seeing results
+                    // The client will show results page and user can click "Back to Menu" when ready
+                    
+                    console.log(`✅ [CW Socket] Forfeit handled, player removed from room`);
+                    return;
+                }
+            }
+            
+            // For multi-team or non-game scenarios, proceed normally
             const success = intraFactionArena.leaveRoom(userId);
             
-            if (success && room) {
+            if (success) {
                 // Leave the socket room
                 socket.leave(roomId);
                 
                 console.log(`✅ [CW Socket] User ${username} left room ${roomId}`);
                 
-                // Notify others
-                socket.to(roomId).emit('cw-player-left', { userId, username });
-                
-                // Broadcast updated room
-                const updatedRoom = intraFactionArena.getRoomById(roomId);
-                if (updatedRoom) {
-                    io.to(roomId).emit('cw-room-update', {
-                        room: intraFactionArena.sanitizeRoomForClient(updatedRoom)
+                // If game is in progress with multiple teams, notify others
+                if (isGameInProgress && leavingTeamCopy && totalTeams > 2) {
+                    console.log(`📢 [CW Socket] Team ${leavingTeamCopy.name} left the match`);
+                    
+                    io.to(roomId).emit('cw-team-forfeited', {
+                        teamId: leavingTeamCopy.id,
+                        teamName: leavingTeamCopy.name,
+                        remainingTeams: teamsWithPlayers - 1
                     });
+                    
+                    // Update room
+                    const updatedRoom = intraFactionArena.getRoomById(roomId);
+                    if (updatedRoom) {
+                        io.to(roomId).emit('cw-room-update', {
+                            room: intraFactionArena.sanitizeRoomForClient(updatedRoom)
+                        });
+                    }
                 } else {
-                    console.log(`ℹ️ [CW Socket] Room ${roomId} was deleted (no players left)`);
+                    // Not in game, just notify others
+                    socket.to(roomId).emit('cw-player-left', { userId, username });
+                    
+                    // Broadcast updated room
+                    const updatedRoom = intraFactionArena.getRoomById(roomId);
+                    if (updatedRoom) {
+                        io.to(roomId).emit('cw-room-update', {
+                            room: intraFactionArena.sanitizeRoomForClient(updatedRoom)
+                        });
+                    } else {
+                        console.log(`ℹ️ [CW Socket] Room ${roomId} was deleted (no players left)`);
+                    }
                 }
             }
             
