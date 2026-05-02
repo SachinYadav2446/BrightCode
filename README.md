@@ -237,13 +237,27 @@ CodeBright utilizes a **Cyber-Premium Design System**.
 
 ---
 
-## 📚 Additional Documentation
+## 📚 Documentation
 
-- **[USER_GUIDE.md](./USER_GUIDE.md)**: Comprehensive user guide with detailed instructions
-- **[JAVA_SETUP.md](./JAVA_SETUP.md)**: Java JDK installation guide for Code Arena Java modules
-- **[API_DOCS.md](./API_DOCS.md)**: API documentation (if available)
-- **[CONTRIBUTING.md](./CONTRIBUTING.md)**: Guidelines for contributors
-- **[CHANGELOG.md](./CHANGELOG.md)**: Version history and changes
+### 📖 Essential Guides
+- **[Documentation Index](./docs/INDEX.md)** - Complete documentation index and navigation
+- **[Quick Start Guide](./docs/guides/QUICK_START.md)** - Get started in minutes
+- **[Environment Setup](./docs/guides/ENV_FORMAT_GUIDE.md)** - Configure your `.env` file
+- **[AI Test Cases Setup](./docs/guides/SETUP_AI_TEST_CASES.md)** - Configure AI-powered test generation
+
+### 🎯 Feature Documentation
+- **[AI Test Case System](./docs/features/AI_TEST_CASE_COMPLETE_GUIDE.md)** - Comprehensive AI test case guide
+- **[Persistent Storage](./docs/features/PERSISTENT_STORAGE_GUIDE.md)** - Test case caching and storage
+- **[Collaborative Editor](./docs/features/COLLABORATIVE_EDITOR_SPEC.md)** - Real-time collaboration features
+- **[External API Integration](./docs/features/CODEFORCES_EXERCISM_INTEGRATION.md)** - Codeforces & Exercism integration
+
+### 🔧 Troubleshooting
+- **[Server Status Check](./docs/troubleshooting/CHECK_SERVER_STATUS.md)** - Verify server health
+- **[Code Wars Issues](./docs/troubleshooting/CODE_WARS_TROUBLESHOOTING.md)** - Common problems and solutions
+
+### 📦 Project Resources
+- **[Feature Specs](./.kiro/specs/)** - Detailed feature specifications and designs
+- **[Archive](./archive/)** - Historical documentation and completed phases
 
 ---
 

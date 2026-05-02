@@ -119,12 +119,12 @@ The implementation follows a 5-phase approach: Backend Foundation → Frontend E
   - _Requirements: 11.1, 11.2_
 
 - [ ] 7. Integrate code editor library (CodeMirror or Monaco)
-  - [~] 7.1 Install code editor dependency
+  - [ ] 7.1 Install code editor dependency
     - Choose CodeMirror (lightweight) or Monaco (feature-rich)
     - Run `npm install @uiw/react-codemirror` or `npm install @monaco-editor/react`
     - Install language support packages
   
-  - [~] 7.2 Integrate editor into CollaborativeCodeEditor component
+  - [ ] 7.2 Integrate editor into CollaborativeCodeEditor component
     - Import and render editor component
     - Configure syntax highlighting for JavaScript, Python, Java
     - Configure line numbers, auto-completion, bracket matching
@@ -133,13 +133,13 @@ The implementation follows a 5-phase approach: Backend Foundation → Frontend E
     - _Requirements: 11.5_
 
 - [ ] 8. Implement real-time code synchronization
-  - [~] 8.1 Implement `handleCodeChange(newCode)` method with debouncing
+  - [ ] 8.1 Implement `handleCodeChange(newCode)` method with debouncing
     - Update local state immediately (optimistic update)
     - Debounce broadcast to 100ms using lodash debounce
     - Emit `cw-code-change` socket event with roomId, teamId, questionId, code, cursorPosition, userId, timestamp
     - _Requirements: 1.1, 8.1, 8.4_
   
-  - [~] 8.2 Implement `applyRemoteCodeUpdate(update)` method
+  - [ ] 8.2 Implement `applyRemoteCodeUpdate(update)` method
     - Check if update.timestamp > state.lastSyncTimestamp
     - If newer, apply update.code to editor state
     - Update lastSyncTimestamp
@@ -147,12 +147,12 @@ The implementation follows a 5-phase approach: Backend Foundation → Frontend E
     - Preserve local cursor position when possible
     - _Requirements: 1.2, 6.3, 6.4, 6.5_
   
-  - [~] 8.3 Set up socket event listener for `cw-teammate-code-update`
+  - [ ] 8.3 Set up socket event listener for `cw-teammate-code-update`
     - Call applyRemoteCodeUpdate() when event received
     - Handle updates from all teammates
     - _Requirements: 1.2_
   
-  - [~] 8.4 Implement `joinEditorSession()` method
+  - [ ] 8.4 Implement `joinEditorSession()` method
     - Emit `cw-join-team-editor` socket event on component mount
     - Listen for `cw-editor-sync` response
     - Initialize editor with synced code and cursors
@@ -160,30 +160,30 @@ The implementation follows a 5-phase approach: Backend Foundation → Frontend E
     - _Requirements: 1.4, 3.1_
 
 - [ ] 9. Implement cursor position tracking and broadcasting
-  - [~] 9.1 Implement `handleCursorMove(position)` method with throttling
+  - [ ] 9.1 Implement `handleCursorMove(position)` method with throttling
     - Throttle broadcast to 50ms using lodash throttle
     - Emit `cw-cursor-move` socket event with roomId, teamId, questionId, position, userId
     - Update local cursor position in state
     - _Requirements: 2.1, 8.2_
   
-  - [~] 9.2 Set up socket event listener for `cw-teammate-cursor-update`
+  - [ ] 9.2 Set up socket event listener for `cw-teammate-cursor-update`
     - Update teammateCursors Map with new position
     - Include username from event data
     - _Requirements: 2.2_
 
 - [ ] 10. Implement connection status and error handling
-  - [~] 10.1 Add connection status indicator
+  - [ ] 10.1 Add connection status indicator
     - Display "Connected" / "Reconnecting..." / "Disconnected" status
     - Update based on socket connection state
     - _Requirements: 10.1_
   
-  - [~] 10.2 Implement reconnection logic
+  - [ ] 10.2 Implement reconnection logic
     - Listen for socket reconnect event
     - Automatically call joinEditorSession() on reconnect
     - Request full state sync
     - _Requirements: 10.2_
   
-  - [~] 10.3 Implement error handling for failed updates
+  - [ ] 10.3 Implement error handling for failed updates
     - Catch errors in applyRemoteCodeUpdate()
     - Log error to console
     - Request full state sync from server
@@ -199,12 +199,12 @@ The implementation follows a 5-phase approach: Backend Foundation → Frontend E
   - Test socket event listeners are registered
   - _Requirements: 1.1, 6.3, 6.4, 8.1_
 
-- [~] 12. Checkpoint - Frontend editor component complete
+- [ ] 12. Checkpoint - Frontend editor component complete
   - Ensure all tests pass, ask the user if questions arise.
 
 ### Phase 3: Multi-Cursor & Presence
 
-- [~] 13. Create TeammateCursor component
+- [ ] 13. Create TeammateCursor component
   - Create file `client/src/components/codewars/TeammateCursor.jsx`
   - Create file `client/src/components/codewars/TeammateCursor.css`
   - Define props interface (username, position, color, isVisible)
@@ -214,25 +214,25 @@ The implementation follows a 5-phase approach: Backend Foundation → Frontend E
   - _Requirements: 2.2, 2.3, 2.4, 2.7_
 
 - [ ] 14. Implement cursor auto-fade behavior
-  - [~] 14.1 Add inactivity timer to TeammateCursor
+  - [ ] 14.1 Add inactivity timer to TeammateCursor
     - Track last cursor movement timestamp
     - Start 3-second timer on each movement
     - Fade out cursor opacity after 3 seconds of inactivity
     - _Requirements: 2.5_
   
-  - [~] 14.2 Restore cursor visibility on movement
+  - [ ] 14.2 Restore cursor visibility on movement
     - Reset opacity to full when new position received
     - Restart inactivity timer
     - _Requirements: 2.6_
 
-- [~] 15. Integrate TeammateCursor into CollaborativeCodeEditor
+- [ ] 15. Integrate TeammateCursor into CollaborativeCodeEditor
   - Map over teammateCursors state to render TeammateCursor components
   - Assign unique color to each teammate from palette (blue, green, purple, orange)
   - Position cursors using absolute positioning based on line/ch coordinates
   - Convert editor line/ch to pixel coordinates for rendering
   - _Requirements: 2.2, 2.3_
 
-- [~] 16. Create TeammatePresence component
+- [ ] 16. Create TeammatePresence component
   - Create file `client/src/components/codewars/TeammatePresence.jsx`
   - Create file `client/src/components/codewars/TeammatePresence.css`
   - Define props interface (teammates array, currentUserId, currentQuestionId)
@@ -243,23 +243,23 @@ The implementation follows a 5-phase approach: Backend Foundation → Frontend E
   - _Requirements: 3.3, 3.4, 3.5, 3.7_
 
 - [ ] 17. Implement presence tracking logic
-  - [~] 17.1 Set up socket listener for `cw-teammate-joined-editor`
+  - [ ] 17.1 Set up socket listener for `cw-teammate-joined-editor`
     - Add teammate to presence list
     - Update UI to show new teammate
     - _Requirements: 3.1_
   
-  - [~] 17.2 Set up socket listener for `cw-teammate-left-editor`
+  - [ ] 17.2 Set up socket listener for `cw-teammate-left-editor`
     - Remove teammate from presence list
     - Update UI to remove teammate
     - _Requirements: 3.2_
   
-  - [~] 17.3 Implement typing status detection
+  - [ ] 17.3 Implement typing status detection
     - Track last code change timestamp per teammate
     - Show "Typing..." if code change within last 2 seconds
     - Clear typing status after 2 seconds of inactivity
     - _Requirements: 3.5_
 
-- [~] 18. Integrate TeammatePresence into CollaborativeCodeEditor
+- [ ] 18. Integrate TeammatePresence into CollaborativeCodeEditor
   - Render TeammatePresence component above editor area
   - Pass teammates data from component state
   - Update teammates list based on socket events
@@ -274,23 +274,23 @@ The implementation follows a 5-phase approach: Backend Foundation → Frontend E
   - Test TeammatePresence updates on join/leave events
   - _Requirements: 2.5, 2.6, 3.1, 3.2, 3.7_
 
-- [~] 19. Checkpoint - Multi-cursor and presence complete
+- [ ] 19. Checkpoint - Multi-cursor and presence complete
   - Ensure all tests pass, ask the user if questions arise.
 
 ### Phase 4: Integration & Testing
 
 - [ ] 20. Integrate CollaborativeCodeEditor into CodeWarsArena page
-  - [~] 20.1 Import CollaborativeCodeEditor into CodeWarsArena.jsx
+  - [ ] 20.1 Import CollaborativeCodeEditor into CodeWarsArena.jsx
     - Add import statement for CollaborativeCodeEditor
     - Add import statement for TeammatePresence
   
-  - [~] 20.2 Add conditional rendering logic for solo vs team mode
+  - [ ] 20.2 Add conditional rendering logic for solo vs team mode
     - Check if room.teamSize > 1 (team mode)
     - Render CollaborativeCodeEditor for team mode
     - Render standard editor for solo mode (teamSize === 1)
     - _Requirements: 11.6, 11.7_
   
-  - [~] 20.3 Pass required props to CollaborativeCodeEditor
+  - [ ] 20.3 Pass required props to CollaborativeCodeEditor
     - Pass roomId from currentRoom.id
     - Pass teamId from user's team assignment
     - Pass questionId from current question
@@ -301,13 +301,13 @@ The implementation follows a 5-phase approach: Backend Foundation → Frontend E
     - _Requirements: 11.1_
 
 - [ ] 21. Implement solution submission integration
-  - [~] 21.1 Create `handleSubmitSolution(code)` callback in GameInterface
+  - [ ] 21.1 Create `handleSubmitSolution(code)` callback in GameInterface
     - Emit `cw-submit-solution` socket event
     - Disable editor during evaluation
     - Show loading indicator
     - _Requirements: 7.1, 7.6_
   
-  - [~] 21.2 Handle submission response events
+  - [ ] 21.2 Handle submission response events
     - Listen for solution success/failure events
     - Display success toast with points awarded
     - Display failure toast with error details
@@ -315,18 +315,18 @@ The implementation follows a 5-phase approach: Backend Foundation → Frontend E
     - _Requirements: 7.4, 7.5, 7.7_
 
 - [ ] 22. Implement editor state cleanup
-  - [~] 22.1 Clean up on component unmount
+  - [ ] 22.1 Clean up on component unmount
     - Emit `cw-leave-team-editor` when component unmounts
     - Remove socket event listeners
     - Clear local state
     - _Requirements: 3.2_
   
-  - [~] 22.2 Clean up on game end
+  - [ ] 22.2 Clean up on game end
     - Clear all editor states when game ends
     - Remove all active sessions
     - _Requirements: 5.6_
 
-- [~] 23. Add loading states and error notifications
+- [ ] 23. Add loading states and error notifications
   - Display loading spinner during initial editor sync
   - Display error notification for connection failures
   - Display warning for rate limit exceeded
@@ -351,13 +351,13 @@ The implementation follows a 5-phase approach: Backend Foundation → Frontend E
   - Test 5 users (max team size) editing together
   - _Requirements: 1.3, 6.1, 10.1, 10.2_
 
-- [~] 26. Checkpoint - Integration and testing complete
+- [ ] 26. Checkpoint - Integration and testing complete
   - Ensure all tests pass, ask the user if questions arise.
 
 ### Phase 5: Performance & Security
 
 - [ ] 27. Implement rate limiting on server
-  - [~] 27.1 Create rate limiter utility
+  - [ ] 27.1 Create rate limiter utility
     - Create file `server/utils/rateLimiter.js`
     - Implement `checkRateLimit(userId, eventType, maxPerSecond)` function
     - Use Map to track events per user with timestamps
@@ -365,26 +365,26 @@ The implementation follows a 5-phase approach: Backend Foundation → Frontend E
     - Return true/false for rate limit check
     - _Requirements: 12.1, 12.2_
   
-  - [~] 27.2 Apply rate limiting to code change events
+  - [ ] 27.2 Apply rate limiting to code change events
     - Call checkRateLimit() in `cw-code-change` handler
     - Limit to 20 events per second per user
     - Drop excess events and emit warning
     - _Requirements: 12.1, 12.3_
   
-  - [~] 27.3 Apply rate limiting to cursor move events
+  - [ ] 27.3 Apply rate limiting to cursor move events
     - Call checkRateLimit() in `cw-cursor-move` handler
     - Limit to 50 events per second per user
     - Drop excess events silently
     - _Requirements: 12.2, 12.3_
 
 - [ ] 28. Implement security validations
-  - [~] 28.1 Add input sanitization for code content
+  - [ ] 28.1 Add input sanitization for code content
     - Sanitize code before broadcasting to prevent script injection
     - Validate code size limit (50KB)
     - Reject oversized payloads with error
     - _Requirements: 8.5, 8.6, 12.4_
   
-  - [~] 28.2 Add access control validations
+  - [ ] 28.2 Add access control validations
     - Verify user belongs to team before allowing editor operations
     - Verify room exists and is active
     - Verify question exists in room
@@ -392,37 +392,37 @@ The implementation follows a 5-phase approach: Backend Foundation → Frontend E
     - Log unauthorized attempts
     - _Requirements: 4.3, 4.4, 4.6, 12.5, 12.6_
   
-  - [~] 28.3 Add authentication check
+  - [ ] 28.3 Add authentication check
     - Verify JWT token on socket connection
     - Store authenticated user ID in socket session
     - Reject unauthenticated connections
     - _Requirements: 12.6_
 
 - [ ] 29. Optimize client-side performance
-  - [~] 29.1 Verify debouncing and throttling parameters
+  - [ ] 29.1 Verify debouncing and throttling parameters
     - Confirm code changes debounced to 100ms
     - Confirm cursor moves throttled to 50ms
     - Adjust if needed based on testing
     - _Requirements: 8.1, 8.2_
   
-  - [~] 29.2 Implement lazy loading for editor states
+  - [ ] 29.2 Implement lazy loading for editor states
     - Only sync editor state for currently active question
     - Don't load all questions' states upfront
     - Load on-demand when user switches questions
     - _Requirements: 8.3_
   
-  - [~] 29.3 Optimize cursor rendering
+  - [ ] 29.3 Optimize cursor rendering
     - Use CSS transforms for cursor positioning (better performance)
     - Debounce cursor render updates if needed
     - Limit number of visible cursors if team size > 5
 
 - [ ] 30. Implement state cleanup and memory management
-  - [~] 30.1 Add inactive session cleanup
+  - [ ] 30.1 Add inactive session cleanup
     - Remove editor sessions inactive for 5 minutes
     - Clear cursor positions for inactive users
     - _Requirements: 5.7_
   
-  - [~] 30.2 Add game end cleanup
+  - [ ] 30.2 Add game end cleanup
     - Clear all editor states when game ends
     - Clear all active sessions
     - Clear all cursor positions
@@ -445,7 +445,7 @@ The implementation follows a 5-phase approach: Backend Foundation → Frontend E
   - Test oversized payloads are rejected
   - _Requirements: 4.4, 4.5, 4.6, 12.1, 12.2, 12.4_
 
-- [~] 33. Final checkpoint - Performance and security complete
+- [ ] 33. Final checkpoint - Performance and security complete
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
