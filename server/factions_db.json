@@ -41,6 +41,20 @@
         "activity": {
           "2026-04-20": 150
         }
+      },
+      {
+        "id": "d1841961-f1a9-4597-8c5e-52871b23580a",
+        "username": "Good_guy",
+        "xp": 0,
+        "role": "member",
+        "activity": {}
+      },
+      {
+        "id": "7897730e-7731-4bc9-bcf0-0fa3ecf526d9",
+        "username": "abc",
+        "xp": 0,
+        "role": "member",
+        "activity": {}
       }
     ],
     "createdAt": "2026-04-26T17:45:46.209Z",

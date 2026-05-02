@@ -137,6 +137,32 @@
       "joinedAt": "2026-04-25T11:35:08.241Z",
       "created_count": 1,
       "java_level": 81
+    },
+    {
+      "id": "7897730e-7731-4bc9-bcf0-0fa3ecf526d9",
+      "username": "abc",
+      "email": "darshit02736@gmail.com",
+      "password": "$2b$10$4NR52PPBwDoJey3fz6AGZeytnGp70ULZNsQ0cJOtXCpkXcDC8GOCW",
+      "xp": 0,
+      "css_level": 0,
+      "logic_level": 0,
+      "react_level": 0,
+      "mern_level": 0,
+      "activity": {},
+      "joinedAt": "2026-05-01T20:00:52.191Z"
+    },
+    {
+      "id": "d1841961-f1a9-4597-8c5e-52871b23580a",
+      "username": "Good_guy",
+      "email": "yadavsachin2446@gmail.com",
+      "password": "$2b$10$ajwunnGnEB6IlLQOghRC1erbUPmRv8ceHzjYrVia6yetmVOmULvbi",
+      "xp": 0,
+      "css_level": 0,
+      "logic_level": 0,
+      "react_level": 0,
+      "mern_level": 0,
+      "activity": {},
+      "joinedAt": "2026-05-01T20:26:23.149Z"
     }
   ]
 }

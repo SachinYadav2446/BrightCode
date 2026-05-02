@@ -18,6 +18,7 @@ const FileSystem = require('./fileSystem');
 const { compileAndRunJava } = require('./javaCompiler');
 const CodeWarsArena = require('./codeWarsArena');
 const IntraFactionArena = require('./intraFactionArena');
+const rateLimiter = require('./utils/rateLimiter');
 
 const app = express();
 const server = http.createServer(app);
@@ -292,8 +293,8 @@ app.post('/support', async (req, res) => {
     }
 
     const mailOptions = {
-        from: '"BrightCode Support" <brightcodelim@gmail.com>',
-        to: 'brightcodelim@gmail.com', // Your email for receiving inquiries
+        from: '"BrightCode Support" <codebrightlim@gmail.com>',
+        to: 'codebrightlim@gmail.com', // Your email for receiving inquiries
         subject: `[SUPPORT INQUIRY] ${subject || 'New Message'}`,
         html: `
             <div style="font-family: 'Poppins', sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb; background: #000; color: #fff;">
@@ -2337,6 +2338,319 @@ io.on('connection', (socket) => {
     socket.on('leave-code-wars-room', ({ roomId }) => {
         socket.leave(`room_${roomId}`);
         console.log(`[CODE WARS] User left room ${roomId}`);
+    });
+
+    // ── Collaborative Editor Socket Handlers ──────────────────────────────
+    
+    // Task 3.1: Join team editor session
+    socket.on('cw-join-team-editor', ({ roomId, teamId, questionId, userId, username }) => {
+        try {
+            console.log(`📝 [CW Editor] User ${username} joining team editor - Room: ${roomId}, Team: ${teamId}, Question: ${questionId}`);
+            
+            // Validate user belongs to team and get current editor state
+            const editorState = intraFactionArena.joinTeamEditor(roomId, teamId, questionId, userId, username);
+            
+            // Join team-specific socket room
+            const teamEditorRoom = `cw-${roomId}-team-${teamId}-q-${questionId}`;
+            socket.join(teamEditorRoom);
+            
+            console.log(`✅ [CW Editor] User ${username} joined team editor room: ${teamEditorRoom}`);
+            
+            // Emit current editor state to joining user (Requirement 9.5)
+            socket.emit('cw-editor-sync', {
+                teamId,
+                questionId,
+                code: editorState.code,
+                cursors: editorState.cursors,
+                lastEdit: editorState.lastEdit,
+                timestamp: editorState.timestamp
+            });
+            
+            // Broadcast to other team members that a teammate joined (Requirement 9.8)
+            socket.to(teamEditorRoom).emit('cw-teammate-joined-editor', {
+                userId,
+                username,
+                questionId
+            });
+            
+        } catch (error) {
+            console.error(`❌ [CW Editor] Join team editor error:`, error.message);
+            socket.emit('cw-error', { error: error.message });
+        }
+    });
+    
+    // Task 3.2: Handle code changes with rate limiting and security (Tasks 27.2, 28.1, 28.2)
+    socket.on('cw-code-change', ({ roomId, teamId, questionId, code, cursorPosition, userId, timestamp }) => {
+        try {
+            // Task 27.2: Rate limiting - 20 events per second per user
+            if (!rateLimiter.checkRateLimit(userId, 'code-change', 20)) {
+                socket.emit('cw-error', { 
+                    error: 'Rate limit exceeded for code changes',
+                    code: 'RATE_LIMIT_EXCEEDED'
+                });
+                return;
+            }
+            
+            // Task 28.1: Input sanitization - validate code size (50KB limit)
+            if (code && code.length > 50 * 1024) {
+                socket.emit('cw-error', { 
+                    error: 'Code size exceeds 50KB limit',
+                    code: 'PAYLOAD_TOO_LARGE'
+                });
+                console.log(`⚠️ [CW Editor] Oversized code payload rejected from user ${userId}`);
+                return;
+            }
+            
+            // Task 28.2: Access control validations
+            const room = intraFactionArena.getRoomById(roomId);
+            if (!room) {
+                socket.emit('cw-error', { 
+                    error: 'Room not found',
+                    code: 'ROOM_NOT_FOUND'
+                });
+                console.log(`⚠️ [CW Editor] Unauthorized access attempt - room not found: ${roomId}`);
+                return;
+            }
+            
+            // Verify room is active
+            if (room.status !== 'active') {
+                socket.emit('cw-error', { 
+                    error: 'Room is not active',
+                    code: 'ROOM_NOT_ACTIVE'
+                });
+                return;
+            }
+            
+            // Find player to get username and verify team membership
+            const team = room.teams.find(t => t.id === teamId);
+            if (!team) {
+                socket.emit('cw-error', { 
+                    error: 'Team not found',
+                    code: 'TEAM_NOT_FOUND'
+                });
+                console.log(`⚠️ [CW Editor] Unauthorized access attempt - team not found: ${teamId}`);
+                return;
+            }
+            
+            const player = team.players.find(p => p.id === userId);
+            if (!player) {
+                socket.emit('cw-error', { 
+                    error: 'User does not belong to this team',
+                    code: 'UNAUTHORIZED_ACCESS'
+                });
+                console.log(`⚠️ [CW Editor] Unauthorized access attempt - user ${userId} not in team ${teamId}`);
+                return;
+            }
+            
+            // Verify question exists in room
+            const question = room.questions.find(q => q.id === questionId);
+            if (!question) {
+                socket.emit('cw-error', { 
+                    error: 'Question not found in room',
+                    code: 'QUESTION_NOT_FOUND'
+                });
+                return;
+            }
+            
+            // Update team code with conflict resolution (Requirement 1.2)
+            const result = intraFactionArena.updateTeamCode(
+                roomId, 
+                teamId, 
+                questionId, 
+                code, 
+                userId, 
+                cursorPosition, 
+                timestamp
+            );
+            
+            if (result.success) {
+                // Broadcast to team members (exclude sender) (Requirement 9.6)
+                const teamEditorRoom = `cw-${roomId}-team-${teamId}-q-${questionId}`;
+                socket.to(teamEditorRoom).emit('cw-teammate-code-update', {
+                    userId,
+                    username: player.username,
+                    code,
+                    cursorPosition,
+                    timestamp
+                });
+                
+                console.log(`✅ [CW Editor] Code updated by ${player.username} in room ${roomId}`);
+            } else if (result.conflict) {
+                // Notify sender of conflict (older timestamp rejected)
+                socket.emit('cw-code-conflict', {
+                    message: result.message,
+                    serverTimestamp: result.timestamp
+                });
+                console.log(`⚠️ [CW Editor] Code conflict detected for ${player.username} - update rejected`);
+            }
+            
+        } catch (error) {
+            console.error(`❌ [CW Editor] Code change error:`, error.message);
+            socket.emit('cw-error', { error: error.message });
+        }
+    });
+    
+    // Task 3.3: Handle cursor movements with rate limiting (Task 27.3)
+    socket.on('cw-cursor-move', ({ roomId, teamId, questionId, position, userId }) => {
+        try {
+            // Task 27.3: Rate limiting - 50 events per second per user
+            if (!rateLimiter.checkRateLimit(userId, 'cursor-move', 50)) {
+                // Drop excess events silently (cursor moves are non-critical)
+                return;
+            }
+            
+            // Get room to find username
+            const room = intraFactionArena.getRoomById(roomId);
+            if (!room) {
+                return; // Silently fail for cursor moves
+            }
+            
+            // Find player to get username
+            const team = room.teams.find(t => t.id === teamId);
+            if (!team) {
+                return; // Silently fail
+            }
+            
+            const player = team.players.find(p => p.id === userId);
+            if (!player) {
+                return; // Silently fail
+            }
+            
+            // Update cursor position (Requirement 2.2)
+            intraFactionArena.updateCursorPosition(roomId, teamId, questionId, userId, position);
+            
+            // Broadcast to team members (exclude sender) (Requirement 9.7)
+            const teamEditorRoom = `cw-${roomId}-team-${teamId}-q-${questionId}`;
+            socket.to(teamEditorRoom).emit('cw-teammate-cursor-update', {
+                userId,
+                username: player.username,
+                position
+            });
+            
+        } catch (error) {
+            // Don't emit error for cursor moves - they're high frequency and non-critical
+            // Just log for debugging
+            if (process.env.NODE_ENV === 'development') {
+                console.error(`❌ [CW Editor] Cursor move error:`, error.message);
+            }
+        }
+    });
+    
+    // Task 3.4: Enhanced submit solution with team collaboration
+    socket.on('cw-submit-solution', async ({ roomId, teamId, questionId, code, userId }) => {
+        try {
+            console.log(`🚀 [CW Editor] Solution submission - Room: ${roomId}, Team: ${teamId}, Question: ${questionId}`);
+            
+            // Get room to find username
+            const room = intraFactionArena.getRoomById(roomId);
+            if (!room) {
+                throw new Error('Room not found');
+            }
+            
+            // Find player to get username
+            const team = room.teams.find(t => t.id === teamId);
+            if (!team) {
+                throw new Error('Team not found');
+            }
+            
+            const player = team.players.find(p => p.id === userId);
+            if (!player) {
+                throw new Error('User does not belong to this team');
+            }
+            
+            // Get current team code from editor state (Requirement 7.1)
+            const editorState = intraFactionArena.getTeamEditorState(roomId, teamId, questionId);
+            const codeToSubmit = editorState.code || code;
+            
+            // Disable editor for team during evaluation (Requirement 7.6)
+            const teamEditorRoom = `cw-${roomId}-team-${teamId}-q-${questionId}`;
+            io.to(teamEditorRoom).emit('cw-editor-disabled', {
+                questionId,
+                reason: 'Evaluating solution...'
+            });
+            
+            // Submit solution (Requirement 7.3)
+            const result = await intraFactionArena.submitSolution(roomId, userId, questionId, codeToSubmit);
+            
+            // Re-enable editor for team
+            io.to(teamEditorRoom).emit('cw-editor-enabled', {
+                questionId
+            });
+            
+            // Broadcast result to all team members (Requirement 7.4, 7.5)
+            if (result.success) {
+                io.to(teamEditorRoom).emit('cw-solution-success', {
+                    userId,
+                    username: player.username,
+                    questionId,
+                    points: result.points,
+                    totalScore: result.totalScore,
+                    result: result.result
+                });
+                console.log(`✅ [CW Editor] Solution accepted for team ${teamId} - ${result.points} points`);
+            } else {
+                io.to(teamEditorRoom).emit('cw-solution-failure', {
+                    userId,
+                    username: player.username,
+                    questionId,
+                    error: result.error || 'Solution failed test cases',
+                    result: result.result
+                });
+                console.log(`❌ [CW Editor] Solution rejected for team ${teamId}`);
+            }
+            
+        } catch (error) {
+            console.error(`❌ [CW Editor] Submit solution error:`, error.message);
+            socket.emit('cw-error', { error: error.message });
+            
+            // Re-enable editor on error
+            const teamEditorRoom = `cw-${roomId}-team-${teamId}-q-${questionId}`;
+            io.to(teamEditorRoom).emit('cw-editor-enabled', {
+                questionId
+            });
+        }
+    });
+    
+    // Task 3.5: Socket disconnect cleanup
+    socket.on('disconnect', () => {
+        try {
+            // Find all rooms this socket was in
+            const socketRooms = Array.from(socket.rooms);
+            
+            // Filter for team editor rooms (format: cw-{roomId}-team-{teamId}-q-{questionId})
+            const editorRooms = socketRooms.filter(room => room.startsWith('cw-') && room.includes('-team-'));
+            
+            editorRooms.forEach(editorRoom => {
+                // Parse room name to extract roomId, teamId, questionId
+                const match = editorRoom.match(/^cw-(.+)-team-(.+)-q-(.+)$/);
+                if (match) {
+                    const [, roomId, teamId, questionId] = match;
+                    
+                    // Get room to find userId from socket
+                    const room = intraFactionArena.getRoomById(roomId);
+                    if (room) {
+                        // Find which user this socket belongs to by checking team players
+                        const team = room.teams.find(t => t.id === teamId);
+                        if (team) {
+                            // We need to track socket.id to userId mapping
+                            // For now, we'll broadcast a generic departure
+                            // The client will handle cleanup based on their own userId
+                            
+                            console.log(`🚪 [CW Editor] Socket disconnected from editor room: ${editorRoom}`);
+                            
+                            // Broadcast departure to teammates (Requirement 10.7)
+                            socket.to(editorRoom).emit('cw-teammate-left-editor', {
+                                questionId,
+                                socketId: socket.id
+                            });
+                        }
+                    }
+                }
+            });
+            
+        } catch (error) {
+            console.error(`❌ [CW Editor] Disconnect cleanup error:`, error.message);
+        }
     });
 });
 
