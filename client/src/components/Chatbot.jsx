@@ -4,13 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import './Chatbot.css';
 
-const Chatbot = () => {
+const Chatbot = ({ context = {} }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState(() => {
     const savedHistory = sessionStorage.getItem('chatbotHistory');
     return savedHistory ? JSON.parse(savedHistory) : [
-      { id: 1, type: 'bot', text: "Hi! I'm Pal, your coding companion. How can I help you today?" }
+      { id: 1, type: 'bot', text: "Hey! I'm Pal, your coding companion. I'm here to help you with anything coding-related, whether it's debugging, learning new concepts, or navigating BrightCode. What can I help you with today?" }
     ];
   });
   const [inputValue, setInputValue] = useState('');
@@ -42,36 +42,36 @@ const Chatbot = () => {
     setIsTyping(true);
 
     try {
-      // Send the conversation history to the backend API
+      // Send the conversation history and context to the backend API
       const response = await axios.post('http://localhost:5051/api/chat', { 
-        messages: updatedMessages 
+        messages: updatedMessages,
+        context: context // Pass context about current page, problem, user, etc.
       });
 
       if (response.data && response.data.text) {
         let cleanedText = response.data.text;
         
-        // Remove excessive bold formatting (**text**)
+        // Remove any remaining markdown formatting
         cleanedText = cleanedText.replace(/\*\*(.*?)\*\*/g, '$1');
+        cleanedText = cleanedText.replace(/\*(.*?)\*/g, '$1');
+        cleanedText = cleanedText.replace(/^#+\s/gm, '');
+        cleanedText = cleanedText.replace(/`([^`]+)`/g, '$1');
         
-        // Truncate very long responses to max 3 sentences or 500 characters
-        const sentences = cleanedText.split(/(?<=[.!?])\s+/);
-        if (sentences.length > 3) {
-          cleanedText = sentences.slice(0, 3).join(' ') + '...';
-        } else if (cleanedText.length > 500) {
-          cleanedText = cleanedText.substring(0, 500) + '...';
-        }
+        // Split into paragraphs for better readability
+        const paragraphs = cleanedText.split('\n\n');
+        const formattedText = paragraphs.map(p => p.trim()).filter(p => p).join('\n\n');
         
-        const aiResponse = { id: Date.now() + 1, type: 'bot', text: cleanedText };
+        const aiResponse = { id: Date.now() + 1, type: 'bot', text: formattedText };
         setMessages(prev => [...prev, aiResponse]);
       } else {
         throw new Error("Invalid response format");
       }
     } catch (error) {
-      console.error("Chatbot API Error:", error);
+      console.error("Pal API Error:", error);
       const errorMsg = { 
         id: Date.now() + 1, 
         type: 'bot', 
-        text: "I'm currently experiencing communication interference with the main server. Please try again later." 
+        text: "I encountered a technical hiccup on my end. Could you try asking that again? If the issue persists, the server might be taking a quick break." 
       };
       setMessages(prev => [...prev, errorMsg]);
     } finally {
@@ -110,6 +110,7 @@ const Chatbot = () => {
               <div className="chatbot-header-title">
                 <Bot size={20} className="chatbot-header-icon" />
                 <span>Pal</span>
+                <span className="chatbot-status-dot"></span>
               </div>
               <div className="chatbot-header-actions">
                 <button onClick={() => setIsExpanded(!isExpanded)} className="chatbot-action-btn">
@@ -133,7 +134,12 @@ const Chatbot = () => {
                     {msg.type === 'bot' ? <Bot size={16} /> : <User size={16} />}
                   </div>
                   <div className="chatbot-message-content">
-                    {msg.text}
+                    {msg.text.split('\n').map((line, i) => (
+                      <React.Fragment key={i}>
+                        {line}
+                        {i < msg.text.split('\n').length - 1 && <br />}
+                      </React.Fragment>
+                    ))}
                   </div>
                 </motion.div>
               ))}
@@ -147,6 +153,7 @@ const Chatbot = () => {
                   </div>
                 </div>
               )}
+              
               <div ref={messagesEndRef} />
             </div>
 
