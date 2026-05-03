@@ -82,7 +82,7 @@
 }
 
 .sidebar-header h2 {
-    font-size: 0.7rem;
+    font-size: 0.85rem;
     font-weight: 800;
     color: var(--arena-text-muted);
     margin: 0;
@@ -150,7 +150,7 @@
 }
 
 .sidebar-contest-name {
-    font-size: 0.8rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: var(--arena-text);
     flex: 1;
@@ -167,7 +167,7 @@
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--arena-border);
     border-radius: 50px;
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--arena-text-muted);
     text-transform: lowercase;
@@ -190,7 +190,7 @@
     border: 1px solid var(--arena-border);
     border-radius: 8px;
     color: var(--arena-text);
-    font-size: 0.8rem;
+    font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
@@ -277,7 +277,7 @@
 }
 
 .contest-title {
-    font-size: 2rem;
+    font-size: 2.75rem;
     font-weight: 900;
     color: var(--arena-cream);
     margin: 0 0 0.5rem 0;
@@ -286,7 +286,7 @@
 }
 
 .contest-description {
-    font-size: 0.875rem;
+    font-size: 1rem;
     color: var(--arena-text-muted);
     line-height: 1.6;
     margin: 0 0 1.5rem 0;
@@ -305,7 +305,7 @@
 }
 
 .meta-card-label {
-    font-size: 0.625rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--arena-text-muted);
     text-transform: uppercase;
@@ -313,7 +313,7 @@
 }
 
 .meta-card-value {
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--arena-cream);
 }
@@ -339,7 +339,7 @@
 }
 
 .features-title {
-    font-size: 0.625rem;
+    font-size: 0.75rem;
     font-weight: 700;
     color: var(--arena-text-muted);
     margin: 0 0 0.875rem 0;
@@ -377,7 +377,7 @@
     display: flex;
     align-items: flex-start;
     gap: 0.625rem;
-    font-size: 0.75rem;
+    font-size: 0.9rem;
     color: var(--arena-text);
     line-height: 1.5;
     padding: 0.75rem 0.875rem;
@@ -396,18 +396,18 @@
 
 .feature-bullet {
     color: var(--arena-red);
-    font-size: 0.75rem;
+    font-size: 0.9rem;
     line-height: 1.5;
     flex-shrink: 0;
 }
 
 .enter-arena-btn {
-    padding: 0.65rem 1.25rem;
+    padding: 0.875rem 1.75rem;
     background: var(--arena-red);
     border: none;
     border-radius: 8px;
     color: #fff;
-    font-size: 0.75rem;
+    font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
