@@ -60,7 +60,8 @@ export const createNote = async (noteData) => {
   });
   
   if (!response.ok) {
-    throw new Error('Failed to create note');
+    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
   }
   
   return response.json();
@@ -114,7 +115,8 @@ export const createFolder = async (folderData) => {
   });
   
   if (!response.ok) {
-    throw new Error('Failed to create folder');
+    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
   }
   
   return response.json();

@@ -81,17 +81,32 @@ const CodeVault = () => {
 
   const handleFolderCreateSubmit = async (e) => {
     if (e) e.preventDefault();
-    if (!newFolderName.trim()) return;
+    
+    if (!newFolderName.trim()) {
+      return;
+    }
+
+    console.log('[CodeVault] Creating repository:', newFolderName);
+    console.log('[CodeVault] User:', user);
+    console.log('[CodeVault] Token:', localStorage.getItem('token'));
 
     try {
       const folder = await createFolder({ name: newFolderName.trim() });
+      console.log('[CodeVault] Repository created successfully:', folder);
       setFolders([...folders, folder]);
       setShowCreateFolderModal(false);
       setNewFolderName('');
       toast.success('Repository created');
     } catch (error) {
-      console.error('Failed to create repository:', error);
-      toast.error('Failed to create repository: ' + error.message);
+      console.error('[CodeVault] Failed to create repository:', error);
+      console.error('[CodeVault] Error details:', error.response?.data || error.message);
+      
+      // Check if it's an authentication error
+      if (error.message.includes('Invalid token') || error.message.includes('403')) {
+        toast.error('Session expired. Please log out and log back in.');
+      } else {
+        toast.error('Failed to create repository: ' + error.message);
+      }
     }
   };
 
@@ -115,6 +130,9 @@ const CodeVault = () => {
       return;
     }
 
+    console.log('[CodeVault] Creating note in folder:', selectedFolder);
+    console.log('[CodeVault] User:', user);
+
     try {
       const newNote = await createNote({
         title: 'Untitled Note',
@@ -122,12 +140,14 @@ const CodeVault = () => {
         folderId: selectedFolder,
         tags: []
       });
+      console.log('[CodeVault] Note created successfully:', newNote);
       setNotes([newNote, ...notes]);
       // Don't auto-open the note, just add it to the list
       toast.success('New note created');
     } catch (error) {
-      console.error('Failed to create note:', error);
-      toast.error('Failed to create note');
+      console.error('[CodeVault] Failed to create note:', error);
+      console.error('[CodeVault] Error details:', error.response?.data || error.message);
+      toast.error('Failed to create note: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -459,60 +479,6 @@ const CodeVault = () => {
                                   <File size={14} className="file-icon" />
                                   <span>{note.title || 'Untitled'}</span>
                                 </button>
-                                <div className="file-item-actions">
-                                  <button
-                                    className="file-action-btn"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setModalConfig({
-                                        type: 'input',
-                                        title: 'Rename File',
-                                        initialValue: note.title || 'Untitled',
-                                        onConfirm: (newTitle) => {
-                                          updateNote(note.id, { ...note, title: newTitle })
-                                            .then(updatedNote => {
-                                              setNotes(notes.map(n => n.id === note.id ? updatedNote : n));
-                                              if (activeNote?.id === note.id) {
-                                                setActiveNote(updatedNote);
-                                              }
-                                              toast.success('File renamed');
-                                            })
-                                            .catch(() => toast.error('Failed to rename file'));
-                                        }
-                                      });
-                                    }}
-                                    title="Rename"
-                                  >
-                                    <Edit2 size={10} />
-                                  </button>
-                                  <button
-                                    className="file-action-btn file-action-delete"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setModalConfig({
-                                        type: 'confirm',
-                                        variant: 'danger',
-                                        title: 'Delete File',
-                                        message: `Are you sure you want to delete "${note.title || 'Untitled'}"?`,
-                                        confirmText: 'Delete File',
-                                        onConfirm: () => {
-                                          deleteNote(note.id)
-                                            .then(() => {
-                                              setNotes(notes.filter(n => n.id !== note.id));
-                                              if (activeNote?.id === note.id) {
-                                                setActiveNote(null);
-                                              }
-                                              toast.success('File deleted');
-                                            })
-                                            .catch(() => toast.error('Failed to delete file'));
-                                        }
-                                      });
-                                    }}
-                                    title="Delete"
-                                  >
-                                    <Trash2 size={10} />
-                                  </button>
-                                </div>
                               </div>
                             ))
                           )}
