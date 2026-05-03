@@ -118,7 +118,7 @@ loadFactions();
 
 // ── Initialize Code Wars Arena ──────────────────────────────────────────────
 const codeWarsArena = new CodeWarsArena(io, factions);
-const intraFactionArena = new IntraFactionArena(io, factions);
+const intraFactionArena = new IntraFactionArena(io, factions, memoryStore, useMemoryDB);
 
 // Prefetch popular LeetCode problems on server start
 const { prefetchLeetCodeProblems } = require('./codeWarQuestions');
@@ -2268,7 +2268,8 @@ io.on('connection', (socket) => {
                         reason: 'forfeit'
                     });
                     
-                    console.log(`📤 [CW Socket] Game-ended event sent, now cleaning up player`);
+                    console.log(`📤 [CW Socket] Game-ended event sent to room and leaving player`);
+                    console.log(`📤 [CW Socket] NOT sending cw-left-room - client will handle navigation from results page`);
                     
                     // Now remove the player from the room
                     socket.leave(roomId);
@@ -2277,7 +2278,7 @@ io.on('connection', (socket) => {
                     // DON'T send cw-left-room here - let the client handle navigation after seeing results
                     // The client will show results page and user can click "Back to Menu" when ready
                     
-                    console.log(`✅ [CW Socket] Forfeit handled, player removed from room`);
+                    console.log(`✅ [CW Socket] Forfeit handled, player removed from room, returning early`);
                     return;
                 }
             }
@@ -3048,18 +3049,27 @@ app.post('/code-wars/start-game', authenticateToken, async (req, res) => {
 
 // Submit solution (updated for rooms)
 app.post('/code-wars/submit-solution', authenticateToken, async (req, res) => {
+    console.log('[API] 📝 Submit solution request received');
+    console.log('[API] User ID:', req.user?.id);
+    console.log('[API] Request body:', { questionId: req.body.questionId, codeLength: req.body.code?.length });
+    
     const { questionId, code } = req.body;
     
     if (!questionId || !code) {
+        console.error('[API] ❌ Missing required fields');
         return res.status(400).json({ error: 'Missing required fields' });
     }
     
     try {
         const playerRoom = intraFactionArena.getPlayerRoom(req.user.id);
+        console.log('[API] Player room:', playerRoom?.id || 'NOT FOUND');
+        
         if (!playerRoom) {
+            console.error('[API] ❌ Player not in any active game');
             return res.status(404).json({ error: 'Not in any active game' });
         }
         
+        console.log('[API] ✅ Calling submitSolution...');
         const result = await intraFactionArena.submitSolution(
             playerRoom.id,
             req.user.id,
@@ -3067,9 +3077,13 @@ app.post('/code-wars/submit-solution', authenticateToken, async (req, res) => {
             code
         );
         
+        console.log('[API] ✅ Submit solution successful');
+        console.log('[API] Result:', { success: result.success, points: result.points, score: result.scorePercentage });
         res.json(result);
         
     } catch (error) {
+        console.error('[API] ❌ Submit solution error:', error.message);
+        console.error('[API] Error stack:', error.stack);
         res.status(400).json({ error: error.message });
     }
 });
