@@ -176,11 +176,11 @@ class CodeforcesAPI {
      */
     getPoints(difficulty) {
         const pointMap = {
-            'easy': 100,
-            'medium': 200,
-            'hard': 400
+            'easy': 50,
+            'medium': 80,
+            'hard': 150
         };
-        return pointMap[difficulty] || 100;
+        return pointMap[difficulty] || 50;
     }
 
     /**
