@@ -90,7 +90,8 @@ const CodeVault = () => {
       setNewFolderName('');
       toast.success('Repository created');
     } catch (error) {
-      toast.error('Failed to create repository');
+      console.error('Failed to create repository:', error);
+      toast.error('Failed to create repository: ' + error.message);
     }
   };
 
