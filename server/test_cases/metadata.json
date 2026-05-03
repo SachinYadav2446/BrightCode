@@ -1,0 +1,134 @@
+{
+  "problems": {
+    "cw_002": {
+      "title": "Palindrome Check",
+      "categories": {
+        "sample": {
+          "count": 3,
+          "file": "sample/cw_002.json",
+          "lastUpdated": "2026-05-03T09:38:23.476Z"
+        },
+        "hidden": {
+          "count": 2,
+          "file": "hidden/cw_002.json",
+          "lastUpdated": "2026-05-03T09:38:23.508Z"
+        }
+      },
+      "totalTestCases": 5
+    },
+    "cw_004": {
+      "title": "Valid Parentheses",
+      "categories": {
+        "sample": {
+          "count": 3,
+          "file": "sample/cw_004.json",
+          "lastUpdated": "2026-05-03T09:38:23.478Z"
+        },
+        "hidden": {
+          "count": 3,
+          "file": "hidden/cw_004.json",
+          "lastUpdated": "2026-05-03T09:38:23.514Z"
+        }
+      },
+      "totalTestCases": 6
+    },
+    "cw_003": {
+      "title": "Factorial Calculator",
+      "categories": {
+        "sample": {
+          "count": 3,
+          "file": "sample/cw_003.json",
+          "lastUpdated": "2026-05-03T09:38:23.478Z"
+        },
+        "hidden": {
+          "count": 2,
+          "file": "hidden/cw_003.json",
+          "lastUpdated": "2026-05-03T09:38:23.508Z"
+        }
+      },
+      "totalTestCases": 5
+    },
+    "cw_001": {
+      "title": "Two Sum",
+      "categories": {
+        "sample": {
+          "count": 3,
+          "file": "sample/cw_001.json",
+          "lastUpdated": "2026-05-03T09:50:29.176Z"
+        },
+        "hidden": {
+          "count": 2,
+          "file": "hidden/cw_001.json",
+          "lastUpdated": "2026-05-03T09:50:29.212Z"
+        }
+      },
+      "totalTestCases": 5
+    },
+    "cw_008": {
+      "title": "FizzBuzz",
+      "categories": {
+        "sample": {
+          "count": 3,
+          "file": "sample/cw_008.json",
+          "lastUpdated": "2026-05-03T09:50:29.177Z"
+        },
+        "hidden": {
+          "count": 2,
+          "file": "hidden/cw_008.json",
+          "lastUpdated": "2026-05-03T09:50:29.204Z"
+        }
+      },
+      "totalTestCases": 5
+    },
+    "cw_005": {
+      "title": "Binary Search",
+      "categories": {
+        "sample": {
+          "count": 3,
+          "file": "sample/cw_005.json",
+          "lastUpdated": "2026-05-03T09:50:29.180Z"
+        },
+        "hidden": {
+          "count": 2,
+          "file": "hidden/cw_005.json",
+          "lastUpdated": "2026-05-03T09:50:29.225Z"
+        }
+      },
+      "totalTestCases": 5
+    },
+    "cw_009": {
+      "title": "Find Maximum",
+      "categories": {
+        "sample": {
+          "count": 3,
+          "file": "sample/cw_009.json",
+          "lastUpdated": "2026-05-03T09:51:19.907Z"
+        },
+        "hidden": {
+          "count": 2,
+          "file": "hidden/cw_009.json",
+          "lastUpdated": "2026-05-03T09:51:19.998Z"
+        }
+      },
+      "totalTestCases": 5
+    },
+    "cw_011": {
+      "title": "Remove Duplicates",
+      "categories": {
+        "sample": {
+          "count": 3,
+          "file": "sample/cw_011.json",
+          "lastUpdated": "2026-05-03T09:51:19.928Z"
+        },
+        "hidden": {
+          "count": 2,
+          "file": "hidden/cw_011.json",
+          "lastUpdated": "2026-05-03T09:51:19.999Z"
+        }
+      },
+      "totalTestCases": 5
+    }
+  },
+  "totalTestCases": 41,
+  "lastUpdated": "2026-05-03T09:51:19.999Z"
+}

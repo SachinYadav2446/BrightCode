@@ -1,0 +1,32 @@
+[
+  {
+    "id": "cw_009_hidden_0",
+    "input": [
+      [
+        100,
+        200,
+        50,
+        75
+      ]
+    ],
+    "expected": "200",
+    "difficulty": "easy",
+    "size": 44,
+    "createdAt": "2026-05-03T09:51:19.964Z"
+  },
+  {
+    "id": "cw_009_hidden_1",
+    "input": [
+      [
+        7,
+        7,
+        7,
+        7
+      ]
+    ],
+    "expected": "7",
+    "difficulty": "easy",
+    "size": 36,
+    "createdAt": "2026-05-03T09:51:19.964Z"
+  }
+]

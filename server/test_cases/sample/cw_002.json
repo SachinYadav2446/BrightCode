@@ -1,0 +1,32 @@
+[
+  {
+    "id": "cw_002_sample_0",
+    "input": [
+      "A man a plan a canal Panama"
+    ],
+    "expected": "true",
+    "difficulty": "easy",
+    "size": 59,
+    "createdAt": "2026-05-03T09:38:23.461Z"
+  },
+  {
+    "id": "cw_002_sample_1",
+    "input": [
+      "race a car"
+    ],
+    "expected": "false",
+    "difficulty": "easy",
+    "size": 43,
+    "createdAt": "2026-05-03T09:38:23.461Z"
+  },
+  {
+    "id": "cw_002_sample_2",
+    "input": [
+      ""
+    ],
+    "expected": "true",
+    "difficulty": "easy",
+    "size": 32,
+    "createdAt": "2026-05-03T09:38:23.461Z"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "cw_004_hidden_0",
+    "input": [
+      "([)]"
+    ],
+    "expected": "false",
+    "difficulty": "easy",
+    "size": 37,
+    "createdAt": "2026-05-03T09:38:23.501Z"
+  },
+  {
+    "id": "cw_004_hidden_1",
+    "input": [
+      "{[]}"
+    ],
+    "expected": "true",
+    "difficulty": "easy",
+    "size": 36,
+    "createdAt": "2026-05-03T09:38:23.501Z"
+  },
+  {
+    "id": "cw_004_hidden_2",
+    "input": [
+      ""
+    ],
+    "expected": "true",
+    "difficulty": "easy",
+    "size": 32,
+    "createdAt": "2026-05-03T09:38:23.501Z"
+  }
+]

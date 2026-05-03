@@ -1,0 +1,22 @@
+[
+  {
+    "id": "cw_003_hidden_0",
+    "input": [
+      7
+    ],
+    "expected": "5040",
+    "difficulty": "easy",
+    "size": 31,
+    "createdAt": "2026-05-03T09:38:23.496Z"
+  },
+  {
+    "id": "cw_003_hidden_1",
+    "input": [
+      10
+    ],
+    "expected": "3628800",
+    "difficulty": "easy",
+    "size": 35,
+    "createdAt": "2026-05-03T09:38:23.496Z"
+  }
+]

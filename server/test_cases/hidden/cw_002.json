@@ -1,0 +1,22 @@
+[
+  {
+    "id": "cw_002_hidden_0",
+    "input": [
+      "Madam"
+    ],
+    "expected": "true",
+    "difficulty": "easy",
+    "size": 37,
+    "createdAt": "2026-05-03T09:38:23.492Z"
+  },
+  {
+    "id": "cw_002_hidden_1",
+    "input": [
+      "No 'x' in Nixon"
+    ],
+    "expected": "true",
+    "difficulty": "easy",
+    "size": 47,
+    "createdAt": "2026-05-03T09:38:23.492Z"
+  }
+]

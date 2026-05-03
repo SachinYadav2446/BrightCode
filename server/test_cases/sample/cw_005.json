@@ -1,0 +1,51 @@
+[
+  {
+    "id": "cw_005_sample_0",
+    "input": [
+      [
+        -1,
+        0,
+        3,
+        5,
+        9,
+        12
+      ],
+      9
+    ],
+    "expected": "4",
+    "difficulty": "easy",
+    "size": 44,
+    "createdAt": "2026-05-03T09:50:29.171Z"
+  },
+  {
+    "id": "cw_005_sample_1",
+    "input": [
+      [
+        -1,
+        0,
+        3,
+        5,
+        9,
+        12
+      ],
+      2
+    ],
+    "expected": "-1",
+    "difficulty": "easy",
+    "size": 45,
+    "createdAt": "2026-05-03T09:50:29.171Z"
+  },
+  {
+    "id": "cw_005_sample_2",
+    "input": [
+      [
+        5
+      ],
+      5
+    ],
+    "expected": "0",
+    "difficulty": "easy",
+    "size": 32,
+    "createdAt": "2026-05-03T09:50:29.171Z"
+  }
+]
