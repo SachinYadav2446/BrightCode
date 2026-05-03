@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     ArrowLeft, Swords, Trophy, Clock, Users, Zap, Play, 
@@ -56,6 +56,10 @@ const CodeWarsArena = () => {
     const [gameResults, setGameResults] = useState(null); // Store final game results
     const [leftPanelWidth, setLeftPanelWidth] = useState(40); // Percentage width for problem panel
     const [isResizing, setIsResizing] = useState(false);
+    
+    // Use ref to track if we're processing a game-ended event (forfeit or normal end)
+    // This prevents cw-left-room from interfering with results display
+    const processingGameEndRef = useRef(false);
     
     // Modal states
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -188,6 +192,23 @@ const CodeWarsArena = () => {
 
         s.on('cw-room-update', (data) => {
             console.log('🔄 Room updated:', data);
+            console.log('📊 Updated room data:', {
+                scores: data.room?.scores,
+                submissions: data.room?.submissions,
+                teams: data.room?.teams
+            });
+            
+            // Log player scores from teams
+            if (data.room?.teams) {
+                data.room.teams.forEach(team => {
+                    console.log(`Team ${team.id}:`, team.players.map(p => ({
+                        username: p.username,
+                        score: p.score,
+                        questionsCompleted: p.questionsCompleted
+                    })));
+                });
+            }
+            
             setCurrentRoom(data.room);
         });
 
@@ -202,21 +223,20 @@ const CodeWarsArena = () => {
 
         s.on('cw-left-room', (data) => {
             console.log('🚪 Left room event received:', data);
+            console.log('🚪 Processing game end?', processingGameEndRef.current);
             
-            // If we're already on results page, don't navigate away
-            // This happens when game ended due to forfeit
-            setGameState(prevState => {
-                if (prevState === 'results') {
-                    console.log('📊 Already on results page, staying here');
-                    return prevState;
-                }
-                
-                // Otherwise, go back to menu
-                console.log('📊 Going to menu');
-                setCurrentRoom(null);
-                setPlayerFinished(false);
-                return 'menu';
-            });
+            // If we're processing a game-ended event, ignore this
+            if (processingGameEndRef.current) {
+                console.log('🚪 Ignoring cw-left-room because we are processing game-ended');
+                return;
+            }
+            
+            // Otherwise, go back to menu
+            console.log('📊 Going to menu from left-room event');
+            toast.success('Left room');
+            setCurrentRoom(null);
+            setPlayerFinished(false);
+            setGameState('menu');
             
             loadFactionRoomsViaSocket(s);
         });
@@ -271,11 +291,26 @@ const CodeWarsArena = () => {
             console.log('🏁 Reason:', data.reason);
             console.log('🏁 Results:', data.results);
             
+            // Set flag to prevent cw-left-room from interfering
+            processingGameEndRef.current = true;
+            
             // Immediately set results and navigate to results page
             // This prevents any other navigation from happening
             setCurrentRoom(data.room);
             setGameResults(data.results);
             setGameState('results');
+            
+            console.log('🏁 Game state set to results, showing results page');
+            
+            if (data.reason === 'forfeit') {
+                toast.info(`Match ended - ${data.results.forfeitedTeam} forfeited`);
+            }
+            
+            // Reset the flag after a short delay to allow normal navigation later
+            setTimeout(() => {
+                processingGameEndRef.current = false;
+                console.log('🏁 Reset processing game end flag');
+            }, 1000);
             
             // Clear the current room from socket since game is over
             if (data.room?.id) {
@@ -660,6 +695,8 @@ const CodeWarsArena = () => {
 
         try {
             console.log('🚪 Leaving room via socket...');
+            console.log('🚪 Current room:', currentRoom.id);
+            console.log('🚪 Current game state:', gameState);
             
             socket.emit('cw-leave-room', {
                 roomId: currentRoom.id,
@@ -667,9 +704,9 @@ const CodeWarsArena = () => {
                 username: user.username
             });
             
-            // Response will come via 'cw-left-room' event
-            toast.success('Left room');
-            await loadFactionRooms();
+            // Don't do anything here - let the socket events handle the response
+            // Either 'cw-game-ended' (forfeit) or 'cw-left-room' (normal leave) will fire
+            console.log('🚪 Leave room event emitted, waiting for server response...');
             
         } catch (error) {
             console.error('Leave room error:', error);
@@ -752,17 +789,17 @@ const CodeWarsArena = () => {
             {(gameState === 'menu' || gameState === 'create' || gameState === 'join' || gameState === 'room') && (
                 <header className="arena-header">
                     <div className="arena-header-left">
-                        <button className="back-btn" onClick={() => {
-                            if (gameState === 'create' || gameState === 'join') {
-                                setGameState('menu');
-                            } else if (gameState === 'room') {
-                                leaveRoom();
-                            } else {
-                                navigate(-1);
-                            }
-                        }}>
-                            <ArrowLeft size={20} />
-                        </button>
+                        {gameState !== 'room' && (
+                            <button className="back-btn" onClick={() => {
+                                if (gameState === 'create' || gameState === 'join') {
+                                    setGameState('menu');
+                                } else {
+                                    navigate(-1);
+                                }
+                            }}>
+                                <ArrowLeft size={20} />
+                            </button>
+                        )}
                     </div>
                     <div className="arena-title">
                         <h1>Syntax Showdown</h1>
@@ -808,7 +845,6 @@ const CodeWarsArena = () => {
                             socket={socket}
                             playerFinished={playerFinished}
                             onEndContest={endContest}
-                            onLeaveRoom={leaveRoom}
                         />
                     )}
                     
@@ -1084,9 +1120,7 @@ const CreateRoomScreen = ({ form, setForm, onSubmit, onBack, loading }) => (
                     >
                         <option value={1}>1v1</option>
                         <option value={2}>2v2</option>
-                        <option value={3}>3v3</option>
                         <option value={4}>4v4</option>
-                        <option value={5}>5v5</option>
                     </select>
                 </div>
                 
@@ -1097,8 +1131,6 @@ const CreateRoomScreen = ({ form, setForm, onSubmit, onBack, loading }) => (
                         onChange={(e) => setForm({...form, maxTeams: parseInt(e.target.value)})}
                     >
                         <option value={2}>2 Teams</option>
-                        <option value={3}>3 Teams</option>
-                        <option value={4}>4 Teams</option>
                     </select>
                 </div>
                 
@@ -1355,27 +1387,27 @@ const RoomLobby = ({ room, user, onLeave, onStart, onSwitchTeam, onCopyId }) => 
                         />
                     ))}
                 </div>
+            </div>
 
-                {/* Bottom Section: Actions */}
-                <div className="lobby-bottom">
-                    {!canStart && isCreator && (
-                        <div className="warning-text">
-                            <AlertCircle size={18} />
-                            Need at least {minPlayers} players to start
-                        </div>
-                    )}
-                    <div className="lobby-actions">
-                        {isCreator && (
-                            <button className="btn-start" onClick={onStart} disabled={!canStart}>
-                                <Play size={16} />
-                                Start Game
-                            </button>
-                        )}
-                        <button className="btn-leave" onClick={onLeave}>
-                            <LogOut size={16} />
-                            Leave
-                        </button>
+            {/* Actions Outside Card */}
+            <div className="lobby-actions-container">
+                {!canStart && isCreator && (
+                    <div className="warning-text">
+                        <AlertCircle size={18} />
+                        Need at least {minPlayers} players to start
                     </div>
+                )}
+                <div className="lobby-actions">
+                    {isCreator && (
+                        <button className="btn-start" onClick={onStart} disabled={!canStart}>
+                            <Play size={16} />
+                            Start Game
+                        </button>
+                    )}
+                    <button className="btn-leave" onClick={onLeave}>
+                        <LogOut size={16} />
+                        Leave
+                    </button>
                 </div>
             </div>
         </motion.div>
@@ -1716,7 +1748,7 @@ const ResultsScreen = ({ room, results, user, onBackToMenu }) => {
 };
 
 // Game Interface Component
-const GameInterface = ({ room, user, socket, playerFinished, onEndContest, onLeaveRoom }) => {
+const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [code, setCode] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -1731,7 +1763,6 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest, onLea
     const [isResizing, setIsResizing] = useState(false);
     const [activeTab, setActiveTab] = useState('statement'); // 'statement' or 'chat'
     const [chatMessages, setChatMessages] = useState([]);
-    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
     useEffect(() => {
         // Calculate time left
@@ -1746,6 +1777,40 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest, onLea
         const timer = setInterval(updateTimer, 1000);
         return () => clearInterval(timer);
     }, [room.endTime]);
+    
+    // Load saved code when question changes
+    useEffect(() => {
+        const currentQuestion = room.questions[currentQuestionIndex];
+        if (!currentQuestion) return;
+        
+        const savedCodeKey = `codewars_${room.id}_${user.id}_${currentQuestion.id}`;
+        const savedCode = localStorage.getItem(savedCodeKey);
+        
+        if (savedCode) {
+            console.log('Loading saved code for question:', currentQuestion.id);
+            setCode(savedCode);
+        } else {
+            console.log('No saved code, using starter code');
+            setCode(currentQuestion.starterCode || '');
+        }
+        
+        // Clear test results when changing questions
+        setTestResults(null);
+    }, [currentQuestionIndex, room.id, room.questions, user.id]);
+    
+    // Save code to localStorage whenever it changes (debounced)
+    useEffect(() => {
+        const currentQuestion = room.questions[currentQuestionIndex];
+        if (!currentQuestion || !code) return;
+        
+        const saveTimer = setTimeout(() => {
+            const savedCodeKey = `codewars_${room.id}_${user.id}_${currentQuestion.id}`;
+            localStorage.setItem(savedCodeKey, code);
+            console.log('Code saved for question:', currentQuestion.id);
+        }, 1000); // Save after 1 second of no changes
+        
+        return () => clearTimeout(saveTimer);
+    }, [code, currentQuestionIndex, room.id, room.questions, user.id]);
 
     const currentQuestion = room.questions[currentQuestionIndex];
     
@@ -1791,13 +1856,44 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest, onLea
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
 
-            if (response.data.success) {
-                toast.success(`✅ Correct! +${response.data.points} points`);
-                setTestResults(null); // Clear test results on success
-                // Move to next question if available
-                if (currentQuestionIndex < room.questions.length - 1) {
-                    setCurrentQuestionIndex(currentQuestionIndex + 1);
-                    setCode('');
+            console.log('📤 Submit response:', response.data);
+
+            if (response.data.success || response.data.partialCredit) {
+                const { points, maxPoints, scorePercentage, testsPassed, testsTotal, passedByCategory, totalByCategory } = response.data;
+                
+                console.log('✅ Submission successful:', {
+                    points,
+                    maxPoints,
+                    scorePercentage,
+                    testsPassed,
+                    testsTotal
+                });
+                
+                if (response.data.success) {
+                    toast.success(`✅ Perfect! All tests passed! +${points} points`);
+                } else {
+                    toast.success(`✓ Partial Credit: ${testsPassed}/${testsTotal} tests passed (${scorePercentage}%) +${points}/${maxPoints} points`);
+                }
+                
+                // Store detailed results for display
+                setTestResults({
+                    success: response.data.success,
+                    partialCredit: response.data.partialCredit,
+                    scorePercentage,
+                    testsPassed,
+                    testsTotal,
+                    passedByCategory,
+                    totalByCategory,
+                    points,
+                    maxPoints
+                });
+                
+                // Move to next question if fully completed
+                if (response.data.success && currentQuestionIndex < room.questions.length - 1) {
+                    setTimeout(() => {
+                        setCurrentQuestionIndex(currentQuestionIndex + 1);
+                        setTestResults(null);
+                    }, 2000);
                 }
             } else {
                 // Show detailed error message
@@ -1826,9 +1922,13 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest, onLea
                 }
             }
         } catch (error) {
-            console.error('Submission error:', error);
-            const errorMsg = error.response?.data?.error || 'Submission failed';
-            toast.error(errorMsg);
+            console.error('❌ Submission error:', error);
+            console.error('❌ Error response:', error.response?.data);
+            console.error('❌ Error status:', error.response?.status);
+            console.error('❌ Error message:', error.message);
+            
+            const errorMsg = error.response?.data?.error || error.message || 'Submission failed';
+            toast.error(`Submission failed: ${errorMsg}`);
         } finally {
             setSubmitting(false);
         }
@@ -1930,6 +2030,13 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest, onLea
         };
     }, [socket, myTeam]);
 
+    // Helper function to check if a specific question is completed
+    const isQuestionCompleted = (questionId) => {
+        if (!room.submissions || !user?.id) return false;
+        const mySubmissions = room.submissions[user.id] || [];
+        return mySubmissions.some(sub => sub.questionId === questionId && sub.result?.scoreData?.allPassed);
+    };
+
     const handleSendMessage = (message) => {
         if (!socket || !myTeam || !message.trim()) return;
 
@@ -1973,27 +2080,30 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest, onLea
             {/* Top Navigation Bar */}
             <div className="game-navbar">
                 <div className="navbar-left">
-                    <button className="leave-contest-btn" onClick={() => setShowLeaveConfirm(true)}>
-                        <LogOut size={16} />
-                        Leave
-                    </button>
+                    <div className="room-info-compact">
+                        <Swords size={18} />
+                        <span>{room.name}</span>
+                    </div>
                 </div>
                 
                 <div className="navbar-center">
                     <div className="question-tabs">
-                        {room.questions.map((q, index) => (
-                            <button
-                                key={q.id}
-                                className={`question-tab ${index === currentQuestionIndex ? 'active' : ''} ${
-                                    myPlayer.questionsCompleted > index ? 'completed' : ''
-                                }`}
-                                onClick={() => !isFinished && setCurrentQuestionIndex(index)}
-                                disabled={isFinished}
-                            >
-                                {index + 1}
-                                {myPlayer.questionsCompleted > index && <CheckCircle size={12} className="check-icon" />}
-                            </button>
-                        ))}
+                        {room.questions.map((q, index) => {
+                            const completed = isQuestionCompleted(q.id);
+                            return (
+                                <button
+                                    key={q.id}
+                                    className={`question-tab ${index === currentQuestionIndex ? 'active' : ''} ${
+                                        completed ? 'completed' : ''
+                                    }`}
+                                    onClick={() => !isFinished && setCurrentQuestionIndex(index)}
+                                    disabled={isFinished}
+                                >
+                                    {index + 1}
+                                    {completed && <CheckCircle size={12} className="check-icon" />}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
                 
@@ -2060,7 +2170,7 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest, onLea
             </div>
             
             <div className="split-view">
-                {/* Left Panel - Problem Description or Chat */}
+                {/* Left Panel - Problem Description, Submissions, or Chat */}
                 <div className="problem-panel" style={{ width: `${leftPanelWidth}%` }}>
                     {activeTab === 'statement' ? (
                         <>
@@ -2170,16 +2280,20 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest, onLea
                                 disabled={isFinished}
                             />
                             
-                            {/* Test Results Display */}
-                            {/* LeetCode-Style Test Results Panel */}
-                            {testResults && testResults.results && (
+                            {/* Enhanced Test Results Display with Categories */}
+                            {testResults && (
                                 <div className={`leetcode-test-results ${testResultsCollapsed ? 'collapsed' : ''}`}>
                                     <div className="test-results-header">
                                         <div className="test-results-title">
-                                            {testResults.testsPassed === testResults.totalTests ? (
+                                            {testResults.success ? (
                                                 <>
                                                     <CheckCircle size={20} className="success-icon" />
                                                     <span className="success-text">Accepted</span>
+                                                </>
+                                            ) : testResults.partialCredit ? (
+                                                <>
+                                                    <AlertCircle size={20} className="warning-icon" />
+                                                    <span className="warning-text">Partial Credit</span>
                                                 </>
                                             ) : (
                                                 <>
@@ -2189,7 +2303,9 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest, onLea
                                             )}
                                         </div>
                                         <div className="test-results-summary">
-                                            {testResults.testsPassed}/{testResults.totalTests} test cases passed
+                                            <span className="score-badge">{testResults.scorePercentage}%</span>
+                                            <span className="tests-passed">{testResults.testsPassed}/{testResults.testsTotal} tests passed</span>
+                                            <span className="points-earned">+{testResults.points}/{testResults.maxPoints} pts</span>
                                         </div>
                                         <button 
                                             className="collapse-btn"
@@ -2210,62 +2326,54 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest, onLea
                                     </div>
                                     
                                     <div className="test-results-body">
-                                        <div className="test-cases-tabs">
-                                        {testResults.results.map((result, index) => (
-                                            <div 
-                                                key={index} 
-                                                className={`test-case-tab ${result.passed ? 'passed' : 'failed'}`}
-                                            >
-                                                <div className="test-case-header">
-                                                    <div className="test-case-title">
-                                                        {result.passed ? (
-                                                            <CheckCircle size={14} className="tab-icon success" />
-                                                        ) : (
-                                                            <XCircle size={14} className="tab-icon error" />
-                                                        )}
-                                                        <span>Case {index + 1}</span>
-                                                    </div>
-                                                    {!result.passed && (
-                                                        <span className="failed-badge">Failed</span>
-                                                    )}
-                                                </div>
-                                                
-                                                <div className="test-case-content">
-                                                    <div className="test-case-section">
-                                                        <div className="section-label">Input</div>
-                                                        <div className="section-value">
-                                                            <code>{JSON.stringify(result.input)}</code>
-                                                        </div>
-                                                    </div>
+                                        {/* Category Breakdown */}
+                                        <div className="category-breakdown">
+                                            <h4>Test Categories</h4>
+                                            <div className="category-grid">
+                                                {testResults.passedByCategory && Object.entries(testResults.passedByCategory).map(([category, passed]) => {
+                                                    const total = testResults.totalByCategory[category];
+                                                    const percentage = Math.round((passed / total) * 100);
+                                                    const categoryNames = {
+                                                        'sample': 'Sample Cases',
+                                                        'hidden': 'Hidden Cases',
+                                                        'edge': 'Edge Cases',
+                                                        'stress': 'Stress Tests',
+                                                        'random': 'Random Tests'
+                                                    };
                                                     
-                                                    <div className="test-case-section">
-                                                        <div className="section-label">Expected Output</div>
-                                                        <div className="section-value expected">
-                                                            <code>{result.expected}</code>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    {!result.passed && (
-                                                        <div className="test-case-section">
-                                                            <div className="section-label">Your Output</div>
-                                                            <div className="section-value actual-error">
-                                                                <code>{result.actual || result.error || 'Runtime Error'}</code>
+                                                    return (
+                                                        <div key={category} className="category-card">
+                                                            <div className="category-header">
+                                                                <span className="category-name">{categoryNames[category] || category}</span>
+                                                                <span className={`category-status ${passed === total ? 'success' : 'partial'}`}>
+                                                                    {passed}/{total}
+                                                                </span>
+                                                            </div>
+                                                            <div className="category-progress">
+                                                                <div 
+                                                                    className="category-progress-bar" 
+                                                                    style={{ width: `${percentage}%` }}
+                                                                />
                                                             </div>
                                                         </div>
-                                                    )}
-                                                    
-                                                    {result.passed && (
-                                                        <div className="test-case-section">
-                                                            <div className="section-label">Your Output</div>
-                                                            <div className="section-value actual-success">
-                                                                <code>{result.actual || result.expected}</code>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                    );
+                                                })}
                                             </div>
-                                        ))}
-                                    </div>
+                                        </div>
+                                        
+                                        {/* Overall Progress Bar */}
+                                        <div className="overall-progress">
+                                            <div className="progress-label">
+                                                <span>Overall Progress</span>
+                                                <span className="progress-percentage">{testResults.scorePercentage}%</span>
+                                            </div>
+                                            <div className="progress-bar-container">
+                                                <div 
+                                                    className={`progress-bar-fill ${testResults.success ? 'success' : testResults.partialCredit ? 'partial' : 'failed'}`}
+                                                    style={{ width: `${testResults.scorePercentage}%` }}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -2337,7 +2445,6 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest, onLea
                                     onClick={() => {
                                         if (currentQuestionIndex > 0) {
                                             setCurrentQuestionIndex(currentQuestionIndex - 1);
-                                            setCode('');
                                             setTestResults(null);
                                         }
                                     }}
@@ -2351,7 +2458,6 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest, onLea
                                     onClick={() => {
                                         if (currentQuestionIndex < room.questions.length - 1) {
                                             setCurrentQuestionIndex(currentQuestionIndex + 1);
-                                            setCode('');
                                             setTestResults(null);
                                         }
                                     }}
@@ -2364,46 +2470,6 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest, onLea
                     )}
                 </div>
             </div>
-
-            {/* Leave Confirmation Modal */}
-            {showLeaveConfirm && (
-                <div className="modal-overlay" onClick={() => setShowLeaveConfirm(false)}>
-                    <motion.div 
-                        className="confirm-modal"
-                        onClick={(e) => e.stopPropagation()}
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.9, opacity: 0 }}
-                    >
-                        <div className="confirm-modal-header">
-                            <AlertCircle size={48} color="#ef4444" />
-                            <h2>Leave Contest?</h2>
-                        </div>
-                        <div className="confirm-modal-body">
-                            <p>Are you sure you want to leave this contest?</p>
-                            <p className="confirm-modal-note">Your progress will be saved and you can rejoin later.</p>
-                        </div>
-                        <div className="confirm-modal-actions">
-                            <button 
-                                className="confirm-cancel-btn"
-                                onClick={() => setShowLeaveConfirm(false)}
-                            >
-                                Cancel
-                            </button>
-                            <button 
-                                className="confirm-leave-btn"
-                                onClick={() => {
-                                    setShowLeaveConfirm(false);
-                                    onLeaveRoom();
-                                }}
-                            >
-                                <LogOut size={16} />
-                                Leave Contest
-                            </button>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
         </div>
     );
 };
