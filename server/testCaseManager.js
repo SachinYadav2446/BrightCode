@@ -204,11 +204,130 @@ class TestCaseManager {
     }
 
     /**
-     * Get all test cases as a flat array (for submission testing)
+     * Generate comprehensive test case distribution for a problem
+     * Returns a balanced set of test cases across all categories
      */
-    async getAllTestCasesForSubmission(problemId) {
-        const testCases = await this.getTestCases(problemId);
-        return testCases || [];
+    async generateTestCaseDistribution(problem, aiGenerator) {
+        const problemId = problem.id || this.generateProblemId(problem);
+        
+        // Define distribution
+        const distribution = {
+            [this.CATEGORIES.SAMPLE]: { count: 3, weight: 20 },    // 20% of score
+            [this.CATEGORIES.HIDDEN]: { count: 4, weight: 40 },    // 40% of score
+            [this.CATEGORIES.EDGE]: { count: 3, weight: 20 },      // 20% of score
+            [this.CATEGORIES.STRESS]: { count: 3, weight: 15 },    // 15% of score
+            [this.CATEGORIES.RANDOM]: { count: 2, weight: 5 }      // 5% of score
+        };
+        
+        const totalCases = Object.values(distribution).reduce((sum, d) => sum + d.count, 0);
+        console.log(`[TC-Manager] 🎯 Generating ${totalCases} test cases for ${problem.title}`);
+        
+        // Generate test cases for each category
+        for (const [category, config] of Object.entries(distribution)) {
+            try {
+                const testCases = await aiGenerator.generateTestCases(problem, {
+                    count: config.count,
+                    category: category,
+                    difficulty: problem.difficulty
+                });
+                
+                if (testCases && testCases.length > 0) {
+                    await this.storeTestCases(problem, testCases, category);
+                }
+            } catch (error) {
+                console.error(`[TC-Manager] ❌ Failed to generate ${category} test cases:`, error.message);
+            }
+        }
+        
+        return {
+            problemId,
+            distribution,
+            totalCases
+        };
+    }
+    
+    /**
+     * Get test cases with scoring weights
+     */
+    async getTestCasesWithWeights(problemId) {
+        const allTestCases = await this.getTestCases(problemId);
+        
+        if (!allTestCases || allTestCases.length === 0) {
+            return null;
+        }
+        
+        // Add weight to each test case based on category
+        const weights = {
+            [this.CATEGORIES.SAMPLE]: 20,
+            [this.CATEGORIES.HIDDEN]: 40,
+            [this.CATEGORIES.EDGE]: 20,
+            [this.CATEGORIES.STRESS]: 15,
+            [this.CATEGORIES.RANDOM]: 5
+        };
+        
+        const testCasesWithWeights = allTestCases.map(tc => ({
+            ...tc,
+            weight: weights[tc.category] || 0,
+            categoryName: this.getCategoryDisplayName(tc.category)
+        }));
+        
+        return testCasesWithWeights;
+    }
+    
+    /**
+     * Calculate score based on passed test cases
+     */
+    calculateScore(testResults) {
+        let totalWeight = 0;
+        let earnedWeight = 0;
+        let passedByCategory = {};
+        let totalByCategory = {};
+        
+        for (const result of testResults) {
+            const category = result.category;
+            const weight = result.weight || 0;
+            
+            totalWeight += weight;
+            
+            if (!totalByCategory[category]) {
+                totalByCategory[category] = 0;
+                passedByCategory[category] = 0;
+            }
+            
+            totalByCategory[category]++;
+            
+            if (result.passed) {
+                earnedWeight += weight;
+                passedByCategory[category]++;
+            }
+        }
+        
+        const totalCases = testResults.length;
+        const passedCases = testResults.filter(r => r.passed).length;
+        const scorePercentage = totalWeight > 0 ? Math.round((earnedWeight / totalWeight) * 100) : 0;
+        
+        return {
+            score: scorePercentage,
+            passed: passedCases,
+            total: totalCases,
+            passedByCategory,
+            totalByCategory,
+            allPassed: passedCases === totalCases
+        };
+    }
+    
+    /**
+     * Get display name for category
+     */
+    getCategoryDisplayName(category) {
+        const names = {
+            [this.CATEGORIES.SAMPLE]: 'Sample Cases',
+            [this.CATEGORIES.HIDDEN]: 'Hidden Cases',
+            [this.CATEGORIES.EDGE]: 'Edge Cases',
+            [this.CATEGORIES.STRESS]: 'Stress Tests',
+            [this.CATEGORIES.RANDOM]: 'Random Tests'
+        };
+        return names[category] || category;
     }
 
     /**
