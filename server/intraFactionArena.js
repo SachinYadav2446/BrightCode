@@ -6,9 +6,11 @@ const { getAITestCaseGenerator } = require('./aiTestCaseGenerator');
 const { getTestCaseManager } = require('./testCaseManager');
 
 class IntraFactionArena {
-    constructor(io, factions) {
+    constructor(io, factions, memoryStore, useMemoryDB) {
         this.io = io;
         this.factions = factions;
+        this.memoryStore = memoryStore;
+        this.useMemoryDB = useMemoryDB;
         this.activeRooms = new Map(); // roomId -> roomData
         this.playerRooms = new Map(); // userId -> roomId
         this.questionHistory = new Map(); // factionId -> Set of recent question IDs
@@ -39,6 +41,18 @@ class IntraFactionArena {
     createRoom(creatorId, creatorUsername, factionId, roomConfig) {
         const roomId = this.generateRoomId();
         
+        // Validate team configuration
+        const validTeamSizes = [1, 2, 4];
+        const validMaxTeams = [2];
+        
+        if (!validTeamSizes.includes(roomConfig.teamSize)) {
+            throw new Error('Invalid team size. Only 1v1, 2v2, and 4v4 are allowed.');
+        }
+        
+        if (!validMaxTeams.includes(roomConfig.maxTeams)) {
+            throw new Error('Invalid number of teams. Only 2 teams are allowed.');
+        }
+        
         const room = {
             id: roomId,
             name: roomConfig.name || `${creatorUsername}'s Battle`,
@@ -49,8 +63,8 @@ class IntraFactionArena {
             
             // Game Configuration
             gameMode: roomConfig.gameMode || 'QUICK_BATTLE',
-            teamSize: roomConfig.teamSize || 1, // 1v1, 2v2, 3v3, etc.
-            maxTeams: roomConfig.maxTeams || 2, // Usually 2 teams
+            teamSize: roomConfig.teamSize || 1, // 1v1, 2v2, 4v4
+            maxTeams: roomConfig.maxTeams || 2, // Always 2 teams
             questionCount: roomConfig.questionCount || 3,
             timeLimit: roomConfig.timeLimit || 600, // 10 minutes default
             difficulty: roomConfig.difficulty || 'mixed', // easy, medium, hard, mixed
@@ -573,20 +587,29 @@ class IntraFactionArena {
     }
 
     async submitSolution(roomId, userId, questionId, code) {
+        console.log(`[ARENA] 📝 Submit solution - Room: ${roomId}, User: ${userId}, Question: ${questionId}`);
+        
         const room = this.activeRooms.get(roomId);
         if (!room || room.status !== 'active') {
+            console.error(`[ARENA] ❌ Game not active - Room status: ${room?.status}`);
             throw new Error('Game not active');
         }
         
         const player = this.findPlayerInRoom(room, userId);
         if (!player || player.role !== 'player') {
+            console.error(`[ARENA] ❌ Player not found - User: ${userId}`);
             throw new Error('Player not found in game');
         }
         
+        console.log(`[ARENA] ✅ Player found - Team: ${player.teamId}, Score: ${player.player.score}`);
+        
         const question = room.questions.find(q => q.id === questionId);
         if (!question) {
+            console.error(`[ARENA] ❌ Question not found - ID: ${questionId}`);
             throw new Error('Question not found');
         }
+        
+        console.log(`[ARENA] ✅ Question found - Title: ${question.title}, Points: ${question.points}`);
         
         // Check if player already completed this question
         const playerSubmissions = room.submissions.get(userId) || [];
@@ -597,24 +620,64 @@ class IntraFactionArena {
         }
         
         try {
-            // Get test cases (PRIMARY: from our library, FALLBACK: AI generator)
-            let testCases = await this.testCaseManager.getAllTestCasesForSubmission(question.id);
+            // Get test cases with weights (PRIMARY: from our library, FALLBACK: AI generator)
+            let testCases = await this.testCaseManager.getTestCasesWithWeights(question.id);
             
             if (!testCases || testCases.length === 0) {
-                testCases = await this.aiTestCaseGenerator.getTestCases(question);
+                // Fallback: generate and store test cases
+                console.log(`[ARENA] ⚠️ No test cases found, generating for question ${question.id}`);
+                await this.testCaseManager.generateTestCaseDistribution(question, this.aiTestCaseGenerator);
+                testCases = await this.testCaseManager.getTestCasesWithWeights(question.id);
             }
             
-            console.log(`[ARENA] Running solution with ${testCases.length} test cases`);
+            console.log(`[ARENA] 🧪 Running solution with ${testCases?.length || 0} test cases`);
+            
+            if (!testCases || testCases.length === 0) {
+                console.error(`[ARENA] ❌ Still no test cases available after generation attempt`);
+                throw new Error('No test cases available for this question');
+            }
+            
+            console.log(`[ARENA] 📋 Test cases across ${new Set(testCases.map(tc => tc.category)).size} categories`);
             
             // Compile and test the solution
-            const result = await compileAndRunJava(code, testCases);
+            console.log(`[ARENA] ⚙️ Compiling and running Java code...`);
+            const executionResult = await compileAndRunJava(code, testCases);
+            console.log(`[ARENA] ✅ Execution complete - Success: ${executionResult.success}`);
+            
+            // Enhanced result processing with category tracking
+            const testResults = testCases.map((tc, index) => ({
+                ...tc,
+                passed: executionResult.results ? executionResult.results[index]?.passed : false,
+                output: executionResult.results ? executionResult.results[index]?.output : null,
+                error: executionResult.results ? executionResult.results[index]?.error : null
+            }));
+            
+            // Calculate comprehensive score
+            const scoreData = this.testCaseManager.calculateScore(testResults);
+            
+            // Determine points based on score percentage
+            const earnedPoints = Math.round((question.points * scoreData.score) / 100);
             
             const submission = {
                 questionId,
                 code,
-                result,
+                result: {
+                    ...executionResult,
+                    scoreData,
+                    testResults: testResults.map(tr => ({
+                        category: tr.category,
+                        categoryName: tr.categoryName,
+                        passed: tr.passed,
+                        // Only show input/output for sample cases
+                        input: tr.category === 'sample' ? tr.input : undefined,
+                        expected: tr.category === 'sample' ? tr.expected : undefined,
+                        output: tr.category === 'sample' ? tr.output : undefined
+                    }))
+                },
                 submittedAt: new Date().toISOString(),
-                timeTaken: this.calculateTimeTaken(room.startTime)
+                timeTaken: this.calculateTimeTaken(room.startTime),
+                scorePercentage: scoreData.score,
+                earnedPoints
             };
             
             // Store submission
@@ -623,52 +686,92 @@ class IntraFactionArena {
             }
             room.submissions.get(userId).push(submission);
             
-            if (result.success) {
+            // Award points based on score (even partial credit)
+            if (earnedPoints > 0) {
+                console.log(`[ARENA] 💰 Awarding ${earnedPoints} points to player ${userId}`);
+                
                 // Update player score
-                player.player.score += question.points;
-                player.player.questionsCompleted++;
+                const oldScore = player.player.score;
+                player.player.score += earnedPoints;
+                console.log(`[ARENA] 📊 Player score: ${oldScore} → ${player.player.score}`);
                 
                 // Update team score
                 const currentTeamScore = room.scores.get(player.teamId) || 0;
-                room.scores.set(player.teamId, currentTeamScore + question.points);
+                room.scores.set(player.teamId, currentTeamScore + earnedPoints);
+                console.log(`[ARENA] 🏆 Team ${player.teamId} score: ${currentTeamScore} → ${currentTeamScore + earnedPoints}`);
                 
-                // Update team questions completed
-                const team = room.teams.find(t => t.id === player.teamId);
-                if (team) {
-                    team.questionsCompleted++;
+                // Only mark as completed if 100% passed
+                if (scoreData.allPassed) {
+                    player.player.questionsCompleted++;
+                    console.log(`[ARENA] ✅ Question completed! Total completed: ${player.player.questionsCompleted}`);
+                    
+                    // Update team questions completed
+                    const team = room.teams.find(t => t.id === player.teamId);
+                    if (team) {
+                        team.questionsCompleted++;
+                        console.log(`[ARENA] 🎯 Team questions completed: ${team.questionsCompleted}`);
+                    }
+                    
+                    // Add XP to user's account (only for fully completed questions)
+                    this.updateUserXP(userId, earnedPoints);
                 }
                 
-                // Notify room of successful submission
-                this.notifyRoomUpdate(room, 'solution-accepted', {
+                console.log(`[ARENA] 📡 Broadcasting room update...`);
+                
+                // Broadcast room update to all players
+                this.notifyRoomUpdate(room, 'cw-room-update', {
                     userId,
                     username: player.player.username,
                     teamId: player.teamId,
                     questionId,
-                    points: question.points,
+                    points: earnedPoints,
+                    scorePercentage: scoreData.score,
+                    passed: scoreData.passed,
+                    total: scoreData.total,
+                    allPassed: scoreData.allPassed,
                     timeTaken: submission.timeTaken
                 });
                 
+                console.log(`[ARENA] ✅ Room update broadcast complete`);
+                
                 // Check if game should end (all questions completed by someone)
-                if (player.player.questionsCompleted === room.questions.length) {
+                if (scoreData.allPassed && player.player.questionsCompleted === room.questions.length) {
                     setTimeout(() => this.endGame(roomId), 1000);
                 }
+            } else {
+                console.log(`[ARENA] ⚠️ No points earned (earnedPoints: ${earnedPoints})`);
             }
             
             this.activeRooms.set(roomId, room);
+            console.log(`[ARENA] 💾 Room state saved`);
             
-            return {
-                success: result.success,
-                result: result,
-                points: result.success ? question.points : 0,
-                totalScore: player.player.score
+            const responseData = {
+                success: scoreData.allPassed,
+                partialCredit: earnedPoints > 0 && !scoreData.allPassed,
+                result: submission.result,
+                points: earnedPoints,
+                maxPoints: question.points,
+                scorePercentage: scoreData.score,
+                totalScore: player.player.score,
+                testsPassed: scoreData.passed,
+                testsTotal: scoreData.total,
+                passedByCategory: scoreData.passedByCategory,
+                totalByCategory: scoreData.totalByCategory
             };
             
+            console.log(`[ARENA] 📤 Sending response:`, responseData);
+            
+            return responseData;
+            
         } catch (error) {
+            console.error('[ARENA] Submit solution error:', error);
             return {
                 success: false,
                 error: error.message,
                 points: 0,
-                totalScore: player.player.score
+                totalScore: player.player.score,
+                testsPassed: 0,
+                testsTotal: 0
             };
         }
     }
@@ -825,6 +928,35 @@ class IntraFactionArena {
         }
         
         return sanitized;
+    }
+    
+    updateUserXP(userId, xpAmount) {
+        try {
+            if (!this.useMemoryDB || !this.memoryStore) {
+                console.warn('[ARENA] Cannot update XP - memory store not available');
+                return;
+            }
+            
+            let userIndex = this.memoryStore.users.findIndex(u => u.id === userId);
+            
+            if (userIndex === -1) {
+                console.warn(`[ARENA] User ${userId} not found in memory store`);
+                return;
+            }
+            
+            const user = this.memoryStore.users[userIndex];
+            user.xp = (user.xp || 0) + xpAmount;
+            
+            console.log(`[ARENA] Added ${xpAmount} XP to user ${userId}. New total: ${user.xp}`);
+            
+            // Track daily activity
+            const today = new Date().toISOString().split('T')[0];
+            if (!user.activity) user.activity = {};
+            user.activity[today] = (user.activity[today] || 0) + xpAmount;
+            
+        } catch (error) {
+            console.error('[ARENA] Error updating user XP:', error);
+        }
     }
 
     broadcastFactionRooms(factionId) {
