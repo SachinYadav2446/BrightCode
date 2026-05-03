@@ -121,7 +121,7 @@
       "username": "Sachin",
       "email": "yadavsachin123411@gmail.com",
       "password": "$2b$10$JcCvBpz7.Fzu37eh5qxib.Ev9mCKeWCjbQRAfXoHMYrshmhUsZSvG",
-      "xp": 1890,
+      "xp": 1910,
       "css_level": 8,
       "logic_level": 6,
       "react_level": 72,
@@ -132,7 +132,8 @@
         "2026-04-28": 40,
         "2026-04-29": 30,
         "2026-04-30": 1140,
-        "2026-05-01": 20
+        "2026-05-01": 20,
+        "2026-05-02": 20
       },
       "joinedAt": "2026-04-25T11:35:08.241Z",
       "created_count": 1,
