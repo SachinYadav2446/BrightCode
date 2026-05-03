@@ -480,6 +480,41 @@ const CollaborativeCodeEditor = ({
   }, [initialCode]);
   
   /**
+   * Load saved code when question changes, or use initialCode if no saved code
+   */
+  useEffect(() => {
+    console.log('[CollaborativeCodeEditor] Question changed to:', questionId);
+    
+    // Try to load saved code from localStorage
+    const savedCodeKey = `codewars_${roomId}_${userId}_${questionId}`;
+    const savedCode = localStorage.getItem(savedCodeKey);
+    
+    if (savedCode) {
+      console.log('[CollaborativeCodeEditor] Loading saved code from localStorage');
+      setCode(savedCode);
+    } else {
+      console.log('[CollaborativeCodeEditor] No saved code, using initialCode');
+      setCode(initialCode);
+    }
+  }, [questionId, roomId, userId, initialCode]);
+  
+  /**
+   * Save code to localStorage whenever it changes (debounced)
+   */
+  useEffect(() => {
+    // Debounce save to avoid too many writes
+    const saveTimer = setTimeout(() => {
+      if (code && code !== initialCode) {
+        const savedCodeKey = `codewars_${roomId}_${userId}_${questionId}`;
+        localStorage.setItem(savedCodeKey, code);
+        console.log('[CollaborativeCodeEditor] Code saved to localStorage');
+      }
+    }, 1000); // Save after 1 second of no changes
+    
+    return () => clearTimeout(saveTimer);
+  }, [code, roomId, userId, questionId, initialCode]);
+  
+  /**
    * Get teammate color from predefined palette
    */
   const getTeammateColor = useCallback((userId) => {
