@@ -73,12 +73,12 @@
   color: #fef3c7;
   font-weight: 700;
   font-size: 1.1rem;
-  text-shadow: 0 0 10px rgba(254, 243, 199, 0.5);
+  text-shadow: 0 0 3px rgba(254, 243, 199, 0.2);
 }
 
 .chatbot-header-icon {
   color: #ef4444;
-  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.6));
+  filter: drop-shadow(0 0 3px rgba(239, 68, 68, 0.3));
 }
 
 .chatbot-header-actions {

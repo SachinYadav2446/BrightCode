@@ -10,7 +10,7 @@ const Chatbot = () => {
   const [messages, setMessages] = useState(() => {
     const savedHistory = sessionStorage.getItem('chatbotHistory');
     return savedHistory ? JSON.parse(savedHistory) : [
-      { id: 1, type: 'bot', text: "Hi! I'm CodeMentor, your AI coding companion. How can I help you today?" }
+      { id: 1, type: 'bot', text: "Hi! I'm Pal, your coding companion. How can I help you today?" }
     ];
   });
   const [inputValue, setInputValue] = useState('');
@@ -109,7 +109,7 @@ const Chatbot = () => {
             <div className="chatbot-header">
               <div className="chatbot-header-title">
                 <Bot size={20} className="chatbot-header-icon" />
-                <span>CodeMentor AI</span>
+                <span>Pal</span>
               </div>
               <div className="chatbot-header-actions">
                 <button onClick={() => setIsExpanded(!isExpanded)} className="chatbot-action-btn">
