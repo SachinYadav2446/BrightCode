@@ -1,6 +1,6 @@
 // Intra-Faction Code Wars Arena - Custom Rooms System
 const { v4: uuidv4 } = require('uuid');
-const { compileAndRunJava } = require('./javaCompiler');
+const { executeCode } = require('./codeExecutor');
 const { getRandomQuestions, getQuestionById, GAME_MODES, DIFFICULTY_LEVELS, getRandomQuestionsWithGitHub } = require('./codeWarQuestions');
 const { getAITestCaseGenerator } = require('./aiTestCaseGenerator');
 const { getTestCaseManager } = require('./testCaseManager');
@@ -103,7 +103,8 @@ class IntraFactionArena {
                 name: `Team ${i + 1}`,
                 players: [],
                 score: 0,
-                questionsCompleted: 0
+                questionsCompleted: 0,
+                failedAttempts: 0 // Track failed submissions for tiebreaker
             });
         }
 
@@ -586,8 +587,8 @@ class IntraFactionArena {
         }
     }
 
-    async submitSolution(roomId, userId, questionId, code) {
-        console.log(`[ARENA] 📝 Submit solution - Room: ${roomId}, User: ${userId}, Question: ${questionId}`);
+    async submitSolution(roomId, userId, questionId, code, language = 'java') {
+        console.log(`[ARENA] 📝 Submit solution - Room: ${roomId}, User: ${userId}, Question: ${questionId}, Language: ${language}`);
         
         const room = this.activeRooms.get(roomId);
         if (!room || room.status !== 'active') {
@@ -640,8 +641,8 @@ class IntraFactionArena {
             console.log(`[ARENA] 📋 Test cases across ${new Set(testCases.map(tc => tc.category)).size} categories`);
             
             // Compile and test the solution
-            console.log(`[ARENA] ⚙️ Compiling and running Java code...`);
-            const executionResult = await compileAndRunJava(code, testCases);
+            console.log(`[ARENA] ⚙️ Compiling and running ${language} code...`);
+            const executionResult = await executeCode(code, language, testCases);
             console.log(`[ARENA] ✅ Execution complete - Success: ${executionResult.success}`);
             
             // Enhanced result processing with category tracking
@@ -685,6 +686,15 @@ class IntraFactionArena {
                 room.submissions.set(userId, []);
             }
             room.submissions.get(userId).push(submission);
+            
+            // Track failed attempts for tiebreaker (if no points earned)
+            if (earnedPoints === 0) {
+                const team = room.teams.find(t => t.id === player.teamId);
+                if (team) {
+                    team.failedAttempts++;
+                    console.log(`[ARENA] ❌ Failed attempt recorded for Team ${player.teamId}. Total failed: ${team.failedAttempts}`);
+                }
+            }
             
             // Award points based on score (even partial credit)
             if (earnedPoints > 0) {
@@ -875,6 +885,7 @@ class IntraFactionArena {
             teamName: team.name,
             totalScore: room.scores.get(team.id) || 0,
             questionsCompleted: team.questionsCompleted,
+            failedAttempts: team.failedAttempts || 0,
             players: team.players.map(p => ({
                 username: p.username,
                 score: p.score,
@@ -882,8 +893,14 @@ class IntraFactionArena {
             }))
         }));
         
-        // Sort by score
-        teamResults.sort((a, b) => b.totalScore - a.totalScore);
+        // Sort by score first, then by failed attempts (fewer is better) as tiebreaker
+        teamResults.sort((a, b) => {
+            if (b.totalScore !== a.totalScore) {
+                return b.totalScore - a.totalScore; // Higher score wins
+            }
+            // Tiebreaker: fewer failed attempts wins
+            return a.failedAttempts - b.failedAttempts;
+        });
         
         return {
             winner: teamResults[0],
