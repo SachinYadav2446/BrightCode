@@ -28,9 +28,11 @@
   right: 2rem;
   width: 350px;
   height: 500px;
+  max-height: calc(100vh - 4rem);
+  max-width: calc(100vw - 4rem);
   background: #0a0a0a;
   border: 2px solid #fef3c7;
-  border-radius: 16px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(254, 243, 199, 0.2);
@@ -42,6 +44,8 @@
 .chatbot-window.expanded {
   width: 450px;
   height: 600px;
+  max-height: calc(100vh - 4rem);
+  max-width: calc(100vw - 4rem);
 }
 
 @media (max-width: 768px) {
