@@ -1580,6 +1580,7 @@ const ResultsScreen = ({ room, results, user, onBackToMenu }) => {
             teamName: team.name,
             totalScore: room.scores?.[team.id] || 0,
             questionsCompleted: team.questionsCompleted || 0,
+            failedAttempts: team.failedAttempts || 0,
             players: team.players.map(p => ({
                 id: p.id,
                 username: p.username,
@@ -1588,8 +1589,14 @@ const ResultsScreen = ({ room, results, user, onBackToMenu }) => {
             }))
         }));
         
-        // Sort by score
-        teamResults.sort((a, b) => b.totalScore - a.totalScore);
+        // Sort by score first, then by failed attempts (fewer is better) as tiebreaker
+        teamResults.sort((a, b) => {
+            if (b.totalScore !== a.totalScore) {
+                return b.totalScore - a.totalScore; // Higher score wins
+            }
+            // Tiebreaker: fewer failed attempts wins
+            return a.failedAttempts - b.failedAttempts;
+        });
         
         return {
             winner: teamResults[0],
@@ -1645,29 +1652,20 @@ const ResultsScreen = ({ room, results, user, onBackToMenu }) => {
                 {/* Personal Stats */}
                 <div className="personal-stats">
                     <h2>Your Performance</h2>
-                    <div className="stats-grid">
-                        <div className="stat-box">
-                            <div className="stat-icon">
-                                <Star size={24} />
-                            </div>
-                            <div className="stat-value">{myPlayer?.score || 0}</div>
-                            <div className="stat-label">Points Earned</div>
+                    <div className="stats-list">
+                        <div className="stat-row">
+                            <span className="stat-label-text">Points Earned</span>
+                            <span className="stat-value-text">{myPlayer?.score || 0}</span>
                         </div>
                         
-                        <div className="stat-box">
-                            <div className="stat-icon">
-                                <CheckCircle size={24} />
-                            </div>
-                            <div className="stat-value">{myPlayer?.questionsCompleted || 0}/{gameResults.gameStats.totalQuestions}</div>
-                            <div className="stat-label">Questions Solved</div>
+                        <div className="stat-row">
+                            <span className="stat-label-text">Questions Solved</span>
+                            <span className="stat-value-text">{myPlayer?.questionsCompleted || 0}/{gameResults.gameStats.totalQuestions}</span>
                         </div>
                         
-                        <div className="stat-box">
-                            <div className="stat-icon">
-                                <Users size={24} />
-                            </div>
-                            <div className="stat-value">{myTeam?.name}</div>
-                            <div className="stat-label">Your Team</div>
+                        <div className="stat-row">
+                            <span className="stat-label-text">Your Team</span>
+                            <span className="stat-value-text">{myTeam?.name}</span>
                         </div>
                     </div>
                 </div>
@@ -1694,6 +1692,10 @@ const ResultsScreen = ({ room, results, user, onBackToMenu }) => {
                                     <div className="team-progress">
                                         <Target size={14} />
                                         <span>{team.questionsCompleted} questions solved</span>
+                                    </div>
+                                    <div className="team-accuracy">
+                                        <CheckCircle size={14} />
+                                        <span>{team.failedAttempts || 0} failed attempts</span>
                                     </div>
                                 </div>
                                 
@@ -1751,18 +1753,45 @@ const ResultsScreen = ({ room, results, user, onBackToMenu }) => {
 const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [code, setCode] = useState('');
+    const [selectedLanguage, setSelectedLanguage] = useState('java'); // Default to Java
     const [submitting, setSubmitting] = useState(false);
     const [testing, setTesting] = useState(false);
     const [timeLeft, setTimeLeft] = useState(0);
     const [showEndConfirm, setShowEndConfirm] = useState(false);
     const [testResults, setTestResults] = useState(null);
     const [testResultsCollapsed, setTestResultsCollapsed] = useState(false);
-    const [showCustomInput, setShowCustomInput] = useState(false);
-    const [customInput, setCustomInput] = useState('');
     const [leftPanelWidth, setLeftPanelWidth] = useState(40); // Percentage width for problem panel
     const [isResizing, setIsResizing] = useState(false);
     const [activeTab, setActiveTab] = useState('statement'); // 'statement' or 'chat'
     const [chatMessages, setChatMessages] = useState([]);
+    
+    // Language-specific default code templates
+    const getDefaultCode = (language) => {
+        const templates = {
+            java: `public static int solution(int n) {
+    // Write your solution here
+    
+}`,
+            python: `def solution(n):
+    # Write your solution here
+    pass`,
+            javascript: `function solution(n) {
+    // Write your solution here
+    
+}`,
+            cpp: `int solution(int n) {
+    // Write your solution here
+    
+}`
+        };
+        return templates[language] || templates.java;
+    };
+    
+    // Update code when language changes
+    const handleLanguageChange = (newLanguage) => {
+        setSelectedLanguage(newLanguage);
+        setCode(getDefaultCode(newLanguage));
+    };
 
     useEffect(() => {
         // Calculate time left
@@ -1783,20 +1812,20 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
         const currentQuestion = room.questions[currentQuestionIndex];
         if (!currentQuestion) return;
         
-        const savedCodeKey = `codewars_${room.id}_${user.id}_${currentQuestion.id}`;
+        const savedCodeKey = `codewars_${room.id}_${user.id}_${currentQuestion.id}_${selectedLanguage}`;
         const savedCode = localStorage.getItem(savedCodeKey);
         
         if (savedCode) {
-            console.log('Loading saved code for question:', currentQuestion.id);
+            console.log('Loading saved code for question:', currentQuestion.id, 'language:', selectedLanguage);
             setCode(savedCode);
         } else {
-            console.log('No saved code, using starter code');
-            setCode(currentQuestion.starterCode || '');
+            console.log('No saved code, using default template for', selectedLanguage);
+            setCode(getDefaultCode(selectedLanguage));
         }
         
         // Clear test results when changing questions
         setTestResults(null);
-    }, [currentQuestionIndex, room.id, room.questions, user.id]);
+    }, [currentQuestionIndex, room.id, room.questions, user.id, selectedLanguage]);
     
     // Save code to localStorage whenever it changes (debounced)
     useEffect(() => {
@@ -1804,13 +1833,13 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
         if (!currentQuestion || !code) return;
         
         const saveTimer = setTimeout(() => {
-            const savedCodeKey = `codewars_${room.id}_${user.id}_${currentQuestion.id}`;
+            const savedCodeKey = `codewars_${room.id}_${user.id}_${currentQuestion.id}_${selectedLanguage}`;
             localStorage.setItem(savedCodeKey, code);
-            console.log('Code saved for question:', currentQuestion.id);
+            console.log('Code saved for question:', currentQuestion.id, 'language:', selectedLanguage);
         }, 1000); // Save after 1 second of no changes
         
         return () => clearTimeout(saveTimer);
-    }, [code, currentQuestionIndex, room.id, room.questions, user.id]);
+    }, [code, currentQuestionIndex, room.id, room.questions, user.id, selectedLanguage]);
 
     const currentQuestion = room.questions[currentQuestionIndex];
     
@@ -1851,7 +1880,8 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
         try {
             const response = await axios.post('http://localhost:5051/code-wars/submit-solution', {
                 questionId: currentQuestion.id,
-                code: codeToSubmit
+                code: codeToSubmit,
+                language: selectedLanguage
             }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
@@ -2110,7 +2140,7 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
                 <div className="navbar-right">
                     <div className="timer-display">
                         <Timer size={18} />
-                        <span className={timeLeft < 300 ? 'urgent' : ''}>{formatTime(timeLeft)}</span>
+                        <span className={timeLeft < 120 ? 'urgent' : ''}>{formatTime(timeLeft)}</span>
                     </div>
                     <div className="score-display">
                         <Trophy size={18} />
@@ -2156,9 +2186,16 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
                     )}
                 </div>
                 <div className="unified-header-right">
-                    <Code size={16} />
-                    <select className="language-dropdown">
+                    <select 
+                        className="language-dropdown"
+                        value={selectedLanguage}
+                        onChange={(e) => handleLanguageChange(e.target.value)}
+                        disabled={isFinished}
+                    >
                         <option value="java">Java</option>
+                        <option value="python">Python</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="cpp">C++</option>
                     </select>
                     {room.teamSize > 1 && (
                         <div className="team-indicator">
@@ -2265,7 +2302,7 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
                             username={user.username}
                             socket={socket}
                             initialCode={currentQuestion.starterCode || ''}
-                            language="java"
+                            language={selectedLanguage}
                             onSubmit={submitSolution}
                             disabled={isFinished || submitting}
                         />
@@ -2378,68 +2415,8 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
                                 </div>
                             )}
                             
-                            {/* Custom Test Input Section */}
-                            <div className="custom-test-section">
-                                <button 
-                                    className="custom-test-toggle"
-                                    onClick={() => setShowCustomInput(!showCustomInput)}
-                                >
-                                    <Eye size={14} />
-                                    Test against Custom Input
-                                    <ChevronUp size={14} className={showCustomInput ? 'rotated' : ''} />
-                                </button>
-                                
-                                {showCustomInput && (
-                                    <div className="custom-input-area">
-                                        <textarea
-                                            className="custom-input-textarea"
-                                            value={customInput}
-                                            onChange={(e) => setCustomInput(e.target.value)}
-                                            placeholder="Enter custom test input here..."
-                                            rows={4}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                            
                             {/* Action Buttons */}
                             <div className="editor-footer">
-                                <button 
-                                    className="run-tests-btn"
-                                    onClick={() => runTests()}
-                                    disabled={testing || !code.trim() || isFinished}
-                                >
-                                    {testing ? (
-                                        <>
-                                            <Loader className="spin" size={16} />
-                                            Testing...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Play size={16} />
-                                            Run
-                                        </>
-                                    )}
-                                </button>
-                                
-                                <button 
-                                    className="submit-solution-btn"
-                                    onClick={() => submitSolution()}
-                                    disabled={submitting || !code.trim() || isFinished}
-                                >
-                                    {submitting ? (
-                                        <>
-                                            <Loader className="spin" size={16} />
-                                            Submitting...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <CheckCircle size={16} />
-                                            Submit
-                                        </>
-                                    )}
-                                </button>
-                                
                                 <button 
                                     className="prev-question-btn"
                                     onClick={() => {
@@ -2452,6 +2429,44 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
                                 >
                                     Previous
                                 </button>
+                                
+                                <div style={{ display: 'flex', gap: '12px' }}>
+                                    <button 
+                                        className="run-tests-btn"
+                                        onClick={() => runTests()}
+                                        disabled={testing || !code.trim() || isFinished}
+                                    >
+                                        {testing ? (
+                                            <>
+                                                <Loader className="spin" size={16} />
+                                                Testing...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Play size={16} />
+                                                Run
+                                            </>
+                                        )}
+                                    </button>
+                                    
+                                    <button 
+                                        className="submit-solution-btn"
+                                        onClick={() => submitSolution()}
+                                        disabled={submitting || !code.trim() || isFinished}
+                                    >
+                                        {submitting ? (
+                                            <>
+                                                <Loader className="spin" size={16} />
+                                                Submitting...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle size={16} />
+                                                Submit
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                                 
                                 <button 
                                     className="next-question-btn"
