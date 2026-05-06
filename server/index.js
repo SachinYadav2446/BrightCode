@@ -2665,9 +2665,9 @@ io.on('connection', (socket) => {
     });
     
     // Task 3.4: Enhanced submit solution with team collaboration
-    socket.on('cw-submit-solution', async ({ roomId, teamId, questionId, code, userId }) => {
+    socket.on('cw-submit-solution', async ({ roomId, teamId, questionId, code, userId, language = 'java' }) => {
         try {
-            console.log(`🚀 [CW Editor] Solution submission - Room: ${roomId}, Team: ${teamId}, Question: ${questionId}`);
+            console.log(`🚀 [CW Editor] Solution submission - Room: ${roomId}, Team: ${teamId}, Question: ${questionId}, Language: ${language}`);
             
             // Get room to find username
             const room = intraFactionArena.getRoomById(roomId);
@@ -2698,7 +2698,7 @@ io.on('connection', (socket) => {
             });
             
             // Submit solution (Requirement 7.3)
-            const result = await intraFactionArena.submitSolution(roomId, userId, questionId, codeToSubmit);
+            const result = await intraFactionArena.submitSolution(roomId, userId, questionId, codeToSubmit, language);
             
             // Re-enable editor for team
             io.to(teamEditorRoom).emit('cw-editor-enabled', {
@@ -3051,9 +3051,9 @@ app.post('/code-wars/start-game', authenticateToken, async (req, res) => {
 app.post('/code-wars/submit-solution', authenticateToken, async (req, res) => {
     console.log('[API] 📝 Submit solution request received');
     console.log('[API] User ID:', req.user?.id);
-    console.log('[API] Request body:', { questionId: req.body.questionId, codeLength: req.body.code?.length });
+    console.log('[API] Request body:', { questionId: req.body.questionId, codeLength: req.body.code?.length, language: req.body.language });
     
-    const { questionId, code } = req.body;
+    const { questionId, code, language = 'java' } = req.body;
     
     if (!questionId || !code) {
         console.error('[API] ❌ Missing required fields');
@@ -3074,7 +3074,8 @@ app.post('/code-wars/submit-solution', authenticateToken, async (req, res) => {
             playerRoom.id,
             req.user.id,
             questionId,
-            code
+            code,
+            language
         );
         
         console.log('[API] ✅ Submit solution successful');
@@ -3086,6 +3087,46 @@ app.post('/code-wars/submit-solution', authenticateToken, async (req, res) => {
         console.error('[API] Error stack:', error.stack);
         res.status(400).json({ error: error.message });
     }
+});
+
+// Get language templates and examples
+app.get('/code-wars/language-templates', (req, res) => {
+    const { getAvailableLanguages, getSyntaxExample } = require('./languageTemplates');
+    
+    const languages = getAvailableLanguages();
+    const templates = {};
+    
+    languages.forEach(lang => {
+        templates[lang.id] = {
+            name: lang.name,
+            extension: lang.extension,
+            examples: {
+                basic: getSyntaxExample(lang.id, 'basic'),
+                array: getSyntaxExample(lang.id, 'array'),
+                string: getSyntaxExample(lang.id, 'string')
+            }
+        };
+    });
+    
+    res.json({
+        languages,
+        templates
+    });
+});
+
+// Get starter code for a specific language
+app.get('/code-wars/starter-code/:language', (req, res) => {
+    const { language } = req.params;
+    const { problemType = 'function' } = req.query;
+    const { getStarterCode } = require('./languageTemplates');
+    
+    const starterCode = getStarterCode(language, problemType, {
+        functionName: 'solution',
+        returnType: language === 'python' ? '' : 'int',
+        params: language === 'python' ? 'n' : 'int n'
+    });
+    
+    res.json({ starterCode });
 });
 
 // Get my current room
