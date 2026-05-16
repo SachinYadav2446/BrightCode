@@ -562,6 +562,46 @@ app.post('/update-profile', authenticateToken, async (req, res) => {
     }
 });
 
+// Change password endpoint
+app.post('/change-password', authenticateToken, async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Current and new passwords are required' });
+    }
+    
+    if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    }
+    
+    try {
+        // Get current user password
+        const userResult = await pool.query('SELECT password FROM users WHERE id = $1', [req.user.id]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const user = userResult.rows[0];
+        
+        // Verify current password
+        const isValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isValid) {
+            return res.status(401).json({ error: 'Current password is incorrect' });
+        }
+        
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        
+        // Update password
+        await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, req.user.id]);
+        
+        res.json({ success: true, message: 'Password changed successfully' });
+    } catch (err) {
+        console.error('CHANGE PASSWORD ERROR:', err);
+        res.status(500).json({ error: 'Database error: ' + err.message });
+    }
+});
+
 app.delete('/delete-user/:username', async (req, res) => {
     const { username } = req.params;
     try {
