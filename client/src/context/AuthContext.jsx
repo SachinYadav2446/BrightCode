@@ -223,6 +223,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const changePassword = async (currentPassword, newPassword) => {
+    try {
+      const { data } = await axios.post('http://localhost:5051/change-password',
+        { currentPassword, newPassword },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+      return { success: true, message: data.message };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.error || 'Failed to change password' };
+    }
+  };
+
   const updateXP = (newXP, stats = {}) => {
     localStorage.setItem('user_xp', newXP);
     if (stats.css_level !== undefined) localStorage.setItem('css_level', stats.css_level);
@@ -264,7 +276,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, sendOTP, logout, updateProfile, updateXP, loading, sessionValid, navbarHidden, setNavbarHidden }}>
+    <AuthContext.Provider value={{ user, login, register, sendOTP, logout, updateProfile, changePassword, updateXP, loading, sessionValid, navbarHidden, setNavbarHidden }}>
       {children}
     </AuthContext.Provider>
   );
