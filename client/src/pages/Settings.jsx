@@ -7,9 +7,10 @@ import toast from 'react-hot-toast';
 import './Settings.css';
 
 const Settings = () => {
-  const { user, updateProfile, logout } = useAuth();
+  const { user, updateProfile, changePassword, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('details');
+  const [showConfigModal, setShowConfigModal] = useState(false);
 
   // Calculate Metrics (similar to Home.jsx)
   const activity = user?.activity || {};
@@ -23,6 +24,15 @@ const Settings = () => {
     bio: user?.bio || '',
     stack: user?.stack || []
   });
+  
+  // Config Modal States
+  const [configData, setConfigData] = useState({
+    username: user?.username || '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [isEditingStack, setIsEditingStack] = useState(false);
   const [newStackItem, setNewStackItem] = useState('');
@@ -101,6 +111,55 @@ const Settings = () => {
     toast.success('Logged out securely');
   };
 
+  const handleConfigureProfile = async () => {
+    setIsSaving(true);
+    try {
+      // Update username if changed
+      if (configData.username !== user.username) {
+        const res = await updateProfile({
+          username: configData.username,
+          bio: user.bio,
+          stack: user.stack
+        });
+        if (!res.success) {
+          toast.error(res.error);
+          setIsSaving(false);
+          return;
+        }
+        toast.success('Username updated');
+      }
+      
+      // Change password if provided
+      if (configData.newPassword) {
+        if (configData.newPassword !== configData.confirmPassword) {
+          toast.error('Passwords do not match');
+          setIsSaving(false);
+          return;
+        }
+        
+        const res = await changePassword(configData.currentPassword, configData.newPassword);
+        if (!res.success) {
+          toast.error(res.error);
+          setIsSaving(false);
+          return;
+        }
+        toast.success('Password changed successfully');
+      }
+      
+      setShowConfigModal(false);
+      setConfigData({
+        username: user.username,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    } catch (err) {
+      toast.error('Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="settings-page">
       <div className="settings-wrapper">
@@ -135,17 +194,13 @@ const Settings = () => {
         <main className="settings-main">
           {/* Top Bar */}
           <div className="top-bar">
-            <div className="top-bar-left">
-              {/* Logo removed here as it's in sidebar now, or keep it if needed */}
-            </div>
             <button className="top-back-btn" onClick={() => navigate('/hub')}>
-              <ArrowLeft size={16} />
+              <ArrowLeft size={14} />
               <span>Back to Hub</span>
             </button>
           </div>
 
-          <AnimatePresence mode="wait">
-            {activeTab === 'details' ? (
+          <AnimatePresence mode="wait">            {activeTab === 'details' ? (
               <motion.div
                 key="details"
                 initial={{ opacity: 0, y: 20 }}
