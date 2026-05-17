@@ -47,9 +47,9 @@
 }
 
 .toolbar-btn-active {
-  background: rgba(239, 68, 68, 0.1) !important;
+  background: rgba(var(--primary-rgb), 0.1) !important;
   color: var(--cv-accent) !important;
-  border-color: rgba(239, 68, 68, 0.2) !important;
+  border-color: rgba(var(--primary-rgb), 0.2) !important;
 }
 
 .toolbar-btn-disabled {
@@ -67,7 +67,7 @@
 }
 
 /* ── Heading color indicators on toolbar ─────────────────── */
-.h1-btn { color: #ef4444 !important; }
+.h1-btn { color: var(--primary) !important; }
 .h2-btn { color: #fbbf24 !important; }
 .h3-btn { color: #34d399 !important; }
 .h4-btn { color: #60a5fa !important; }
@@ -75,7 +75,7 @@
 .h6-btn { color: #f472b6 !important; }
 
 /* ── # prefix — only on the heading where cursor currently is ── */
-.rich-editor-content .ProseMirror h1.heading-active::before { content: '#'; color: rgba(239,68,68,0.55); margin-right: 8px; font-weight: 400; font-size: 0.7em; vertical-align: middle; font-family: 'Fira Code', monospace; }
+.rich-editor-content .ProseMirror h1.heading-active::before { content: '#'; color: rgba(var(--primary-rgb), 0.55); margin-right: 8px; font-weight: 400; font-size: 0.7em; vertical-align: middle; font-family: 'Fira Code', monospace; }
 .rich-editor-content .ProseMirror h2.heading-active::before { content: '##'; color: rgba(251,191,36,0.55); margin-right: 8px; font-weight: 400; font-size: 0.7em; vertical-align: middle; font-family: 'Fira Code', monospace; }
 .rich-editor-content .ProseMirror h3.heading-active::before { content: '###'; color: rgba(52,211,153,0.55); margin-right: 8px; font-weight: 400; font-size: 0.7em; vertical-align: middle; font-family: 'Fira Code', monospace; }
 .rich-editor-content .ProseMirror h4.heading-active::before { content: '####'; color: rgba(96,165,250,0.55); margin-right: 8px; font-weight: 400; font-size: 0.7em; vertical-align: middle; font-family: 'Fira Code', monospace; }
@@ -193,7 +193,7 @@
   color: #e4e4e7;
   font-size: 15px;
   line-height: 1.7;
-  caret-color: #ef4444;
+  caret-color: var(--primary);
 }
 
 .prose-editor:focus {
@@ -217,9 +217,9 @@
   margin-top: 1rem;
   margin-bottom: 0.5rem;
   font-weight: 800;
-  color: #ef4444 !important;
+  color: var(--primary) !important;
   letter-spacing: -0.5px;
-  border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+  border-bottom: 1px solid rgba(var(--primary-rgb), 0.2);
   padding-bottom: 0.3rem;
 }
 
@@ -305,10 +305,10 @@
 
 /* Inline code */
 .rich-editor-content .ProseMirror code {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(var(--primary-rgb), 0.1);
+  border: 1px solid rgba(var(--primary-rgb), 0.2);
   border-radius: 4px;
-  color: #f87171;
+  color: var(--primary-light);
   font-family: 'Fira Code', 'JetBrains Mono', monospace;
   font-size: 0.88em;
   padding: 2px 6px;
@@ -346,10 +346,10 @@
 
 /* Blockquote */
 .rich-editor-content .ProseMirror blockquote {
-  border-left: 3px solid #ef4444;
+  border-left: 3px solid var(--primary);
   margin: 1.2rem 0;
   padding: 12px 20px;
-  background: rgba(239, 68, 68, 0.05);
+  background: rgba(var(--primary-rgb), 0.05);
   border-radius: 0 8px 8px 0;
   color: #9ca3af;
   font-style: italic;
@@ -368,11 +368,11 @@
 }
 
 .rich-editor-content .ProseMirror ul li::marker {
-  color: #ef4444;
+  color: var(--primary);
 }
 
 .rich-editor-content .ProseMirror ol li::marker {
-  color: #ef4444;
+  color: var(--primary);
   font-weight: 700;
 }
 
@@ -409,8 +409,8 @@
 }
 
 .rich-editor-content .ProseMirror ul[data-type="taskList"] input[type="checkbox"]:checked {
-  background: #ef4444;
-  border-color: #ef4444;
+  background: var(--primary);
+  border-color: var(--primary);
 }
 
 .rich-editor-content .ProseMirror ul[data-type="taskList"] input[type="checkbox"]:checked::after {
@@ -432,7 +432,7 @@
 .rich-editor-content .ProseMirror hr {
   border: none;
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(239, 68, 68, 0.4), transparent);
+  background: linear-gradient(to right, transparent, rgba(var(--primary-rgb), 0.4), transparent);
   margin: 2rem 0;
 }
 
@@ -483,8 +483,8 @@
 
 .image-node-selected .image-node-img,
 .image-node-inner:hover .image-node-img {
-  border-color: rgba(239, 68, 68, 0.5);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  border-color: rgba(var(--primary-rgb), 0.5);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
 }
 
 .image-node-actions {
@@ -529,12 +529,12 @@
 }
 
 .image-delete-btn {
-  background: rgba(239, 68, 68, 0.85);
+  background: rgba(var(--primary-rgb), 0.85);
   color: #fff;
 }
 
 .image-delete-btn:hover {
-  background: #ef4444;
+  background: var(--primary);
   transform: scale(1.1);
 }
 
@@ -580,17 +580,17 @@
 }
 
 .image-lightbox-close:hover {
-  background: rgba(239, 68, 68, 0.6);
+  background: rgba(var(--primary-rgb), 0.6);
 }
 
 /* Selection */
 .rich-editor-content .ProseMirror ::selection {
-  background: rgba(239, 68, 68, 0.25);
+  background: rgba(var(--primary-rgb), 0.25);
 }
 
 /* Focus ring on block selection */
 .rich-editor-content .ProseMirror .ProseMirror-selectednode {
-  outline: 2px solid rgba(239, 68, 68, 0.5);
+  outline: 2px solid rgba(var(--primary-rgb), 0.5);
   border-radius: 4px;
 }
 
@@ -611,7 +611,7 @@
 }
 
 .editor-modal-content {
-  background: #0f0f0f;
+  background: var(--bg-dark);
   width: 100%;
   max-width: 420px;
   border-radius: 20px;
@@ -674,7 +674,7 @@
 .editor-modal-input:focus {
   border-color: var(--cv-accent);
   background: #1a1515;
-  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .editor-modal-footer {

@@ -66,13 +66,13 @@
   background: #111;
   padding: 3px 8px;
   border-radius: 4px;
-  color: #ef4444;
+  color: var(--primary);
   font-family: 'Courier New', 'Consolas', monospace;
   font-size: 14px;
 }
 
 .markdown-preview-container pre {
-  background: #0a0a0a;
+  background: var(--bg-dark);
   padding: 20px;
   border-radius: 8px;
   border: 1px solid #222;
@@ -89,7 +89,7 @@
 }
 
 .markdown-preview-container blockquote {
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid var(--primary);
   padding-left: 20px;
   margin: 20px 0;
   color: #999;
@@ -116,18 +116,18 @@
 }
 
 .markdown-preview-container tr:nth-child(even) {
-  background: #0a0a0a;
+  background: var(--bg-dark);
 }
 
 .markdown-preview-container a {
-  color: #ef4444;
+  color: var(--primary);
   text-decoration: none;
   border-bottom: 1px solid transparent;
   transition: border-color 0.2s;
 }
 
 .markdown-preview-container a:hover {
-  border-bottom-color: #ef4444;
+  border-bottom-color: var(--primary);
 }
 
 .markdown-preview-container strong {
@@ -162,7 +162,7 @@
 }
 
 .error-preview {
-  color: #ef4444;
+  color: var(--primary);
 }
 
 /* Scrollbar styling */
@@ -171,7 +171,7 @@
 }
 
 .markdown-preview-container::-webkit-scrollbar-track {
-  background: #0a0a0a;
+  background: var(--bg-dark);
 }
 
 .markdown-preview-container::-webkit-scrollbar-thumb {

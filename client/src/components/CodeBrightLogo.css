@@ -72,7 +72,7 @@
   height: 100%;
   background: linear-gradient(to bottom, 
     transparent 0%, 
-    rgba(239, 68, 68, 0.05) 50%, 
+    rgba(var(--primary-rgb), 0.05) 50%, 
     transparent 100%);
   pointer-events: none;
   animation: scan 4s infinite linear;

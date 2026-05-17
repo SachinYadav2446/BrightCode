@@ -1,15 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg-dark: #0f0f0f;
-  --bg-surface: #1a1a1a;
+  --bg-dark: var(--bg-dark);
+  --bg-surface: var(--bg-surface);
   --bg-surface-lighter: #2a2a2a;
+  
+  /* Primary Theme Colors (Red by default) */
   --primary: #ef4444;
-  --primary-glow: rgba(239, 68, 68, 0.5);
-  --secondary: #dc2626;
+  --primary-rgb: 239, 68, 68;
+  --primary-dark: #dc2626;
+  --primary-dark-rgb: 220, 38, 38;
+  --primary-light: #f87171;
+  --primary-light-rgb: 248, 113, 113;
+  --complementary: #fff9e6; /* Balanced Cream accent */
+  --text-complementary: var(--bg-surface);
+  
+  --primary-glow: rgba(var(--primary-rgb), 0.5);
+  --secondary: var(--primary-dark);
   --text-main: #ffffff;
   --text-muted: #a0a0a0;
-  --border: rgba(239, 68, 68, 0.1);
+  --border: rgba(var(--primary-rgb), 0.1);
   --glass: rgba(15, 15, 15, 0.7);
   --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -26,6 +36,7 @@ html {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: inherit;
 }
 
 body {

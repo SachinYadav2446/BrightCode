@@ -1,4 +1,4 @@
-﻿// MERN STACK - 200 Questions (5 Modules × 40 Questions)
+// MERN STACK - 200 Questions (5 Modules � 40 Questions)
 // Structure per module: 10 MCQ + 10 Short Answer + 20 Coding
 
 export const MERN_LEVELS = [];

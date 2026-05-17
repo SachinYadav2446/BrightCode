@@ -43,11 +43,11 @@
 }
 
 .btn-icon-back:hover {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(var(--primary-rgb), 0.1);
   color: var(--cv-accent);
   border-color: var(--cv-accent);
   transform: translateX(-3px);
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.2);
 }
 
 .compact-title {
@@ -114,7 +114,7 @@
 }
 
 .status-error {
-  color: #ef4444;
+  color: var(--primary);
 }
 
 /* Tag chips removed */
@@ -160,9 +160,9 @@
 }
 
 .btn-delete-note:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.2);
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+  border-color: rgba(var(--primary-rgb), 0.2);
   transform: translateY(-2px);
 }
 
