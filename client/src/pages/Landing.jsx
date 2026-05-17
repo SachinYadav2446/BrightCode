@@ -29,17 +29,17 @@ const Landing = () => {
 
   const exploreCards = [
     {
-      icon: <Terminal size={40} color="#ef4444" />,
+      icon: <Terminal size={40} color="var(--primary)" />,
       title: "Collaborative Forge",
       description: "Real-time pair programming with live sync and AI assistance."
     },
     {
-      icon: <Cpu size={40} color="#ef4444" />,
+      icon: <Cpu size={40} color="var(--primary)" />,
       title: "Architecture Lab",
       description: "Master system design and high-performance engineering patterns."
     },
     {
-      icon: <Trophy size={40} color="#ef4444" />,
+      icon: <Trophy size={40} color="var(--primary)" />,
       title: "Syndicate Wars",
       description: "Join factions, compete in sprints, and dominate the leaderboard."
     }
@@ -160,7 +160,7 @@ const Landing = () => {
             transition={{ duration: 0.6 }}
           >
             <div className="explore-icon-box">
-              <Globe size={32} color="#ef4444" />
+              <Globe size={32} color="var(--primary)" />
             </div>
             <h2>Universal Exploration Hub</h2>
             <p>
@@ -176,7 +176,7 @@ const Landing = () => {
           <div className="explore-main-layout">
             <div className="side-info left">
               <div className="side-icon-wrap">
-                <Zap size={24} color="#ef4444" />
+                <Zap size={24} color="var(--primary)" />
               </div>
               <h4>High Performance</h4>
               <p>Optimized for low-latency collaboration and rapid execution.</p>
@@ -227,7 +227,7 @@ const Landing = () => {
 
             <div className="side-info right">
               <div className="side-icon-wrap">
-                <Shield size={24} color="#ef4444" />
+                <Shield size={24} color="var(--primary)" />
               </div>
               <h4>Enterprise Grade</h4>
               <p>Built with security and scalability at its very core.</p>
