@@ -14,9 +14,9 @@ import './Factions.css';
 const EMBLEMS = ['⚔️', '🛡️', '🔥', '⚡', '🌙', '💎', '🦅', '🐉', '🌊', '☄️', '🧪', '🎯'];
 
 const FEATURE_CARDS = [
-    { id: 'rankings', title: 'Global Rankings', icon: <Trophy size={32} />, desc: 'Dominate the global leaderboard and establish your syndicate\'s legacy.', color: '#dc2626' },
+    { id: 'rankings', title: 'Global Rankings', icon: <Trophy size={32} />, desc: 'Dominate the global leaderboard and establish your syndicate\'s legacy.', color: 'var(--primary-dark)' },
     { id: 'xp', title: 'Collaborative XP', icon: <Zap size={32} />, desc: 'Sync your code with operatives to unlock massive faction-wide multipliers.', color: '#d4a847' },
-    { id: 'wars', title: 'Guild Wars', icon: <Swords size={32} />, desc: 'Deploy your squad on Sundays for high-stakes territory battles.', color: '#1a1a1a' },
+    { id: 'wars', title: 'Guild Wars', icon: <Swords size={32} />, desc: 'Deploy your squad on Sundays for high-stakes territory battles.', color: 'var(--bg-surface)' },
     { id: 'vault', title: 'Private Vaults', icon: <Lock size={32} />, desc: 'Secure exclusive snippets and tactical assets in encrypted repositories.', color: '#8a7f72' },
     { id: 'hub', title: 'Global Command', icon: <Code size={32} />, desc: 'Communicate and collaborate with the world\'s most elite engineering teams.', color: '#2563eb' },
 ];
@@ -267,7 +267,7 @@ const Factions = () => {
                             </div>
 
                             <div className="faction-form-group">
-                                <label>Faction Name <span style={{ color: '#ef4444' }}>*</span></label>
+                                <label>Faction Name <span style={{ color: 'var(--primary)' }}>*</span></label>
                                 <input type="text" className="faction-input" placeholder="e.g. Neon Vanguard, Quantum Syndicate..."
                                     value={newFaction.name} onChange={e => setNewFaction(prev => ({ ...prev, name: e.target.value }))}
                                     maxLength={32} />
@@ -430,7 +430,7 @@ const Factions = () => {
                     <div className="benefits-marquee">
                         <div className="benefits-track">
                             <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Trophy size={28} color="#dc2626" /></div>
+                                <div className="benefit-icon-wrapper"><Trophy size={28} color="var(--primary-dark)" /></div>
                                 <div className="benefit-text-content">
                                     <h3>Rankings</h3>
                                     <p>Lead your guild to the #1 spot on the global leaderboard.</p>
@@ -444,7 +444,7 @@ const Factions = () => {
                                 </div>
                             </div>
                             <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Target size={28} color="#dc2626" /></div>
+                                <div className="benefit-icon-wrapper"><Target size={28} color="var(--primary-dark)" /></div>
                                 <div className="benefit-text-content">
                                     <h3>Collab</h3>
                                     <p>Work on exclusive projects in a focused guild environment.</p>
@@ -458,7 +458,7 @@ const Factions = () => {
                                 </div>
                             </div>
                             <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Shield size={28} color="#dc2626" /></div>
+                                <div className="benefit-icon-wrapper"><Shield size={28} color="var(--primary-dark)" /></div>
                                 <div className="benefit-text-content">
                                     <h3>Private Repos</h3>
                                     <p>Access exclusive codebases reserved for your guild members.</p>
@@ -472,7 +472,7 @@ const Factions = () => {
                                 </div>
                             </div>
                             <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Users size={28} color="#dc2626" /></div>
+                                <div className="benefit-icon-wrapper"><Users size={28} color="var(--primary-dark)" /></div>
                                 <div className="benefit-text-content">
                                     <h3>Mentors</h3>
                                     <p>Get direct feedback from senior guild leads and masters.</p>
@@ -486,7 +486,7 @@ const Factions = () => {
                                 </div>
                             </div>
                             <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Trophy size={28} color="#dc2626" /></div>
+                                <div className="benefit-icon-wrapper"><Trophy size={28} color="var(--primary-dark)" /></div>
                                 <div className="benefit-text-content">
                                     <h3>Rankings</h3>
                                     <p>Lead your guild to the #1 spot on the global leaderboard.</p>
@@ -500,7 +500,7 @@ const Factions = () => {
                                 </div>
                             </div>
                             <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Target size={28} color="#dc2626" /></div>
+                                <div className="benefit-icon-wrapper"><Target size={28} color="var(--primary-dark)" /></div>
                                 <div className="benefit-text-content">
                                     <h3>Collab</h3>
                                     <p>Work on exclusive projects in a focused guild environment.</p>
@@ -514,7 +514,7 @@ const Factions = () => {
                                 </div>
                             </div>
                             <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Shield size={28} color="#dc2626" /></div>
+                                <div className="benefit-icon-wrapper"><Shield size={28} color="var(--primary-dark)" /></div>
                                 <div className="benefit-text-content">
                                     <h3>Private Repos</h3>
                                     <p>Access exclusive codebases reserved for your guild members.</p>
@@ -528,7 +528,7 @@ const Factions = () => {
                                 </div>
                             </div>
                             <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Users size={28} color="#dc2626" /></div>
+                                <div className="benefit-icon-wrapper"><Users size={28} color="var(--primary-dark)" /></div>
                                 <div className="benefit-text-content">
                                     <h3>Mentors</h3>
                                     <p>Get direct feedback from senior guild leads and masters.</p>
@@ -629,25 +629,25 @@ const Factions = () => {
                                                                 {member.username === user?.username && <div className="me-indicator">YOU</div>}
                                                             </div>
                                                             <div className="hq-name-group">
-                                                                <span className="hq-member-name">{member.username}</span>
-                                                                <span className="hq-member-role">
+                                                                <span className="hq-username">{member.username}</span>
+                                                                <span className="hq-rank-tag">
                                                                     {member.username === factions.find(f => f.id === myFactionId)?.ownerName ? 'Syndicate Lead' : 'Elite Operative'}
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                        <div className="hq-stat-col">
+                                                        <div className="hq-stat-col hq-weekly-xp">
                                                             <span className="hq-stat-val">+{weeklyXp}</span>
                                                             <span className="hq-stat-sub">this week</span>
                                                         </div>
-                                                        <div className="hq-stat-col">
+                                                        <div className="hq-stat-col hq-total-xp">
                                                             <span className="hq-stat-val">{totalContributed.toLocaleString()}</span>
                                                             <span className="hq-stat-sub">lifetime</span>
                                                         </div>
-                                                        <div className="hq-stat-col">
-                                                            <div className="hq-progress-mini">
-                                                                <div className="hq-progress-bar" style={{ width: `20%` }}></div>
+                                                        <div className="hq-stat-col hq-mastery">
+                                                            <div className="mastery-track">
+                                                                <div className="mastery-fill" style={{ width: `20%` }}></div>
                                                             </div>
-                                                            <span className="hq-stat-sub">LVL {memberLvl}</span>
+                                                            <span className="mastery-lvl">LVL {memberLvl}</span>
                                                         </div>
                                                         <div className="hq-action-col">
                                                             {user?.username === factions.find(f => f.id === myFactionId)?.ownerName && member.username !== user?.username && (
@@ -701,7 +701,7 @@ const Factions = () => {
                                             <div className="privacy-info">
                                                 <div className="privacy-icon-wrapper">
                                                     {factions.find(f => f.id === myFactionId)?.isPublic === false ? (
-                                                        <Lock size={24} color="#ef4444" />
+                                                        <Lock size={24} color="var(--primary)" />
                                                     ) : (
                                                         <Globe size={24} color="#22c55e" />
                                                     )}
@@ -769,7 +769,7 @@ const Factions = () => {
                                         <h3 className="hq-sub-title danger-title">Danger Zone</h3>
                                         <div className="danger-card">
                                             <div className="danger-info">
-                                                <Trash2 size={20} color="#ef4444" />
+                                                <Trash2 size={20} color="var(--primary)" />
                                                 <div>
                                                     <h4>Disband Syndicate</h4>
                                                     <p>Permanently delete this faction. All members will be removed and progress lost.</p>
