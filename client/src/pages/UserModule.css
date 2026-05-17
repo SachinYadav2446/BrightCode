@@ -1,5 +1,5 @@
-﻿/* ================================================================
-   UserModule.css — BrightCode User Guide
+/* ================================================================
+   UserModule.css � BrightCode User Guide
    ================================================================ */
 
 .user-module-page {
@@ -9,7 +9,7 @@
   font-family: "Poppins", sans-serif;
 }
 
-/* ── Top Nav ── */
+/* -- Top Nav -- */
 .module-nav {
   height: 52px;
   padding: 0 40px;
@@ -41,7 +41,7 @@
 }
 
 .back-btn:hover {
-  color: #ef4444;
+  color: var(--primary);
   transform: translateX(-4px);
 }
 
@@ -64,14 +64,14 @@
   font-weight: 600;
 }
 
-/* ── Layout ── */
+/* -- Layout -- */
 .module-layout {
   display: block;
   min-height: calc(100vh - 52px);
   padding-top: 52px;
 }
 
-/* ── Sidebar ── */
+/* -- Sidebar -- */
 .module-sidebar {
   position: fixed;
   top: 52px;
@@ -126,14 +126,14 @@
 }
 
 .sidebar-link:hover {
-  background: rgba(239, 68, 68, 0.06);
-  color: #ef4444;
+  background: rgba(var(--primary-rgb), 0.06);
+  color: var(--primary);
 }
 
 .sidebar-link.active {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border-left: 2px solid #ef4444;
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+  border-left: 2px solid var(--primary);
 }
 
 .sidebar-link svg {
@@ -146,14 +146,14 @@
   opacity: 1;
 }
 
-/* ── Main Content ── */
+/* -- Main Content -- */
 .module-main {
   margin-left: 260px;
   padding: 52px 80px 80px;
   max-width: 860px;
 }
 
-/* ── Hero Intro ── */
+/* -- Hero Intro -- */
 .module-intro {
   margin-bottom: 80px;
 }
@@ -161,9 +161,9 @@
 .intro-badge {
   display: inline-block;
   padding: 5px 14px;
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(var(--primary-rgb), 0.2);
   border-radius: 100px;
   font-size: 0.72rem;
   font-weight: 700;
@@ -205,10 +205,10 @@
 }
 
 .intro-meta svg {
-  color: #ef4444;
+  color: var(--primary);
 }
 
-/* ── Doc Sections ── */
+/* -- Doc Sections -- */
 .doc-section {
   margin-bottom: 80px;
   scroll-margin-top: 100px;
@@ -218,7 +218,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #ef4444;
+  color: var(--primary);
   font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -242,7 +242,7 @@
   max-width: 680px;
 }
 
-/* ── Accordion ── */
+/* -- Accordion -- */
 .accordion-item {
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 14px;
@@ -252,7 +252,7 @@
 }
 
 .accordion-item.open {
-  border-color: rgba(239, 68, 68, 0.2);
+  border-color: rgba(var(--primary-rgb), 0.2);
 }
 
 .accordion-trigger {
@@ -279,7 +279,7 @@
 
 .accordion-item.open .accordion-trigger {
   color: #fff;
-  background: rgba(239, 68, 68, 0.05);
+  background: rgba(var(--primary-rgb), 0.05);
 }
 
 .accordion-body {
@@ -291,7 +291,7 @@
   border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-/* ── Step List ── */
+/* -- Step List -- */
 .step-list {
   list-style: none;
   padding: 0;
@@ -314,8 +314,8 @@
   flex-shrink: 0;
   width: 24px;
   height: 24px;
-  background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
+  background: rgba(var(--primary-rgb), 0.12);
+  color: var(--primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -325,7 +325,7 @@
   margin-top: 1px;
 }
 
-/* ── Bullet List ── */
+/* -- Bullet List -- */
 .bullet-list {
   list-style: none;
   padding: 0;
@@ -345,12 +345,12 @@
 }
 
 .bullet-icon {
-  color: #ef4444;
+  color: var(--primary);
   flex-shrink: 0;
   margin-top: 3px;
 }
 
-/* ── Code Table (for shortcuts/syntax) ── */
+/* -- Code Table (for shortcuts/syntax) -- */
 .code-table {
   display: flex;
   flex-direction: column;
@@ -365,22 +365,22 @@
 }
 
 .code-row code {
-  background: rgba(239, 68, 68, 0.08);
-  color: #ef4444;
+  background: rgba(var(--primary-rgb), 0.08);
+  color: var(--primary);
   padding: 3px 10px;
   border-radius: 6px;
   font-family: "JetBrains Mono", monospace;
   font-size: 0.82rem;
   min-width: 80px;
   text-align: center;
-  border: 1px solid rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(var(--primary-rgb), 0.15);
 }
 
 .code-row span {
   color: #aaa;
 }
 
-/* ── Shortcuts Grid ── */
+/* -- Shortcuts Grid -- */
 .shortcuts-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -434,13 +434,13 @@ kbd {
   color: #777;
 }
 
-/* ── Support Card ── */
+/* -- Support Card -- */
 .support-card {
   display: flex;
   align-items: center;
   gap: 20px;
-  background: rgba(239, 68, 68, 0.05);
-  border: 1px solid rgba(239, 68, 68, 0.15);
+  background: rgba(var(--primary-rgb), 0.05);
+  border: 1px solid rgba(var(--primary-rgb), 0.15);
   border-radius: 16px;
   padding: 24px 28px;
   margin-top: 24px;
@@ -448,7 +448,7 @@ kbd {
 }
 
 .support-card-icon {
-  color: #ef4444;
+  color: var(--primary);
   flex-shrink: 0;
 }
 
@@ -473,7 +473,7 @@ kbd {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #ef4444;
+  background: var(--primary);
   color: #fff;
   text-decoration: none;
   padding: 10px 20px;
@@ -485,11 +485,11 @@ kbd {
 }
 
 .support-card-btn:hover {
-  background: #dc2626;
+  background: var(--primary-dark);
   transform: translateY(-1px);
 }
 
-/* ── Page Footer ── */
+/* -- Page Footer -- */
 .module-page-footer {
   margin-top: 80px;
   padding-bottom: 60px;
@@ -509,7 +509,7 @@ kbd {
 }
 
 .footer-highlight {
-  color: #ef4444;
+  color: var(--primary);
   font-weight: 700;
 }
 
@@ -518,7 +518,7 @@ kbd {
   color: #333;
 }
 
-/* ── Responsive ── */
+/* -- Responsive -- */
 @media (max-width: 1100px) {
   .module-main {
     padding: 40px 40px 60px;

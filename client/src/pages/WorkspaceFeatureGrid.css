@@ -14,8 +14,8 @@
   right: 0;
   bottom: 0;
   background-image: 
-    linear-gradient(rgba(239, 68, 68, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(239, 68, 68, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(var(--primary-rgb), 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--primary-rgb), 0.03) 1px, transparent 1px);
   background-size: 80px 80px;
   pointer-events: none;
 }
@@ -43,8 +43,8 @@
 }
 
 .feature-box:hover {
-  background: rgba(239, 68, 68, 0.05);
-  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(var(--primary-rgb), 0.05);
+  border-color: rgba(var(--primary-rgb), 0.3);
   transform: translateY(-4px);
 }
 
@@ -62,8 +62,8 @@
 .center {
   grid-column: 2;
   grid-row: 1 / 3;
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgba(var(--primary-rgb), 0.08);
+  border: 1px solid rgba(var(--primary-rgb), 0.25);
   align-items: center;
   justify-content: center;
   text-align: center;
@@ -71,8 +71,8 @@
 }
 
 .center:hover {
-  background: rgba(239, 68, 68, 0.12);
-  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(var(--primary-rgb), 0.12);
+  border-color: rgba(var(--primary-rgb), 0.4);
 }
 
 .top-right {
@@ -98,12 +98,12 @@
 .feature-icon-small {
   width: 40px;
   height: 40px;
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(var(--primary-rgb), 0.15);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ef4444;
+  color: var(--primary);
   margin-bottom: 12px;
 }
 
@@ -120,7 +120,7 @@
 }
 
 .feature-desc.highlight {
-  color: #ef4444;
+  color: var(--primary);
   font-weight: 600;
 }
 
@@ -128,14 +128,14 @@
 .center-icon-large {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.4) 100%);
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.3) 0%, rgba(var(--primary-dark-rgb), 0.4) 100%);
   border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ef4444;
+  color: var(--primary);
   margin-bottom: 24px;
-  box-shadow: 0 12px 40px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 12px 40px rgba(var(--primary-rgb), 0.3);
 }
 
 .center-title {
@@ -149,7 +149,7 @@
 .center-subtitle {
   font-size: 1rem;
   font-weight: 600;
-  color: #ef4444;
+  color: var(--primary);
   margin-bottom: 16px;
 }
 
