@@ -2343,7 +2343,7 @@ const EditorPage = () => {
                             <div className="floating-toolbar">
                                 <div className="toolbar-group">
                                     <div className="color-swatches">
-                                        {['#fbbf24', '#ef4444', '#3b82f6', '#10b981', '#ffffff'].map(color => (
+                                        {['#fbbf24', 'var(--primary)', '#3b82f6', '#10b981', '#ffffff'].map(color => (
                                             <button 
                                                 key={color} 
                                                 className={`swatch ${drawColor === color && drawTool !== 'eraser' ? 'active' : ''}`}

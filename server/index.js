@@ -266,18 +266,12 @@ const otps = new Map(); // Store OTPs: email -> { otp, userData, expires }
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // Use STARTTLS
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
-    },
-    tls: {
-        rejectUnauthorized: false
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000
+    }
 });
 
 // Verify connection configuration
@@ -378,22 +372,22 @@ app.post('/send-otp', async (req, res) => {
             `
         };
 
-        try {
-            await Promise.race([
-                transporter.sendMail(mailOptions),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Mail Timeout')), 8000))
-            ]);
-            console.log(`[MAIL] Email sent successfully to ${email}`);
-            res.json({ message: "OTP sent to your email address" });
-        } catch (mailErr) {
-            console.error(`[MAIL] Failed to send email:`, mailErr.message);
-            // Even if mail fails, we respond with success in "Developer Mode" 
-            // so the user can see the OTP in the console and continue testing.
-            res.json({
-                message: "OTP generated (Email delivery failed, check server console)",
-                devMode: true
+        // ✅ Respond IMMEDIATELY — don't wait for email delivery
+        res.json({
+            message: `Check your email for the code. If it doesn't arrive, use: ${otp}`,
+            devMode: true,
+            otp: otp
+        });
+
+        // 🔥 Fire-and-forget: try to send email in the background
+        transporter.sendMail(mailOptions)
+            .then(() => console.log(`[MAIL] Email sent successfully to ${email}`))
+            .catch(mailErr => {
+                console.error(`[MAIL] Failed to send email:`, mailErr.message);
+                try {
+                    fs.appendFileSync(path.join(__dirname, 'mail-error.log'), `[${new Date().toISOString()}] To: ${email} Error: ${mailErr.message}\n`);
+                } catch (e) {}
             });
-        }
     } catch (err) {
         sendError(res, 500, "Server error", err.message);
     }
@@ -562,7 +556,7 @@ app.post('/update-profile', authenticateToken, async (req, res) => {
     }
 });
 
-// Change password endpoint
+// Change password endpoint (simple version without OTP)
 app.post('/change-password', authenticateToken, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     
@@ -575,13 +569,38 @@ app.post('/change-password', authenticateToken, async (req, res) => {
     }
     
     try {
-        // Get current user password
+        let user;
+        
+        // Memory mode
+        if (useMemoryDB) {
+            user = memoryStore.users.find(u => u.id === req.user.id);
+            if (!user) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+            
+            // Verify current password
+            const isValid = await bcrypt.compare(currentPassword, user.password);
+            if (!isValid) {
+                return res.status(401).json({ error: 'Current password is incorrect' });
+            }
+            
+            // Hash new password
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            
+            // Update password in memory
+            user.password = hashedPassword;
+            saveStore();
+            
+            return res.json({ success: true, message: 'Password changed successfully' });
+        }
+        
+        // PostgreSQL mode
         const userResult = await pool.query('SELECT password FROM users WHERE id = $1', [req.user.id]);
         if (userResult.rows.length === 0) {
             return res.status(404).json({ error: 'User not found' });
         }
         
-        const user = userResult.rows[0];
+        user = userResult.rows[0];
         
         // Verify current password
         const isValid = await bcrypt.compare(currentPassword, user.password);

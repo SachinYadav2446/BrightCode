@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Settings as SettingsIcon, Save, Plus, X, LogOut, Shield, Info, Globe, Terminal, Mail, Calendar, ShieldCheck, ChevronRight, Layers } from 'lucide-react';
+import { ArrowLeft, User, Settings as SettingsIcon, Save, Plus, X, LogOut, Shield, Info, Globe, Terminal, Mail, Calendar, ShieldCheck, ChevronRight, Layers, Zap, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import './Settings.css';
@@ -37,6 +37,82 @@ const Settings = () => {
   const [isEditingStack, setIsEditingStack] = useState(false);
   const [newStackItem, setNewStackItem] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [useMemoryDB, setUseMemoryDB] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState('crimson');
+  const [selectedFont, setSelectedFont] = useState('poppins');
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Apply theme and font on mount
+  React.useEffect(() => {
+    const savedTheme = localStorage.getItem('app_theme') || 'crimson';
+    const savedFont = localStorage.getItem('app_font') || 'poppins';
+    setSelectedTheme(savedTheme);
+    setSelectedFont(savedFont);
+    applyTheme(savedTheme);
+    applyFont(savedFont);
+  }, []);
+
+  const applyTheme = (theme) => {
+    const root = document.documentElement;
+    if (theme === 'amber') {
+      // Orange theme colors
+      root.style.setProperty('--primary', '#fb923c');
+      root.style.setProperty('--primary-rgb', '251, 146, 60');
+      root.style.setProperty('--primary-dark', '#ea580c');
+      root.style.setProperty('--primary-dark-rgb', '234, 88, 12');
+      root.style.setProperty('--primary-light', '#fdba74');
+      root.style.setProperty('--primary-light-rgb', '253, 186, 116');
+      root.style.setProperty('--complementary', '#fef3c7'); // Light Gold/Sand
+      root.style.setProperty('--text-complementary', '#78350f'); // Deep Brown
+      root.style.setProperty('--bg-dark', '#161412'); // Warm Dark Roast
+      root.style.setProperty('--bg-surface', '#241f1c'); // Warm Surface
+    } else {
+      // Scarlet Flare colors
+      root.style.setProperty('--primary', '#ef4444');
+      root.style.setProperty('--primary-rgb', '239, 68, 68');
+      root.style.setProperty('--primary-dark', '#dc2626');
+      root.style.setProperty('--primary-dark-rgb', '220, 38, 38');
+      root.style.setProperty('--primary-light', '#f87171');
+      root.style.setProperty('--primary-light-rgb', '248, 113, 113');
+      root.style.setProperty('--complementary', '#faf5ee'); // Cream
+      root.style.setProperty('--text-complementary', '#1a1a1a'); // Dark Text
+      root.style.setProperty('--bg-dark', '#0f0f0f');
+      root.style.setProperty('--bg-surface', '#1a1a1a');
+    }
+  };
+
+  const handleThemeChange = (theme) => {
+    setSelectedTheme(theme);
+    localStorage.setItem('app_theme', theme);
+    
+    // Trigger cinematic transition
+    setIsTransitioning(true);
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 1000);
+  };
+
+  const applyFont = (font) => {
+    const root = document.documentElement;
+    const fonts = {
+      'poppins': "'Poppins', sans-serif",
+      'inter': "'Inter', sans-serif",
+      'outfit': "'Outfit', sans-serif",
+      'montserrat': "'Montserrat', sans-serif"
+    };
+    root.style.setProperty('--font-sans', fonts[font] || fonts['poppins']);
+  };
+
+  const handleFontChange = (font) => {
+    setSelectedFont(font);
+    localStorage.setItem('app_font', font);
+    
+    // Trigger cinematic transition
+    setIsTransitioning(true);
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 1000);
+  };
 
   if (!user) return null;
 
@@ -49,7 +125,6 @@ const Settings = () => {
         stack: user.stack // Keep current stack
       });
       if (res.success) {
-        toast.success('Bio updated');
         setIsEditingBio(false);
       } else {
         toast.error(res.error);
@@ -71,7 +146,6 @@ const Settings = () => {
       });
       if (res.success) {
         setFormData(prev => ({ ...prev, stack: newStack }));
-        toast.success('Stack updated');
       } else {
         toast.error(res.error);
       }
@@ -108,14 +182,31 @@ const Settings = () => {
   const handleLogout = () => {
     logout();
     navigate('/');
-    toast.success('Logged out securely');
+  };
+
+  const handleCloseModal = () => {
+    setShowConfigModal(false);
+    setConfigData({
+      username: user.username,
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
   };
 
   const handleConfigureProfile = async () => {
     setIsSaving(true);
     try {
+      let hasChanges = false;
+      
       // Update username if changed
       if (configData.username !== user.username) {
+        if (!configData.username.trim()) {
+          toast.error('Username cannot be empty');
+          setIsSaving(false);
+          return;
+        }
+        
         const res = await updateProfile({
           username: configData.username,
           bio: user.bio,
@@ -126,13 +217,25 @@ const Settings = () => {
           setIsSaving(false);
           return;
         }
-        toast.success('Username updated');
+        hasChanges = true;
       }
       
       // Change password if provided
       if (configData.newPassword) {
+        if (!configData.currentPassword) {
+          toast.error('Current password is required');
+          setIsSaving(false);
+          return;
+        }
+        
         if (configData.newPassword !== configData.confirmPassword) {
-          toast.error('Passwords do not match');
+          toast.error('New passwords do not match');
+          setIsSaving(false);
+          return;
+        }
+        
+        if (configData.newPassword.length < 6) {
+          toast.error('Password must be at least 6 characters');
           setIsSaving(false);
           return;
         }
@@ -143,9 +246,16 @@ const Settings = () => {
           setIsSaving(false);
           return;
         }
-        toast.success('Password changed successfully');
+        hasChanges = true;
       }
       
+      if (!hasChanges) {
+        toast.error('No changes to save');
+        setIsSaving(false);
+        return;
+      }
+      
+      // Close modal and reset form
       setShowConfigModal(false);
       setConfigData({
         username: user.username,
@@ -192,15 +302,8 @@ const Settings = () => {
 
         {/* Main Content Area */}
         <main className="settings-main">
-          {/* Top Bar */}
-          <div className="top-bar">
-            <button className="top-back-btn" onClick={() => navigate('/hub')}>
-              <ArrowLeft size={14} />
-              <span>Back to Hub</span>
-            </button>
-          </div>
-
-          <AnimatePresence mode="wait">            {activeTab === 'details' ? (
+          <AnimatePresence mode="wait">
+            {activeTab === 'details' ? (
               <motion.div
                 key="details"
                 initial={{ opacity: 0, y: 20 }}
@@ -229,13 +332,9 @@ const Settings = () => {
                     </div>
                   </div>
                   <div className="profile-actions">
-                    <button className="action-btn primary" onClick={() => setActiveTab('details')}>
+                    <button className="action-btn primary" onClick={() => setShowConfigModal(true)}>
                       <Terminal size={16} />
                       <span>Configure Profile</span>
-                    </button>
-                    <button className="action-btn danger" onClick={handleLogout}>
-                      <LogOut size={16} />
-                      <span>Sign Out</span>
                     </button>
                   </div>
                 </div>
@@ -349,37 +448,122 @@ const Settings = () => {
               >
                 {/* System Settings Content */}
                 <div className="section-title">
-                  <h1>System Settings</h1>
-                  <p>Environment configurations and security protocols.</p>
+                  <h1>System Configuration</h1>
+                  <p>Manage preferences, security, and application settings.</p>
                 </div>
 
-                <div className="settings-cards-grid">
-                  <div className="system-card">
-                    <div className="card-icon"><Shield size={24} /></div>
-                    <div className="card-info">
-                      <h3>Security Protocol</h3>
-                      <p>Active session protected via RSA-256 encryption.</p>
-                    </div>
+                {/* Theme Section */}
+                <div className="system-section">
+                  <div className="section-header">
+                    <h2>Theme</h2>
                   </div>
-                  <div className="system-card">
-                    <div className="card-icon"><Info size={24} /></div>
-                    <div className="card-info">
-                      <h3>System Version</h3>
-                      <p>v2.4.0-Stable Production Build</p>
+                  <div className="theme-selector">
+                    <div 
+                      className={`theme-option ${selectedTheme === 'crimson' ? 'active' : ''}`}
+                      onClick={() => handleThemeChange('crimson')}
+                    >
+                      <div className="theme-preview crimson-theme">
+                        <div className="preview-header"></div>
+                        <div className="preview-content">
+                          <div className="preview-sidebar"></div>
+                          <div className="preview-main">
+                            <div className="preview-line"></div>
+                            <div className="preview-line short"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="theme-info">
+                        <h3>Scarlet Flare</h3>
+                        <p>High-energy crimson</p>
+                      </div>
+                      <div className="theme-check">
+                        <ShieldCheck size={16} />
+                      </div>
+                    </div>
+
+                    <div 
+                      className={`theme-option ${selectedTheme === 'amber' ? 'active' : ''}`}
+                      onClick={() => handleThemeChange('amber')}
+                    >
+                      <div className="theme-preview amber-theme">
+                        <div className="preview-header"></div>
+                        <div className="preview-content">
+                          <div className="preview-sidebar"></div>
+                          <div className="preview-main">
+                            <div className="preview-line"></div>
+                            <div className="preview-line short"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="theme-info">
+                        <h3>Amber Glow</h3>
+                        <p>Radiant solar orange</p>
+                      </div>
+                      <div className="theme-check">
+                        <ShieldCheck size={16} />
+                      </div>
                     </div>
                   </div>
                 </div>
 
+                {/* Font Section */}
+                <div className="system-section">
+                  <div className="section-header">
+                    <h2>Font Style</h2>
+                  </div>
+                  <div className="font-selector">
+                    <div 
+                      className={`font-option ${selectedFont === 'poppins' ? 'active' : ''}`}
+                      onClick={() => handleFontChange('poppins')}
+                    >
+                      <div className="font-preview" style={{ fontFamily: "'Poppins', sans-serif" }}>Aa</div>
+                      <div className="font-info">
+                        <h3>Poppins</h3>
+                        <p>Modern Geometric</p>
+                      </div>
+                    </div>
+                    <div 
+                      className={`font-option ${selectedFont === 'inter' ? 'active' : ''}`}
+                      onClick={() => handleFontChange('inter')}
+                    >
+                      <div className="font-preview" style={{ fontFamily: "'Inter', sans-serif" }}>Aa</div>
+                      <div className="font-info">
+                        <h3>Inter</h3>
+                        <p>Clean Precision</p>
+                      </div>
+                    </div>
+                    <div 
+                      className={`font-option ${selectedFont === 'outfit' ? 'active' : ''}`}
+                      onClick={() => handleFontChange('outfit')}
+                    >
+                      <div className="font-preview" style={{ fontFamily: "'Outfit', sans-serif" }}>Aa</div>
+                      <div className="font-info">
+                        <h3>Outfit</h3>
+                        <p>Elegant Round</p>
+                      </div>
+                    </div>
+                    <div 
+                      className={`font-option ${selectedFont === 'montserrat' ? 'active' : ''}`}
+                      onClick={() => handleFontChange('montserrat')}
+                    >
+                      <div className="font-preview" style={{ fontFamily: "'Montserrat', sans-serif" }}>Aa</div>
+                      <div className="font-info">
+                        <h3>Montserrat</h3>
+                        <p>Classic Modern</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Danger Zone */}
                 <div className="danger-zone">
-                  <div className="danger-header">
-                    <div className="danger-icon"><LogOut size={20} /></div>
-                    <div className="danger-info">
-                      <h3>Terminate Connection</h3>
-                      <p>This will end your current secure session.</p>
-                    </div>
+                  <div className="danger-content">
+                    <h3>Sign Out</h3>
+                    <p>End your current session and return to landing page.</p>
                   </div>
                   <button className="logout-btn-large" onClick={handleLogout}>
-                    Sign Out Securely
+                    <LogOut size={18} />
+                    <span>Sign Out</span>
                   </button>
                 </div>
               </motion.div>
@@ -387,6 +571,135 @@ const Settings = () => {
           </AnimatePresence>
         </main>
       </div>
+
+      {/* Configure Profile Modal */}
+      <AnimatePresence>
+        {showConfigModal && (
+          <>
+            <motion.div 
+              className="modal-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleCloseModal}
+            />
+            <motion.div 
+              className="config-modal"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
+            >
+              <div className="config-modal-header">
+                <div className="config-header-icon">
+                  <Terminal size={20} />
+                </div>
+                <div>
+                  <h2>Configure Profile</h2>
+                  <p>Update your username and password</p>
+                </div>
+                <button className="modal-close-btn" onClick={handleCloseModal}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="config-modal-body">
+                <div className="config-input-group">
+                  <label>Username</label>
+                  <input 
+                    type="text"
+                    value={configData.username}
+                    onChange={(e) => setConfigData(prev => ({ ...prev, username: e.target.value }))}
+                    placeholder="Enter new username"
+                  />
+                </div>
+
+                <div className="config-divider">
+                  <span>Password Change (Optional)</span>
+                </div>
+
+                <div className="config-input-group">
+                  <label>Current Password</label>
+                  <input 
+                    type="password"
+                    value={configData.currentPassword}
+                    onChange={(e) => setConfigData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    placeholder="Enter current password"
+                  />
+                </div>
+
+                <div className="config-input-group">
+                  <label>New Password</label>
+                  <input 
+                    type="password"
+                    value={configData.newPassword}
+                    onChange={(e) => setConfigData(prev => ({ ...prev, newPassword: e.target.value }))}
+                    placeholder="Enter new password"
+                  />
+                </div>
+
+                <div className="config-input-group">
+                  <label>Confirm New Password</label>
+                  <input 
+                    type="password"
+                    value={configData.confirmPassword}
+                    onChange={(e) => setConfigData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    placeholder="Confirm new password"
+                  />
+                </div>
+              </div>
+
+              <div className="config-modal-footer">
+                <button className="config-btn cancel" onClick={handleCloseModal}>
+                  Cancel
+                </button>
+                <button 
+                  className="config-btn save" 
+                  onClick={handleConfigureProfile}
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {isTransitioning && (
+          <motion.div 
+            className="theme-transition-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="transition-content">
+              <motion.div 
+                className="transition-logo"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              >
+                <span className="logo-bright">BRIGHT</span>
+                <span className="logo-code">CODE</span>
+              </motion.div>
+              <motion.div 
+                className="transition-bar"
+                initial={{ width: 0 }}
+                animate={{ width: "200px" }}
+                transition={{ duration: 0.8, ease: "easeInOut" }}
+              />
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.7 }}
+                transition={{ delay: 0.5 }}
+              >
+                RECONFIGURING SYSTEM CORE...
+              </motion.p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

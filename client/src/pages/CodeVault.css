@@ -1,13 +1,13 @@
 :root {
-  --cv-bg: #0a0a0a;
+  --cv-bg: var(--bg-dark);
   --cv-sidebar-bg: #070707;
-  --cv-surface: #111111;
-  --cv-surface-elevated: #1a1a1a;
+  --cv-surface: var(--bg-surface);
+  --cv-surface-elevated: var(--bg-surface);
   --cv-border: rgba(255, 255, 255, 0.05);
-  --cv-border-hover: rgba(239, 68, 68, 0.2);
-  --cv-accent: #ef4444;
-  --cv-accent-hover: #f87171;
-  --cv-accent-glow: rgba(239, 68, 68, 0.4);
+  --cv-border-hover: rgba(var(--primary-rgb), 0.2);
+  --cv-accent: var(--primary);
+  --cv-accent-hover: var(--primary-light);
+  --cv-accent-glow: rgba(var(--primary-rgb), 0.4);
   --cv-text-primary: #ffffff;
   --cv-text-secondary: #a1a1aa;
   --cv-text-muted: #52525b;
@@ -52,7 +52,7 @@
   font-size: 16px;
   font-weight: 800;
   letter-spacing: 3px;
-  background: linear-gradient(to right, #ef4444, #f87171);
+  background: linear-gradient(to right, var(--primary), var(--primary-light));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 0;
@@ -106,14 +106,14 @@
 
 .sort-select-sidebar:hover {
   background-color: rgba(255, 255, 255, 0.05);
-  border-color: rgba(239, 68, 68, 0.4);
+  border-color: rgba(var(--primary-rgb), 0.4);
   color: var(--cv-text-primary);
   transform: translateY(-1px);
 }
 
 .sort-select-sidebar:focus {
   border-color: var(--cv-accent);
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
 }
 
 .sort-select-sidebar option {
@@ -241,7 +241,7 @@
 }
 
 .tree-item.active {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(var(--primary-rgb), 0.1);
   color: var(--cv-accent);
   font-weight: 600;
 }
@@ -333,7 +333,7 @@
 }
 
 .tree-item.active .item-count {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(var(--primary-rgb), 0.2);
   color: var(--cv-accent);
 }
 
@@ -370,7 +370,7 @@
 }
 
 .tree-action-delete:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(var(--primary-rgb), 0.2);
   border-color: var(--cv-accent);
   color: var(--cv-accent);
 }
@@ -476,7 +476,7 @@
 }
 
 .file-action-delete:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(var(--primary-rgb), 0.2);
   border-color: var(--cv-accent);
   color: var(--cv-accent);
 }
@@ -529,7 +529,7 @@
 .empty-icon-vault {
   margin-bottom: 24px;
   opacity: 0.2;
-  filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.1));
+  filter: drop-shadow(0 0 20px rgba(var(--primary-rgb), 0.1));
 }
 
 .empty-state-vault h3 {
@@ -618,7 +618,7 @@
 }
 
 .note-item-tag {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(var(--primary-rgb), 0.15);
   color: var(--cv-accent);
   padding: 2px 6px;
   border-radius: 4px;
@@ -773,7 +773,7 @@
 
 .quick-result-item:hover {
   border-color: var(--cv-accent);
-  background: rgba(239, 68, 68, 0.05);
+  background: rgba(var(--primary-rgb), 0.05);
   color: var(--cv-text-primary);
 }
 
@@ -902,8 +902,8 @@
 }
 
 .vault-modal-body input:focus {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
 }
 
 .modal-hint {
@@ -942,16 +942,16 @@
 }
 
 .vault-modal-btn.confirm {
-  background: #ef4444;
+  background: var(--primary);
   border: none;
   color: white;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
 }
 
 .vault-modal-btn.confirm:hover:not(:disabled) {
-  background: #dc2626;
+  background: var(--primary-dark);
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.4);
 }
 
 .vault-modal-btn.confirm:disabled {
@@ -989,13 +989,13 @@
 
 .sort-select-sidebar:hover {
   background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(239, 68, 68, 0.3);
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.1);
+  border-color: rgba(var(--primary-rgb), 0.3);
+  box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.1);
 }
 
 .sort-select-sidebar:focus {
   border-color: var(--cv-accent);
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.2);
 }
 
 .sort-arrow {
@@ -1013,7 +1013,7 @@
 }
 
 .sort-select-sidebar option {
-  background: #0f0f0f;
+  background: var(--bg-dark);
   color: #fff;
   padding: 12px;
 }

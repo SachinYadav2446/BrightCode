@@ -19,7 +19,7 @@
 
 .empty-icon {
   margin-bottom: 24px;
-  color: #ef4444;
+  color: var(--primary);
   opacity: 0.5;
 }
 
@@ -52,7 +52,7 @@
   align-items: center;
   gap: 12px;
   padding: 16px 24px;
-  background: linear-gradient(135deg, #ff4d4d 0%, #dc2626 100%);
+  background: linear-gradient(135deg, #ff4d4d 0%, var(--primary-dark) 100%);
   color: #fff;
   text-decoration: none;
   border-radius: 50px;

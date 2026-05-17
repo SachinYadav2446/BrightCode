@@ -62,7 +62,7 @@
   left: 0;
   width: 0;
   height: 2px;
-  background: #ef4444;
+  background: var(--primary);
   transition: width 0.25s ease;
 }
 
@@ -77,20 +77,20 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.3));
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.2), rgba(var(--primary-dark-rgb), 0.3));
+  border: 1px solid rgba(var(--primary-rgb), 0.4);
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .user-profile-pill:hover {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.4));
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.3), rgba(var(--primary-dark-rgb), 0.4));
   transform: scale(1.05);
 }
 
 .profile-initial {
-  color: #ef4444;
+  color: var(--primary);
   font-weight: 700;
   font-size: 1rem;
 }

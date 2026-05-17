@@ -25,7 +25,7 @@ const BattleArena = () => {
         'Multiple programming languages supported',
         'Instant feedback and code execution'
       ],
-      gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+      gradient: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)',
       route: '/code-wars'
     },
     {

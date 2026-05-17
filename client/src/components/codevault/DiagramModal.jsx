@@ -88,7 +88,7 @@ const DiagramModal = ({ onSave, onClose, initialData }) => {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 16px',
-        background: '#0a0a0a',
+        background: 'var(--bg-dark)',
         borderBottom: '1px solid rgba(255,255,255,0.07)',
         flexShrink: 0,
         zIndex: 10,
@@ -101,7 +101,7 @@ const DiagramModal = ({ onSave, onClose, initialData }) => {
           fontWeight: 700,
           letterSpacing: '2.5px',
           textTransform: 'uppercase',
-          color: '#ef4444',
+          color: 'var(--primary)',
           fontFamily: 'monospace',
         }}>
           ◈ DIAGRAM EDITOR
@@ -116,7 +116,7 @@ const DiagramModal = ({ onSave, onClose, initialData }) => {
               alignItems: 'center',
               gap: 6,
               padding: '7px 16px',
-              background: saving ? '#7f1d1d' : '#ef4444',
+              background: saving ? '#7f1d1d' : 'var(--primary)',
               border: 'none',
               borderRadius: 8,
               color: '#fff',

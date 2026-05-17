@@ -39,7 +39,7 @@ const GAME_MODES = {
         duration: 1800,
         questions: 8,
         icon: <Crown size={24} />,
-        color: '#ef4444'
+        color: 'var(--primary)'
     }
 };
 

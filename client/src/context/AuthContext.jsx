@@ -173,9 +173,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data } = await axios.post('http://localhost:5051/send-otp', 
         { email, username, type },
-        { timeout: 15000 } // 15 seconds timeout
+        { timeout: 40000 } // 40 seconds timeout
       );
-      return { success: true, message: data.message };
+      return { success: true, ...data };
     } catch (err) {
       if (err.code === 'ECONNABORTED') {
         return { success: false, error: 'Request timed out. Please check your connection or try again.' };

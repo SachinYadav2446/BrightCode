@@ -20,23 +20,32 @@ import {
 import { JAVA_LEVELS, CPP_LEVELS, PYTHON_LEVELS, GO_LEVELS, LANGUAGE_PHASES, LANGUAGE_THEORIES } from '../data/languageData';
 
 // ── SIDEBAR TABS CONFIG ───────────────────────────────────────────────
-const SIDEBAR_TABS = [
-    { id: 'language', label: 'Language', icon: Code2, active: true },
+const BASE_TABS = [
     { id: 'frontend', label: 'Frontend', icon: Layout, active: true },
-    { id: 'backend', label: 'Backend', icon: Server, active: true },
-    { id: 'curriculum', label: 'Curriculum', icon: GraduationCap, active: false },
-    { id: 'open-source', label: 'Open Source', icon: GitBranch, active: false },
-    { id: 'data-science', label: 'Data Science', icon: Database, active: false },
-    { id: 'ml', label: 'ML', icon: Brain, active: false },
+    { id: 'backend', label: 'Backend', icon: Server, active: false },
+    { id: 'language', label: 'Language', icon: Code2, active: false },
 ];
 
 // ── LIBRARY LOBBY (Sidebar + Content) ─────────────────────────────────
 const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentLvlIdx }) => {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState('language');
+    const [activeTab, setActiveTab] = useState('frontend');
+
+    // Dynamic Sidebar Tabs based on user email
+    const isMedhaviUser = user?.email?.endsWith('@medhaviskillsuniversity.edu.in');
+    const sidebarTabs = [...BASE_TABS];
+    
+    if (isMedhaviUser) {
+        sidebarTabs.push({ id: 'curriculum', label: 'Curriculum', icon: GraduationCap, active: false });
+    }
 
     // Map sidebar tab id → sections array id
-    const tabToSection = { language: 'language', frontend: 'frontend', backend: 'backend' };
+    const tabToSection = { 
+        language: 'language', 
+        frontend: 'frontend', 
+        backend: 'backend',
+        curriculum: 'curriculum'
+    };
     const currentSection = sections.find(s => s.id === tabToSection[activeTab]);
     const hasContent = Boolean(currentSection && currentSection.games.length > 0);
 
@@ -49,11 +58,11 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
             {/* ── Sidebar ── */}
             <aside className="library-sidebar">
                 <div className="sidebar-brand">
-                    <Layers size={18} color="#ef4444" />
+                    <Layers size={18} color="var(--primary)" />
                     <span>SKILL TRACKS</span>
                 </div>
                 <nav className="sidebar-nav">
-                    {SIDEBAR_TABS.map((tab) => {
+                    {sidebarTabs.map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;
                         return (
@@ -89,7 +98,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                 <div className="library-content-header">
                     <div>
                         <h1 className="lib-title">
-                            {SIDEBAR_TABS.find(t => t.id === activeTab)?.label}
+                            {sidebarTabs.find(t => t.id === activeTab)?.label}
                             <span className="lib-title-accent"> Track</span>
                         </h1>
                         <p className="lib-subtitle">
@@ -140,7 +149,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                                     >
                                         <div className="lib-module-top">
                                             <div className="lib-module-icon">
-                                                {React.cloneElement(game.icon, { size: 32, color: '#ef4444' })}
+                                                {React.cloneElement(game.icon, { size: 32, color: 'var(--primary)' })}
                                             </div>
                                             <div className="lib-module-badge">{game.subtitle}</div>
                                         </div>
@@ -159,7 +168,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                                                         animate={{ width: `${pct}%` }}
                                                         transition={{ duration: 1, ease: 'easeOut' }}
                                                         style={{ 
-                                                            background: pct >= 100 ? '#10b981' : '#ef4444',
+                                                            background: pct >= 100 ? '#10b981' : 'var(--primary)',
                                                             boxShadow: pct >= 100 ? '0 0 10px rgba(16, 185, 129, 0.4)' : '0 0 10px rgba(239, 68, 68, 0.3)'
                                                         }}
                                                     />
@@ -183,7 +192,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                             className="lib-coming-soon"
                         >
                             <div className="lib-soon-icon">
-                                {React.createElement(SIDEBAR_TABS.find(t => t.id === activeTab)?.icon || Lock, { size: 48, color: '#ef4444' })}
+                                {React.createElement(sidebarTabs.find(t => t.id === activeTab)?.icon || Lock, { size: 48, color: 'var(--primary)' })}
                             </div>
                             <h2>Coming Soon</h2>
                             <p>We're engineering world-class <strong>{SIDEBAR_TABS.find(t => t.id === activeTab)?.label}</strong> challenges.<br />Stay tuned — this track is being forged.</p>
@@ -247,12 +256,6 @@ const Arcade = () => {
 
     const sections = [
         {
-            id: 'language',
-            name: 'Language Fundamentals',
-            description: 'Master core programming language concepts and syntax.',
-            games: []
-        },
-        {
             id: 'frontend',
             name: 'Frontend Development',
             description: 'Master the art of building beautiful, responsive user interfaces and logical core.',
@@ -268,7 +271,18 @@ const Arcade = () => {
             description: 'Build robust server-side applications and APIs', 
             games: [] 
         },
-        { id: 'data-science', name: 'Data Science', description: 'Analyze data and build intelligent systems', games: [] }
+        {
+            id: 'language',
+            name: 'Language Fundamentals',
+            description: 'Master core programming language concepts and syntax.',
+            games: []
+        },
+        {
+            id: 'curriculum',
+            name: 'Academic Curriculum',
+            description: 'Specialized tracks designed for Medhavi Skills University students.',
+            games: []
+        }
     ];
 
     const [highestLevel, setHighestLevel] = useState(0);
@@ -742,7 +756,7 @@ const Arcade = () => {
                                                 setViewingSections(false);
                                             }}
                                         >
-                                            <Zap size={16} fill="#ef4444" color="#ef4444" />
+                                            <Zap size={16} fill="var(--primary)" color="var(--primary)" />
                                             <span>Resume from where you left off (Level {highestLevel + 1})</span>
                                         </motion.button>
                                 )}
@@ -831,7 +845,7 @@ const Arcade = () => {
                                                     initial={{ width: 0 }}
                                                     animate={{ width: `${phasePct}%` }}
                                                     transition={{ duration: 0.8, ease: 'easeOut' }}
-                                                    style={{ background: phasePct === 100 ? '#10b981' : (locked ? '#333' : '#ef4444') }}
+                                                    style={{ background: phasePct === 100 ? '#10b981' : (locked ? '#333' : 'var(--primary)') }}
                                                 />
                                             </div>
                                             <span className="phase-progress-label">{solvedInPhase}/{totalInPhase}</span>
@@ -1201,7 +1215,7 @@ const Arcade = () => {
                                     {modalConfig.type === 'success' ? (
                                         <CheckCircle2 size={32} color="#10b981" />
                                     ) : (
-                                        <AlertCircle size={32} color="#ef4444" />
+                                        <AlertCircle size={32} color="var(--primary)" />
                                     )}
                                 </div>
                                 <button className="modal-close-btn" onClick={() => setShowModal(false)}>

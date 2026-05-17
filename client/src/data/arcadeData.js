@@ -801,7 +801,7 @@ export const LOGIC_LEVELS = [
         title: 'Promise Any', 
         desc: 'Return the first promise to fulfill from `[p1, p2]`. If all reject, it throws.', 
         syntax: 'async function solution(p1, p2) {\n  return await Promise.any([p1, p2]);\n}',
-        testCases: [[Promise.reject('fail'), Promise.resolve('win'), 'win']], 
+        testCases: [['REJECTED_PROMISE', 'RESOLVED_PROMISE', 'win']], 
         params: 'p1, p2',
         isAsync: true
     },
@@ -1554,13 +1554,13 @@ export const PHASE_THEORIES = {
     'Fundamentals': { title: 'React Core', icon: React.createElement(Code2, { size: 40, color: "#818cf8" }), content: ['JSX syntax and Component logic.', 'Props for one-way data flow.', 'The Virtual DOM reconciliation process.'] },
     'Hooks': { title: 'Hooks Engine', icon: React.createElement(Zap, { size: 40, color: "#818cf8" }), content: ['useState for local state management.', 'useEffect for side-effect handling.', 'useMemo and useCallback for efficiency.'] },
     'Advanced': { title: 'Architect Patterns', icon: React.createElement(Layers, { size: 40, color: "#818cf8" }), content: ['Context API for global state.', 'Lazy loading and Code splitting.', 'Error Boundaries and Suspense.'] },
-    'StateFlux': { title: 'State Flux', icon: React.createElement(RefreshCw, { size: 40, color: "#ef4444" }), content: ['Redux, Zustand, and Global State.', 'Actions, Reducers, and Store logic.', 'Immutability and Selectors.'] },
-    'DataFetching': { title: 'Data Fetching', icon: React.createElement(Network, { size: 40, color: "#ef4444" }), content: ['React Query and SWR caching.', 'Axios and Fetch API integration.', 'Optimistic updates and Mutations.'] },
-    'SpeedMatrix': { title: 'Speed Matrix', icon: React.createElement(Zap, { size: 40, color: "#ef4444" }), content: ['Virtualization and Memoization.', 'Bundle optimization and Code splitting.', 'Core Web Vitals (LCP, CLS, FID).'] },
-    'RouterLab': { title: 'Router Lab', icon: React.createElement(Globe, { size: 40, color: "#ef4444" }), content: ['Client-side routing with React Router.', 'Dynamic params and Nested routes.', 'Protected routes and Loaders.'] },
-    'NextForge': { title: 'Next.js Forge', icon: React.createElement(Cpu, { size: 40, color: "#ef4444" }), content: ['App Router and Server Components.', 'Server Actions and API Routes.', 'SSR, SSG, and ISR strategies.'] },
-    'TheGuard': { title: 'The Guard', icon: React.createElement(Lock, { size: 40, color: "#ef4444" }), content: ['Unit testing with Jest and RTL.', 'Security basics (XSS, CSRF, CSP).', 'Validation schemas with Zod/Yup.'] },
-    'MasterArchitect': { title: 'Master Architect', icon: React.createElement(Trophy, { size: 40, color: "#ef4444" }), content: ['Design patterns (HOC, Compound).', 'TypeScript with React integration.', 'Clean Architecture and Micro-Frontends.'] }
+    'StateFlux': { title: 'State Flux', icon: React.createElement(RefreshCw, { size: 40, color: "var(--primary)" }), content: ['Redux, Zustand, and Global State.', 'Actions, Reducers, and Store logic.', 'Immutability and Selectors.'] },
+    'DataFetching': { title: 'Data Fetching', icon: React.createElement(Network, { size: 40, color: "var(--primary)" }), content: ['React Query and SWR caching.', 'Axios and Fetch API integration.', 'Optimistic updates and Mutations.'] },
+    'SpeedMatrix': { title: 'Speed Matrix', icon: React.createElement(Zap, { size: 40, color: "var(--primary)" }), content: ['Virtualization and Memoization.', 'Bundle optimization and Code splitting.', 'Core Web Vitals (LCP, CLS, FID).'] },
+    'RouterLab': { title: 'Router Lab', icon: React.createElement(Globe, { size: 40, color: "var(--primary)" }), content: ['Client-side routing with React Router.', 'Dynamic params and Nested routes.', 'Protected routes and Loaders.'] },
+    'NextForge': { title: 'Next.js Forge', icon: React.createElement(Cpu, { size: 40, color: "var(--primary)" }), content: ['App Router and Server Components.', 'Server Actions and API Routes.', 'SSR, SSG, and ISR strategies.'] },
+    'TheGuard': { title: 'The Guard', icon: React.createElement(Lock, { size: 40, color: "var(--primary)" }), content: ['Unit testing with Jest and RTL.', 'Security basics (XSS, CSRF, CSP).', 'Validation schemas with Zod/Yup.'] },
+    'MasterArchitect': { title: 'Master Architect', icon: React.createElement(Trophy, { size: 40, color: "var(--primary)" }), content: ['Design patterns (HOC, Compound).', 'TypeScript with React integration.', 'Clean Architecture and Micro-Frontends.'] }
 };
 
 // =================================================================

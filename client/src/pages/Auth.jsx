@@ -16,6 +16,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [otp, setOtp] = useState('');
+  const [devOtp, setDevOtp] = useState(''); // OTP shown inline when email fails
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { login, register, sendOTP } = useAuth();
@@ -34,7 +35,14 @@ const Auth = () => {
     
     const res = await sendOTP(email, username, 'register');
     if (res.success) {
-      toast.success('Verification code sent to your email');
+      if (res.devMode && res.otp) {
+        setDevOtp(res.otp);
+        setOtp(res.otp);
+        toast.success('Code ready! See it displayed on the next screen.');
+      } else {
+        setDevOtp('');
+        toast.success('Verification code sent to your email');
+      }
       setStep(2);
     } else {
       toast.error(res.error);
@@ -55,7 +63,6 @@ const Auth = () => {
                     localStorage.removeItem(key);
                 }
             });
-            toast.success('System Authenticated.');
             navigate('/hub');
           } else {
             toast.error(res.error);
@@ -68,7 +75,6 @@ const Auth = () => {
                     localStorage.removeItem(key);
                 }
             });
-            toast.success('Account Created!');
             setTimeout(async () => {
                 const autoLogin = await login(email, password);
                 if (autoLogin.success) navigate('/hub');
@@ -217,6 +223,12 @@ const Auth = () => {
                       className="form-step"
                     >
                       <div className="otp-container">
+                        {devOtp && (
+                          <div className="dev-otp-banner">
+                            <span className="dev-otp-label">📧 Email unavailable — your code:</span>
+                            <span className="dev-otp-code">{devOtp}</span>
+                          </div>
+                        )}
                         <div className="input-group">
                           <label>Verification Code</label>
                           <div className="input-wrapper">
@@ -254,17 +266,21 @@ const Auth = () => {
                 )}
               </button>
 
-              {!isLogin && step === 2 && (
+            </form>
+
+            {!isLogin && step === 2 && (
+              <div className="auth-step-back">
                 <button 
                   type="button" 
-                  className="back-btn" 
+                  className="back-btn-link" 
                   onClick={() => setStep(1)}
                   disabled={isSubmitting}
                 >
-                  Edit Details
+                  <ChevronLeft size={14} />
+                  <span>Edit registration details</span>
                 </button>
-              )}
-            </form>
+              </div>
+            )}
 
             {isLogin || step === 1 ? (
               <div className="auth-switch">

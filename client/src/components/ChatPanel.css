@@ -24,7 +24,7 @@
     gap: 10px;
 }
 
-.chat-icon-accent { color: #ef4444; }
+.chat-icon-accent { color: var(--primary); }
 
 .chat-title-text {
     font-size: 0.85rem;
@@ -108,7 +108,7 @@
 }
 
 .chat-msg-avatar.me {
-    background: #ef4444;
+    background: var(--primary);
     border: none;
     color: #fff;
 }
@@ -157,8 +157,8 @@
 }
 
 .chat-msg-wrapper.me .chat-msg-bubble {
-    background: rgba(239,68,68,0.09);
-    border: 1px solid rgba(239,68,68,0.22);
+    background: rgba(var(--primary-rgb), 0.09);
+    border: 1px solid rgba(var(--primary-rgb), 0.22);
     border-radius: 14px 4px 14px 14px;
     color: #fff;
 }
@@ -194,7 +194,7 @@
 .chat-send-btn {
     width: 42px;
     height: 42px;
-    background: #ef4444;
+    background: var(--primary);
     border: none;
     border-radius: 10px;
     color: #fff;
@@ -206,9 +206,9 @@
 }
 
 .chat-send-btn:hover:not(:disabled) {
-    background: #dc2626;
+    background: var(--primary-dark);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
 }
 
 .chat-send-btn:disabled {
