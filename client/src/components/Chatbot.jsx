@@ -5,135 +5,6 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import './Chatbot.css';
 
-/* ── BrightCode Pal — Clean, Modern Robot Mascot ── */
-const CyberpunkRobot = ({ size = 16 }) => {
-  const w = size;
-  const h = size;
-  return (
-    <svg width={w} height={h} viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        {/* BrightCode brand colors */}
-        <radialGradient id="headGlow" cx="40%" cy="35%">
-          <stop offset="0%" stopColor="#fca5a5" />
-          <stop offset="50%" stopColor="#f87171" />
-          <stop offset="100%" stopColor="#ef4444" />
-        </radialGradient>
-        <radialGradient id="bodyGlow" cx="40%" cy="35%">
-          <stop offset="0%" stopColor="#fb923c" />
-          <stop offset="50%" stopColor="#f97316" />
-          <stop offset="100%" stopColor="#ea580c" />
-        </radialGradient>
-        <radialGradient id="eyeShine" cx="35%" cy="35%">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="70%" stopColor="#fef3c7" />
-          <stop offset="100%" stopColor="#fde68a" />
-        </radialGradient>
-        <linearGradient id="accentGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#fbbf24" />
-          <stop offset="100%" stopColor="#f59e0b" />
-        </linearGradient>
-        <filter id="dropShadow">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-          <feOffset dx="0" dy="4" result="offsetblur"/>
-          <feFlood floodColor="#000000" floodOpacity="0.3"/>
-          <feComposite in2="offsetblur" operator="in"/>
-          <feMerge>
-            <feMergeNode/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-          <feMerge>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
-
-      {/* Antenna */}
-      <line x1="100" y1="20" x2="100" y2="8" stroke="#f97316" strokeWidth="4" strokeLinecap="round"/>
-      <circle cx="100" cy="6" r="6" fill="url(#accentGrad)" filter="url(#glow)"/>
-      <circle cx="100" cy="6" r="3" fill="#ffffff" opacity="0.9"/>
-
-      {/* Head - large and friendly */}
-      <circle cx="100" cy="60" r="40" fill="url(#headGlow)" filter="url(#dropShadow)"/>
-      
-      {/* Head highlight */}
-      <ellipse cx="85" cy="50" rx="20" ry="18" fill="#ffffff" opacity="0.35"/>
-      
-      {/* Eyes - big and expressive */}
-      <ellipse cx="82" cy="58" rx="12" ry="14" fill="url(#eyeShine)" filter="url(#dropShadow)"/>
-      <ellipse cx="118" cy="58" rx="12" ry="14" fill="url(#eyeShine)" filter="url(#dropShadow)"/>
-      
-      {/* Pupils */}
-      <circle cx="83" cy="60" r="7" fill="#1e293b"/>
-      <circle cx="119" cy="60" r="7" fill="#1e293b"/>
-      
-      {/* Eye highlights */}
-      <circle cx="80" cy="56" r="4" fill="#ffffff" opacity="0.95"/>
-      <circle cx="116" cy="56" r="4" fill="#ffffff" opacity="0.95"/>
-      <circle cx="86" cy="63" r="2" fill="#ffffff" opacity="0.7"/>
-      <circle cx="122" cy="63" r="2" fill="#ffffff" opacity="0.7"/>
-      
-      {/* Happy smile */}
-      <path d="M 75 72 Q 100 82 125 72" stroke="#dc2626" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.8"/>
-      
-      {/* Cheek blush */}
-      <ellipse cx="65" cy="68" rx="8" ry="6" fill="#fca5a5" opacity="0.5"/>
-      <ellipse cx="135" cy="68" rx="8" ry="6" fill="#fca5a5" opacity="0.5"/>
-
-      {/* Neck */}
-      <rect x="88" y="98" width="24" height="10" rx="6" fill="#ea580c"/>
-
-      {/* Body - rounded and friendly */}
-      <ellipse cx="100" cy="150" rx="42" ry="45" fill="url(#bodyGlow)" filter="url(#dropShadow)"/>
-      
-      {/* Body highlight */}
-      <ellipse cx="88" cy="135" rx="22" ry="25" fill="#ffffff" opacity="0.3"/>
-      
-      {/* Chest display */}
-      <rect x="82" y="140" width="36" height="26" rx="8" fill="#1e293b" opacity="0.5"/>
-      <rect x="84" y="142" width="32" height="22" rx="6" fill="#fbbf24" opacity="0.6"/>
-      
-      {/* Heart icon in chest */}
-      <circle cx="100" cy="153" r="7" fill="#ef4444" filter="url(#glow)"/>
-      <circle cx="100" cy="153" r="4" fill="#ffffff" opacity="0.8"/>
-
-      {/* Arms */}
-      <ellipse cx="52" cy="145" rx="12" ry="28" fill="#f97316" filter="url(#dropShadow)"/>
-      <ellipse cx="148" cy="145" rx="12" ry="28" fill="#f97316" filter="url(#dropShadow)"/>
-      
-      {/* Arm highlights */}
-      <ellipse cx="48" cy="135" rx="6" ry="14" fill="#ffffff" opacity="0.3"/>
-      <ellipse cx="144" cy="135" rx="6" ry="14" fill="#ffffff" opacity="0.3"/>
-      
-      {/* Hands */}
-      <circle cx="52" cy="175" r="10" fill="#fb923c" filter="url(#dropShadow)"/>
-      <circle cx="148" cy="175" r="10" fill="#fb923c" filter="url(#dropShadow)"/>
-
-      {/* Legs */}
-      <ellipse cx="82" cy="205" rx="14" ry="24" fill="#f97316" filter="url(#dropShadow)"/>
-      <ellipse cx="118" cy="205" rx="14" ry="24" fill="#f97316" filter="url(#dropShadow)"/>
-      
-      {/* Leg highlights */}
-      <ellipse cx="78" cy="195" rx="7" ry="12" fill="#ffffff" opacity="0.3"/>
-      <ellipse cx="114" cy="195" rx="7" ry="12" fill="#ffffff" opacity="0.3"/>
-
-      {/* Feet - yellow accent */}
-      <ellipse cx="82" cy="230" rx="16" ry="9" fill="url(#accentGrad)" filter="url(#dropShadow)"/>
-      <ellipse cx="118" cy="230" rx="16" ry="9" fill="url(#accentGrad)" filter="url(#dropShadow)"/>
-      
-      {/* Feet highlights */}
-      <ellipse cx="78" cy="228" rx="9" ry="4" fill="#ffffff" opacity="0.5"/>
-      <ellipse cx="114" cy="228" rx="9" ry="4" fill="#ffffff" opacity="0.5"/>
-      
-      {/* Shoe details */}
-      <ellipse cx="82" cy="231" rx="10" ry="5" fill="#fde68a" opacity="0.6"/>
-      <ellipse cx="118" cy="231" rx="10" ry="5" fill="#fde68a" opacity="0.6"/>
-    </svg>
-  );
-};
 
 const Chatbot = ({ context = {} }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -494,13 +365,13 @@ const Chatbot = ({ context = {} }) => {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             className="chatbot-fab"
             onClick={() => setIsOpen(true)}
             title="Chat with Pal"
           >
-            <CyberpunkRobot size={58} />
-            <div className="chatbot-fab-glow"></div>
+            <MessageSquare size={24} />
           </motion.button>
         )}
       </AnimatePresence>
@@ -516,9 +387,7 @@ const Chatbot = ({ context = {} }) => {
           >
             <div className="chatbot-header">
               <div className="chatbot-header-title">
-                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '24px', marginRight: '8px' }}>
-                  <CyberpunkRobot size={14} />
-                </div>
+                <Bot size={20} className="chatbot-header-icon" />
                 <span>Pal</span>
                 <span className="chatbot-status-dot"></span>
                 {isSpeaking && (
@@ -556,8 +425,8 @@ const Chatbot = ({ context = {} }) => {
                   animate={{ opacity: 1, y: 0 }}
                   className={`chatbot-message ${msg.type}`}
                 >
-                  <div className="chatbot-message-avatar" style={{ overflow: 'visible', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {msg.type === 'bot' ? <CyberpunkRobot size={14} /> : <User size={16} />}
+                  <div className="chatbot-message-avatar">
+                    {msg.type === 'bot' ? <Bot size={16} /> : <User size={16} />}
                   </div>
                   <div className="chatbot-message-content">
                     {msg.text.split('\n').map((line, i) => (
@@ -571,8 +440,8 @@ const Chatbot = ({ context = {} }) => {
               ))}
               {isTyping && (
                 <div className="chatbot-message bot">
-                  <div className="chatbot-message-avatar" style={{ overflow: 'visible', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <CyberpunkRobot size={14} />
+                  <div className="chatbot-message-avatar">
+                    <Bot size={16} />
                   </div>
                   <div className="chatbot-message-content typing-indicator">
                     <span></span><span></span><span></span>
