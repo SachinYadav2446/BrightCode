@@ -138,7 +138,7 @@
 
 .back-btn:hover {
     border-color: var(--primary);
-    color: var(--complementary);
+    color: var(--text-main);
     transform: translateX(-4px);
     box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.2);
 }
@@ -157,7 +157,7 @@
 .arena-title h1 {
     font-size: 25px;
     font-weight: 600;
-    color: var(--complementary);
+    color: var(--text-main);
     text-shadow: none;
     display: flex;
     align-items: center;
@@ -224,7 +224,7 @@
 
 .faction-name {
     font-weight: 800;
-    color: var(--complementary);
+    color: var(--text-main);
     font-size: 1.05rem;
 }
 
@@ -318,7 +318,7 @@
 .menu-section h2 {
     font-size: 1.75rem;
     font-weight: 800;
-    color: var(--complementary);
+    color: var(--text-main);
     margin-bottom: 10px;
     font-family: var(--font-sans), sans-serif;
 }
@@ -383,7 +383,7 @@
 .game-mode-card h3 {
     font-size: 1.4rem;
     font-weight: 800;
-    color: var(--complementary);
+    color: var(--text-main);
     margin-bottom: 8px;
 }
 
@@ -440,7 +440,7 @@
 
 .join-room-btn {
     background: transparent;
-    color: var(--complementary);
+    color: var(--text-main);
     border: 1px solid rgba(var(--primary-rgb), 0.3);
 }
 
@@ -465,7 +465,7 @@
 .faction-rooms-section h3 {
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--complementary);
+    color: var(--text-main);
     margin: 0;
     font-family: var(--font-sans), sans-serif;
 }
@@ -585,7 +585,7 @@
 
 .room-table-cell {
     font-size: 0.75rem;
-    color: var(--complementary);
+    color: var(--text-main);
     font-family: var(--font-sans), sans-serif;
     display: flex;
     align-items: center;
@@ -601,7 +601,7 @@
 .room-name-text {
     font-weight: 600;
     font-size: 0.8rem;
-    color: var(--complementary);
+    color: var(--text-main);
 }
 
 .room-id-small {
@@ -665,7 +665,7 @@
 .no-rooms h4 {
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--complementary);
+    color: var(--text-main);
     margin: 0 0 8px 0;
     font-family: var(--font-sans), sans-serif;
 }
@@ -716,7 +716,7 @@
 .queue-content h2 {
     font-size: 2rem;
     font-weight: 800;
-    color: var(--complementary);
+    color: var(--text-main);
     margin-bottom: 8px;
 }
 
@@ -738,7 +738,7 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 600;
 }
 
@@ -752,7 +752,7 @@
 }
 
 .queue-tips h4 {
-    color: var(--complementary);
+    color: var(--text-main);
     margin-bottom: 12px;
     font-weight: 700;
 }
@@ -789,7 +789,7 @@
 
 .leave-queue-btn:hover {
     border-color: var(--primary);
-    color: var(--complementary);
+    color: var(--text-main);
 }
 
 /* ── Game Interface ── */
@@ -1277,7 +1277,7 @@
 
 .language-dropdown {
     background: #2a2a2a;
-    color: var(--complementary);
+    color: var(--text-main);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 6px;
     padding: 6px 12px;
@@ -1301,7 +1301,7 @@
 
 .language-dropdown option {
     background: #2a2a2a;
-    color: var(--complementary);
+    color: var(--text-main);
 }
 
 .editor-toolbar {
@@ -1849,7 +1849,7 @@
     gap: 6px;
     font-size: 1rem;
     font-weight: 600;
-    color: var(--complementary);
+    color: var(--text-main);
     font-family: var(--font-sans), sans-serif;
 }
 
@@ -1886,7 +1886,7 @@
 .question-tab.active {
     border-color: var(--primary);
     background: rgba(var(--primary-rgb), 0.1);
-    color: var(--complementary);
+    color: var(--text-main);
 }
 
 .question-tab.completed {
@@ -1926,7 +1926,7 @@
 .question-header h3 {
     font-size: 1.4rem;
     font-weight: 800;
-    color: var(--complementary);
+    color: var(--text-main);
 }
 
 .question-meta {
@@ -1978,7 +1978,7 @@
 }
 
 .examples h4 {
-    color: var(--complementary);
+    color: var(--text-main);
     margin-bottom: 12px;
     font-weight: 700;
 }
@@ -1998,7 +1998,7 @@
 }
 
 .example strong {
-    color: var(--complementary);
+    color: var(--text-main);
 }
 
 /* ── Code Editor Panel ── */
@@ -2087,7 +2087,7 @@
     gap: 8px;
     padding: 16px 24px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 700;
     background: rgba(0, 0, 0, 0.2);
 }
@@ -2096,7 +2096,7 @@
     flex: 1;
     background: var(--bg-dark);
     border: none;
-    color: var(--complementary);
+    color: var(--text-main);
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.9rem;
     line-height: 1.5;
@@ -2283,7 +2283,7 @@
 
 .join-room-btn {
     background: rgba(17, 17, 17, 0.8);
-    color: var(--complementary);
+    color: var(--text-main);
     border: 2px solid rgba(var(--primary-rgb), 0.3);
     backdrop-filter: blur(10px);
 }
@@ -2333,7 +2333,7 @@
 .section-header h3 {
     font-size: 1.8rem;
     font-weight: 900;
-    color: var(--complementary);
+    color: var(--text-main);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -2375,7 +2375,7 @@
 
 .refresh-btn:hover {
     border-color: var(--primary);
-    color: var(--complementary);
+    color: var(--text-main);
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.3);
 }
@@ -2425,7 +2425,7 @@
 }
 
 .no-rooms h4 {
-    color: var(--complementary);
+    color: var(--text-main);
     margin-bottom: 12px;
     font-weight: 800;
     font-size: 1.3rem;
@@ -2507,7 +2507,7 @@
 }
 
 .room-header h4 {
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 900;
     font-size: 1.2rem;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -2563,7 +2563,7 @@
 }
 
 .room-card:hover .config-item {
-    color: var(--complementary);
+    color: var(--text-main);
     background: rgba(var(--primary-rgb), 0.1);
 }
 
@@ -2584,7 +2584,7 @@
 }
 
 .players-count {
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 800;
     font-size: 1rem;
     display: flex;
@@ -2643,7 +2643,7 @@
 }
 
 .join-room-card-btn:hover {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, #b91c1c 100%);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, color-mix(in srgb, var(--primary-dark) 70%, #000) 100%);
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.4);
 }
@@ -2688,7 +2688,7 @@
 .screen-header h2 {
     font-size: 1.6rem;
     font-weight: 900;
-    color: var(--complementary);
+    color: var(--text-main);
     background: linear-gradient(135deg, var(--complementary) 0%, var(--primary) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -2716,7 +2716,7 @@
 
 .back-btn-inline:hover {
     border-color: var(--primary);
-    color: var(--complementary);
+    color: var(--text-main);
     background: rgba(var(--primary-rgb), 0.1);
 }
 
@@ -2734,7 +2734,7 @@
 
 .privacy-buttons-inline label {
     display: block;
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 700;
     margin-bottom: 6px;
     font-size: 0.8rem;
@@ -2768,7 +2768,7 @@
 .privacy-btn.active {
     background: rgba(var(--primary-rgb), 0.15);
     border-color: rgba(var(--primary-rgb), 0.5);
-    color: var(--complementary);
+    color: var(--text-main);
     box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
 }
 
@@ -2788,7 +2788,7 @@
     border: 2px solid rgba(245, 158, 11, 0.4);
     border-radius: 8px;
     padding: 8px 12px;
-    color: var(--complementary);
+    color: var(--text-main);
     font-size: 0.85rem;
     transition: all 0.3s ease;
     font-weight: 500;
@@ -2868,7 +2868,7 @@
 
 .form-group label {
     display: block;
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 700;
     margin-bottom: 6px;
     font-size: 0.8rem;
@@ -2889,7 +2889,7 @@
     border: 2px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
     padding: 8px 32px 8px 12px;
-    color: var(--complementary);
+    color: var(--text-main);
     font-size: 0.85rem;
     transition: all 0.3s ease;
     font-weight: 500;
@@ -2919,7 +2919,7 @@
 
 .form-group select option {
     background: var(--bg-surface);
-    color: var(--complementary);
+    color: var(--text-main);
     padding: 8px;
 }
 
@@ -3060,7 +3060,7 @@
 }
 
 .room-info h2 {
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 700;
     margin-bottom: 8px;
     font-size: 1.4rem;
@@ -3225,7 +3225,7 @@
 }
 
 .team-header h3 {
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 600;
     font-size: 0.95rem;
     margin: 0;
@@ -3292,7 +3292,7 @@
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    color: var(--complementary);
+    color: var(--text-main);
     font-size: 0.85rem;
     border: 1px solid rgba(245, 240, 232, 0.2);
     flex-shrink: 0;
@@ -3312,7 +3312,7 @@
 }
 
 .player-name {
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 500;
     font-size: 0.85rem;
     display: flex;
@@ -3331,7 +3331,7 @@
     background: rgba(245, 240, 232, 0.06);
     border: 1px solid rgba(245, 240, 232, 0.2);
     border-radius: 0;
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 600;
     font-size: 0.85rem;
     cursor: pointer;
@@ -3392,7 +3392,7 @@
 }
 
 .spectators-section h4 {
-    color: var(--complementary);
+    color: var(--text-main);
     margin-bottom: 16px;
     font-weight: 800;
     font-size: 1.1rem;
@@ -3513,7 +3513,7 @@
 .score {
     font-size: 1.1rem;
     font-weight: 800;
-    color: var(--complementary);
+    color: var(--text-main);
 }
 
 /* Spectator View */
@@ -3531,7 +3531,7 @@
 }
 
 .spectator-header h2 {
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 800;
 }
 
@@ -3551,7 +3551,7 @@
 }
 
 .teams-scoreboard .team-score h3 {
-    color: var(--complementary);
+    color: var(--text-main);
     margin-bottom: 8px;
 }
 
@@ -3692,7 +3692,7 @@
 
 .privacy-title {
     font-weight: 700;
-    color: var(--complementary);
+    color: var(--text-main);
     font-size: 0.95rem;
 }
 
@@ -3882,7 +3882,7 @@
 }
 
 .rooms-count {
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 600;
     font-size: 0.9rem;
 }
@@ -4068,7 +4068,7 @@
 }
 
 .finished-message h2 {
-    color: var(--complementary);
+    color: var(--text-main);
     font-size: 2rem;
     font-weight: 900;
     margin-bottom: 12px;
@@ -4097,7 +4097,7 @@
 }
 
 .final-score p {
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 600;
     margin-bottom: 4px;
 }
@@ -4168,7 +4168,7 @@
 }
 
 .modal-content h3 {
-    color: var(--complementary);
+    color: var(--text-main);
     font-size: 1.8rem;
     font-weight: 900;
     margin-bottom: 16px;
@@ -4211,7 +4211,7 @@
 
 .cancel-btn:hover {
     border-color: rgba(255, 255, 255, 0.4);
-    color: var(--complementary);
+    color: var(--text-main);
     background: rgba(255, 255, 255, 0.05);
 }
 
@@ -4386,7 +4386,7 @@
 .waiting-content h2 {
     font-size: 2rem;
     font-weight: 900;
-    color: var(--complementary);
+    color: var(--text-main);
     margin-bottom: 12px;
 }
 
@@ -4424,7 +4424,7 @@
 .stat-value {
     font-size: 1.8rem;
     font-weight: 900;
-    color: var(--complementary);
+    color: var(--text-main);
     line-height: 1;
     margin-bottom: 8px;
 }
@@ -4440,7 +4440,7 @@
 }
 
 .players-status h3 {
-    color: var(--complementary);
+    color: var(--text-main);
     font-size: 1.3rem;
     font-weight: 800;
     margin-bottom: 20px;
@@ -4492,7 +4492,7 @@
 }
 
 .player-name {
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 700;
     margin-bottom: 4px;
 }
@@ -4583,7 +4583,7 @@
 .results-title h1 {
     font-size: 3rem;
     font-weight: 900;
-    color: var(--complementary);
+    color: var(--text-main);
     margin: 0;
 }
 
@@ -4608,7 +4608,7 @@
 }
 
 .personal-stats h2 {
-    color: var(--complementary);
+    color: var(--text-main);
     font-size: 1.3rem;
     font-weight: 700;
     margin-bottom: 20px;
@@ -4642,7 +4642,7 @@
 
 .stat-value-text {
     font-size: 1.1rem;
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 700;
 }
 
@@ -4656,7 +4656,7 @@
 }
 
 .team-rankings h2 {
-    color: var(--complementary);
+    color: var(--text-main);
     font-size: 1.3rem;
     font-weight: 700;
     margin-bottom: 20px;
@@ -4722,7 +4722,7 @@
 }
 
 .team-info h3 {
-    color: var(--complementary);
+    color: var(--text-main);
     font-size: 1.3rem;
     font-weight: 800;
     margin-bottom: 12px;
@@ -4789,7 +4789,7 @@
 }
 
 .player-result-name {
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 600;
     margin-bottom: 4px;
 }
@@ -4810,7 +4810,7 @@
 }
 
 .game-stats-summary h3 {
-    color: var(--complementary);
+    color: var(--text-main);
     font-size: 1.3rem;
     font-weight: 700;
     margin-bottom: 20px;
@@ -5075,7 +5075,7 @@
 .hero-title {
     font-size: 3.2rem;
     font-weight: 900;
-    color: var(--complementary);
+    color: var(--text-main);
     margin: 0;
     font-family: var(--font-sans), sans-serif;
     letter-spacing: -0.02em;
@@ -5188,7 +5188,7 @@
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(96, 165, 250, 0.3);
     border-radius: 8px;
-    color: var(--complementary);
+    color: var(--text-main);
     font-size: 0.85rem;
     font-weight: 600;
     font-family: var(--font-sans), sans-serif;
@@ -5301,7 +5301,7 @@
 
 .hero-btn.join-btn {
     background: rgba(96, 165, 250, 0.15);
-    color: var(--complementary);
+    color: var(--text-main);
     border: 2px solid rgba(96, 165, 250, 0.5);
     backdrop-filter: blur(10px);
 }
@@ -5428,7 +5428,7 @@
 }
 
 .refresh-table-btn:hover {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, #b91c1c 100%);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, color-mix(in srgb, var(--primary-dark) 70%, #000) 100%);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.4);
 }
@@ -5486,7 +5486,7 @@
 }
 
 .table-body::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, #b91c1c 100%);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, color-mix(in srgb, var(--primary-dark) 70%, #000) 100%);
 }
 
 /* Room Card Row */
@@ -5721,7 +5721,7 @@
     display: block;
     font-size: 0.95rem;
     font-weight: 700;
-    color: var(--complementary);
+    color: var(--text-main);
     margin-bottom: 0;
 }
 
@@ -5760,7 +5760,7 @@
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
-    color: var(--complementary);
+    color: var(--text-main);
     font-size: 0.95rem;
 }
 
@@ -5834,7 +5834,7 @@
 .room-title-section h2 {
     margin: 0;
     font-size: 1.5rem;
-    color: var(--complementary);
+    color: var(--text-main);
     font-family: var(--font-sans), sans-serif;
     font-weight: 700;
     letter-spacing: -0.5px;
@@ -5865,14 +5865,14 @@
 }
 
 .room-code button:hover {
-    color: var(--complementary);
+    color: var(--text-main);
 }
 
 .room-config {
     display: flex;
     align-items: center;
     gap: 12px;
-    color: var(--complementary);
+    color: var(--text-main);
     font-size: 0.95rem;
     font-family: var(--font-sans), sans-serif;
     font-weight: 600;
@@ -5956,7 +5956,7 @@
 .btn-start {
     background: var(--complementary);
     color: var(--bg-dark);
-    border-color: var(--complementary);
+    border-color: var(--text-main);
 }
 
 .btn-start:disabled {
@@ -6089,7 +6089,7 @@
 
 .score-badge {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: var(--complementary);
+    color: var(--text-main);
     padding: 0.25rem 0.75rem;
     border-radius: 12px;
     font-weight: 700;
@@ -6125,7 +6125,7 @@
 .category-breakdown h4 {
     margin: 0 0 1rem 0;
     font-size: 0.9rem;
-    color: var(--complementary);
+    color: var(--text-main);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -6206,7 +6206,7 @@
 .progress-percentage {
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--complementary);
+    color: var(--text-main);
 }
 
 .progress-bar-container {
@@ -6257,7 +6257,7 @@
 .submissions-header h3 {
     margin: 0;
     font-size: 1.1rem;
-    color: var(--complementary);
+    color: var(--text-main);
     font-weight: 600;
 }
 
@@ -6380,7 +6380,7 @@
 .submission-score .score-value {
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--complementary);
+    color: var(--text-main);
 }
 
 .submission-tests .tests-value {

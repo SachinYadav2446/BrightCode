@@ -107,7 +107,7 @@
 .profile-avatar {
   width: 52px;
   height: 52px;
-  background: linear-gradient(135deg, var(--primary), #991b1b);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -848,7 +848,7 @@
 }
 
 .config-btn.save:hover {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, #b91c1c 100%);
+  background: linear-gradient(135deg, var(--primary-dark) 0%, color-mix(in srgb, var(--primary-dark) 70%, #000) 100%);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.4);
 }
@@ -1048,18 +1048,66 @@
   background: rgba(239, 68, 68, 0.4);
 }
 
-/* Amber Theme (Orange) */
+/* Creeper Craft / Minecraft Theme preview */
+.theme-preview.amber-theme {
+  background: #2a2a2a;
+  image-rendering: pixelated;
+  background-image:
+    repeating-linear-gradient(0deg,   transparent, transparent 7px, rgba(0,0,0,0.4) 7px, rgba(0,0,0,0.4) 8px),
+    repeating-linear-gradient(90deg,  transparent, transparent 7px, rgba(0,0,0,0.4) 7px, rgba(0,0,0,0.4) 8px);
+  background-size: 8px 8px;
+}
+
 .theme-preview.amber-theme .preview-header {
-  background: rgba(251,146,60,0.1);
-  border-bottom: 1px solid rgba(251,146,60,0.2);
+  background: #5D9E3F;
+  border-bottom: 3px solid #2d4a1e;
 }
 
 .theme-preview.amber-theme .preview-sidebar {
-  background: rgba(251,146,60,0.05);
+  background: #4a4a4a;
+  border-right: 2px solid #2a2a2a;
 }
 
 .theme-preview.amber-theme .preview-line {
-  background: rgba(251,146,60,0.4);
+  background: #FFD700;
+  box-shadow: none;
+}
+
+/* Night City / Cyberpunk Theme preview */
+.theme-preview.neo-noir-theme {
+  background: #050508;
+  position: relative;
+  overflow: hidden;
+}
+.theme-preview.neo-noir-theme::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 217, 255, 0.03) 2px,
+    rgba(0, 217, 255, 0.03) 4px
+  );
+  pointer-events: none;
+}
+.theme-preview.neo-noir-theme .preview-header {
+  background: rgba(0, 217, 255, 0.08);
+  border-bottom: 1px solid #00d9ff;
+  box-shadow: 0 0 8px rgba(0, 217, 255, 0.4);
+}
+.theme-preview.neo-noir-theme .preview-sidebar {
+  background: rgba(255, 0, 128, 0.05);
+  border-right: 1px solid rgba(255, 0, 128, 0.4);
+}
+.theme-preview.neo-noir-theme .preview-line {
+  background: #00d9ff;
+  box-shadow: 0 0 6px #00d9ff;
+}
+.theme-preview.neo-noir-theme .preview-line.short {
+  background: #ff0080;
+  box-shadow: 0 0 6px #ff0080;
 }
 
 .preview-header {
@@ -1333,20 +1381,55 @@
 }
 
 .logo-code {
-  color: #ef4444; /* Default red for cinematic feel */
-  text-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
+  color: var(--primary); /* Dynamically uses the active theme's primary color */
+  text-shadow: 0 0 30px var(--primary-glow);
 }
 
 .transition-bar {
   height: 2px;
-  background: linear-gradient(90deg, transparent, #ef4444, transparent);
-  box-shadow: 0 0 20px #ef4444;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  box-shadow: 0 0 20px var(--primary-glow);
 }
 
 .transition-content p {
   font-size: 0.8rem;
   letter-spacing: 4px;
   font-weight: 600;
-  color: #ef4444;
+  color: var(--primary);
   text-transform: uppercase;
+}
+
+/* ── Creeper Craft card active state ── */
+.theme-minecraft .theme-option.active {
+  border-color: #FFD700 !important;
+  background: rgba(93, 158, 63, 0.08) !important;
+  box-shadow: 0 0 0 2px #5D9E3F, inset 0 0 20px rgba(255, 215, 0, 0.05) !important;
+}
+
+/* ── Creeper Craft theme card label ── */
+.theme-minecraft .theme-info h3 {
+  font-size: 0.5rem !important;
+  text-shadow: 2px 2px 0 #1a1a1a !important;
+  line-height: 2 !important;
+}
+.theme-minecraft .theme-info p {
+  font-size: 0.4rem !important;
+  color: #7a7a7a !important;
+  line-height: 2 !important;
+}
+
+/* ── Night City / Cyberpunk card active state ── */
+.theme-cyberpunk .theme-option.active {
+  border-color: #00d9ff !important;
+  background: rgba(0, 217, 255, 0.04) !important;
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.2), inset 0 0 20px rgba(0, 217, 255, 0.03) !important;
+}
+.theme-cyberpunk .theme-info h3 {
+  color: #e0f7ff !important;
+  text-shadow: 0 0 8px rgba(0, 217, 255, 0.4) !important;
+  letter-spacing: 2px !important;
+}
+.theme-cyberpunk .theme-info p {
+  color: #4a8a9a !important;
+  letter-spacing: 1px !important;
 }

@@ -24,7 +24,7 @@ const Settings = () => {
     bio: user?.bio || '',
     stack: user?.stack || []
   });
-  
+
   // Config Modal States
   const [configData, setConfigData] = useState({
     username: user?.username || '',
@@ -32,7 +32,7 @@ const Settings = () => {
     newPassword: '',
     confirmPassword: ''
   });
-  
+
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [isEditingStack, setIsEditingStack] = useState(false);
   const [newStackItem, setNewStackItem] = useState('');
@@ -44,7 +44,11 @@ const Settings = () => {
 
   // Apply theme and font on mount
   React.useEffect(() => {
-    const savedTheme = localStorage.getItem('app_theme') || 'crimson';
+    let savedTheme = localStorage.getItem('app_theme') || 'crimson';
+    if (savedTheme === 'cyber-neon') {
+      savedTheme = 'neo-noir';
+      localStorage.setItem('app_theme', 'neo-noir');
+    }
     const savedFont = localStorage.getItem('app_font') || 'poppins';
     setSelectedTheme(savedTheme);
     setSelectedFont(savedFont);
@@ -54,37 +58,79 @@ const Settings = () => {
 
   const applyTheme = (theme) => {
     const root = document.documentElement;
+    // Remove all theme classes first
+    root.classList.remove('theme-minecraft');
+    root.classList.remove('theme-cyberpunk');
+
     if (theme === 'amber') {
-      // Orange theme colors
-      root.style.setProperty('--primary', '#fb923c');
-      root.style.setProperty('--primary-rgb', '251, 146, 60');
-      root.style.setProperty('--primary-dark', '#ea580c');
-      root.style.setProperty('--primary-dark-rgb', '234, 88, 12');
-      root.style.setProperty('--primary-light', '#fdba74');
-      root.style.setProperty('--primary-light-rgb', '253, 186, 116');
-      root.style.setProperty('--complementary', '#fef3c7'); // Light Gold/Sand
-      root.style.setProperty('--text-complementary', '#78350f'); // Deep Brown
-      root.style.setProperty('--bg-dark', '#161412'); // Warm Dark Roast
-      root.style.setProperty('--bg-surface', '#241f1c'); // Warm Surface
+      // ── Minecraft / Amber theme ──────────────────────────────
+      root.classList.add('theme-minecraft');
+      root.style.setProperty('--primary', '#FFD700');
+      root.style.setProperty('--primary-rgb', '255, 215, 0');
+      root.style.setProperty('--primary-dark', '#c8a020');
+      root.style.setProperty('--primary-dark-rgb', '200, 160, 32');
+      root.style.setProperty('--primary-light', '#ffe566');
+      root.style.setProperty('--primary-light-rgb', '255, 229, 102');
+      root.style.setProperty('--primary-glow', 'rgba(255, 215, 0, 0.5)');
+      root.style.setProperty('--complementary', '#5D9E3F');
+      root.style.setProperty('--text-complementary', '#fffdd0');
+      root.style.setProperty('--panel-text', '#fffdd0');
+      root.style.setProperty('--bg-dark', '#1a1a1a');
+      root.style.setProperty('--bg-surface', '#3a3a3a');
+      root.style.setProperty('--text-main', '#fffdd0');
+      root.style.setProperty('--text-muted', '#7a7a7a');
+      root.style.setProperty('--text-hi', '#fffdd0');
+      root.style.setProperty('--text-mid', '#FFD700');
+      root.style.setProperty('--text-lo', '#8B6914');
+      root.style.setProperty('--font-sans', "'Press Start 2P', monospace");
+    } else if (theme === 'neo-noir') {
+      // ── Cyberpunk / Neo Noir theme ──────────────────────────────
+      root.classList.add('theme-cyberpunk');
+      root.style.setProperty('--primary', '#00d9ff');
+      root.style.setProperty('--primary-rgb', '0, 217, 255');
+      root.style.setProperty('--primary-dark', '#ff0080');
+      root.style.setProperty('--primary-dark-rgb', '255, 0, 128');
+      root.style.setProperty('--primary-light', '#66e8ff');
+      root.style.setProperty('--primary-light-rgb', '102, 232, 255');
+      root.style.setProperty('--primary-glow', 'rgba(0, 217, 255, 0.6)');
+      root.style.setProperty('--complementary', '#ff0080');
+      root.style.setProperty('--text-complementary', '#ffffff');
+      root.style.setProperty('--panel-text', '#00d9ff');
+      root.style.setProperty('--bg-dark', '#050508');
+      root.style.setProperty('--bg-surface', '#0a0a12');
+      root.style.setProperty('--text-main', '#e0f7ff');
+      root.style.setProperty('--text-muted', '#4a6a7a');
+      root.style.setProperty('--text-hi', '#ffffff');
+      root.style.setProperty('--text-mid', '#00d9ff');
+      root.style.setProperty('--text-lo', '#ff0080');
+      root.style.setProperty('--font-sans', "'Orbitron', 'Share Tech Mono', sans-serif");
     } else {
-      // Scarlet Flare colors
+      // ── Scarlet Flare theme (default) ──────────────────────────
       root.style.setProperty('--primary', '#ef4444');
       root.style.setProperty('--primary-rgb', '239, 68, 68');
       root.style.setProperty('--primary-dark', '#dc2626');
       root.style.setProperty('--primary-dark-rgb', '220, 38, 38');
       root.style.setProperty('--primary-light', '#f87171');
       root.style.setProperty('--primary-light-rgb', '248, 113, 113');
-      root.style.setProperty('--complementary', '#faf5ee'); // Cream
-      root.style.setProperty('--text-complementary', '#1a1a1a'); // Dark Text
+      root.style.setProperty('--primary-glow', 'rgba(239, 68, 68, 0.5)');
+      root.style.setProperty('--complementary', '#faf5ee');
+      root.style.setProperty('--text-complementary', '#1a1a1a');
+      root.style.setProperty('--panel-text', '#1a1a1a');
       root.style.setProperty('--bg-dark', '#0f0f0f');
       root.style.setProperty('--bg-surface', '#1a1a1a');
+      // Text variables – always set explicitly to prevent CSS cascade bugs
+      root.style.setProperty('--text-main', '#ffffff');
+      root.style.setProperty('--text-muted', '#a0a0a0');
+      root.style.setProperty('--text-hi', '#fffdd0');   // Cream – the Scarlet Flare signature
+      root.style.setProperty('--text-mid', '#f5f5dc');  // Light cream
+      root.style.setProperty('--text-lo', '#d2b48c');   // Tan
     }
   };
 
   const handleThemeChange = (theme) => {
     setSelectedTheme(theme);
     localStorage.setItem('app_theme', theme);
-    
+
     // Trigger cinematic transition
     setIsTransitioning(true);
     setTimeout(() => {
@@ -106,7 +152,7 @@ const Settings = () => {
   const handleFontChange = (font) => {
     setSelectedFont(font);
     localStorage.setItem('app_font', font);
-    
+
     // Trigger cinematic transition
     setIsTransitioning(true);
     setTimeout(() => {
@@ -198,7 +244,7 @@ const Settings = () => {
     setIsSaving(true);
     try {
       let hasChanges = false;
-      
+
       // Update username if changed
       if (configData.username !== user.username) {
         if (!configData.username.trim()) {
@@ -206,7 +252,7 @@ const Settings = () => {
           setIsSaving(false);
           return;
         }
-        
+
         const res = await updateProfile({
           username: configData.username,
           bio: user.bio,
@@ -219,7 +265,7 @@ const Settings = () => {
         }
         hasChanges = true;
       }
-      
+
       // Change password if provided
       if (configData.newPassword) {
         if (!configData.currentPassword) {
@@ -227,19 +273,19 @@ const Settings = () => {
           setIsSaving(false);
           return;
         }
-        
+
         if (configData.newPassword !== configData.confirmPassword) {
           toast.error('New passwords do not match');
           setIsSaving(false);
           return;
         }
-        
+
         if (configData.newPassword.length < 6) {
           toast.error('Password must be at least 6 characters');
           setIsSaving(false);
           return;
         }
-        
+
         const res = await changePassword(configData.currentPassword, configData.newPassword);
         if (!res.success) {
           toast.error(res.error);
@@ -248,13 +294,13 @@ const Settings = () => {
         }
         hasChanges = true;
       }
-      
+
       if (!hasChanges) {
         toast.error('No changes to save');
         setIsSaving(false);
         return;
       }
-      
+
       // Close modal and reset form
       setShowConfigModal(false);
       setConfigData({
@@ -276,14 +322,14 @@ const Settings = () => {
         {/* Left Sidebar */}
         <aside className="settings-sidebar">
           <nav className="sidebar-nav">
-            <button 
+            <button
               className={`nav-item ${activeTab === 'details' ? 'active' : ''}`}
               onClick={() => setActiveTab('details')}
             >
               <User size={20} />
               <span>Identity</span>
             </button>
-            <button 
+            <button
               className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
               onClick={() => setActiveTab('settings')}
             >
@@ -362,7 +408,7 @@ const Settings = () => {
                         <div className="bio-container">
                           {isEditingBio ? (
                             <div className="bio-edit-wrapper">
-                              <textarea 
+                              <textarea
                                 value={formData.bio}
                                 onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
                                 placeholder="Write your bio..."
@@ -399,8 +445,8 @@ const Settings = () => {
                               </div>
                             ))}
                             <div className="add-stack-wrapper">
-                              <input 
-                                type="text" 
+                              <input
+                                type="text"
                                 value={newStackItem}
                                 onChange={(e) => setNewStackItem(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && addStackItem()}
@@ -458,7 +504,7 @@ const Settings = () => {
                     <h2>Theme</h2>
                   </div>
                   <div className="theme-selector">
-                    <div 
+                    <div
                       className={`theme-option ${selectedTheme === 'crimson' ? 'active' : ''}`}
                       onClick={() => handleThemeChange('crimson')}
                     >
@@ -481,7 +527,7 @@ const Settings = () => {
                       </div>
                     </div>
 
-                    <div 
+                    <div
                       className={`theme-option ${selectedTheme === 'amber' ? 'active' : ''}`}
                       onClick={() => handleThemeChange('amber')}
                     >
@@ -496,8 +542,31 @@ const Settings = () => {
                         </div>
                       </div>
                       <div className="theme-info">
-                        <h3>Amber Glow</h3>
-                        <p>Radiant solar orange</p>
+                        <h3>Creeper Craft</h3>
+                        <p>Pixel block world</p>
+                      </div>
+                      <div className="theme-check">
+                        <ShieldCheck size={16} />
+                      </div>
+                    </div>
+
+                    <div
+                      className={`theme-option ${selectedTheme === 'neo-noir' ? 'active' : ''}`}
+                      onClick={() => handleThemeChange('neo-noir')}
+                    >
+                      <div className="theme-preview neo-noir-theme">
+                        <div className="preview-header"></div>
+                        <div className="preview-content">
+                          <div className="preview-sidebar"></div>
+                          <div className="preview-main">
+                            <div className="preview-line"></div>
+                            <div className="preview-line short"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="theme-info">
+                        <h3>Night City</h3>
+                        <p>Cyberpunk neon grid</p>
                       </div>
                       <div className="theme-check">
                         <ShieldCheck size={16} />
@@ -512,7 +581,7 @@ const Settings = () => {
                     <h2>Font Style</h2>
                   </div>
                   <div className="font-selector">
-                    <div 
+                    <div
                       className={`font-option ${selectedFont === 'poppins' ? 'active' : ''}`}
                       onClick={() => handleFontChange('poppins')}
                     >
@@ -522,7 +591,7 @@ const Settings = () => {
                         <p>Modern Geometric</p>
                       </div>
                     </div>
-                    <div 
+                    <div
                       className={`font-option ${selectedFont === 'inter' ? 'active' : ''}`}
                       onClick={() => handleFontChange('inter')}
                     >
@@ -532,7 +601,7 @@ const Settings = () => {
                         <p>Clean Precision</p>
                       </div>
                     </div>
-                    <div 
+                    <div
                       className={`font-option ${selectedFont === 'outfit' ? 'active' : ''}`}
                       onClick={() => handleFontChange('outfit')}
                     >
@@ -542,7 +611,7 @@ const Settings = () => {
                         <p>Elegant Round</p>
                       </div>
                     </div>
-                    <div 
+                    <div
                       className={`font-option ${selectedFont === 'montserrat' ? 'active' : ''}`}
                       onClick={() => handleFontChange('montserrat')}
                     >
@@ -576,14 +645,14 @@ const Settings = () => {
       <AnimatePresence>
         {showConfigModal && (
           <>
-            <motion.div 
+            <motion.div
               className="modal-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={handleCloseModal}
             />
-            <motion.div 
+            <motion.div
               className="config-modal"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -606,7 +675,7 @@ const Settings = () => {
               <div className="config-modal-body">
                 <div className="config-input-group">
                   <label>Username</label>
-                  <input 
+                  <input
                     type="text"
                     value={configData.username}
                     onChange={(e) => setConfigData(prev => ({ ...prev, username: e.target.value }))}
@@ -620,7 +689,7 @@ const Settings = () => {
 
                 <div className="config-input-group">
                   <label>Current Password</label>
-                  <input 
+                  <input
                     type="password"
                     value={configData.currentPassword}
                     onChange={(e) => setConfigData(prev => ({ ...prev, currentPassword: e.target.value }))}
@@ -630,7 +699,7 @@ const Settings = () => {
 
                 <div className="config-input-group">
                   <label>New Password</label>
-                  <input 
+                  <input
                     type="password"
                     value={configData.newPassword}
                     onChange={(e) => setConfigData(prev => ({ ...prev, newPassword: e.target.value }))}
@@ -640,7 +709,7 @@ const Settings = () => {
 
                 <div className="config-input-group">
                   <label>Confirm New Password</label>
-                  <input 
+                  <input
                     type="password"
                     value={configData.confirmPassword}
                     onChange={(e) => setConfigData(prev => ({ ...prev, confirmPassword: e.target.value }))}
@@ -653,8 +722,8 @@ const Settings = () => {
                 <button className="config-btn cancel" onClick={handleCloseModal}>
                   Cancel
                 </button>
-                <button 
-                  className="config-btn save" 
+                <button
+                  className="config-btn save"
                   onClick={handleConfigureProfile}
                   disabled={isSaving}
                 >
@@ -667,14 +736,14 @@ const Settings = () => {
       </AnimatePresence>
       <AnimatePresence>
         {isTransitioning && (
-          <motion.div 
+          <motion.div
             className="theme-transition-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <div className="transition-content">
-              <motion.div 
+              <motion.div
                 className="transition-logo"
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -683,13 +752,13 @@ const Settings = () => {
                 <span className="logo-bright">BRIGHT</span>
                 <span className="logo-code">CODE</span>
               </motion.div>
-              <motion.div 
+              <motion.div
                 className="transition-bar"
                 initial={{ width: 0 }}
                 animate={{ width: "200px" }}
                 transition={{ duration: 0.8, ease: "easeInOut" }}
               />
-              <motion.p 
+              <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 0.7 }}
                 transition={{ delay: 0.5 }}

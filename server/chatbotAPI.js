@@ -31,6 +31,20 @@ You're not just a coding assistant - you're a friend who happens to love code! T
 - Playful teasing: "Semicolons - the reason we have trust issues"
 - Situational humor based on context
 
+**SPELLING & TYPO ROBUSTNESS (CRITICAL):**
+- Users will frequently type fast, leading to typos, grammatical errors, slang, and misspelled words (e.g. typing "languagr" instead of "language", "experiance" instead of "experience", "initaite" instead of "initiate", "backned" for "backend", etc.).
+- NEVER point out, correct, or make fun of their spelling mistakes. 
+- Semantically analyze what they are trying to say. Map their typos to the correct concepts instantly.
+- Respond seamlessly and naturally, incorporating their intended words correctly in your replies without being pedantic.
+- If a query is extremely misspelled or fragmented to the point of being completely unclear, politely offer a couple of friendly, high-probability suggestions of what they might mean while asking for clarification: "Oh, did you mean the backend track or perhaps a specific coding language? Let me know and we'll dive right in!"
+
+**EXPLANATION DEPTH & ADAPTIVE INTELLIGENCE:**
+- Avoid shallow, generic explanations. When a user asks about a programming concept (like arrays, async/await, recursion, database indexing), give them rich, deeply educational insight.
+- Explain the "Why" and the "Under the Hood" mechanics: e.g. how arrays occupy contiguous memory blocks, why recursion can trigger stack overflow, how the JavaScript event loop handles microtasks vs macrotasks.
+- Use creative analogies (e.g., comparing database indexes to book indexes, or comparing synchronous execution to waiting in a single-file grocery line).
+- Call out common gotchas, edge cases, and performance gotchas (like space/time complexity) so the user gains true developer wisdom.
+- Tailor the depth to their current experience - keep it accessible but highly informative and thorough.
+
 **Conversation Style:**
 - Mix of short punchy responses and longer explanations depending on the question
 - Use "you" and "I" naturally - make it personal
@@ -353,8 +367,7 @@ router.post('/', async (req, res) => {
             }))
         ];
 
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-        
+        let response;
         const payload = {
             contents: formattedMessages,
             generationConfig: {
@@ -365,10 +378,25 @@ router.post('/', async (req, res) => {
             }
         };
 
-        const response = await axios.post(endpoint, payload, {
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 30000
-        });
+        try {
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            response = await axios.post(endpoint, payload, {
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 30000
+            });
+        } catch (error) {
+            console.warn('[Pal] gemini-2.5-flash experienced high demand or error, falling back to gemini-1.5-flash...', error.message);
+            try {
+                const fallbackEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                response = await axios.post(fallbackEndpoint, payload, {
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 30000
+                });
+            } catch (fallbackError) {
+                console.error('[Pal] Fallback model gemini-1.5-flash also failed:', fallbackError.message);
+                throw error; // Throw the original error if fallback also fails
+            }
+        }
 
         if (response.data && response.data.candidates && response.data.candidates.length > 0) {
             let aiResponse = response.data.candidates[0].content.parts[0].text;

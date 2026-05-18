@@ -2358,7 +2358,7 @@
 .confirm-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 30px rgba(var(--primary-rgb), 0.5);
-    background: linear-gradient(135deg, var(--primary-dark), #b91c1c);
+    background: linear-gradient(135deg, var(--primary-dark), color-mix(in srgb, var(--primary-dark) 70%, #000));
 }
 
 .confirm-btn:active {
