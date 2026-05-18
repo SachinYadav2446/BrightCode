@@ -934,7 +934,7 @@
 }
 
 .faction-cta-primary:hover {
-    background: #b91c1c;
+    background: var(--primary-dark);
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(var(--primary-dark-rgb), 0.4);
 }
@@ -1492,7 +1492,7 @@
 .benefit-card h3 {
     font-size: 1.1rem;
     font-weight: 900;
-    color: var(--complementary);
+    color: var(--text-main);
     margin: 0;
     letter-spacing: -0.01em;
 }
@@ -1981,7 +1981,7 @@
 }
 
 .hq-toggle-btn.active:hover {
-    background: #b91c1c;
+    background: var(--primary-dark);
 }
 
 .hq-toggle-btn svg {

@@ -356,11 +356,11 @@ const Home = () => {
 
 
   const getLevelInfo = (xp) => {
-    if (xp >= 10000) return { label: 'Grandmaster', color: '#ffd700' };
-    if (xp >= 5000)  return { label: 'Expert',      color: '#daa520' };
-    if (xp >= 2000)  return { label: 'Advanced',    color: '#cd853f' };
-    if (xp >= 500)   return { label: 'Apprentice',  color: '#d2b48c' };
-    return             { label: 'Initiate',    color: '#8b4513' };
+    if (xp >= 10000) return { label: 'Grandmaster', color: '#ffd700' };  // Gold
+    if (xp >= 5000)  return { label: 'Expert',      color: '#f97316' };  // Orange
+    if (xp >= 2000)  return { label: 'Advanced',    color: '#fb923c' };  // Light orange
+    if (xp >= 500)   return { label: 'Apprentice',  color: '#fbbf24' };  // Amber
+    return             { label: 'Initiate',    color: '#fffdd0' };  // Cream – visible on dark
   };
 
 

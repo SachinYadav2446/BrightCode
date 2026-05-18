@@ -15,23 +15,30 @@
 }
 
 :root {
-  --primary: #ffd700; /* Golden */
+  --primary: #ffd700;
+  /* Golden */
   --primary-glow: rgba(255, 215, 0, 0.3);
   --secondary: #daa520;
   --accent-gold: #ffd700;
 
-  --surface-0: #0a0202; /* Deepest Reddish Black */
+  --surface-0: #0a0202;
+  /* Deepest Reddish Black */
   --surface-1: #120505;
   --surface-2: #1a0808;
   --surface-3: #220c0c;
 
-  --border-sub: rgba(245, 245, 220, 0.08); /* Creamy border */
+  --border-sub: rgba(245, 245, 220, 0.08);
+  /* Creamy border */
   --border-mid: rgba(245, 245, 220, 0.15);
-  --border-hi: rgba(255, 215, 0, 0.25); /* Golden border */
+  --border-hi: rgba(255, 215, 0, 0.25);
+  /* Golden border */
 
-  --text-hi: #fffdd0; /* Cream */
-  --text-mid: #f5f5dc; /* Light Cream */
-  --text-lo: #d2b48c; /* Tan */
+  --text-hi: #fffdd0;
+  /* Cream */
+  --text-mid: #f5f5dc;
+  /* Light Cream */
+  --text-lo: #d2b48c;
+  /* Tan */
 
   --accent-white: #fffdd0;
   --accent-red: #8b0000;
@@ -4358,7 +4365,7 @@ html {
   .fame-view-all-wrapper {
     margin-top: 40px;
   }
-  
+
   .fame-view-all-btn {
     padding: 16px 32px;
     font-size: 0.95rem;
@@ -4373,32 +4380,38 @@ html {
     font-size: 0.85rem;
     gap: 8px;
   }
-  
+
   .fame-view-all-btn svg {
     width: 18px;
     height: 18px;
   }
 }
+
 /* -- Comprehensive Mobile Responsiveness -- */
 @media (max-width: 992px) {
   .home-dashboard-container {
     padding: 0 20px;
   }
+
   .home-stats-row {
     flex-direction: column;
     gap: 15px;
   }
+
   .support-container {
     flex-direction: column;
   }
+
   .support-form {
     width: 100%;
     padding: 0;
   }
+
   .support-info {
     width: 100%;
     padding-bottom: 20px;
   }
+
   .dev-details-grid {
     grid-template-columns: 1fr;
   }
@@ -4408,23 +4421,29 @@ html {
   .hero-title {
     font-size: 3rem;
   }
+
   .about-title {
     font-size: 2.5rem;
   }
+
   .home-welcome-text {
     font-size: 2rem;
   }
+
   .contribution-grid-wrapper {
     overflow-x: auto;
   }
+
   .contribution-scroll-container {
     min-width: 600px;
   }
+
   .nav-content {
     flex-direction: column;
     gap: 10px;
     padding: 15px;
   }
+
   .nav-links {
     flex-wrap: wrap;
     justify-content: center;
@@ -4435,6 +4454,7 @@ html {
   .home-welcome-text {
     font-size: 1.5rem !important;
   }
+
   .highlight {
     margin-left: 4px !important;
   }

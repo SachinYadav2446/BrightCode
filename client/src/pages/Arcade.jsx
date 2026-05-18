@@ -195,7 +195,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                                 {React.createElement(sidebarTabs.find(t => t.id === activeTab)?.icon || Lock, { size: 48, color: 'var(--primary)' })}
                             </div>
                             <h2>Coming Soon</h2>
-                            <p>We're engineering world-class <strong>{SIDEBAR_TABS.find(t => t.id === activeTab)?.label}</strong> challenges.<br />Stay tuned — this track is being forged.</p>
+                            <p>We're engineering world-class <strong>{sidebarTabs.find(t => t.id === activeTab)?.label}</strong> challenges.<br />Stay tuned — this track is being forged.</p>
                             <div className="lib-soon-chips">
                                 {['Challenges', 'Projects', 'Quizzes', 'Labs'].map(c => (
                                     <span key={c} className="lib-soon-chip">{c}</span>
