@@ -33,6 +33,35 @@ import { useAuth } from '../context/AuthContext';
 
 import CodeBrightLogo from '../components/CodeBrightLogo';
 
+// ── RemoteVideoTile: renders a remote participant's video ─────────────────────
+const RemoteVideoTile = ({ socketId, participant }) => {
+    const videoRef = useRef(null);
+
+    useEffect(() => {
+        if (videoRef.current && participant.stream) {
+            videoRef.current.srcObject = participant.stream;
+        }
+    }, [participant.stream]);
+
+    return (
+        <div className="vc-tile">
+            <video ref={videoRef} autoPlay playsInline className="vc-video" />
+            {(!participant.isVideoOn || !participant.stream) && (
+                <div className="vc-avatar-fallback">
+                    <span>{participant.username?.charAt(0).toUpperCase()}</span>
+                </div>
+            )}
+            <div className="vc-tile-label">
+                <span>{participant.username}</span>
+                <div className="vc-tile-icons">
+                    {participant.isMuted && <MicOff size={12} />}
+                    {!participant.isVideoOn && <VideoOff size={12} />}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 
 
@@ -181,23 +210,20 @@ const EditorPage = () => {
 
 
 
-    // ── FEATURE 1: Hologram Comms (WebRTC) ───────────────────────────────────
-
-    const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(false);
-
+    // ── FEATURE 1: Multi-User Video Call (WebRTC) ────────────────────────────
+    const [isVideoCallOpen, setIsVideoCallOpen] = useState(true); // Always open by default
     const [isCallActive, setIsCallActive] = useState(false);
-
     const [isMuted, setIsMuted] = useState(false);
-
-    const [isVideoOn, setIsVideoOn] = useState(false);
-
+    const [isVideoOn, setIsVideoOn] = useState(false); // Camera off by default
+    const [callParticipants, setCallParticipants] = useState({}); // socketId -> { username, stream, isMuted, isVideoOn }
     const localVideoRef = useRef(null);
-
-    const remoteVideoRef = useRef(null);
-
     const localStreamRef = useRef(null);
-
+    const peerConnectionsRef = useRef({}); // socketId -> RTCPeerConnection
+    // Keep legacy refs for backward compat
+    const remoteVideoRef = useRef(null);
     const peerConnectionRef = useRef(null);
+    const isVoiceChatOpen = isVideoCallOpen;
+    const setIsVoiceChatOpen = setIsVideoCallOpen;
 
 
 
@@ -556,26 +582,45 @@ const EditorPage = () => {
 
                 // ── WebRTC Signaling ─────────────────────────────────────────
 
-                socket.on('webrtc-offer', async ({ offer, from }) => handleIncomingCall(offer, from));
-
-                socket.on('webrtc-answer', async ({ answer }) => {
-
-                    if (peerConnectionRef.current) {
-
-                        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
-
-                    }
-
+                // ── Multi-User WebRTC Video Call Signaling ───────────────────
+                socket.on('webrtc-offer', async ({ offer, from }) => {
+                    await handleIncomingOffer(offer, from);
                 });
 
-                socket.on('webrtc-ice-candidate', async ({ candidate }) => {
-
-                    if (peerConnectionRef.current && candidate) {
-
-                        try { await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate)); } catch { }
-
+                socket.on('webrtc-answer', async ({ answer, from }) => {
+                    const pc = peerConnectionsRef.current[from];
+                    if (pc) {
+                        try { await pc.setRemoteDescription(new RTCSessionDescription(answer)); } catch {}
                     }
+                });
 
+                socket.on('webrtc-ice-candidate', async ({ candidate, from }) => {
+                    const pc = peerConnectionsRef.current[from];
+                    if (pc && candidate) {
+                        try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch {}
+                    }
+                });
+
+                // New peer joined the call — initiate connection to them
+                socket.on('video-call-user-joined', async ({ socketId, username }) => {
+                    toast(`${username} joined the call`, { icon: '📹' });
+                    if (localStreamRef.current) {
+                        await initiateCallToPeer(socketId, username);
+                    }
+                });
+
+                // Peer left the call
+                socket.on('video-call-user-left', ({ socketId, username }) => {
+                    toast(`${username} left the call`, { icon: '📵' });
+                    closePeerConnection(socketId);
+                });
+
+                // Peer toggled mute/video
+                socket.on('video-call-peer-state', ({ socketId, isMuted, isVideoOn, username }) => {
+                    setCallParticipants(prev => ({
+                        ...prev,
+                        [socketId]: { ...prev[socketId], isMuted, isVideoOn, username }
+                    }));
                 });
 
                 socket.on('call-ended', () => { endCall(); toast('Call ended by peer', { icon: '📵' }); });
@@ -609,6 +654,17 @@ const EditorPage = () => {
         };
 
     }, [roomId, user?.username, navigate]);
+
+    // Auto-join call when clients list is populated
+    useEffect(() => {
+        if (clients.length > 0 && !isCallActive && socketRef.current) {
+            // Small delay to ensure socket is fully ready
+            const timer = setTimeout(() => {
+                autoJoinCall();
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [clients.length]);
 
     // ── Auto-refresh Preview ──────────────────────────────────────────────────
     useEffect(() => {
@@ -1143,132 +1199,217 @@ const EditorPage = () => {
 
 
 
-    // ── FEATURE 1: WebRTC Hologram Comms ─────────────────────────────────────
+    // ── FEATURE 1: Multi-User WebRTC Video Call ──────────────────────────────
+
+    const STUN_SERVERS = { iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+    ]};
 
     const createPeerConnection = (targetId) => {
-
-        const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-
+        const pc = new RTCPeerConnection(STUN_SERVERS);
+        peerConnectionsRef.current[targetId] = pc;
+        // Legacy single ref
         peerConnectionRef.current = pc;
 
         pc.onicecandidate = (event) => {
-
             if (event.candidate && socketRef.current) {
-
                 socketRef.current.emit('webrtc-ice-candidate', { roomId, candidate: event.candidate, targetId });
-
             }
-
         };
 
         pc.ontrack = (event) => {
+            const stream = event.streams[0];
+            // Legacy single remote ref
+            if (remoteVideoRef.current) remoteVideoRef.current.srcObject = stream;
+            setCallParticipants(prev => ({
+                ...prev,
+                [targetId]: { ...prev[targetId], stream }
+            }));
+        };
 
-            if (remoteVideoRef.current) remoteVideoRef.current.srcObject = event.streams[0];
-
+        pc.onconnectionstatechange = () => {
+            if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+                closePeerConnection(targetId);
+            }
         };
 
         return pc;
-
     };
 
+    const closePeerConnection = (socketId) => {
+        const pc = peerConnectionsRef.current[socketId];
+        if (pc) { pc.close(); delete peerConnectionsRef.current[socketId]; }
+        setCallParticipants(prev => {
+            const updated = { ...prev };
+            delete updated[socketId];
+            return updated;
+        });
+    };
 
-
-    const startCall = async () => {
-
+    // Get local media stream (audio + optional video)
+    const getLocalStream = async (withVideo = true) => {
         try {
-
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideoOn });
-
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: withVideo });
             localStreamRef.current = stream;
-
             if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-
-            const target = clients.find(c => c.id !== myId);
-
-            if (!target) { toast.error('No other collaborator in room to call.'); stream.getTracks().forEach(t => t.stop()); return; }
-
-            const pc = createPeerConnection(target.id);
-
-            stream.getTracks().forEach(track => pc.addTrack(track, stream));
-
-            const offer = await pc.createOffer();
-
-            await pc.setLocalDescription(offer);
-
-            socketRef.current.emit('webrtc-offer', { roomId, offer, targetId: target.id });
-
-            setIsCallActive(true);
-
-            toast.success('Hologram Comms initiated...', { style: { background: '#1c1917', color: '#34d399' } });
-
+            return stream;
         } catch (err) {
+            // Try audio only if video fails
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                localStreamRef.current = stream;
+                if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+                return stream;
+            } catch {
+                console.log('Microphone/Camera access denied - user can enable later');
+                return null;
+            }
+        }
+    };
 
-            toast.error('Microphone/Camera access denied: ' + err.message);
-
+    // Auto-join the call when workspace loads
+    const autoJoinCall = async () => {
+        // Start with audio only, camera off by default
+        const stream = await getLocalStream(false);
+        if (!stream) {
+            // If no permissions, still mark as active but without stream
+            setIsCallActive(true);
+            return;
         }
 
+        setIsCallActive(true);
+
+        // Tell everyone we joined
+        socketRef.current?.emit('video-call-join', { roomId, username: user?.username });
+
+        // Connect to all existing participants in the room (except self)
+        const otherClients = clients.filter(c => c.id !== myId);
+        for (const client of otherClients) {
+            await initiateCallToPeer(client.id, client.username);
+        }
     };
 
+    // Initiate a peer connection and send offer
+    const initiateCallToPeer = async (targetId, targetUsername) => {
+        if (!localStreamRef.current) return;
+        const pc = createPeerConnection(targetId);
+        setCallParticipants(prev => ({
+            ...prev,
+            [targetId]: { username: targetUsername, stream: null, isMuted: false, isVideoOn: true }
+        }));
+        localStreamRef.current.getTracks().forEach(track => pc.addTrack(track, localStreamRef.current));
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socketRef.current?.emit('webrtc-offer', { roomId, offer, targetId });
+    };
 
-
-    const handleIncomingCall = async (offer, from) => {
-
-        try {
-
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideoOn });
-
-            localStreamRef.current = stream;
-
-            if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-
-            const pc = createPeerConnection(from);
-
-            stream.getTracks().forEach(track => pc.addTrack(track, stream));
-
-            await pc.setRemoteDescription(new RTCSessionDescription(offer));
-
-            const answer = await pc.createAnswer();
-
-            await pc.setLocalDescription(answer);
-
-            socketRef.current.emit('webrtc-answer', { roomId, answer, targetId: from });
-
+    // Handle incoming offer from a peer
+    const handleIncomingOffer = async (offer, from) => {
+        // Auto-get stream if not already in call
+        let stream = localStreamRef.current;
+        if (!stream) {
+            stream = await getLocalStream(isVideoOn);
+            if (!stream) return;
             setIsCallActive(true);
+            setIsVideoCallOpen(true);
+            socketRef.current?.emit('video-call-join', { roomId, username: user?.username });
+        }
 
-            setIsVoiceChatOpen(true);
+        const callerInfo = clients.find(c => c.id === from);
+        const pc = createPeerConnection(from);
+        setCallParticipants(prev => ({
+            ...prev,
+            [from]: { username: callerInfo?.username || 'Peer', stream: null, isMuted: false, isVideoOn: true }
+        }));
 
-            toast(`Incoming Hologram Comms — connection established`, { icon: '📡' });
+        stream.getTracks().forEach(track => pc.addTrack(track, stream));
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socketRef.current?.emit('webrtc-answer', { roomId, answer, targetId: from });
 
-        } catch { }
-
+        toast(`${callerInfo?.username || 'Someone'} joined the call`, { icon: '📹' });
     };
 
-
-
+    // Leave the call (only called when leaving workspace)
     const endCall = () => {
+        // Stop all local tracks
+        if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach(t => t.stop());
+            localStreamRef.current = null;
+        }
+        if (localVideoRef.current) localVideoRef.current.srcObject = null;
 
-        if (localStreamRef.current) { localStreamRef.current.getTracks().forEach(t => t.stop()); localStreamRef.current = null; }
+        // Close all peer connections
+        Object.keys(peerConnectionsRef.current).forEach(id => {
+            peerConnectionsRef.current[id]?.close();
+        });
+        peerConnectionsRef.current = {};
+        peerConnectionRef.current = null;
 
-        if (peerConnectionRef.current) { peerConnectionRef.current.close(); peerConnectionRef.current = null; }
-
+        setCallParticipants({});
         setIsCallActive(false);
+        setIsMuted(false);
 
-        socketRef.current?.emit('end-call', { roomId });
-
+        socketRef.current?.emit('video-call-leave', { roomId, username: user?.username });
     };
-
-
 
     const toggleMute = () => {
-
         if (localStreamRef.current) {
-
-            localStreamRef.current.getAudioTracks().forEach(t => { t.enabled = isMuted; });
-
-            setIsMuted(prev => !prev);
-
+            const newMuted = !isMuted;
+            localStreamRef.current.getAudioTracks().forEach(t => { t.enabled = !newMuted; });
+            setIsMuted(newMuted);
+            socketRef.current?.emit('video-call-state', { roomId, isMuted: newMuted, isVideoOn, username: user?.username });
         }
+    };
 
+    const toggleVideo = async () => {
+        if (!localStreamRef.current) {
+            // No stream yet, need to get camera access
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                localStreamRef.current = stream;
+                if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+                
+                // Add tracks to all existing peer connections
+                Object.values(peerConnectionsRef.current).forEach(pc => {
+                    stream.getTracks().forEach(track => {
+                        pc.addTrack(track, stream);
+                    });
+                });
+                
+                setIsVideoOn(true);
+                socketRef.current?.emit('video-call-state', { roomId, isMuted, isVideoOn: true, username: user?.username });
+            } catch (err) {
+                toast.error('Camera access denied');
+            }
+        } else {
+            const newVideoOn = !isVideoOn;
+            const videoTracks = localStreamRef.current.getVideoTracks();
+            
+            if (videoTracks.length > 0) {
+                videoTracks.forEach(t => { t.enabled = newVideoOn; });
+            } else if (newVideoOn) {
+                // Need to add video track
+                try {
+                    const videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    const videoTrack = videoStream.getVideoTracks()[0];
+                    localStreamRef.current.addTrack(videoTrack);
+                    
+                    // Add to all peer connections
+                    Object.values(peerConnectionsRef.current).forEach(pc => {
+                        pc.addTrack(videoTrack, localStreamRef.current);
+                    });
+                } catch (err) {
+                    toast.error('Camera access denied');
+                    return;
+                }
+            }
+            
+            setIsVideoOn(newVideoOn);
+            socketRef.current?.emit('video-call-state', { roomId, isMuted, isVideoOn: newVideoOn, username: user?.username });
+        }
     };
 
 
@@ -1787,85 +1928,103 @@ const EditorPage = () => {
                 )}
             </AnimatePresence>
 
-            {/* ── HOLOGRAM COMMS PiP ──────────────────────────────────────────── */}
+            {/* ── PRESENCE PANEL (Always Visible) ────────────────────────────────────────────── */}
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="presence-panel"
+            >
+                {/* Header */}
+                <div className="presence-header">
+                    <div className="presence-title">
+                        <Users size={14} />
+                        <span>Workspace</span>
+                        <span className="presence-count">{clients.length}</span>
+                    </div>
+                </div>
 
-            <AnimatePresence>
-
-                {isVoiceChatOpen && (
-
-                    <motion.div initial={{ opacity: 0, scale: 0.85, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.85, y: 20 }} className="hologram-pip">
-
-                        <div className="hologram-header">
-
-                            <div className="hologram-title"><span className="hologram-dot"></span> Hologram Comms</div>
-
-                            <button className="icon-btn" onClick={() => setIsVoiceChatOpen(false)}><Plus size={16} style={{ transform: 'rotate(45deg)' }} /></button>
-
-                        </div>
-
-                        <div className="hologram-video-area">
-
-                            <video ref={remoteVideoRef} autoPlay playsInline className="remote-video" />
-
-                            <video ref={localVideoRef} autoPlay playsInline muted className="local-video" />
-
-                            {!isCallActive && (
-
-                                <div className="hologram-idle">
-
-                                    <div className="idle-ring"></div>
-
-                                    <span>No active connection</span>
-
+                {/* Participants Grid */}
+                <div className="presence-grid">
+                    {/* Local user tile */}
+                    <div className="presence-tile">
+                        <div className="presence-video-container">
+                            <video ref={localVideoRef} autoPlay playsInline muted className="presence-video" />
+                            {!isVideoOn && (
+                                <div className="presence-avatar">
+                                    <span>{user?.username?.charAt(0).toUpperCase()}</span>
                                 </div>
-
                             )}
-
+                            <div className="presence-status-badge online" />
                         </div>
-
-                        <div className="hologram-controls">
-
-                            {isCallActive ? (
-
-                                <>
-
-                                    <button className={`holo-btn ${isMuted ? 'danger' : ''}`} onClick={toggleMute} title={isMuted ? 'Unmute' : 'Mute'}>
-
-                                        {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
-
-                                    </button>
-
-                                    <button className="holo-btn call-end" onClick={endCall} title="End Call">
-
-                                        <PhoneOff size={16} />
-
-                                    </button>
-
-                                    <button className={`holo-btn ${isVideoOn ? 'active-green' : ''}`} onClick={() => setIsVideoOn(v => !v)} title="Toggle Video">
-
-                                        {isVideoOn ? <Video size={16} /> : <VideoOff size={16} />}
-
-                                    </button>
-
-                                </>
-
-                            ) : (
-
-                                <button className="holo-btn holo-primary full-width" onClick={startCall}>
-
-                                    <Phone size={16} /> Start Hologram
-
-                                </button>
-
-                            )}
-
+                        <div className="presence-info">
+                            <span className="presence-name">{user?.username}</span>
+                            <span className="presence-you-tag">You</span>
                         </div>
+                    </div>
 
-                    </motion.div>
+                    {/* Remote participants */}
+                    {clients.filter(c => c.id !== myId).map(client => {
+                        const participant = callParticipants[client.id];
+                        return (
+                            <div key={client.id} className="presence-tile">
+                                <div className="presence-video-container">
+                                    {participant?.stream ? (
+                                        <>
+                                            <video
+                                                ref={el => {
+                                                    if (el && participant.stream) {
+                                                        el.srcObject = participant.stream;
+                                                    }
+                                                }}
+                                                autoPlay
+                                                playsInline
+                                                className="presence-video"
+                                            />
+                                            {!participant.isVideoOn && (
+                                                <div className="presence-avatar">
+                                                    <span>{client.username?.charAt(0).toUpperCase()}</span>
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <div className="presence-avatar">
+                                            <span>{client.username?.charAt(0).toUpperCase()}</span>
+                                        </div>
+                                    )}
+                                    <div className="presence-status-badge online" />
+                                    {participant?.isMuted && (
+                                        <div className="presence-muted-badge">
+                                            <MicOff size={10} />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="presence-info">
+                                    <span className="presence-name">{client.username}</span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
 
-                )}
-
-            </AnimatePresence>
+                {/* Quick Controls */}
+                <div className="presence-controls">
+                    <button
+                        className={`presence-control-btn ${isMuted ? 'muted' : ''}`}
+                        onClick={toggleMute}
+                        title={isMuted ? 'Unmute' : 'Mute'}
+                    >
+                        {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
+                    </button>
+                    <button
+                        className={`presence-control-btn ${!isVideoOn ? 'off' : ''}`}
+                        onClick={toggleVideo}
+                        title={isVideoOn ? 'Turn off camera' : 'Turn on camera'}
+                    >
+                        {isVideoOn ? <Video size={16} /> : <VideoOff size={16} />}
+                    </button>
+                </div>
+            </motion.div>
 
 
 
