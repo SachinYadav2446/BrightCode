@@ -22,7 +22,7 @@
       {
         "id": "edc9d6b9-ce68-4ecd-b255-dc306f3d7aa3",
         "username": "Sachin",
-        "xp": 1910,
+        "xp": 1960,
         "role": "member",
         "activity": {
           "2026-04-26": 15,
@@ -31,16 +31,18 @@
           "2026-04-29": 30,
           "2026-04-30": 1140,
           "2026-05-01": 20,
-          "2026-05-02": 20
+          "2026-05-02": 20,
+          "2026-05-19": 50
         }
       },
       {
         "id": "61f817b3-810f-48fa-b1bf-639d65034e97",
         "username": "Soham",
-        "xp": 260,
+        "xp": 270,
         "role": "member",
         "activity": {
-          "2026-04-20": 150
+          "2026-04-20": 150,
+          "2026-05-18": 10
         }
       },
       {
@@ -60,6 +62,13 @@
     ],
     "createdAt": "2026-04-26T17:45:46.209Z",
     "isPublic": false,
-    "pendingMembers": []
+    "pendingMembers": [
+      {
+        "id": "37b6f1eb-f6d6-48e5-aaac-1c59ce029d13",
+        "username": "Nothing",
+        "xp": 30,
+        "requestedAt": "2026-05-19T15:06:49.438Z"
+      }
+    ]
   }
 ]

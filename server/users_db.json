@@ -9,21 +9,26 @@
       "css_level": 0,
       "logic_level": 0,
       "react_level": 0,
-      "mern_level": 0
+      "mern_level": 0,
+      "bio": "",
+      "stack": []
     },
     {
       "id": "61f817b3-810f-48fa-b1bf-639d65034e97",
       "username": "Soham",
       "email": "xyz@gmail.com",
       "password": "$2b$10$BsowmLD8hniaMcAvre/QeeFfIc5yk7ZSr5rSQEdc/OLAE3EqZG2Yq",
-      "xp": 260,
+      "xp": 270,
       "css_level": 0,
       "logic_level": 0,
       "react_level": 2,
       "mern_level": 0,
       "activity": {
-        "2026-04-20": 150
-      }
+        "2026-04-20": 150,
+        "2026-05-18": 10
+      },
+      "bio": "",
+      "stack": []
     },
     {
       "id": "952407e1-83b1-4ddf-8d2e-adf3637c38f3",
@@ -40,7 +45,9 @@
         "2026-04-21": 90,
         "2026-04-26": 15,
         "2026-04-27": 5
-      }
+      },
+      "bio": "",
+      "stack": []
     },
     {
       "id": "537d7e56-0e59-45ed-8b54-2d8d59334d2d",
@@ -51,7 +58,9 @@
       "css_level": 0,
       "logic_level": 2,
       "react_level": 0,
-      "mern_level": 0
+      "mern_level": 0,
+      "bio": "",
+      "stack": []
     },
     {
       "id": "5cbba4f1-63a8-445f-be5f-75e982fa7627",
@@ -62,7 +71,9 @@
       "css_level": 0,
       "logic_level": 2,
       "react_level": 0,
-      "mern_level": 0
+      "mern_level": 0,
+      "bio": "",
+      "stack": []
     },
     {
       "id": "b0cafd5a-915f-49fa-8593-445740eb39ca",
@@ -73,7 +84,9 @@
       "css_level": 0,
       "logic_level": 0,
       "react_level": 0,
-      "mern_level": 0
+      "mern_level": 0,
+      "bio": "",
+      "stack": []
     },
     {
       "id": "7dbf7376-7700-45b4-8e9f-26fc0df9eee7",
@@ -84,7 +97,9 @@
       "css_level": 0,
       "logic_level": 0,
       "react_level": 0,
-      "mern_level": 0
+      "mern_level": 0,
+      "bio": "",
+      "stack": []
     },
     {
       "id": "a918cbd8-3cff-473a-a9f0-137906c5e5cd",
@@ -101,7 +116,10 @@
       },
       "joinedAt": "2026-04-21T10:07:16.530Z",
       "joined_count": 1,
-      "created_count": 7
+      "created_count": 7,
+      "bio": "",
+      "stack": [],
+      "created_at": "2026-04-21T10:07:16.530Z"
     },
     {
       "id": "0fa590c1-9cad-41e6-87b3-d9a869d751e5",
@@ -114,17 +132,20 @@
       "react_level": 0,
       "mern_level": 0,
       "activity": {},
-      "joinedAt": "2026-04-21T16:04:05.179Z"
+      "joinedAt": "2026-04-21T16:04:05.179Z",
+      "bio": "",
+      "stack": [],
+      "created_at": "2026-04-21T16:04:05.179Z"
     },
     {
       "id": "edc9d6b9-ce68-4ecd-b255-dc306f3d7aa3",
       "username": "Sachin",
       "email": "yadavsachin123411@gmail.com",
       "password": "$2b$10$JcCvBpz7.Fzu37eh5qxib.Ev9mCKeWCjbQRAfXoHMYrshmhUsZSvG",
-      "xp": 1910,
+      "xp": 1960,
       "css_level": 8,
       "logic_level": 6,
-      "react_level": 72,
+      "react_level": 77,
       "mern_level": 14,
       "activity": {
         "2026-04-26": 15,
@@ -133,11 +154,17 @@
         "2026-04-29": 30,
         "2026-04-30": 1140,
         "2026-05-01": 20,
-        "2026-05-02": 20
+        "2026-05-02": 20,
+        "2026-05-19": 50
       },
       "joinedAt": "2026-04-25T11:35:08.241Z",
       "created_count": 1,
-      "java_level": 81
+      "java_level": 81,
+      "bio": "Nothing\n",
+      "stack": [
+        "FrontEnd"
+      ],
+      "created_at": "2026-04-25T11:35:08.241Z"
     },
     {
       "id": "7897730e-7731-4bc9-bcf0-0fa3ecf526d9",
@@ -150,7 +177,10 @@
       "react_level": 0,
       "mern_level": 0,
       "activity": {},
-      "joinedAt": "2026-05-01T20:00:52.191Z"
+      "joinedAt": "2026-05-01T20:00:52.191Z",
+      "bio": "",
+      "stack": [],
+      "created_at": "2026-05-01T20:00:52.191Z"
     },
     {
       "id": "d1841961-f1a9-4597-8c5e-52871b23580a",
@@ -163,7 +193,28 @@
       "react_level": 0,
       "mern_level": 0,
       "activity": {},
-      "joinedAt": "2026-05-01T20:26:23.149Z"
+      "joinedAt": "2026-05-01T20:26:23.149Z",
+      "bio": "",
+      "stack": [],
+      "created_at": "2026-05-01T20:26:23.149Z"
+    },
+    {
+      "id": "37b6f1eb-f6d6-48e5-aaac-1c59ce029d13",
+      "username": "Nothing",
+      "email": "sachin.p24@medhaviskillsuniversity.edu.in",
+      "password": "$2b$10$9G1Mq8mXvK2v7uSFzZsytuhM/x2eMuvDti3nXI3gjjdoW4QynbBg.",
+      "xp": 30,
+      "css_level": 0,
+      "logic_level": 0,
+      "react_level": 0,
+      "mern_level": 0,
+      "activity": {
+        "2026-05-19": 30
+      },
+      "joinedAt": "2026-05-19T11:17:23.664Z",
+      "bio": "",
+      "stack": [],
+      "created_at": "2026-05-19T11:17:23.664Z"
     }
   ]
 }
