@@ -14,6 +14,7 @@ import Workspace from './pages/Workspace';
 import CodeVault from './pages/CodeVault';
 import CodeWarsArena from './pages/CodeWarsArena';
 import BattleArena from './pages/BattleArena';
+import UserModule from './pages/UserModule';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
@@ -110,7 +111,7 @@ const applyGlobalTheme = (theme) => {
     root.style.setProperty('--primary-light', '#f87171');
     root.style.setProperty('--primary-light-rgb', '248, 113, 113');
     root.style.setProperty('--primary-glow', 'rgba(239, 68, 68, 0.5)');
-    root.style.setProperty('--complementary', '#faf5ee');
+    root.style.setProperty('--complementary', '#fdf5e6');
     root.style.setProperty('--text-complementary', '#1a1a1a');
     root.style.setProperty('--panel-text', '#1a1a1a');
     root.style.setProperty('--bg-dark', '#0f0f0f');
@@ -158,7 +159,15 @@ const applyScarletFlare = () => {
   root.style.setProperty('--text-hi', '#fffdd0');
   root.style.setProperty('--text-mid', '#f5f5dc');
   root.style.setProperty('--text-lo', '#d2b48c');
-  root.style.setProperty('--font-sans', "'Poppins', sans-serif");
+  
+  const savedFont = localStorage.getItem('app_font') || 'poppins';
+  const fonts = {
+    'poppins': "'Poppins', sans-serif",
+    'inter': "'Inter', sans-serif",
+    'outfit': "'Outfit', sans-serif",
+    'montserrat': "'Montserrat', sans-serif"
+  };
+  root.style.setProperty('--font-sans', fonts[savedFont] || fonts['poppins']);
 };
 
 // Watches route changes and applies correct theme
@@ -320,6 +329,10 @@ function App() {
                   <CodeWarsArena />
                 </ProtectedRoute>
               } 
+            />
+            <Route 
+              path="/user-guide" 
+              element={<UserModule />} 
             />
             {/* Catch-all: redirect any unknown path to landing */}
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -15,6 +15,7 @@ const Navbar = () => {
     if (path.startsWith('/workspace')) return 'workspace';
     if (path.startsWith('/codevault')) return 'codevault';
     if (path.startsWith('/factions')) return 'factions';
+    if (path.startsWith('/user-guide')) return 'guide';
     return '';
   };
 
