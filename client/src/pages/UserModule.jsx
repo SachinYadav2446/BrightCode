@@ -1,19 +1,20 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft, BookOpen, Rocket, Gamepad2,
-  Layout, Sword, Shield, Zap, Globe, Code2, Users,
+  ArrowLeft, BookOpen, Rocket,
+  Layout, Sword, Shield, Zap, Globe, Users,
   Activity, ChevronDown, ChevronRight, ExternalLink,
-  FileText, Image, GitBranch, Bot, Keyboard, LifeBuoy, Star
+  FileText, Image, GitBranch, Bot, Keyboard, LifeBuoy,
+  Search, Play
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "./UserModule.css";
 
 const navSections = [
   { id: "getting-started", icon: "Rocket", label: "Getting Started" },
   { id: "account", icon: "Shield", label: "Account Management" },
   { id: "workspace", icon: "Layout", label: "Collaborative Workspace" },
-  { id: "learning", icon: "Gamepad2", label: "Learning Modules" },
   { id: "codevault", icon: "FileText", label: "CodeVault Notes" },
   { id: "rich-editor", icon: "BookOpen", label: "Rich Text Editor" },
   { id: "diagrams", icon: "Image", label: "Diagram Creation" },
@@ -27,7 +28,7 @@ const navSections = [
 
 const iconMap = {
   Rocket: <Rocket size={18} />, Shield: <Shield size={18} />,
-  Layout: <Layout size={18} />, Gamepad2: <Gamepad2 size={18} />,
+  Layout: <Layout size={18} />,
   FileText: <FileText size={18} />, BookOpen: <BookOpen size={18} />,
   Image: <Image size={18} />, Bot: <Bot size={18} />,
   GitBranch: <GitBranch size={18} />, Activity: <Activity size={18} />,
@@ -90,7 +91,22 @@ const ShortcutRow = ({ keys, action }) => (
 
 const UserModule = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
   const [activeSection, setActiveSection] = useState("getting-started");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleBack = () => {
+    const returnTo = location.state?.returnTo;
+    const activeTab = location.state?.activeTab || "details";
+    if (returnTo) {
+      navigate(returnTo, { state: { activeTab } });
+    } else if (user) {
+      navigate("/settings", { state: { activeTab: "details" } });
+    } else {
+      navigate("/");
+    }
+  };
 
   const handleNavClick = (id) => {
     setActiveSection(id);
@@ -98,31 +114,34 @@ const UserModule = () => {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  // Filter sections based on search
+  const filteredSections = navSections.filter(sec =>
+    sec.label.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="user-module-page">
-      {/* Top Nav */}
-      <nav className="module-nav">
-        <button className="back-btn" onClick={() => navigate("/")}>
-          <ArrowLeft size={20} /> <span>Back to Landing</span>
-        </button>
-        <div className="nav-brand">
-          <Code2 size={22} color="var(--primary)" />
-          <span>BrightCode / User Guide</span>
-        </div>
-        <div className="nav-version">
-          <Star size={14} color="var(--primary)" />
-          <span>v2.0 — April 2026</span>
-        </div>
-      </nav>
-
       <div className="module-layout">
         {/* Sidebar */}
         <aside className="module-sidebar">
-          <div className="sidebar-header">
-            <h3>Contents</h3>
+          <button type="button" className="sidebar-back-btn" onClick={handleBack}>
+            <ArrowLeft size={18} />
+            <span>Back</span>
+          </button>
+
+          {/* Search Bar */}
+          <div className="sidebar-search">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Search guide..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
+
           <nav className="sidebar-links">
-            {navSections.map((sec) => (
+            {filteredSections.map((sec) => (
               <button
                 key={sec.id}
                 className={`sidebar-link ${activeSection === sec.id ? "active" : ""}`}
@@ -137,6 +156,11 @@ const UserModule = () => {
 
         {/* Main Content */}
         <main className="module-main">
+          <button type="button" className="guide-back-mobile" onClick={handleBack}>
+            <ArrowLeft size={18} />
+            <span>Back</span>
+          </button>
+
           {/* Hero */}
           <motion.div
             className="module-intro"
@@ -148,7 +172,7 @@ const UserModule = () => {
             <h1>Mastering BrightCode</h1>
             <p>
               Everything you need to navigate, compete, and build inside the
-              BrightCode ecosystem — from first login to faction domination.
+              BrightCode ecosystem ï¿½ from first login to faction domination.
             </p>
             <div className="intro-meta">
               <span><Globe size={14} /> Comprehensive</span>
@@ -156,6 +180,45 @@ const UserModule = () => {
               <span><Users size={14} /> Community-driven</span>
             </div>
           </motion.div>
+
+          {/* Quick Actions */}
+          <div className="quick-actions">
+            <motion.div 
+              className="action-card"
+              onClick={() => navigate("/workspace")}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Layout size={24} />
+              <h4>Try Workspace</h4>
+              <p>Start coding collaboratively</p>
+              <Play size={14} />
+            </motion.div>
+
+            <motion.div 
+              className="action-card"
+              onClick={() => navigate("/codevault")}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <FileText size={24} />
+              <h4>CodeVault</h4>
+              <p>Create your first note</p>
+              <Play size={14} />
+            </motion.div>
+
+            <motion.div 
+              className="action-card"
+              onClick={() => navigate("/factions")}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Sword size={24} />
+              <h4>Join Faction</h4>
+              <p>Team up with others</p>
+              <Play size={14} />
+            </motion.div>
+          </div>
 
           {/* -- Getting Started -- */}
           <section id="getting-started" className="doc-section">
@@ -181,7 +244,7 @@ const UserModule = () => {
 
             <AccordionItem title="First-Time Setup">
               <StepList steps={[
-                "Complete your profile — add an avatar, bio, and social links.",
+                "Complete your profile ï¿½ add an avatar, bio, and social links.",
                 "Choose your preferred programming languages.",
                 "Select a faction to join (you can change this later).",
                 "Explore the interactive onboarding tutorial.",
@@ -190,10 +253,10 @@ const UserModule = () => {
 
             <AccordionItem title="Dashboard Overview">
               <BulletList items={[
-                "Left Sidebar — Navigation menu for all main features.",
-                "Center Panel — Active workspace or learning module.",
-                "Right Sidebar — Activity feed, notifications, and AI assistant.",
-                "Top Bar — User profile, settings, and quick actions.",
+                "Left Sidebar ï¿½ Navigation menu for all main features.",
+                "Center Panel ï¿½ Active workspace or learning module.",
+                "Right Sidebar ï¿½ Activity feed, notifications, and AI assistant.",
+                "Top Bar ï¿½ User profile, settings, and quick actions.",
               ]} />
             </AccordionItem>
           </section>
@@ -213,19 +276,19 @@ const UserModule = () => {
 
             <AccordionItem title="Profile Settings">
               <BulletList items={[
-                "Edit Profile — Update username, avatar, bio, and social links.",
-                "Privacy Settings — Control visibility of your activity and profile.",
-                "Notification Preferences — Choose what notifications to receive.",
-                "Theme Preferences — Switch between light and dark mode.",
+                "Edit Profile ï¿½ Update username, avatar, bio, and social links.",
+                "Privacy Settings ï¿½ Control visibility of your activity and profile.",
+                "Notification Preferences ï¿½ Choose what notifications to receive.",
+                "Theme Preferences ï¿½ Switch between light and dark mode.",
               ]} />
             </AccordionItem>
 
             <AccordionItem title="Security">
               <BulletList items={[
-                "Password Management — Change your password regularly.",
-                "Two-Factor Authentication — Enable 2FA for added security.",
-                "Session Management — View and revoke active sessions.",
-                "Connected Devices — Manage all authorized devices.",
+                "Password Management ï¿½ Change your password regularly.",
+                "Two-Factor Authentication ï¿½ Enable 2FA for added security.",
+                "Session Management ï¿½ View and revoke active sessions.",
+                "Connected Devices ï¿½ Manage all authorized devices.",
               ]} />
             </AccordionItem>
           </section>
@@ -240,13 +303,13 @@ const UserModule = () => {
             <p>
               The Workspace is BrightCode's signature IDE-like environment.
               Sub-10ms latency sync, multi-language support, and integrated
-              team communication — all in one place.
+              team communication ï¿½ all in one place.
             </p>
 
             <AccordionItem title="Creating a Workspace">
               <StepList steps={[
                 "Click New Workspace from the dashboard.",
-                "Choose workspace type — private or public.",
+                "Choose workspace type ï¿½ private or public.",
                 "Set permissions and invite collaborators by username or email.",
                 "Configure workspace settings and language preferences.",
               ]} />
@@ -254,61 +317,19 @@ const UserModule = () => {
 
             <AccordionItem title="Real-Time Collaboration">
               <BulletList items={[
-                "Live Editing — See collaborators' cursors in real time.",
-                "Built-in Chat — Communicate without leaving the editor.",
-                "File Sharing — Upload and share files within the workspace.",
-                "Version History — Track every change with Warp Drive.",
+                "Live Editing ï¿½ See collaborators' cursors in real time.",
+                "Built-in Chat ï¿½ Communicate without leaving the editor.",
+                "File Sharing ï¿½ Upload and share files within the workspace.",
+                "Version History ï¿½ Track every change with Warp Drive.",
               ]} />
             </AccordionItem>
 
             <AccordionItem title="Workspace Management">
               <BulletList items={[
-                "Admin Controls — Manage users, permissions, and settings.",
-                "File Organization — Create folders and organize your files.",
-                "Export Options — Export workspace as ZIP or individual files.",
-                "Archive Workspace — Archive inactive workspaces to keep things tidy.",
-              ]} />
-            </AccordionItem>
-          </section>
-
-          {/* -- Learning Modules -- */}
-          <section id="learning" className="doc-section">
-            <div className="section-label">
-              <Gamepad2 size={20} />
-              <span>Learning Modules</span>
-            </div>
-            <h2>Sharpen Your Skills</h2>
-            <p>
-              From guided campaigns to timed arena battles, BrightCode's
-              learning modules are designed to push your engineering skills
-              to the next level.
-            </p>
-
-            <AccordionItem title="Logic Lab — 100-Level Campaign">
-              <StepList steps={[
-                "Start Campaign — Begin with Phase 1 challenges.",
-                "Complete Challenges — Solve programming problems to earn XP.",
-                "Unlock Phases — Progress through increasingly difficult stages.",
-                "Track Progress — View completion percentage and badges earned.",
-              ]} />
-            </AccordionItem>
-
-            <AccordionItem title="Code Arena (Arcade)">
-              <StepList steps={[
-                "Select Module — Choose from CSS Odyssey, Logic Suite, and more.",
-                "Time Attack — Solve problems within strict time limits.",
-                "Instant Feedback — Get real-time evaluation of your solutions.",
-                "Leaderboards — Compete against players globally.",
-                "Rewards — Earn XP and unlock achievements.",
-              ]} />
-            </AccordionItem>
-
-            <AccordionItem title="Learning Tips">
-              <BulletList items={[
-                "Start with easier modules to build confidence before advancing.",
-                "Review solution explanations — understanding beats memorizing.",
-                "Use the AI Assistant (The Sentinel) when you get stuck.",
-                "Practice consistently — even 20 minutes a day compounds fast.",
+                "Admin Controls ï¿½ Manage users, permissions, and settings.",
+                "File Organization ï¿½ Create folders and organize your files.",
+                "Export Options ï¿½ Export workspace as ZIP or individual files.",
+                "Archive Workspace ï¿½ Archive inactive workspaces to keep things tidy.",
               ]} />
             </AccordionItem>
           </section>
@@ -328,30 +349,30 @@ const UserModule = () => {
 
             <AccordionItem title="Creating & Managing Notes">
               <StepList steps={[
-                "New Note — Click + New Note or press Ctrl+N.",
-                "Title & Organize — Give meaningful titles and place notes in folders.",
-                "Rich Editing — Use the toolbar or markdown for formatting.",
-                "Tags — Add tags for easy categorization and search.",
-                "Save — Notes auto-save; manual save is available with Ctrl+S.",
+                "New Note ï¿½ Click + New Note or press Ctrl+N.",
+                "Title & Organize ï¿½ Give meaningful titles and place notes in folders.",
+                "Rich Editing ï¿½ Use the toolbar or markdown for formatting.",
+                "Tags ï¿½ Add tags for easy categorization and search.",
+                "Save ï¿½ Notes auto-save; manual save is available with Ctrl+S.",
               ]} />
             </AccordionItem>
 
             <AccordionItem title="Organization Features">
               <BulletList items={[
-                "Folders — Create nested folder structures for any project.",
-                "Drag & Drop — Reorganize notes by dragging them.",
-                "Favorites — Star important notes for quick access.",
-                "Recent Notes — Quickly jump back to recently edited notes.",
-                "Trash — Recover deleted notes from the trash bin.",
+                "Folders ï¿½ Create nested folder structures for any project.",
+                "Drag & Drop ï¿½ Reorganize notes by dragging them.",
+                "Favorites ï¿½ Star important notes for quick access.",
+                "Recent Notes ï¿½ Quickly jump back to recently edited notes.",
+                "Trash ï¿½ Recover deleted notes from the trash bin.",
               ]} />
             </AccordionItem>
 
             <AccordionItem title="Search & Discovery">
               <BulletList items={[
-                "Full-Text Search — Search across all note content instantly.",
-                "Filter by Tags — Narrow results by one or more tags.",
-                "Filter by Date — Find notes from specific time periods.",
-                "Advanced Search — Use AND, OR, NOT operators for complex queries.",
+                "Full-Text Search ï¿½ Search across all note content instantly.",
+                "Filter by Tags ï¿½ Narrow results by one or more tags.",
+                "Filter by Date ï¿½ Find notes from specific time periods.",
+                "Advanced Search ï¿½ Use AND, OR, NOT operators for complex queries.",
               ]} />
             </AccordionItem>
           </section>
@@ -365,7 +386,7 @@ const UserModule = () => {
             <h2>Write Without Limits</h2>
             <p>
               The built-in rich text editor supports full markdown, inline
-              formatting, media embeds, and a powerful toolbar — everything
+              formatting, media embeds, and a powerful toolbar ï¿½ everything
               you need to write beautiful, structured notes.
             </p>
 
@@ -383,24 +404,24 @@ const UserModule = () => {
 
             <AccordionItem title="Advanced Features">
               <BulletList items={[
-                "Lists — - for bullet, 1. for numbered, [ ] for task lists.",
-                "Blockquotes — > at the start of a line.",
-                "Horizontal Rules — --- or ***.",
-                "Links — [text](url) or use the toolbar button.",
-                "Images — ![alt](url) or upload directly from your computer.",
-                "Tables — Markdown table syntax or the toolbar insert.",
+                "Lists ï¿½ - for bullet, 1. for numbered, [ ] for task lists.",
+                "Blockquotes ï¿½ > at the start of a line.",
+                "Horizontal Rules ï¿½ --- or ***.",
+                "Links ï¿½ [text](url) or use the toolbar button.",
+                "Images ï¿½ ![alt](url) or upload directly from your computer.",
+                "Tables ï¿½ Markdown table syntax or the toolbar insert.",
               ]} />
             </AccordionItem>
 
             <AccordionItem title="Toolbar Functions">
               <BulletList items={[
-                "Formatting — Bold, italic, underline, strikethrough.",
-                "Headings — H1–H6 dropdown with color coding.",
-                "Lists — Bullet, numbered, and task lists.",
-                "Alignment — Left, center, right, justify.",
-                "Colors — Text color and highlight color pickers.",
-                "Media — Insert links, images, and diagrams.",
-                "Blocks — Code blocks, quotes, and horizontal rules.",
+                "Formatting ï¿½ Bold, italic, underline, strikethrough.",
+                "Headings ï¿½ H1ï¿½H6 dropdown with color coding.",
+                "Lists ï¿½ Bullet, numbered, and task lists.",
+                "Alignment ï¿½ Left, center, right, justify.",
+                "Colors ï¿½ Text color and highlight color pickers.",
+                "Media ï¿½ Insert links, images, and diagrams.",
+                "Blocks ï¿½ Code blocks, quotes, and horizontal rules.",
               ]} />
             </AccordionItem>
           </section>
@@ -414,39 +435,39 @@ const UserModule = () => {
             <h2>Visualize Your Ideas</h2>
             <p>
               The integrated diagram editor lets you draw flowcharts, system
-              diagrams, and sketches directly inside your notes — no external
+              diagrams, and sketches directly inside your notes ï¿½ no external
               tools needed.
             </p>
 
             <AccordionItem title="Creating a Diagram">
               <StepList steps={[
-                "Open Diagram Editor — Click the diagram button in the editor toolbar.",
-                "Draw Shapes — Select from rectangle, circle, arrow, and line tools.",
-                "Add Text — Use the text tool for labels and annotations.",
-                "Connect Elements — Draw arrows between shapes to show relationships.",
-                "Style Elements — Change colors, stroke width, and fill.",
-                "Save — Click Save to Note to embed the diagram as an image.",
+                "Open Diagram Editor ï¿½ Click the diagram button in the editor toolbar.",
+                "Draw Shapes ï¿½ Select from rectangle, circle, arrow, and line tools.",
+                "Add Text ï¿½ Use the text tool for labels and annotations.",
+                "Connect Elements ï¿½ Draw arrows between shapes to show relationships.",
+                "Style Elements ï¿½ Change colors, stroke width, and fill.",
+                "Save ï¿½ Click Save to Note to embed the diagram as an image.",
               ]} />
             </AccordionItem>
 
             <AccordionItem title="Available Tools">
               <BulletList items={[
-                "Selection Tool — Select and move elements freely.",
-                "Rectangle / Circle — Basic shapes for any diagram.",
-                "Arrow / Line — Connectors and directional lines.",
-                "Text — Add labels and descriptions anywhere.",
-                "Free Draw — Hand-drawn sketches for quick ideas.",
-                "Eraser — Remove individual elements.",
-                "Zoom — Zoom in and out for detail work.",
+                "Selection Tool ï¿½ Select and move elements freely.",
+                "Rectangle / Circle ï¿½ Basic shapes for any diagram.",
+                "Arrow / Line ï¿½ Connectors and directional lines.",
+                "Text ï¿½ Add labels and descriptions anywhere.",
+                "Free Draw ï¿½ Hand-drawn sketches for quick ideas.",
+                "Eraser ï¿½ Remove individual elements.",
+                "Zoom ï¿½ Zoom in and out for detail work.",
               ]} />
             </AccordionItem>
 
             <AccordionItem title="Editing & Export">
               <BulletList items={[
                 "Click any embedded diagram then hit the pencil icon to edit.",
-                "PNG Export — High-quality image export for sharing.",
-                "Copy to Clipboard — Quick copy for pasting anywhere.",
-                "Save Locally — Download the diagram file to your machine.",
+                "PNG Export ï¿½ High-quality image export for sharing.",
+                "Copy to Clipboard ï¿½ Quick copy for pasting anywhere.",
+                "Save Locally ï¿½ Download the diagram file to your machine.",
               ]} />
             </AccordionItem>
           </section>
@@ -455,13 +476,13 @@ const UserModule = () => {
           <section id="ai-assistant" className="doc-section">
             <div className="section-label">
               <Bot size={20} />
-              <span>AI Assistant — The Sentinel</span>
+              <span>AI Assistant ï¿½ The Sentinel</span>
             </div>
             <h2>Your Intelligent Coding Partner</h2>
             <p>
               The Sentinel is BrightCode's context-aware AI assistant. It reads
               your current file, understands your code, and helps you debug,
-              optimize, and learn — all without leaving the editor.
+              optimize, and learn ï¿½ all without leaving the editor.
             </p>
 
             <AccordionItem title="Accessing the Assistant">
@@ -475,17 +496,17 @@ const UserModule = () => {
 
             <AccordionItem title="What the Sentinel Can Do">
               <BulletList items={[
-                "Code Explanation — Break down complex snippets in plain language.",
-                "Debugging Help — Identify and fix bugs with context-aware analysis.",
-                "Optimization Suggestions — Improve performance and readability.",
-                "Learning Resources — Recommend tutorials and documentation.",
-                "Best Practices — Suggest coding standards and design patterns.",
+                "Code Explanation ï¿½ Break down complex snippets in plain language.",
+                "Debugging Help ï¿½ Identify and fix bugs with context-aware analysis.",
+                "Optimization Suggestions ï¿½ Improve performance and readability.",
+                "Learning Resources ï¿½ Recommend tutorials and documentation.",
+                "Best Practices ï¿½ Suggest coding standards and design patterns.",
               ]} />
             </AccordionItem>
 
             <AccordionItem title="Tips for Best Results">
               <BulletList items={[
-                "Be specific — describe the exact behavior you expect vs. what happens.",
+                "Be specific ï¿½ describe the exact behavior you expect vs. what happens.",
                 "Share relevant code context when asking about a bug.",
                 "Ask follow-up questions to dig deeper into an explanation.",
                 "Use it for learning, not just for getting answers.",
@@ -497,7 +518,7 @@ const UserModule = () => {
           <section id="version-control" className="doc-section">
             <div className="section-label">
               <GitBranch size={20} />
-              <span>Version Control — Warp Drive</span>
+              <span>Version Control ï¿½ Warp Drive</span>
             </div>
             <h2>Time-Travel Through Your Code</h2>
             <p>
@@ -508,19 +529,19 @@ const UserModule = () => {
 
             <AccordionItem title="Temporal Snapshots">
               <StepList steps={[
-                "Automatic Snapshots — The system captures milestones automatically.",
-                "Manual Snapshots — Create a snapshot anytime with one click.",
-                "View History — Browse the full timeline of all snapshots.",
-                "Restore — Revert to any previous snapshot instantly.",
+                "Automatic Snapshots ï¿½ The system captures milestones automatically.",
+                "Manual Snapshots ï¿½ Create a snapshot anytime with one click.",
+                "View History ï¿½ Browse the full timeline of all snapshots.",
+                "Restore ï¿½ Revert to any previous snapshot instantly.",
               ]} />
             </AccordionItem>
 
             <AccordionItem title="Advanced Features">
               <BulletList items={[
-                "Compare Versions — Side-by-side diff view of any two snapshots.",
-                "Branching — Create alternative versions to experiment safely.",
-                "Merge Changes — Combine different versions when ready.",
-                "Export History — Export the full version history as a report.",
+                "Compare Versions ï¿½ Side-by-side diff view of any two snapshots.",
+                "Branching ï¿½ Create alternative versions to experiment safely.",
+                "Merge Changes ï¿½ Combine different versions when ready.",
+                "Export History ï¿½ Export the full version history as a report.",
               ]} />
             </AccordionItem>
 
@@ -549,28 +570,28 @@ const UserModule = () => {
 
             <AccordionItem title="Heatmap Visualization">
               <BulletList items={[
-                "Daily Activity — See your coding activity mapped by day.",
-                "Module Breakdown — View activity split by Logic Lab, Arcade, etc.",
-                "Trend Analysis — Identify patterns in your coding habits.",
-                "Goal Setting — Set and track personal coding goals.",
+                "Daily Activity ï¿½ See your coding activity mapped by day.",
+                "Module Breakdown ï¿½ View activity split by Logic Lab, Arcade, etc.",
+                "Trend Analysis ï¿½ Identify patterns in your coding habits.",
+                "Goal Setting ï¿½ Set and track personal coding goals.",
               ]} />
             </AccordionItem>
 
             <AccordionItem title="XP System">
               <BulletList items={[
-                "Earning XP — Complete challenges, solve problems, create content.",
-                "Level Progression — Level up based on your total accumulated XP.",
-                "Achievements — Unlock badges and special rewards.",
-                "Leaderboard Ranking — See how you compare to other users globally.",
+                "Earning XP ï¿½ Complete challenges, solve problems, create content.",
+                "Level Progression ï¿½ Level up based on your total accumulated XP.",
+                "Achievements ï¿½ Unlock badges and special rewards.",
+                "Leaderboard Ranking ï¿½ See how you compare to other users globally.",
               ]} />
             </AccordionItem>
 
             <AccordionItem title="Productivity Insights">
               <BulletList items={[
-                "Time Tracking — Monitor time spent on different activities.",
-                "Skill Development — Track progress in specific programming areas.",
-                "Recommendations — Get personalized learning suggestions.",
-                "Progress Reports — Weekly and monthly activity summaries.",
+                "Time Tracking ï¿½ Monitor time spent on different activities.",
+                "Skill Development ï¿½ Track progress in specific programming areas.",
+                "Recommendations ï¿½ Get personalized learning suggestions.",
+                "Progress Reports ï¿½ Weekly and monthly activity summaries.",
               ]} />
             </AccordionItem>
           </section>
@@ -590,28 +611,28 @@ const UserModule = () => {
 
             <AccordionItem title="Joining a Faction">
               <StepList steps={[
-                "Browse Factions — View available factions and their focus areas.",
-                "Select Faction — Choose based on your interests (Web Dev, Data Science, etc.).",
-                "Apply — Request to join or accept an invitation.",
-                "Participate — Contribute to faction goals and group activities.",
+                "Browse Factions ï¿½ View available factions and their focus areas.",
+                "Select Faction ï¿½ Choose based on your interests (Web Dev, Data Science, etc.).",
+                "Apply ï¿½ Request to join or accept an invitation.",
+                "Participate ï¿½ Contribute to faction goals and group activities.",
               ]} />
             </AccordionItem>
 
             <AccordionItem title="Faction Features">
               <BulletList items={[
-                "Private Chat — Communicate exclusively with faction members.",
-                "Shared Resources — Access faction-specific learning materials.",
-                "Group Challenges — Complete challenges as a coordinated team.",
-                "Faction Leaderboards — Compete against other factions for supremacy.",
+                "Private Chat ï¿½ Communicate exclusively with faction members.",
+                "Shared Resources ï¿½ Access faction-specific learning materials.",
+                "Group Challenges ï¿½ Complete challenges as a coordinated team.",
+                "Faction Leaderboards ï¿½ Compete against other factions for supremacy.",
               ]} />
             </AccordionItem>
 
             <AccordionItem title="Competition">
               <BulletList items={[
-                "Global Leaderboards — Top performers ranked across all users.",
-                "Faction Rankings — Faction vs. faction competition each season.",
-                "Weekly Challenges — Time-limited competitive events with big rewards.",
-                "Rewards — Trophies, badges, and special platform privileges.",
+                "Global Leaderboards ï¿½ Top performers ranked across all users.",
+                "Faction Rankings ï¿½ Faction vs. faction competition each season.",
+                "Weekly Challenges ï¿½ Time-limited competitive events with big rewards.",
+                "Rewards ï¿½ Trophies, badges, and special platform privileges.",
               ]} />
             </AccordionItem>
           </section>
@@ -725,7 +746,7 @@ const UserModule = () => {
               All documentation is free and open to the community.{" "}
               <span className="footer-highlight">Join the elite.</span>
             </p>
-            <span className="footer-version">Last updated: April 30, 2026 · v2.0</span>
+            <span className="footer-version">Last updated: April 30, 2026 ï¿½ v2.0</span>
           </footer>
         </main>
       </div>

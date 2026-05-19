@@ -460,6 +460,7 @@ const Landing = () => {
               <div className="footer-nav-col">
                 <h5 className="footer-nav-title">Resources</h5>
                 <ul className="footer-nav-list">
+                  <li><a href="/user-guide">User Guide</a></li>
                   <li><a href="#">Documentation</a></li>
                   <li><a href="#">System Status</a></li>
                   <li><a href="#">Community</a></li>

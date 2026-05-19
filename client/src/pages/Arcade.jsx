@@ -5,7 +5,7 @@ import {
     Gamepad2, ArrowLeft, Code2, Trophy, Zap, ArrowRight, Lock, 
     ChevronLeft, ChevronRight, RefreshCw, Activity, BookOpen,
     Layout, Server, GraduationCap, GitBranch, Database, Brain, Layers,
-    CheckCircle2, AlertCircle, X
+    CheckCircle2, AlertCircle, X, FileText
 } from 'lucide-react';
 import './Arcade.css';
 import axios from 'axios';
@@ -26,17 +26,285 @@ const BASE_TABS = [
     { id: 'language', label: 'Language', icon: Code2, active: false },
 ];
 
+// ── CURRICULUM SUBJECT DATA ────────────────────────────────────────────
+// Content will be added later — all sections are empty placeholders
+const SUBJECT_RESOURCES = {
+    'dsa-system': { 
+        notes: [
+            {
+                title: 'Advanced DSA Notes - 4th Semester',
+                content: 'Comprehensive notes covering advanced data structures and algorithms including graphs, dynamic programming, and optimization techniques.',
+                pdfUrl: '/data/DSANotes4thsem.pdf',
+                type: 'pdf'
+            },
+            {
+                title: 'System Design Notes - 4th Semester',
+                content: 'Complete guide to system design principles, scalability patterns, load balancing, database sharding, and distributed systems architecture.',
+                pdfUrl: '/data/SystemDesignNotes4thsem.pdf',
+                type: 'pdf'
+            },
+            {
+                title: 'Golang Programming - 4th Semester',
+                content: 'Learn Go programming language fundamentals, concurrency patterns, and building scalable backend systems.',
+                pdfUrl: '/data/GOLANGNotes4thsem.pdf',
+                type: 'pdf'
+            }
+        ], 
+        mcqs: [
+            {
+                title: 'Golang MCQs - 4th Semester',
+                content: 'Practice multiple choice questions covering Go programming concepts, syntax, concurrency, and best practices.',
+                pdfUrl: '/data/GOLANG MCQsNotes4thsem.pdf',
+                type: 'pdf'
+            }
+        ], 
+        resources: [] 
+    },
+    'comp-arch':        { notes: [], mcqs: [], resources: [] },
+    'genai-ml':         { notes: [], mcqs: [], resources: [] },
+    'ml-fundamentals':  { notes: [], mcqs: [], resources: [] },
+    'human-values':     { notes: [], mcqs: [], resources: [] },
+};
+
+const CURRICULUM_SUBJECTS = [
+    {
+        id: 'dsa-system',
+        title: 'Advanced DSA & System Design',
+        badge: 'CORE TECHNICAL',
+        desc: 'Conquer complex graphs, dynamic programming algorithms, load balancing, databases, sharding, and scalable architecture paradigms.',
+        icon: <Brain size={28} color="var(--primary)" />,
+        syllabus: ['Unit 1: Advanced Graph Algorithms (Tarjan\'s, Dynamic Connectivity)', 'Unit 2: Dynamic Programming & Bitmask Optimization', 'Unit 3: System Design Fundamentals (Availability vs Consistency, CAP)', 'Unit 4: Scaling Architectures (Horizontal Scaling, Load Balancing, CDN)', 'Unit 5: Database Scaling (Replication, Partitioning, Sharding, Cache-Aside)'],
+    },
+    {
+        id: 'comp-arch',
+        title: 'Computer Architecture',
+        badge: 'HARDWARE CORE',
+        desc: 'Explore CPU internals, memory hierarchies, pipelining, instruction sets, and the hardware that makes software possible.',
+        icon: <GitBranch size={28} color="var(--primary)" />,
+        syllabus: ['Unit 1: Digital Logic & Boolean Algebra', 'Unit 2: CPU Design & Instruction Cycle', 'Unit 3: Pipelining & Hazard Resolution', 'Unit 4: Memory Hierarchy (Cache, RAM, Storage)', 'Unit 5: I/O Systems & Interrupts'],
+    },
+    {
+        id: 'genai-ml',
+        title: 'GenAI & LLM Systems',
+        badge: 'AI FRONTIER',
+        desc: 'Master Transformer architecture, prompt engineering, RAG pipelines, fine-tuning, and production deployment of large language models.',
+        icon: <Zap size={28} color="var(--primary)" />,
+        syllabus: ['Unit 1: Transformer & Attention Mechanism', 'Unit 2: Prompt Engineering & In-Context Learning', 'Unit 3: RAG (Retrieval-Augmented Generation)', 'Unit 4: Fine-Tuning & RLHF', 'Unit 5: LLM Deployment & Evaluation'],
+    },
+    {
+        id: 'ml-fundamentals',
+        title: 'Machine Learning',
+        badge: 'DATA SCIENCE',
+        desc: 'Build intuition for supervised and unsupervised learning, neural networks, regularization, feature engineering, and model evaluation.',
+        icon: <Activity size={28} color="var(--primary)" />,
+        syllabus: ['Unit 1: Supervised Learning (Regression, Classification)', 'Unit 2: Unsupervised Learning (Clustering, PCA)', 'Unit 3: Neural Networks & Backpropagation', 'Unit 4: Regularization & Optimization', 'Unit 5: Model Evaluation & Cross-Validation'],
+    },
+    {
+        id: 'human-values',
+        title: 'Human Values & Ethics',
+        badge: 'PROFESSIONAL',
+        desc: 'Explore universal human values, ethical frameworks for engineers, professional responsibility, and decision-making in complex scenarios.',
+        icon: <CheckCircle2 size={28} color="var(--primary)" />,
+        syllabus: ['Unit 1: Universal Human Values Framework', 'Unit 2: Value-Based Living & Self Exploration', 'Unit 3: Professional Ethics & Engineering Responsibility', 'Unit 4: Social & Environmental Responsibilities', 'Unit 5: Case Studies in Ethical Dilemmas'],
+    },
+];
+
+// ── CURRICULUM SUBJECT FULL PAGE ───────────────────────────────────────
+const CurriculumSubjectPage = ({ subject, onBack }) => {
+    const [activeTab, setActiveTab] = useState('notes');
+    const [mcqAnswers, setMcqAnswers] = useState({});
+    const resources = SUBJECT_RESOURCES[subject.id] || { notes: [], mcqs: [], resources: [] };
+
+    return (
+        <motion.div
+            key="subj-full-page"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="curr-subject-full-page"
+        >
+            {/* Top bar: back button + floating nav in one row */}
+            <div className="curr-subj-topbar">
+                <button className="curr-subj-back-btn" onClick={onBack}>
+                    <ArrowLeft size={16} /> Back to Curriculum
+                </button>
+                <div className="curr-float-nav">
+                {[
+                    { id: 'notes', label: 'Study Notes', Icon: BookOpen },
+                    { id: 'mcqs', label: 'Practice MCQs', Icon: Trophy },
+                    { id: 'resources', label: 'Other Resources', Icon: Layers },
+                ].map(({ id, label, Icon }) => (
+                    <button
+                        key={id}
+                        className={`curr-float-nav-btn ${activeTab === id ? 'active' : ''}`}
+                        onClick={() => { setActiveTab(id); if (id === 'mcqs') setMcqAnswers({}); }}
+                    >
+                        <Icon size={15} /> {label}
+                    </button>
+                ))}
+                </div>
+            </div>
+
+            {/* Content Area */}
+            <div className="curr-subj-content">
+                {/* NOTES */}
+                {activeTab === 'notes' && (
+                    <motion.div key="notes" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="curr-notes-list">
+                        {resources.notes.length === 0 ? (
+                            <div className="curr-empty-state">
+                                <BookOpen size={48} color="var(--text-muted)" />
+                                <p>Study notes will be available soon.</p>
+                            </div>
+                        ) : (
+                            resources.notes.map((note, i) => (
+                                <div key={i} className="curr-note-card">
+                                    <div className="curr-note-card-header">
+                                        <h4 className="curr-note-card-title">{note.title}</h4>
+                                        {note.pdfUrl && (
+                                            <a 
+                                                href={note.pdfUrl} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="curr-note-pdf-btn"
+                                            >
+                                                <FileText size={16} /> View PDF
+                                            </a>
+                                        )}
+                                    </div>
+                                    <p className="curr-note-card-body">{note.content}</p>
+                                </div>
+                            ))
+                        )}
+                    </motion.div>
+                )}
+
+                {/* MCQS */}
+                {activeTab === 'mcqs' && (
+                    <motion.div key="mcqs" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="curr-mcqs-list">
+                        {resources.mcqs.length === 0 ? (
+                            <div className="curr-empty-state">
+                                <Trophy size={48} color="var(--text-muted)" />
+                                <p>Practice MCQs will be available soon.</p>
+                            </div>
+                        ) : (
+                            resources.mcqs.map((q, qi) => {
+                                // Check if it's a PDF MCQ or interactive MCQ
+                                if (q.pdfUrl) {
+                                    return (
+                                        <div key={qi} className="curr-note-card">
+                                            <div className="curr-note-card-header">
+                                                <h4 className="curr-note-card-title">{q.title}</h4>
+                                                <a 
+                                                    href={q.pdfUrl} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="curr-note-pdf-btn"
+                                                >
+                                                    <FileText size={16} /> View PDF
+                                                </a>
+                                            </div>
+                                            <p className="curr-note-card-body">{q.content}</p>
+                                        </div>
+                                    );
+                                }
+                                
+                                // Interactive MCQ
+                                const sel = mcqAnswers[qi];
+                                const answered = sel !== undefined;
+                                const correct = sel === q.correct;
+                                return (
+                                    <div key={qi} className={`curr-mcq-card ${answered ? (correct ? 'correct' : 'incorrect') : ''}`}>
+                                        <p className="curr-mcq-question">Q{qi + 1}: {q.q}</p>
+                                        <div className="curr-mcq-options">
+                                            {q.options.map((opt, oi) => {
+                                                let cls = '';
+                                                if (answered) {
+                                                    if (oi === q.correct) cls = 'correct-opt';
+                                                    else if (oi === sel) cls = 'wrong-opt';
+                                                }
+                                                return (
+                                                    <button key={oi} disabled={answered}
+                                                        className={`curr-mcq-opt-btn ${cls}`}
+                                                        onClick={() => setMcqAnswers(p => ({ ...p, [qi]: oi }))}>
+                                                        <span className="curr-mcq-bullet">{['A','B','C','D'][oi]}</span> {opt}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        {answered && (
+                                            <div className={`curr-mcq-feedback ${correct ? 'success' : 'error'}`}>
+                                                <div className="feedback-badge">
+                                                    {correct ? <CheckCircle2 size={12}/> : <AlertCircle size={12}/>}
+                                                    <span>{correct ? 'Correct!' : 'Incorrect'}</span>
+                                                </div>
+                                                <p className="curr-mcq-explain">{q.explain}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })
+                        )}
+                    </motion.div>
+                )}
+
+                {/* RESOURCES */}
+                {activeTab === 'resources' && (
+                    <motion.div key="resources" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="curr-resources-list">
+                        {resources.resources.length === 0 ? (
+                            <div className="curr-empty-state">
+                                <Layers size={48} color="var(--text-muted)" />
+                                <p>Additional resources will be available soon.</p>
+                            </div>
+                        ) : (
+                            resources.resources.map((r, i) => (
+                                <div key={i} className="curr-resource-item">
+                                    <div className="curr-resource-left">
+                                        <div className="curr-resource-icon">
+                                            {r.pdfUrl ? <FileText size={16} color="var(--primary)" /> : <GraduationCap size={16} color="var(--primary)" />}
+                                        </div>
+                                        <div className="curr-resource-info">
+                                            <h4 className="curr-resource-name">{r.title || r.name}</h4>
+                                            <p className="curr-resource-desc">{r.content || r.desc}</p>
+                                        </div>
+                                    </div>
+                                    {r.pdfUrl ? (
+                                        <a 
+                                            href={r.pdfUrl} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="curr-resource-btn"
+                                        >
+                                            <span>View PDF</span> <ArrowRight size={12}/>
+                                        </a>
+                                    ) : (
+                                        <a href={r.link} className="curr-resource-btn" onClick={e => e.preventDefault()}>
+                                            <span>{r.type}</span> <ArrowRight size={12}/>
+                                        </a>
+                                    )}
+                                </div>
+                            ))
+                        )}
+                    </motion.div>
+                )}
+            </div>
+        </motion.div>
+    );
+};
+
 // ── LIBRARY LOBBY (Sidebar + Content) ─────────────────────────────────
+
 const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentLvlIdx }) => {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('frontend');
+    const [activeSubject, setActiveSubject] = useState(null);
 
     // Dynamic Sidebar Tabs based on user email
     const isMedhaviUser = user?.email?.endsWith('@medhaviskillsuniversity.edu.in');
     const sidebarTabs = [...BASE_TABS];
     
     if (isMedhaviUser) {
-        sidebarTabs.push({ id: 'curriculum', label: 'Curriculum', icon: GraduationCap, active: false });
+        sidebarTabs.push({ id: 'curriculum', label: 'Curriculum', icon: GraduationCap, active: true });
     }
 
     // Map sidebar tab id → sections array id
@@ -48,6 +316,19 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
     };
     const currentSection = sections.find(s => s.id === tabToSection[activeTab]);
     const hasContent = Boolean(currentSection && currentSection.games.length > 0);
+
+    // ── If a curriculum subject is active, show full page ─────────────
+    if (activeSubject) {
+        return (
+            <AnimatePresence mode="wait">
+                <CurriculumSubjectPage
+                    key={activeSubject.id}
+                    subject={activeSubject}
+                    onBack={() => setActiveSubject(null)}
+                />
+            </AnimatePresence>
+        );
+    }
 
     return (
         <motion.div
@@ -95,23 +376,49 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
 
             {/* ── Content Panel ── */}
             <div className="library-content">
-                <div className="library-content-header">
-                    <div>
-                        <h1 className="lib-title">
-                            {sidebarTabs.find(t => t.id === activeTab)?.label}
-                            <span className="lib-title-accent"> Track</span>
-                        </h1>
-                        <p className="lib-subtitle">
-                            {currentSection?.description || 'Specialized modules coming to BrightCode soon.'}
-                        </p>
-                    </div>
-                    <div className="lib-header-badge">
-                        {hasContent ? `${currentSection.games.length} MODULE${currentSection.games.length > 1 ? 'S' : ''}` : 'COMING SOON'}
-                    </div>
-                </div>
-
                 <AnimatePresence mode="wait">
-                    {hasContent ? (
+                    {activeTab === 'curriculum' ? (
+                        <motion.div
+                            key="curriculum"
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -16 }}
+                            transition={{ duration: 0.3 }}
+                            className="lib-modules-grid"
+                        >
+                            {CURRICULUM_SUBJECTS.map((subj, idx) => (
+                                <motion.div
+                                    key={subj.id}
+                                    className="lib-module-card"
+                                    initial={{ opacity: 0, y: 24 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: idx * 0.07 }}
+                                    whileHover={{ y: -6 }}
+                                    onClick={() => setActiveSubject(subj)}
+                                >
+                                    <div className="lib-module-top">
+                                        <div className="lib-module-icon">
+                                            {subj.icon}
+                                        </div>
+                                        <div className="lib-module-badge">{subj.badge}</div>
+                                    </div>
+                                    <h3 className="lib-module-title">{subj.title}</h3>
+                                    <p className="lib-module-desc">{subj.desc}</p>
+                                    <div className="lib-module-footer">
+                                        <div className="lib-progress-wrap">
+                                            <div className="lib-progress-header">
+                                                <span>Notes + MCQs + Resources</span>
+                                            </div>
+                                            <div className="lib-progress-bar">
+                                                <div className="lib-progress-fill" style={{ width: '100%', background: 'var(--primary)', boxShadow: '0 0 10px rgba(239,68,68,0.3)' }} />
+                                            </div>
+                                        </div>
+                                        <button className="lib-enter-btn">Open</button>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    ) : hasContent ? (
                         <motion.div
                             key={activeTab}
                             initial={{ opacity: 0, y: 16 }}
@@ -131,9 +438,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                                     if (game.id === 'react-quest') return user?.react_level || 0;
                                     return 0;
                                 })();
-                                
                                 const pct = Math.round((solvedCount / game.total) * 100);
-
                                 return (
                                     <motion.div
                                         key={game.id}
@@ -142,10 +447,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.08 }}
                                         whileHover={{ y: -6 }}
-                                        onClick={() => { 
-                                            setActiveGame(game.id); 
-                                            setViewingSections(true);
-                                        }}
+                                        onClick={() => { setActiveGame(game.id); setViewingSections(true); }}
                                     >
                                         <div className="lib-module-top">
                                             <div className="lib-module-icon">
@@ -208,6 +510,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
         </motion.div>
     );
 };
+
 
 const Arcade = () => {
     const { user, updateXP, setNavbarHidden } = useAuth();

@@ -1,138 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Bot, User, Maximize2, Minimize2, Mic, Volume2, VolumeX } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, User, Maximize2, Minimize2, Mic, Volume2, VolumeX, Sliders } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import './Chatbot.css';
 
-/* ── BrightCode Pal — Clean, Modern Robot Mascot ── */
-const CyberpunkRobot = ({ size = 16 }) => {
-  const w = size;
-  const h = size;
-  return (
-    <svg width={w} height={h} viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        {/* BrightCode brand colors */}
-        <radialGradient id="headGlow" cx="40%" cy="35%">
-          <stop offset="0%" stopColor="#fca5a5" />
-          <stop offset="50%" stopColor="#f87171" />
-          <stop offset="100%" stopColor="#ef4444" />
-        </radialGradient>
-        <radialGradient id="bodyGlow" cx="40%" cy="35%">
-          <stop offset="0%" stopColor="#fb923c" />
-          <stop offset="50%" stopColor="#f97316" />
-          <stop offset="100%" stopColor="#ea580c" />
-        </radialGradient>
-        <radialGradient id="eyeShine" cx="35%" cy="35%">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="70%" stopColor="#fef3c7" />
-          <stop offset="100%" stopColor="#fde68a" />
-        </radialGradient>
-        <linearGradient id="accentGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#fbbf24" />
-          <stop offset="100%" stopColor="#f59e0b" />
-        </linearGradient>
-        <filter id="dropShadow">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-          <feOffset dx="0" dy="4" result="offsetblur"/>
-          <feFlood floodColor="#000000" floodOpacity="0.3"/>
-          <feComposite in2="offsetblur" operator="in"/>
-          <feMerge>
-            <feMergeNode/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-          <feMerge>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
 
-      {/* Antenna */}
-      <line x1="100" y1="20" x2="100" y2="8" stroke="#f97316" strokeWidth="4" strokeLinecap="round"/>
-      <circle cx="100" cy="6" r="6" fill="url(#accentGrad)" filter="url(#glow)"/>
-      <circle cx="100" cy="6" r="3" fill="#ffffff" opacity="0.9"/>
-
-      {/* Head - large and friendly */}
-      <circle cx="100" cy="60" r="40" fill="url(#headGlow)" filter="url(#dropShadow)"/>
-      
-      {/* Head highlight */}
-      <ellipse cx="85" cy="50" rx="20" ry="18" fill="#ffffff" opacity="0.35"/>
-      
-      {/* Eyes - big and expressive */}
-      <ellipse cx="82" cy="58" rx="12" ry="14" fill="url(#eyeShine)" filter="url(#dropShadow)"/>
-      <ellipse cx="118" cy="58" rx="12" ry="14" fill="url(#eyeShine)" filter="url(#dropShadow)"/>
-      
-      {/* Pupils */}
-      <circle cx="83" cy="60" r="7" fill="#1e293b"/>
-      <circle cx="119" cy="60" r="7" fill="#1e293b"/>
-      
-      {/* Eye highlights */}
-      <circle cx="80" cy="56" r="4" fill="#ffffff" opacity="0.95"/>
-      <circle cx="116" cy="56" r="4" fill="#ffffff" opacity="0.95"/>
-      <circle cx="86" cy="63" r="2" fill="#ffffff" opacity="0.7"/>
-      <circle cx="122" cy="63" r="2" fill="#ffffff" opacity="0.7"/>
-      
-      {/* Happy smile */}
-      <path d="M 75 72 Q 100 82 125 72" stroke="#dc2626" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.8"/>
-      
-      {/* Cheek blush */}
-      <ellipse cx="65" cy="68" rx="8" ry="6" fill="#fca5a5" opacity="0.5"/>
-      <ellipse cx="135" cy="68" rx="8" ry="6" fill="#fca5a5" opacity="0.5"/>
-
-      {/* Neck */}
-      <rect x="88" y="98" width="24" height="10" rx="6" fill="#ea580c"/>
-
-      {/* Body - rounded and friendly */}
-      <ellipse cx="100" cy="150" rx="42" ry="45" fill="url(#bodyGlow)" filter="url(#dropShadow)"/>
-      
-      {/* Body highlight */}
-      <ellipse cx="88" cy="135" rx="22" ry="25" fill="#ffffff" opacity="0.3"/>
-      
-      {/* Chest display */}
-      <rect x="82" y="140" width="36" height="26" rx="8" fill="#1e293b" opacity="0.5"/>
-      <rect x="84" y="142" width="32" height="22" rx="6" fill="#fbbf24" opacity="0.6"/>
-      
-      {/* Heart icon in chest */}
-      <circle cx="100" cy="153" r="7" fill="#ef4444" filter="url(#glow)"/>
-      <circle cx="100" cy="153" r="4" fill="#ffffff" opacity="0.8"/>
-
-      {/* Arms */}
-      <ellipse cx="52" cy="145" rx="12" ry="28" fill="#f97316" filter="url(#dropShadow)"/>
-      <ellipse cx="148" cy="145" rx="12" ry="28" fill="#f97316" filter="url(#dropShadow)"/>
-      
-      {/* Arm highlights */}
-      <ellipse cx="48" cy="135" rx="6" ry="14" fill="#ffffff" opacity="0.3"/>
-      <ellipse cx="144" cy="135" rx="6" ry="14" fill="#ffffff" opacity="0.3"/>
-      
-      {/* Hands */}
-      <circle cx="52" cy="175" r="10" fill="#fb923c" filter="url(#dropShadow)"/>
-      <circle cx="148" cy="175" r="10" fill="#fb923c" filter="url(#dropShadow)"/>
-
-      {/* Legs */}
-      <ellipse cx="82" cy="205" rx="14" ry="24" fill="#f97316" filter="url(#dropShadow)"/>
-      <ellipse cx="118" cy="205" rx="14" ry="24" fill="#f97316" filter="url(#dropShadow)"/>
-      
-      {/* Leg highlights */}
-      <ellipse cx="78" cy="195" rx="7" ry="12" fill="#ffffff" opacity="0.3"/>
-      <ellipse cx="114" cy="195" rx="7" ry="12" fill="#ffffff" opacity="0.3"/>
-
-      {/* Feet - yellow accent */}
-      <ellipse cx="82" cy="230" rx="16" ry="9" fill="url(#accentGrad)" filter="url(#dropShadow)"/>
-      <ellipse cx="118" cy="230" rx="16" ry="9" fill="url(#accentGrad)" filter="url(#dropShadow)"/>
-      
-      {/* Feet highlights */}
-      <ellipse cx="78" cy="228" rx="9" ry="4" fill="#ffffff" opacity="0.5"/>
-      <ellipse cx="114" cy="228" rx="9" ry="4" fill="#ffffff" opacity="0.5"/>
-      
-      {/* Shoe details */}
-      <ellipse cx="82" cy="231" rx="10" ry="5" fill="#fde68a" opacity="0.6"/>
-      <ellipse cx="118" cy="231" rx="10" ry="5" fill="#fde68a" opacity="0.6"/>
-    </svg>
-  );
+const VOICE_PACKS = {
+  scarlet: [
+    { id: 'scarlet_woman', name: 'Lady', gender: 'female', pitch: 1.15, rate: 1.0 },
+    { id: 'scarlet_man', name: 'Gentleman', gender: 'male', pitch: 0.85, rate: 0.95 }
+  ],
+  cyberpunk: [
+    { id: 'cyber_female', name: 'Cyber Hack Female', gender: 'female', pitch: 1.45, rate: 1.1 },
+    { id: 'cyber_male', name: 'Cyber Hack Male', gender: 'male', pitch: 0.55, rate: 1.1 }
+  ],
+  minecraft: [
+    { id: 'mc_villager', name: 'MC Villager', gender: 'male', pitch: 0.5, rate: 0.85 },
+    { id: 'mc_pixie', name: 'Pixel Fairy', gender: 'female', pitch: 1.8, rate: 1.2 }
+  ]
 };
 
 const Chatbot = ({ context = {} }) => {
@@ -151,7 +37,25 @@ const Chatbot = ({ context = {} }) => {
     const saved = localStorage.getItem('palVoiceEnabled');
     return saved ? JSON.parse(saved) : true;
   });
+  const [selectedVoicePack, setSelectedVoicePack] = useState(() => {
+    return localStorage.getItem('palVoicePack') || '';
+  });
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  const getActiveTheme = () => {
+    const root = document.documentElement;
+    if (root.classList.contains('theme-minecraft')) return 'minecraft';
+    if (root.classList.contains('theme-cyberpunk')) return 'cyberpunk';
+    return 'scarlet';
+  };
+
+  const getVoicePack = () => {
+    const theme = getActiveTheme();
+    const packs = VOICE_PACKS[theme] || VOICE_PACKS.scarlet;
+    const selected = packs.find(p => p.id === selectedVoicePack);
+    return selected || packs[0];
+  };
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
   const synthRef = useRef(window.speechSynthesis);
@@ -174,6 +78,11 @@ const Chatbot = ({ context = {} }) => {
   useEffect(() => {
     localStorage.setItem('palVoiceEnabled', JSON.stringify(voiceEnabled));
   }, [voiceEnabled]);
+
+  // Save voice pack preference
+  useEffect(() => {
+    localStorage.setItem('palVoicePack', selectedVoicePack);
+  }, [selectedVoicePack]);
 
   // Initialize Speech Recognition
   useEffect(() => {
@@ -310,18 +219,46 @@ const Chatbot = ({ context = {} }) => {
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     
-    // Configure voice settings
-    utterance.rate = 1.0; // Normal speed
-    utterance.pitch = 1.0; // Normal pitch
+    // Get currently active voice pack properties
+    const voicePack = getVoicePack();
+    
+    // Configure voice settings from voice pack
+    utterance.rate = voicePack.rate;
+    utterance.pitch = voicePack.pitch;
     utterance.volume = 1.0; // Full volume
 
-    // Try to use a more natural voice
+    // Retrieve system voices and filter English ones
     const voices = synthRef.current.getVoices();
-    const preferredVoice = voices.find(voice => 
-      voice.name.includes('Google') || 
-      voice.name.includes('Natural') ||
-      voice.name.includes('Enhanced')
-    ) || voices.find(voice => voice.lang.startsWith('en'));
+    const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+    
+    let preferredVoice = null;
+    if (voicePack.gender === 'female') {
+      preferredVoice = englishVoices.find(v => 
+        v.name.toLowerCase().includes('zira') || 
+        v.name.toLowerCase().includes('female') || 
+        v.name.toLowerCase().includes('samantha') ||
+        v.name.toLowerCase().includes('karen') ||
+        v.name.toLowerCase().includes('hazel') ||
+        v.name.toLowerCase().includes('google us english')
+      );
+    } else {
+      preferredVoice = englishVoices.find(v => 
+        v.name.toLowerCase().includes('david') || 
+        v.name.toLowerCase().includes('male') || 
+        v.name.toLowerCase().includes('mark') || 
+        v.name.toLowerCase().includes('george') || 
+        v.name.toLowerCase().includes('google uk english male')
+      );
+    }
+    
+    // Fallback if no matching gender found
+    if (!preferredVoice) {
+      preferredVoice = voices.find(voice => 
+        voice.name.includes('Google') || 
+        voice.name.includes('Natural') ||
+        voice.name.includes('Enhanced')
+      ) || voices.find(voice => voice.lang.startsWith('en'));
+    }
     
     if (preferredVoice) {
       utterance.voice = preferredVoice;
@@ -494,13 +431,13 @@ const Chatbot = ({ context = {} }) => {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             className="chatbot-fab"
             onClick={() => setIsOpen(true)}
             title="Chat with Pal"
           >
-            <CyberpunkRobot size={58} />
-            <div className="chatbot-fab-glow"></div>
+            <MessageSquare size={24} />
           </motion.button>
         )}
       </AnimatePresence>
@@ -516,9 +453,7 @@ const Chatbot = ({ context = {} }) => {
           >
             <div className="chatbot-header">
               <div className="chatbot-header-title">
-                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '24px', marginRight: '8px' }}>
-                  <CyberpunkRobot size={14} />
-                </div>
+                <Bot size={20} className="chatbot-header-icon" />
                 <span>Pal</span>
                 <span className="chatbot-status-dot"></span>
                 {isSpeaking && (
@@ -532,6 +467,13 @@ const Chatbot = ({ context = {} }) => {
                 )}
               </div>
               <div className="chatbot-header-actions">
+                <button 
+                  onClick={() => setShowVoiceSettings(!showVoiceSettings)} 
+                  className={`chatbot-action-btn ${showVoiceSettings ? 'active' : ''}`}
+                  title="Voice Settings"
+                >
+                  <Sliders size={16} />
+                </button>
                 <button 
                   onClick={toggleVoiceOutput} 
                   className={`chatbot-action-btn ${voiceEnabled ? 'active' : ''}`}
@@ -548,6 +490,30 @@ const Chatbot = ({ context = {} }) => {
               </div>
             </div>
 
+            {showVoiceSettings && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="chatbot-voice-settings-panel"
+              >
+                <div className="voice-settings-title">Select Voice Pack</div>
+                <div className="voice-pack-list">
+                  {(VOICE_PACKS[getActiveTheme()] || VOICE_PACKS.scarlet).map(pack => (
+                    <button
+                      key={pack.id}
+                      onClick={() => {
+                        setSelectedVoicePack(pack.id);
+                        toast.success(`Active voice: ${pack.name}`);
+                      }}
+                      className={`voice-pack-item ${getVoicePack().id === pack.id ? 'active' : ''}`}
+                    >
+                      {pack.name}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
             <div className="chatbot-messages">
               {messages.map((msg) => (
                 <motion.div
@@ -556,8 +522,8 @@ const Chatbot = ({ context = {} }) => {
                   animate={{ opacity: 1, y: 0 }}
                   className={`chatbot-message ${msg.type}`}
                 >
-                  <div className="chatbot-message-avatar" style={{ overflow: 'visible', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {msg.type === 'bot' ? <CyberpunkRobot size={14} /> : <User size={16} />}
+                  <div className="chatbot-message-avatar">
+                    {msg.type === 'bot' ? <Bot size={16} /> : <User size={16} />}
                   </div>
                   <div className="chatbot-message-content">
                     {msg.text.split('\n').map((line, i) => (
@@ -571,8 +537,8 @@ const Chatbot = ({ context = {} }) => {
               ))}
               {isTyping && (
                 <div className="chatbot-message bot">
-                  <div className="chatbot-message-avatar" style={{ overflow: 'visible', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <CyberpunkRobot size={14} />
+                  <div className="chatbot-message-avatar">
+                    <Bot size={16} />
                   </div>
                   <div className="chatbot-message-content typing-indicator">
                     <span></span><span></span><span></span>

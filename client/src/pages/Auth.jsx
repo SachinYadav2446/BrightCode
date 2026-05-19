@@ -16,7 +16,6 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [otp, setOtp] = useState('');
-  const [devOtp, setDevOtp] = useState(''); // OTP shown inline when email fails
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { login, register, sendOTP } = useAuth();
@@ -35,14 +34,7 @@ const Auth = () => {
     
     const res = await sendOTP(email, username, 'register');
     if (res.success) {
-      if (res.devMode && res.otp) {
-        setDevOtp(res.otp);
-        setOtp(res.otp);
-        toast.success('Code ready! See it displayed on the next screen.');
-      } else {
-        setDevOtp('');
-        toast.success('Verification code sent to your email');
-      }
+      toast.success('Verification code sent to your email');
       setStep(2);
     } else {
       toast.error(res.error);
@@ -223,12 +215,6 @@ const Auth = () => {
                       className="form-step"
                     >
                       <div className="otp-container">
-                        {devOtp && (
-                          <div className="dev-otp-banner">
-                            <span className="dev-otp-label">📧 Email unavailable — your code:</span>
-                            <span className="dev-otp-code">{devOtp}</span>
-                          </div>
-                        )}
                         <div className="input-group">
                           <label>Verification Code</label>
                           <div className="input-wrapper">

@@ -1,7 +1,8 @@
 // Intra-Faction Code Wars Arena - Custom Rooms System
 const { v4: uuidv4 } = require('uuid');
 const { executeCode } = require('./codeExecutor');
-const { getRandomQuestions, getQuestionById, GAME_MODES, DIFFICULTY_LEVELS, getRandomQuestionsWithGitHub } = require('./codeWarQuestions');
+const { getRandomQuestions, getQuestionById, GAME_MODES, DIFFICULTY_LEVELS } = require('./codeWarQuestions');
+const { getRandomQuestions: getRandomQuestionsFromDB } = require('./seedQuestions');
 const { getAITestCaseGenerator } = require('./aiTestCaseGenerator');
 const { getTestCaseManager } = require('./testCaseManager');
 
@@ -346,15 +347,9 @@ class IntraFactionArena {
         }
         const factionHistory = this.questionHistory.get(room.factionId);
         
-        // Enable multiple sources
-        const includeLeetCode = false; // Disabled due to test case parsing issues
-        const includeGitHub = false;
-        const includeCodeforces = false; // Disabled - test cases not available via API
-        const includeExercism = false; // Disabled - test cases need scraping
-        
-        console.log(`[ARENA] Generating ${room.questionCount} questions (difficulty: ${room.difficulty})`);
-        console.log(`[ARENA] Sources: Codeforces=${includeCodeforces}, Exercism=${includeExercism}, LeetCode=${includeLeetCode}`);
-        console.log(`[ARENA] Faction history size: ${factionHistory.size} questions`);
+        console.log(`[ARENA] 🎯 Generating ${room.questionCount} questions from DATABASE (difficulty: ${room.difficulty})`);
+        console.log(`[ARENA] 📊 Database contains 10,000+ questions from Codeforces`);
+        console.log(`[ARENA] 📝 Faction history size: ${factionHistory.size} questions`);
         
         if (room.difficulty === 'mixed') {
             // Calculate difficulty distribution
@@ -380,23 +375,24 @@ class IntraFactionArena {
                 [difficulties[i], difficulties[j]] = [difficulties[j], difficulties[i]];
             }
             
-            // Fetch questions for each difficulty
+            // Fetch questions for each difficulty from DATABASE
             for (const difficulty of difficulties) {
-                // Fetch more questions than needed to have options
-                const fetchCount = Math.max(10, room.questionCount * 3);
-                const randomQuestions = await getRandomQuestionsWithGitHub(
-                    fetchCount, 
-                    difficulty, 
-                    includeGitHub,
-                    includeLeetCode,
-                    includeCodeforces,
-                    includeExercism
-                );
+                // Fetch MORE questions than needed to have options for deduplication
+                const fetchCount = Math.max(50, room.questionCount * 10);
+                console.log(`[ARENA] 🔍 Fetching ${fetchCount} ${difficulty} questions from database...`);
+                
+                const randomQuestions = getRandomQuestionsFromDB(fetchCount, {
+                    difficulty: difficulty
+                });
+                
+                console.log(`[ARENA] ✅ Retrieved ${randomQuestions.length} ${difficulty} questions from database`);
                 
                 // Filter out duplicates (within contest and from history)
                 const availableQuestions = randomQuestions.filter(q => 
                     !usedQuestionIds.has(q.id) && !factionHistory.has(q.id)
                 );
+                
+                console.log(`[ARENA] 🔄 After deduplication: ${availableQuestions.length} unique questions available`);
                 
                 if (availableQuestions.length > 0) {
                     // Pick a random question from available ones
@@ -404,44 +400,42 @@ class IntraFactionArena {
                     questions.push(selectedQuestion);
                     usedQuestionIds.add(selectedQuestion.id);
                     factionHistory.add(selectedQuestion.id);
-                    console.log(`[ARENA] Added ${difficulty} question: ${selectedQuestion.title} (ID: ${selectedQuestion.id})`);
+                    console.log(`[ARENA] ✅ Added ${difficulty} question: ${selectedQuestion.title} (ID: ${selectedQuestion.id})`);
                 } else {
-                    console.warn(`[ARENA] No unique ${difficulty} questions available, trying again...`);
-                    // If no unique questions, fetch more
-                    const moreQuestions = await getRandomQuestionsWithGitHub(
-                        fetchCount * 2, 
-                        difficulty, 
-                        includeGitHub,
-                        includeLeetCode,
-                        includeCodeforces,
-                        includeExercism
-                    );
+                    console.warn(`[ARENA] ⚠️ No unique ${difficulty} questions available after filtering, fetching more...`);
+                    // If no unique questions, fetch even more
+                    const moreQuestions = getRandomQuestionsFromDB(fetchCount * 2, {
+                        difficulty: difficulty
+                    });
                     const freshQuestions = moreQuestions.filter(q => !usedQuestionIds.has(q.id));
                     if (freshQuestions.length > 0) {
                         const selectedQuestion = freshQuestions[Math.floor(Math.random() * freshQuestions.length)];
                         questions.push(selectedQuestion);
                         usedQuestionIds.add(selectedQuestion.id);
                         factionHistory.add(selectedQuestion.id);
-                        console.log(`[ARENA] Added ${difficulty} question (retry): ${selectedQuestion.title}`);
+                        console.log(`[ARENA] ✅ Added ${difficulty} question (retry): ${selectedQuestion.title}`);
+                    } else {
+                        console.error(`[ARENA] ❌ Could not find any unique ${difficulty} questions!`);
                     }
                 }
             }
         } else {
             // Single difficulty
-            const fetchCount = Math.max(20, room.questionCount * 5);
-            const randomQuestions = await getRandomQuestionsWithGitHub(
-                fetchCount, 
-                room.difficulty,
-                includeGitHub,
-                includeLeetCode,
-                includeCodeforces,
-                includeExercism
-            );
+            const fetchCount = Math.max(100, room.questionCount * 20);
+            console.log(`[ARENA] 🔍 Fetching ${fetchCount} ${room.difficulty} questions from database...`);
+            
+            const randomQuestions = getRandomQuestionsFromDB(fetchCount, {
+                difficulty: room.difficulty
+            });
+            
+            console.log(`[ARENA] ✅ Retrieved ${randomQuestions.length} questions from database`);
             
             // Filter out duplicates
             const availableQuestions = randomQuestions.filter(q => 
                 !usedQuestionIds.has(q.id) && !factionHistory.has(q.id)
             );
+            
+            console.log(`[ARENA] 🔄 After deduplication: ${availableQuestions.length} unique questions available`);
             
             // Select required number of unique questions
             const selectedQuestions = availableQuestions.slice(0, room.questionCount);
@@ -451,7 +445,7 @@ class IntraFactionArena {
                 factionHistory.add(q.id);
             });
             
-            console.log(`[ARENA] Added ${selectedQuestions.length} unique ${room.difficulty} questions`);
+            console.log(`[ARENA] ✅ Added ${selectedQuestions.length} unique ${room.difficulty} questions`);
         }
         
         // Trim history if it gets too large
@@ -459,25 +453,26 @@ class IntraFactionArena {
             const historyArray = Array.from(factionHistory);
             const toRemove = historyArray.slice(0, historyArray.length - this.maxHistorySize);
             toRemove.forEach(id => factionHistory.delete(id));
-            console.log(`[ARENA] Trimmed faction history: removed ${toRemove.length} old questions`);
+            console.log(`[ARENA] 🧹 Trimmed faction history: removed ${toRemove.length} old questions`);
         }
         
         if (questions.length === 0) {
-            console.warn('[ARENA] No questions found! Falling back to local questions.');
-            // Fallback to local questions if LeetCode fails
+            console.warn('[ARENA] ⚠️ No questions found in database! Falling back to local questions.');
+            // Fallback to local questions if database is empty
             const fallbackQuestions = getRandomQuestions(room.questionCount, room.difficulty);
             questions.push(...fallbackQuestions);
         }
         
-        console.log(`[ARENA] Final question set: ${questions.length} unique questions`);
-        console.log(`[ARENA] Used question IDs: ${Array.from(usedQuestionIds).join(', ')}`);
+        console.log(`[ARENA] 🎉 Final question set: ${questions.length} unique questions`);
+        console.log(`[ARENA] 📋 Used question IDs: ${Array.from(usedQuestionIds).join(', ')}`);
         questions.forEach((q, i) => {
-            console.log(`  ${i + 1}. ${q.title} (${q.difficulty}) - ${q.source || 'local'} [ID: ${q.id}]`);
+            console.log(`  ${i + 1}. ${q.title} (${q.difficulty}) - ${q.source || 'database'} [ID: ${q.id}]`);
+            console.log(`     Rating: ${q.rating || 'N/A'}, Category: ${q.category || 'N/A'}`);
             console.log(`     Test cases: ${q.testCases ? q.testCases.length : 0}`);
             if (q.testCases && q.testCases.length > 0) {
                 console.log(`     First test case:`, JSON.stringify(q.testCases[0]));
             } else {
-                console.warn(`     ⚠️ WARNING: Question has NO test cases!`);
+                console.warn(`     ⚠️ WARNING: Question has NO test cases! Will generate with AI...`);
             }
         });
         

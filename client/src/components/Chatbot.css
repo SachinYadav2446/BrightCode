@@ -2,63 +2,24 @@
   position: fixed;
   bottom: 2rem;
   right: 2rem;
-  width: 90px;
-  height: 120px;
-  background: transparent;
-  border: none;
-  box-shadow: none;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: var(--complementary);
+  border: 2px solid var(--complementary);
+  box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.5), 0 0 20px rgba(254, 243, 199, 0.3);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 9999;
   transition: all 0.3s ease;
-  overflow: visible;
-  outline: none;
 }
 
-.chatbot-fab svg {
-  filter: drop-shadow(0 4px 12px rgba(0, 217, 255, 0.5)) drop-shadow(0 0 15px rgba(255, 0, 128, 0.3));
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: cyber-float 3s ease-in-out infinite;
-}
-
-.chatbot-fab:hover svg {
-  filter: drop-shadow(0 6px 22px rgba(0, 217, 255, 0.95)) drop-shadow(0 0 25px rgba(255, 0, 128, 0.6)) drop-shadow(0 0 45px rgba(0, 217, 255, 0.5));
-  animation-play-state: paused;
-  transform: scale(1.15) translateY(-6px);
-}
-
-.chatbot-fab-glow {
-  position: absolute;
-  bottom: 8px;
-  width: 44px;
-  height: 8px;
-  background: radial-gradient(ellipse at center, rgba(0, 217, 255, 0.75) 0%, rgba(0, 217, 255, 0) 75%);
-  border-radius: 50%;
-  opacity: 0.8;
-  filter: blur(1.5px);
-  animation: cyber-shadow-pulse 3s ease-in-out infinite;
-  z-index: -1;
-}
-
-.chatbot-fab:hover .chatbot-fab-glow {
-  opacity: 0.35;
-  transform: scale(0.55);
-  background: radial-gradient(ellipse at center, rgba(255, 0, 128, 0.85) 0%, rgba(255, 0, 128, 0) 75%);
-}
-
-@keyframes cyber-float {
-  0% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-10px) rotate(0.5deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
-}
-
-@keyframes cyber-shadow-pulse {
-  0% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(0.65); opacity: 0.3; }
-  100% { transform: scale(1); opacity: 0.8; }
+.chatbot-fab:hover {
+  box-shadow: 0 6px 25px rgba(var(--primary-rgb), 0.7), 0 0 30px rgba(254, 243, 199, 0.5);
+  transform: scale(1.05);
 }
 
 .chatbot-window {
@@ -549,4 +510,138 @@
   background: rgba(248, 250, 252, 0.15);
   color: var(--primary) !important;
   border-color: var(--primary);
+}
+
+/* Voice settings dropdown panel inside Chatbot */
+.chatbot-voice-settings-panel {
+  background: var(--bg-surface);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.voice-settings-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.voice-pack-list {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.voice-pack-item {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-main);
+  padding: 10px 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.voice-pack-item:hover {
+  background: rgba(var(--primary-rgb), 0.05);
+  border-color: rgba(var(--primary-rgb), 0.3);
+  transform: translateY(-2px);
+}
+
+.voice-pack-item.active {
+  background: rgba(var(--primary-rgb), 0.1) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+  box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.15) !important;
+  font-weight: 700 !important;
+}
+
+/* Custom styles for Minecraft theme */
+.theme-minecraft .chatbot-voice-settings-panel {
+  background: #3a3a3a !important;
+  border-bottom: 4px solid #1a1a1a !important;
+  box-shadow: inset -4px -4px 0 #1a1a1a, inset 4px 4px 0 #5a5a5a !important;
+  padding: 16px !important;
+}
+
+.theme-minecraft .voice-settings-title {
+  color: var(--primary) !important;
+  font-size: 0.55rem !important;
+  font-family: 'Press Start 2P', monospace !important;
+  letter-spacing: 0px !important;
+}
+
+.theme-minecraft .voice-pack-list {
+  gap: 8px !important;
+}
+
+.theme-minecraft .voice-pack-item {
+  background: #2a2a2a !important;
+  border: 3px solid #1a1a1a !important;
+  color: var(--text-main) !important;
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 0.45rem !important;
+  border-radius: 0 !important;
+  padding: 8px 4px !important;
+  box-shadow: inset -2px -2px 0 #1a1a1a, inset 2px 2px 0 #4a4a4a !important;
+}
+
+.theme-minecraft .voice-pack-item:hover {
+  background: #4a4a4a !important;
+  border-color: #2a2a2a !important;
+  transform: none !important;
+}
+
+.theme-minecraft .voice-pack-item.active {
+  background: var(--primary) !important;
+  border-color: #2a2a2a !important;
+  color: #1a1a1a !important;
+  box-shadow: inset -3px -3px 0 #8b6914, inset 3px 3px 0 #fffdd0 !important;
+}
+
+/* Custom styles for Cyberpunk theme */
+.theme-cyberpunk .chatbot-voice-settings-panel {
+  background: var(--bg-surface) !important;
+  border-bottom: 1px solid var(--primary) !important;
+  box-shadow: 0 0 10px rgba(0, 217, 255, 0.1) !important;
+}
+
+.theme-cyberpunk .voice-settings-title {
+  font-family: 'Orbitron', sans-serif !important;
+  color: var(--primary) !important;
+  text-shadow: 0 0 5px rgba(0, 217, 255, 0.4) !important;
+  font-size: 0.75rem !important;
+}
+
+.theme-cyberpunk .voice-pack-item {
+  font-family: 'Share Tech Mono', monospace !important;
+  border: 1px solid rgba(0, 217, 255, 0.2) !important;
+  border-radius: 0 !important;
+  background: rgba(5, 5, 8, 0.8) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+}
+
+.theme-cyberpunk .voice-pack-item:hover {
+  background: rgba(0, 217, 255, 0.05) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 8px rgba(0, 217, 255, 0.2) !important;
+}
+
+.theme-cyberpunk .voice-pack-item.active {
+  background: rgba(0, 217, 255, 0.15) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+  box-shadow: 0 0 12px rgba(0, 217, 255, 0.4) !important;
 }

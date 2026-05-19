@@ -198,6 +198,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateProfile = async (updateData) => {
+    setUser(prev => prev ? {
+      ...prev,
+      ...(updateData.username !== undefined && { username: updateData.username }),
+      ...(updateData.bio !== undefined && { bio: updateData.bio }),
+      ...(updateData.stack !== undefined && { stack: updateData.stack }),
+    } : null);
+
     try {
       const { data } = await axios.post('http://localhost:5051/update-profile',
         updateData,
@@ -215,8 +222,10 @@ export const AuthProvider = ({ children }) => {
         username: data.username, 
         email: data.email,
         bio: data.bio || '',
-        stack: data.stack || []
+        stack: data.stack || [],
+        ...(data.createdAt !== undefined && { createdAt: data.createdAt }),
       }));
+      if (data.createdAt) localStorage.setItem('user_joined', data.createdAt);
       return { success: true };
     } catch (err) {
       return { success: false, error: err.response?.data?.error || 'Failed to update profile' };

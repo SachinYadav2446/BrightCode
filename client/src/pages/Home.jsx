@@ -132,7 +132,6 @@ const Home = () => {
     java: Number(user?.java_level || 0)
   };
 
-
   // Generate heatmap data based on user activity
 
   const generateHeatmapData = () => {
@@ -659,30 +658,13 @@ const Home = () => {
             {/* User Core Stats */}
 
             <div className="home-user-info">
+              <div className="home-user-info-main">
 
               <h1 className="home-welcome-text">
 
                 Welcome back, <span className="highlight">{user.username}</span>
 
               </h1>
-
-
-
-              {user.stack && user.stack.length > 0 && (
-
-                <div className="home-user-stack">
-
-                  {user.stack.map((tech, index) => (
-
-                    <span key={index} className="tech-pill">{tech}</span>
-
-                  ))}
-
-                </div>
-
-              )}
-
-
 
               <div className="home-stats-row">
 
@@ -746,6 +728,10 @@ const Home = () => {
 
               </div>
 
+              </div>
+              <div className="home-creeper-container">
+                <img src="/creeper.svg" alt="Creeper Decor" className="home-creeper-img" />
+              </div>
             </div>
 
 
