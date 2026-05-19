@@ -1,10 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Bot, User, Maximize2, Minimize2, Mic, Volume2, VolumeX } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, User, Maximize2, Minimize2, Mic, Volume2, VolumeX, Sliders } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import './Chatbot.css';
 
+
+const VOICE_PACKS = {
+  scarlet: [
+    { id: 'scarlet_woman', name: 'Lady', gender: 'female', pitch: 1.15, rate: 1.0 },
+    { id: 'scarlet_man', name: 'Gentleman', gender: 'male', pitch: 0.85, rate: 0.95 }
+  ],
+  cyberpunk: [
+    { id: 'cyber_female', name: 'Cyber Hack Female', gender: 'female', pitch: 1.45, rate: 1.1 },
+    { id: 'cyber_male', name: 'Cyber Hack Male', gender: 'male', pitch: 0.55, rate: 1.1 }
+  ],
+  minecraft: [
+    { id: 'mc_villager', name: 'MC Villager', gender: 'male', pitch: 0.5, rate: 0.85 },
+    { id: 'mc_pixie', name: 'Pixel Fairy', gender: 'female', pitch: 1.8, rate: 1.2 }
+  ]
+};
 
 const Chatbot = ({ context = {} }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,7 +37,25 @@ const Chatbot = ({ context = {} }) => {
     const saved = localStorage.getItem('palVoiceEnabled');
     return saved ? JSON.parse(saved) : true;
   });
+  const [selectedVoicePack, setSelectedVoicePack] = useState(() => {
+    return localStorage.getItem('palVoicePack') || '';
+  });
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  const getActiveTheme = () => {
+    const root = document.documentElement;
+    if (root.classList.contains('theme-minecraft')) return 'minecraft';
+    if (root.classList.contains('theme-cyberpunk')) return 'cyberpunk';
+    return 'scarlet';
+  };
+
+  const getVoicePack = () => {
+    const theme = getActiveTheme();
+    const packs = VOICE_PACKS[theme] || VOICE_PACKS.scarlet;
+    const selected = packs.find(p => p.id === selectedVoicePack);
+    return selected || packs[0];
+  };
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
   const synthRef = useRef(window.speechSynthesis);
@@ -45,6 +78,11 @@ const Chatbot = ({ context = {} }) => {
   useEffect(() => {
     localStorage.setItem('palVoiceEnabled', JSON.stringify(voiceEnabled));
   }, [voiceEnabled]);
+
+  // Save voice pack preference
+  useEffect(() => {
+    localStorage.setItem('palVoicePack', selectedVoicePack);
+  }, [selectedVoicePack]);
 
   // Initialize Speech Recognition
   useEffect(() => {
@@ -181,18 +219,46 @@ const Chatbot = ({ context = {} }) => {
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     
-    // Configure voice settings
-    utterance.rate = 1.0; // Normal speed
-    utterance.pitch = 1.0; // Normal pitch
+    // Get currently active voice pack properties
+    const voicePack = getVoicePack();
+    
+    // Configure voice settings from voice pack
+    utterance.rate = voicePack.rate;
+    utterance.pitch = voicePack.pitch;
     utterance.volume = 1.0; // Full volume
 
-    // Try to use a more natural voice
+    // Retrieve system voices and filter English ones
     const voices = synthRef.current.getVoices();
-    const preferredVoice = voices.find(voice => 
-      voice.name.includes('Google') || 
-      voice.name.includes('Natural') ||
-      voice.name.includes('Enhanced')
-    ) || voices.find(voice => voice.lang.startsWith('en'));
+    const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+    
+    let preferredVoice = null;
+    if (voicePack.gender === 'female') {
+      preferredVoice = englishVoices.find(v => 
+        v.name.toLowerCase().includes('zira') || 
+        v.name.toLowerCase().includes('female') || 
+        v.name.toLowerCase().includes('samantha') ||
+        v.name.toLowerCase().includes('karen') ||
+        v.name.toLowerCase().includes('hazel') ||
+        v.name.toLowerCase().includes('google us english')
+      );
+    } else {
+      preferredVoice = englishVoices.find(v => 
+        v.name.toLowerCase().includes('david') || 
+        v.name.toLowerCase().includes('male') || 
+        v.name.toLowerCase().includes('mark') || 
+        v.name.toLowerCase().includes('george') || 
+        v.name.toLowerCase().includes('google uk english male')
+      );
+    }
+    
+    // Fallback if no matching gender found
+    if (!preferredVoice) {
+      preferredVoice = voices.find(voice => 
+        voice.name.includes('Google') || 
+        voice.name.includes('Natural') ||
+        voice.name.includes('Enhanced')
+      ) || voices.find(voice => voice.lang.startsWith('en'));
+    }
     
     if (preferredVoice) {
       utterance.voice = preferredVoice;
@@ -402,6 +468,13 @@ const Chatbot = ({ context = {} }) => {
               </div>
               <div className="chatbot-header-actions">
                 <button 
+                  onClick={() => setShowVoiceSettings(!showVoiceSettings)} 
+                  className={`chatbot-action-btn ${showVoiceSettings ? 'active' : ''}`}
+                  title="Voice Settings"
+                >
+                  <Sliders size={16} />
+                </button>
+                <button 
                   onClick={toggleVoiceOutput} 
                   className={`chatbot-action-btn ${voiceEnabled ? 'active' : ''}`}
                   title={voiceEnabled ? 'Disable voice output' : 'Enable voice output'}
@@ -416,6 +489,30 @@ const Chatbot = ({ context = {} }) => {
                 </button>
               </div>
             </div>
+
+            {showVoiceSettings && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="chatbot-voice-settings-panel"
+              >
+                <div className="voice-settings-title">Select Voice Pack</div>
+                <div className="voice-pack-list">
+                  {(VOICE_PACKS[getActiveTheme()] || VOICE_PACKS.scarlet).map(pack => (
+                    <button
+                      key={pack.id}
+                      onClick={() => {
+                        setSelectedVoicePack(pack.id);
+                        toast.success(`Active voice: ${pack.name}`);
+                      }}
+                      className={`voice-pack-item ${getVoicePack().id === pack.id ? 'active' : ''}`}
+                    >
+                      {pack.name}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             <div className="chatbot-messages">
               {messages.map((msg) => (
