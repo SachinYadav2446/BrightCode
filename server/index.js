@@ -20,6 +20,7 @@ const CodeWarsArena = require('./codeWarsArena');
 const IntraFactionArena = require('./intraFactionArena');
 const rateLimiter = require('./utils/rateLimiter');
 const chatbotAPI = require('./chatbotAPI');
+const questionsAPI = require('./questionsAPI');
 
 const app = express();
 const server = http.createServer(app);
@@ -39,6 +40,9 @@ app.use(express.json({ limit: '20mb' }));
 
 // ── Mount Chatbot API ───────────────────────────────────────
 app.use('/api/chat', chatbotAPI);
+
+// ── Mount Questions API ─────────────────────────────────────
+app.use('/api/questions', questionsAPI);
 
 const JWT_SECRET = 'brightcode_secret_key_123';
 
@@ -74,10 +78,20 @@ const saveNotesStore = () => {
     }
 };
 
+const normalizeMemoryUser = (user) => {
+    if (!user) return user;
+    if (user.bio === undefined) user.bio = '';
+    if (!Array.isArray(user.stack)) user.stack = [];
+    if (!user.created_at && user.joinedAt) user.created_at = user.joinedAt;
+    if (!user.joinedAt && user.created_at) user.joinedAt = user.created_at;
+    return user;
+};
+
 const loadStore = () => {
     if (fs.existsSync(DB_FILE)) {
         try {
             memoryStore = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+            memoryStore.users = (memoryStore.users || []).map(normalizeMemoryUser);
             console.log(`[PERSISTENCE] Loaded ${memoryStore.users.length} users from users_db.json`);
         } catch (e) {
             console.error('[PERSISTENCE] Error loading memory DB file:', e);
@@ -431,12 +445,14 @@ app.post('/register', async (req, res) => {
             const exists = memoryStore.users.find(u => u.email === email || u.username === username);
             if (exists) return sendError(res, 400, "User exists", "Name or Email is already taken.");
 
-            memoryStore.users.push({
+            memoryStore.users.push(normalizeMemoryUser({
                 id, username, email, password: hashedPassword,
                 xp: 0, css_level: 0, logic_level: 0, react_level: 0, mern_level: 0,
                 activity: {},
+                bio: '',
+                stack: [],
                 joinedAt: new Date().toISOString()
-            });
+            }));
             saveStore();
             return res.status(201).json({
                 message: "Registered in Persistent Memory Mode",
@@ -501,8 +517,8 @@ app.post('/login', async (req, res) => {
             createdCount: user.created_count || 0,
             joinedCount: user.joined_count || 0,
             bio: user.bio || '',
-            stack: user.stack || [],
-            createdAt: user.created_at || new Date().toISOString()
+            stack: Array.isArray(user.stack) ? user.stack : [],
+            createdAt: user.created_at || user.joinedAt || null
         });
     } catch (err) {
         console.error('SERVER LOGIN ERROR:', err);
@@ -525,12 +541,38 @@ app.post('/update-profile', authenticateToken, async (req, res) => {
     const { username, bio, stack } = req.body;
     if (!username) return res.status(400).json({ error: 'Username cannot be empty' });
 
+    const parsedStack = Array.isArray(stack) ? stack : [];
+
     try {
+        if (useMemoryDB) {
+            const taken = memoryStore.users.find(u => u.username === username && u.id !== req.user.id);
+            if (taken) return res.status(400).json({ error: 'Username is already taken' });
+
+            const user = memoryStore.users.find(u => u.id === req.user.id);
+            if (!user) return res.status(404).json({ error: 'User not found' });
+
+            user.username = username;
+            user.bio = bio || '';
+            user.stack = parsedStack;
+            normalizeMemoryUser(user);
+            saveStore();
+
+            const token = jwt.sign({ id: user.id, username }, JWT_SECRET, { expiresIn: '1d' });
+            return res.json({
+                token,
+                username: user.username,
+                email: user.email,
+                xp: user.xp || 0,
+                bio: user.bio || '',
+                stack: user.stack || [],
+                createdAt: user.created_at || user.joinedAt || null
+            });
+        }
+
         const existing = await pool.query('SELECT id FROM users WHERE username = $1 AND id != $2', [username, req.user.id]);
         if (existing.rows.length > 0) return res.status(400).json({ error: 'Username is already taken' });
 
-        // Ensure stack is properly formatted as JSON
-        const stackJson = Array.isArray(stack) ? JSON.stringify(stack) : '[]';
+        const stackJson = JSON.stringify(parsedStack);
 
         const result = await pool.query(
             'UPDATE users SET username = $1, bio = $2, stack = $3::jsonb WHERE id = $4 RETURNING email, xp, bio, stack, created_at',
@@ -540,17 +582,16 @@ app.post('/update-profile', authenticateToken, async (req, res) => {
         const user = result.rows[0];
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        // Parse stack if it's a string
-        const parsedStack = typeof user.stack === 'string' ? JSON.parse(user.stack) : (user.stack || []);
+        const stackOut = typeof user.stack === 'string' ? JSON.parse(user.stack) : (user.stack || []);
 
-        const token = jwt.sign({ id: req.user.id, username: username }, JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ id: req.user.id, username }, JWT_SECRET, { expiresIn: '1d' });
         res.json({
             token,
             username,
             email: user.email,
             xp: user.xp,
             bio: user.bio,
-            stack: parsedStack,
+            stack: stackOut,
             createdAt: user.created_at
         });
     } catch (err) {
@@ -647,15 +688,20 @@ app.get('/me', authenticateToken, async (req, res) => {
             let u = memoryStore.users.find(u => u.id === req.user.id);
             if (!u) {
                 // Self-heal: user missing from memory due to server restart
-                u = {
+                u = normalizeMemoryUser({
                     id: req.user.id,
                     username: req.user.username,
                     email: `${req.user.username}@brightcode.memory`,
                     password: 'memory_migrated',
-                    xp: 0, css_level: 0, logic_level: 0, react_level: 0, mern_level: 0
-                };
+                    xp: 0, css_level: 0, logic_level: 0, react_level: 0, mern_level: 0,
+                    bio: '',
+                    stack: [],
+                    joinedAt: new Date().toISOString()
+                });
                 memoryStore.users.push(u);
+                saveStore();
             }
+            normalizeMemoryUser(u);
             return res.json({
                 id: u.id,
                 username: u.username,
@@ -666,11 +712,14 @@ app.get('/me', authenticateToken, async (req, res) => {
                 logic_level: u.logic_level || 0,
                 react_level: u.react_level || 0,
                 mern_level: u.mern_level || 0,
-                joinedAt: u.joinedAt || null,
+                joinedAt: u.joinedAt || u.created_at || null,
                 activity: u.activity || {},
                 streak: computeStreakFromActivity(u.activity || {}),
                 createdCount: u.created_count || 0,
-                joinedCount: u.joined_count || 0
+                joinedCount: u.joined_count || 0,
+                bio: u.bio || '',
+                stack: u.stack || [],
+                createdAt: u.created_at || u.joinedAt || null
             });
         }
         const result = await pool.query(
@@ -1914,17 +1963,37 @@ io.on('connection', (socket) => {
             }
         });
 
-        // ── WebRTC Hologram Comms Signaling ────────────────────────
+        // ── WebRTC Multi-User Video Call Signaling ────────────────────────
+        // Relay offer to a specific peer
         socket.on('webrtc-offer', ({ roomId: rId, offer, targetId }) => {
             socket.to(targetId).emit('webrtc-offer', { offer, from: socket.id });
         });
 
+        // Relay answer to a specific peer
         socket.on('webrtc-answer', ({ roomId: rId, answer, targetId }) => {
             socket.to(targetId).emit('webrtc-answer', { answer, from: socket.id });
         });
 
+        // Relay ICE candidate to a specific peer
         socket.on('webrtc-ice-candidate', ({ roomId: rId, candidate, targetId }) => {
             socket.to(targetId).emit('webrtc-ice-candidate', { candidate, from: socket.id });
+        });
+
+        // User joined the video call — notify everyone else in the room
+        socket.on('video-call-join', ({ roomId: rId, username }) => {
+            socket.to(rId).emit('video-call-user-joined', { socketId: socket.id, username });
+            console.log(`[VIDEO] ${username} joined video call in room ${rId}`);
+        });
+
+        // User left the video call — notify everyone else
+        socket.on('video-call-leave', ({ roomId: rId, username }) => {
+            socket.to(rId).emit('video-call-user-left', { socketId: socket.id, username });
+            console.log(`[VIDEO] ${username} left video call in room ${rId}`);
+        });
+
+        // Broadcast mute/video toggle state to all peers
+        socket.on('video-call-state', ({ roomId: rId, isMuted, isVideoOn, username }) => {
+            socket.to(rId).emit('video-call-peer-state', { socketId: socket.id, isMuted, isVideoOn, username });
         });
 
         socket.on('end-call', ({ roomId: rId }) => {
