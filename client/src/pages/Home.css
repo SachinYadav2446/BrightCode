@@ -45,7 +45,7 @@
   --accent-gold: #ffd700;
   --accent-black: #0a0202;
 
-  --font-sans: 'Poppins', 'Inter', system-ui, sans-serif;
+  /* --font-sans: 'Poppins', 'Inter', system-ui, sans-serif; */
   --font-mono: 'JetBrains Mono', monospace;
 
   --radius-sm: 8px;
@@ -4319,7 +4319,7 @@ html {
   color: #000;
   text-decoration: none;
   font-size: 0.95rem;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 600;
   letter-spacing: 0.5px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -4448,6 +4448,7 @@ html {
     flex-wrap: wrap;
     justify-content: center;
   }
+
 }
 
 @media (max-width: 480px) {
