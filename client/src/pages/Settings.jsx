@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Settings as SettingsIcon, Save, Plus, X, LogOut, Shield, Info, Globe, Terminal, Mail, Calendar, ShieldCheck, ChevronRight, Layers, Zap, Users } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, User, Settings as SettingsIcon, Save, Plus, X, LogOut, Shield, Info, Globe, Terminal, Mail, Calendar, ShieldCheck, ChevronRight, Layers, Zap, Users, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import './Settings.css';
@@ -9,7 +9,8 @@ import './Settings.css';
 const Settings = () => {
   const { user, updateProfile, changePassword, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('details');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'details');
   const [showConfigModal, setShowConfigModal] = useState(false);
 
   // Calculate Metrics (similar to Home.jsx)
@@ -33,14 +34,32 @@ const Settings = () => {
     confirmPassword: ''
   });
 
-  const [isEditingBio, setIsEditingBio] = useState(false);
-  const [isEditingStack, setIsEditingStack] = useState(false);
   const [newStackItem, setNewStackItem] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingBio, setIsSavingBio] = useState(false);
+  const bioSaveTimer = useRef(null);
   const [useMemoryDB, setUseMemoryDB] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState('crimson');
   const [selectedFont, setSelectedFont] = useState('poppins');
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state?.activeTab]);
+
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      username: user?.username || '',
+      stack: user?.stack || [],
+    }));
+  }, [user?.username, user?.stack]);
+
+  useEffect(() => () => {
+    if (bioSaveTimer.current) clearTimeout(bioSaveTimer.current);
+  }, []);
 
   // Apply theme and font on mount
   React.useEffect(() => {
@@ -113,7 +132,7 @@ const Settings = () => {
       root.style.setProperty('--primary-light', '#f87171');
       root.style.setProperty('--primary-light-rgb', '248, 113, 113');
       root.style.setProperty('--primary-glow', 'rgba(239, 68, 68, 0.5)');
-      root.style.setProperty('--complementary', '#faf5ee');
+      root.style.setProperty('--complementary', '#fdf5e6');
       root.style.setProperty('--text-complementary', '#1a1a1a');
       root.style.setProperty('--panel-text', '#1a1a1a');
       root.style.setProperty('--bg-dark', '#0f0f0f');
@@ -152,50 +171,45 @@ const Settings = () => {
   const handleFontChange = (font) => {
     setSelectedFont(font);
     localStorage.setItem('app_font', font);
+    applyFont(font);
 
     // Trigger cinematic transition
     setIsTransitioning(true);
     setTimeout(() => {
-      window.location.href = '/';
+      window.location.href = '/settings';
     }, 1000);
   };
 
   if (!user) return null;
 
-  const handleUpdateBio = async () => {
-    setIsSaving(true);
-    try {
-      const res = await updateProfile({
-        username: user.username,
-        bio: formData.bio,
-        stack: user.stack // Keep current stack
-      });
-      if (res.success) {
-        setIsEditingBio(false);
-      } else {
-        toast.error(res.error);
-      }
-    } catch (err) {
-      toast.error('Failed to update bio');
-    } finally {
-      setIsSaving(false);
+  const persistProfile = async ({ bio, stack }) => {
+    const res = await updateProfile({
+      username: user.username,
+      bio: bio !== undefined ? bio : (user.bio || ''),
+      stack: stack !== undefined ? stack : (user.stack || []),
+    });
+    if (!res.success) {
+      toast.error(res.error || 'Failed to save profile');
     }
+    return res;
+  };
+
+  const handleBioChange = (value) => {
+    setFormData(prev => ({ ...prev, bio: value }));
+    if (bioSaveTimer.current) clearTimeout(bioSaveTimer.current);
+    bioSaveTimer.current = setTimeout(async () => {
+      setIsSavingBio(true);
+      await persistProfile({ bio: value });
+      setIsSavingBio(false);
+    }, 600);
   };
 
   const handleUpdateStack = async (newStack) => {
     setIsSaving(true);
+    setFormData(prev => ({ ...prev, stack: newStack }));
     try {
-      const res = await updateProfile({
-        username: user.username,
-        bio: user.bio,
-        stack: newStack
-      });
-      if (res.success) {
-        setFormData(prev => ({ ...prev, stack: newStack }));
-      } else {
-        toast.error(res.error);
-      }
-    } catch (err) {
+      await persistProfile({ stack: newStack });
+    } catch {
       toast.error('Failed to update stack');
     } finally {
       setIsSaving(false);
@@ -378,9 +392,17 @@ const Settings = () => {
                     </div>
                   </div>
                   <div className="profile-actions">
-                    <button className="action-btn primary" onClick={() => setShowConfigModal(true)}>
+                    <button type="button" className="action-btn primary" onClick={() => setShowConfigModal(true)}>
                       <Terminal size={16} />
                       <span>Configure Profile</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="action-btn"
+                      onClick={() => navigate('/user-guide', { state: { returnTo: '/settings', activeTab: 'details' } })}
+                    >
+                      <Info size={16} />
+                      <span>User Guide</span>
                     </button>
                   </div>
                 </div>
@@ -404,32 +426,26 @@ const Settings = () => {
                         </div>
                       </div>
                       <div className="data-row">
+                        <span className="data-label">Active Days</span>
+                        <div className="data-value">
+                          <Activity size={14} />
+                          <span>{activeDays} Sessions</span>
+                        </div>
+                      </div>
+                      <div className="data-row">
                         <span className="data-label">Bio</span>
                         <div className="bio-container">
-                          {isEditingBio ? (
-                            <div className="bio-edit-wrapper">
-                              <textarea
-                                value={formData.bio}
-                                onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                                placeholder="Write your bio..."
-                                autoFocus
-                              />
-                              <div className="bio-edit-actions">
-                                <button className="bio-btn cancel" onClick={() => setIsEditingBio(false)}>Cancel</button>
-                                <button className="bio-btn save" onClick={handleUpdateBio} disabled={isSaving}>
-                                  {isSaving ? 'Saving...' : 'Save'}
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="bio-display-wrapper" onClick={() => {
-                              setFormData(prev => ({ ...prev, bio: user.bio || '' }));
-                              setIsEditingBio(true);
-                            }}>
-                              <p className="data-bio">{user.bio || 'No bio set yet.'}</p>
-                              <span className="edit-hint">Click to edit bio</span>
-                            </div>
-                          )}
+                          <div className="bio-edit-wrapper">
+                            <textarea
+                              value={formData.bio}
+                              onChange={(e) => handleBioChange(e.target.value)}
+                              placeholder="Write your bio — saves automatically..."
+                              rows={4}
+                            />
+                            <span className="edit-hint">
+                              {isSavingBio ? 'Saving to profile...' : 'Shown on your home page · auto-saves'}
+                            </span>
+                          </div>
                         </div>
                       </div>
                       <div className="data-row">
@@ -462,23 +478,6 @@ const Settings = () => {
                       <div className="status-intel">
                         <span className="intel-label">STATUS INTELLIGENCE</span>
                         <p>Your account is in excellent standing</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Fleet/Metrics Card */}
-                  <div className="dashboard-card metrics-card">
-                    <div className="card-header">
-                      <div className="header-icon">
-                        <Globe size={18} />
-                      </div>
-                      <span className="header-tag">GLOBAL REACH</span>
-                    </div>
-                    <div className="card-body">
-                      <span className="stat-label">ACTIVE DAYS</span>
-                      <div className="stat-value">
-                        <span className="number">{activeDays}</span>
-                        <span className="unit">Active Sessions</span>
                       </div>
                     </div>
                   </div>
@@ -575,54 +574,56 @@ const Settings = () => {
                   </div>
                 </div>
 
-                {/* Font Section */}
-                <div className="system-section">
-                  <div className="section-header">
-                    <h2>Font Style</h2>
+                {/* Font Section - ONLY for Scarlet Flare */}
+                {selectedTheme === 'crimson' && (
+                  <div className="system-section">
+                    <div className="section-header">
+                      <h2>Font Style</h2>
+                    </div>
+                    <div className="font-selector">
+                      <div
+                        className={`font-option ${selectedFont === 'poppins' ? 'active' : ''}`}
+                        onClick={() => handleFontChange('poppins')}
+                      >
+                        <div className="font-preview" style={{ fontFamily: "'Poppins', sans-serif" }}>Aa</div>
+                        <div className="font-info">
+                          <h3>Poppins</h3>
+                          <p>Modern Geometric</p>
+                        </div>
+                      </div>
+                      <div
+                        className={`font-option ${selectedFont === 'inter' ? 'active' : ''}`}
+                        onClick={() => handleFontChange('inter')}
+                      >
+                        <div className="font-preview" style={{ fontFamily: "'Inter', sans-serif" }}>Aa</div>
+                        <div className="font-info">
+                          <h3>Inter</h3>
+                          <p>Clean Precision</p>
+                        </div>
+                      </div>
+                      <div
+                        className={`font-option ${selectedFont === 'outfit' ? 'active' : ''}`}
+                        onClick={() => handleFontChange('outfit')}
+                      >
+                        <div className="font-preview" style={{ fontFamily: "'Outfit', sans-serif" }}>Aa</div>
+                        <div className="font-info">
+                          <h3>Outfit</h3>
+                          <p>Elegant Round</p>
+                        </div>
+                      </div>
+                      <div
+                        className={`font-option ${selectedFont === 'montserrat' ? 'active' : ''}`}
+                        onClick={() => handleFontChange('montserrat')}
+                      >
+                        <div className="font-preview" style={{ fontFamily: "'Montserrat', sans-serif" }}>Aa</div>
+                        <div className="font-info">
+                          <h3>Montserrat</h3>
+                          <p>Classic Modern</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="font-selector">
-                    <div
-                      className={`font-option ${selectedFont === 'poppins' ? 'active' : ''}`}
-                      onClick={() => handleFontChange('poppins')}
-                    >
-                      <div className="font-preview" style={{ fontFamily: "'Poppins', sans-serif" }}>Aa</div>
-                      <div className="font-info">
-                        <h3>Poppins</h3>
-                        <p>Modern Geometric</p>
-                      </div>
-                    </div>
-                    <div
-                      className={`font-option ${selectedFont === 'inter' ? 'active' : ''}`}
-                      onClick={() => handleFontChange('inter')}
-                    >
-                      <div className="font-preview" style={{ fontFamily: "'Inter', sans-serif" }}>Aa</div>
-                      <div className="font-info">
-                        <h3>Inter</h3>
-                        <p>Clean Precision</p>
-                      </div>
-                    </div>
-                    <div
-                      className={`font-option ${selectedFont === 'outfit' ? 'active' : ''}`}
-                      onClick={() => handleFontChange('outfit')}
-                    >
-                      <div className="font-preview" style={{ fontFamily: "'Outfit', sans-serif" }}>Aa</div>
-                      <div className="font-info">
-                        <h3>Outfit</h3>
-                        <p>Elegant Round</p>
-                      </div>
-                    </div>
-                    <div
-                      className={`font-option ${selectedFont === 'montserrat' ? 'active' : ''}`}
-                      onClick={() => handleFontChange('montserrat')}
-                    >
-                      <div className="font-preview" style={{ fontFamily: "'Montserrat', sans-serif" }}>Aa</div>
-                      <div className="font-info">
-                        <h3>Montserrat</h3>
-                        <p>Classic Modern</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
 
                 {/* Danger Zone */}
                 <div className="danger-zone">

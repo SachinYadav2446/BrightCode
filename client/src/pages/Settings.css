@@ -191,7 +191,7 @@
 /* ── Details Grid ── */
 .details-grid {
   display: grid;
-  grid-template-columns: 1.4fr 0.6fr;
+  grid-template-columns: 1fr;
   gap: 12px;
 }
 
@@ -1358,7 +1358,7 @@
   justify-content: center;
   text-align: center;
   color: #fff;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-sans);
 }
 
 .transition-content {
@@ -1428,8 +1428,86 @@
   color: #e0f7ff !important;
   text-shadow: 0 0 8px rgba(0, 217, 255, 0.4) !important;
   letter-spacing: 2px !important;
+  font-size: 0.95rem !important;
 }
 .theme-cyberpunk .theme-info p {
   color: #4a8a9a !important;
   letter-spacing: 1px !important;
+  font-size: 0.75rem !important;
+}
+
+
+/* ================================================================
+   User Guide Card Styles
+   ================================================================ */
+
+.guide-card {
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.05), rgba(var(--primary-rgb), 0.02));
+  border: 1px solid rgba(var(--primary-rgb), 0.15);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.guide-card .card-header {
+  border-bottom: 1px solid rgba(var(--primary-rgb), 0.1);
+}
+
+.guide-card .header-icon {
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+}
+
+.guide-card .card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.guide-description {
+  font-size: 0.9rem;
+  color: #888;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  flex: 1;
+}
+
+.guide-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: var(--font-sans);
+  margin-top: auto;
+}
+
+.guide-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.3);
+}
+
+.guide-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.guide-btn:hover svg {
+  transform: translateX(4px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .guide-card {
+    grid-column: 1 / -1;
+  }
 }
