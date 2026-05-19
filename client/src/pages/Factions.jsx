@@ -44,6 +44,7 @@ const Factions = () => {
     const [socket, setSocket] = useState(null);
     const [chatMessages, setChatMessages] = useState([]);
     const [kickConfirmModal, setKickConfirmModal] = useState({ show: false, member: null });
+    const [pendingRequests, setPendingRequests] = useState(new Set()); // Track pending join requests
 
     useEffect(() => {
         let s = null;
@@ -101,29 +102,26 @@ const Factions = () => {
                 setMyFactionEmblem(mine?.emblem || null);
             }
         } catch {
-            toast.error('Could not connect to Syndicate server.');
+            // Silently handle error
         } finally {
             setLoading(false);
         }
     };
 
     const createFaction = async () => {
-        if (!newFaction.name.trim()) return toast.error('Faction name is required.');
-        if (!user) return toast.error('Login required.');
+        if (!newFaction.name.trim()) return;
+        if (!user) return;
         setIsSubmitting(true);
         try {
             const token = localStorage.getItem('token');
             await axios.post('http://localhost:5051/factions/create', newFaction, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            toast.success(`Faction "${newFaction.name}" established!`, {
-                style: { background: '#1c1917', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.3)' }
-            });
             setShowCreateModal(false);
             setNewFaction({ name: '', description: '', emblem: '⚔️', isPublic: true });
             fetchFactions();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Failed to create faction.');
+            // Silently handle error
         } finally {
             setIsSubmitting(false);
         }
@@ -131,19 +129,27 @@ const Factions = () => {
 
     const joinFaction = async (factionId) => {
         if (!user) { navigate('/auth'); return; }
-        if (myFactionId) return toast.error('Leave your current faction before joining another.');
+        if (myFactionId) return;
+        
+        // Mark this faction as having a pending request
+        setPendingRequests(prev => new Set([...prev, factionId]));
+        
         try {
             const token = localStorage.getItem('token');
             const res = await axios.post(`http://localhost:5051/factions/join/${factionId}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            toast.success(res.data.message);
             if (!res.data.pending) {
                 setMyFactionId(factionId);
             }
             fetchFactions();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Failed to join.');
+            // Remove from pending if failed
+            setPendingRequests(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(factionId);
+                return newSet;
+            });
         }
     };
 
@@ -154,11 +160,10 @@ const Factions = () => {
             await axios.post(`http://localhost:5051/factions/leave/${myFactionId}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            toast.success('Left faction.');
             setMyFactionId(null);
             fetchFactions();
         } catch {
-            toast.error('Failed to leave faction.');
+            // Silently handle error
         }
     };
 
@@ -168,10 +173,9 @@ const Factions = () => {
             await axios.post(`http://localhost:5051/factions/${myFactionId}/approve`, { userId }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            toast.success('Member approved!');
             fetchFactions();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Failed to approve.');
+            // Silently handle error
         }
     };
 
@@ -181,10 +185,9 @@ const Factions = () => {
             await axios.post(`http://localhost:5051/factions/${myFactionId}/decline`, { userId }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            toast.success('Request declined.');
             fetchFactions();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Failed to decline.');
+            // Silently handle error
         }
     };
 
@@ -194,11 +197,10 @@ const Factions = () => {
             await axios.post(`http://localhost:5051/factions/${myFactionId}/kick`, { userId }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            toast.success('Operative removed.');
             setKickConfirmModal({ show: false, member: null });
             fetchFactions();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Failed to remove member.');
+            // Silently handle error
         }
     };
 
@@ -208,10 +210,9 @@ const Factions = () => {
             const res = await axios.post(`http://localhost:5051/factions/${myFactionId}/toggle-privacy`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            toast.success(res.data.message);
             fetchFactions();
         } catch (err) {
-            toast.error('Failed to change privacy.');
+            // Silently handle error
         }
     };
 
@@ -222,11 +223,10 @@ const Factions = () => {
             await axios.post(`http://localhost:5051/factions/disband/${myFactionId}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            toast.success('Syndicate disbanded.');
             setMyFactionId(null);
             fetchFactions();
         } catch (err) {
-            toast.error('Failed to disband.');
+            // Silently handle error
         }
     };
 
@@ -240,8 +240,6 @@ const Factions = () => {
                 <div className="grid-background"></div>
                 <div className="faction-ambient-light"></div>
             </div>
-
-
 
             <AnimatePresence>
                 {showCreateModal && (
