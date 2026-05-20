@@ -83,7 +83,7 @@ const Auth = () => {
     setIsSubmitting(true);
     const res = await sendOTP(email, username, 'register');
     if (res.success) {
-      toast.success('Verification code sent to your email');
+      toast.success(res.message || 'Verification code sent to your email', { duration: 6000 });
       setStep(2);
     } else {
       toast.error(res.error);
