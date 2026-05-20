@@ -306,15 +306,10 @@ initDB();
 const otps = new Map(); // Store OTPs: email -> { otp, userData, expires }
 
 const transporter = nodemailer.createTransport({
-    host: '142.251.127.108', // Direct IP for smtp.gmail.com to bypass DNS ETIMEOUT
-    port: 465,
-    secure: true,
+    service: 'gmail',
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
-    },
-    tls: {
-        rejectUnauthorized: false
     }
 });
 
