@@ -1,3 +1,4 @@
+﻿import API_URL from '../config';
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot, User, Maximize2, Minimize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,7 +44,7 @@ const Chatbot = ({ context = {}, isSidebarOpen = false }) => {
     setIsTyping(true);
 
     try {
-      const response = await axios.post('http://localhost:5051/api/chat', { 
+      const response = await axios.post(`${API_URL}/api/chat`, { 
         messages: updatedMessages,
         context: context 
       });

@@ -1,3 +1,4 @@
+﻿import API_URL from '../config';
 import React, { useState, useEffect } from 'react';
 
 import { useNavigate, Link } from 'react-router-dom';
@@ -76,7 +77,7 @@ const Home = () => {
   useEffect(() => {
     const fetchTopRankers = async () => {
       try {
-        const response = await axios.get('http://localhost:5051/leaderboard');
+        const response = await axios.get(`${API_URL}/leaderboard`);
         setTopRankers(response.data.slice(0, 3));
       } catch (err) {
         console.error('Failed to fetch top rankers', err);
@@ -359,7 +360,7 @@ const Home = () => {
     if (xp >= 5000)  return { label: 'Expert',      color: '#f97316' };  // Orange
     if (xp >= 2000)  return { label: 'Advanced',    color: '#fb923c' };  // Light orange
     if (xp >= 500)   return { label: 'Apprentice',  color: '#fbbf24' };  // Amber
-    return             { label: 'Initiate',    color: '#fffdd0' };  // Cream – visible on dark
+    return             { label: 'Initiate',    color: '#fffdd0' };  // Cream â€“ visible on dark
   };
 
 
@@ -536,7 +537,7 @@ const Home = () => {
     setSupportForm(prev => ({ ...prev, isSending: true }));
 
     try {
-      const response = await axios.post('http://localhost:5051/support', {
+      const response = await axios.post(`${API_URL}/support`, {
         email: user.email,
         username: user.username,
         subject: supportForm.subject || 'Support Inquiry',
@@ -639,7 +640,7 @@ const Home = () => {
 
       {user && user.activity ? (
 
-        /* ── USER DASHBOARD: MISSION CONTROL ── */
+        /* â”€â”€ USER DASHBOARD: MISSION CONTROL â”€â”€ */
 
         <motion.section
 
@@ -845,7 +846,7 @@ const Home = () => {
 
                     <span key={idx} className="ticker-item">
 
-                      <span className="ticker-bullet">✦</span>
+                      <span className="ticker-bullet">âœ¦</span>
 
                       {quote}
 

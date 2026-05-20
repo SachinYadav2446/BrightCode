@@ -1,3 +1,4 @@
+﻿import API_URL from '../config';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,7 +12,7 @@ import {
 } from 'lucide-react';
 import './FriendsDrawer.css';
 
-const API = 'http://localhost:5051';
+const API = API_URL;
 
 const XP_LEVEL = (xp) => {
     if (xp >= 10000) return 'Grandmaster';
@@ -365,7 +366,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                         )}
 
                         <div className="fd-body">
-                            {/* ── FRIENDS TAB ── */}
+                            {/* â”€â”€ FRIENDS TAB â”€â”€ */}
                             {tab === 'friends' && (
                                 <>
                                     {/* Incoming Requests */}
@@ -390,7 +391,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                                         <Avatar username={req.username} />
                                                         <div className="fd-user-info">
                                                             <Link to={`/u/${req.username}`} className="fd-username">{req.username}</Link>
-                                                            <span className="fd-level">{XP_LEVEL(req.xp)} · {req.xp} XP</span>
+                                                            <span className="fd-level">{XP_LEVEL(req.xp)} Â· {req.xp} XP</span>
                                                         </div>
                                                         <div className="fd-actions">
                                                             <button
@@ -415,7 +416,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                         <div className="fd-section">
                                             <div className="fd-section-hdr static">
                                                 <span className="fd-dot online-dot" />
-                                                Online — {onlineFriends.length}
+                                                Online â€” {onlineFriends.length}
                                             </div>
                                             {onlineFriends.map(f => (
                                                 <FriendRow 
@@ -436,7 +437,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                         <div className="fd-section">
                                             <div className="fd-section-hdr static">
                                                 <span className="fd-dot offline-dot" />
-                                                Offline — {offlineFriends.length}
+                                                Offline â€” {offlineFriends.length}
                                             </div>
                                             {offlineFriends.map(f => (
                                                 <FriendRow 
@@ -467,7 +468,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                 </>
                             )}
 
-                            {/* ── SEARCH TAB ── */}
+                            {/* â”€â”€ SEARCH TAB â”€â”€ */}
                             {tab === 'search' && (
                                 <div className="fd-search-tab">
                                     <div className="fd-search-box">
@@ -493,7 +494,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                             <Avatar username={u.username} online={u.online} />
                                             <div className="fd-user-info">
                                                 <Link to={`/u/${u.username}`} className="fd-username">{u.username}</Link>
-                                                <span className="fd-level">{XP_LEVEL(u.xp)} · {u.xp} XP</span>
+                                                <span className="fd-level">{XP_LEVEL(u.xp)} Â· {u.xp} XP</span>
                                             </div>
                                             <div className="fd-actions">
                                                 {u.friendStatus === 'none' && (
@@ -532,7 +533,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                 </div>
                             )}
 
-                            {/* ■ CHAT TAB ■ */}
+                            {/* â–  CHAT TAB â–  */}
                             {tab === 'chat' && chatTarget && (
                                 <div className="fd-chat-tab">
                                     <div className="fd-chat-header">
@@ -583,7 +584,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                                                         navigate(`/workspace/${m.roomId}`);
                                                                     }}
                                                                 >
-                                                                    ⚔️ Accept Duel
+                                                                    âš”ï¸ Accept Duel
                                                                 </button>
                                                             )}
                                                         </div>
@@ -631,7 +632,7 @@ const FriendRow = ({ friend, onRemove, onClose, onWhisper, onChallenge, unread }
             <Avatar username={friend.username} online={friend.online} />
             <div className="fd-user-info">
                 <Link to={`/u/${friend.username}`} className="fd-username">{friend.username}</Link>
-                <span className="fd-level">{XP_LEVEL(friend.xp)} · {friend.xp} XP</span>
+                <span className="fd-level">{XP_LEVEL(friend.xp)} Â· {friend.xp} XP</span>
             </div>
             {unread && <div className="fd-unread-indicator" style={{ marginLeft: 'auto', marginRight: '5px' }}></div>}
             {hovering && (

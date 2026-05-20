@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:5051';
+﻿import API_URL from '../config';
+// API_URL imported from config.js
 
 // Helper to get auth token
 const getAuthToken = () => {

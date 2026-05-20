@@ -1,3 +1,4 @@
+﻿import API_URL from '../config';
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Plus, Users, X, Copy, Check, Clock, Crown, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -39,7 +40,7 @@ const Workspace = () => {
     // Fetch active rooms from server
     const fetchActiveRooms = async () => {
       try {
-        const response = await fetch('http://localhost:5051/active-rooms');
+        const response = await fetch(`${API_URL}/active-rooms`);
         const data = await response.json();
         setActiveRooms(data);
       } catch (err) {
@@ -103,7 +104,7 @@ const Workspace = () => {
     
     try {
       // Create workspace on backend
-      const response = await fetch('http://localhost:5051/create-workspace', {
+      const response = await fetch(`${API_URL}/create-workspace`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

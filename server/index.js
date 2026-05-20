@@ -22,10 +22,17 @@ const rateLimiter = require('./utils/rateLimiter');
 const chatbotAPI = require('./chatbotAPI');
 const questionsAPI = require('./questionsAPI');
 
+const FRONTEND_URL = process.env.FRONTEND_URL || '*';
+const JWT_SECRET = process.env.JWT_SECRET || 'brightcode_secret_key_123';
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: { origin: '*', methods: ['GET', 'POST'] },
+    cors: {
+        origin: FRONTEND_URL === '*' ? '*' : [FRONTEND_URL, 'http://localhost:5173'],
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        credentials: true,
+    },
 });
 
 // Chat History Store: roomId -> Array of messages
@@ -35,7 +42,10 @@ const roomMessages = new Map();
 const roomTerminals = new Map();
 const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 
-app.use(cors());
+app.use(cors({
+    origin: FRONTEND_URL === '*' ? '*' : [FRONTEND_URL, 'http://localhost:5173'],
+    credentials: true,
+}));
 app.use(express.json({ limit: '20mb' }));
 
 // ── Mount Chatbot API ───────────────────────────────────────
@@ -43,8 +53,6 @@ app.use('/api/chat', chatbotAPI);
 
 // ── Mount Questions API ─────────────────────────────────────
 app.use('/api/questions', questionsAPI);
-
-const JWT_SECRET = 'brightcode_secret_key_123';
 
 // Memory Fallback (for when PostgreSQL is offline)
 let memoryStore = { users: [] };
@@ -353,6 +361,11 @@ app.post('/support', async (req, res) => {
         console.error('SUPPORT MAIL ERROR:', err);
         res.status(500).json({ error: 'Failed to send support message' });
     }
+});
+
+// ── Health Check (used by Render deployment) ────────────────────────────────
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Standard response helper

@@ -1,4 +1,5 @@
 import { io } from 'socket.io-client';
+import API_URL from './config';
 
 let socketInstance = null;
 
@@ -7,9 +8,7 @@ export const initSocket = () => {
         return socketInstance;
     }
 
-    const backendUrl = window.location.hostname === 'localhost'
-        ? 'http://localhost:5051'
-        : `http://${window.location.hostname}:5051`;
+    const backendUrl = API_URL;
 
     socketInstance = io(backendUrl, {
         reconnectionAttempts: 10,

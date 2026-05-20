@@ -1,3 +1,4 @@
+﻿import API_URL from '../config';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
@@ -8,7 +9,7 @@ import { Users } from 'lucide-react';
 import './Navbar.css';
 import './FriendsDrawer.css';
 
-const API = 'http://localhost:5051';
+const API = API_URL;
 
 const Navbar = () => {
   const { user, friendsDrawerOpen, setFriendsDrawerOpen } = useAuth();

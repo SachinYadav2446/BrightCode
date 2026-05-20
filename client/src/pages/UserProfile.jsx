@@ -1,3 +1,4 @@
+﻿import API_URL from '../config';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,7 +11,7 @@ import {
 } from 'lucide-react';
 import './UserProfile.css';
 
-const API = 'http://localhost:5051';
+const API = API_URL;
 
 const LEVEL_CONFIG = {
     'Grandmaster': { color: '#f59e0b', glow: 'rgba(245,158,11,0.5)', rank: 5 },
@@ -21,14 +22,14 @@ const LEVEL_CONFIG = {
 };
 
 const SKILL_META = [
-    { key: 'css',    label: 'CSS Forge',    icon: '🎨', max: 50,  color: '#38bdf8' },
-    { key: 'logic',  label: 'Logic Lab',    icon: '⚡', max: 150, color: '#a78bfa' },
-    { key: 'react',  label: 'React Forge',  icon: '⚛️', max: 500, color: '#34d399' },
-    { key: 'mern',   label: 'MERN Stack',   icon: '🔧', max: 100, color: '#f97316' },
-    { key: 'java',   label: 'Java Master',  icon: '☕', max: 100, color: '#ef4444' },
-    { key: 'cpp',    label: 'C++ Master',   icon: '🔩', max: 100, color: '#64748b' },
-    { key: 'python', label: 'Python',       icon: '🐍', max: 100, color: '#facc15' },
-    { key: 'go',     label: 'Go Master',    icon: '🐹', max: 100, color: '#06b6d4' },
+    { key: 'css',    label: 'CSS Forge',    icon: 'ðŸŽ¨', max: 50,  color: '#38bdf8' },
+    { key: 'logic',  label: 'Logic Lab',    icon: 'âš¡', max: 150, color: '#a78bfa' },
+    { key: 'react',  label: 'React Forge',  icon: 'âš›ï¸', max: 500, color: '#34d399' },
+    { key: 'mern',   label: 'MERN Stack',   icon: 'ðŸ”§', max: 100, color: '#f97316' },
+    { key: 'java',   label: 'Java Master',  icon: 'â˜•', max: 100, color: '#ef4444' },
+    { key: 'cpp',    label: 'C++ Master',   icon: 'ðŸ”©', max: 100, color: '#64748b' },
+    { key: 'python', label: 'Python',       icon: 'ðŸ', max: 100, color: '#facc15' },
+    { key: 'go',     label: 'Go Master',    icon: 'ðŸ¹', max: 100, color: '#06b6d4' },
 ];
 
 const Heatmap = ({ activity }) => {
@@ -234,7 +235,7 @@ export default function UserProfile() {
                     <ArrowLeft size={14} /> Back
                 </button>
 
-                {/* ── Hero Dossier ── */}
+                {/* â”€â”€ Hero Dossier â”€â”€ */}
                 <motion.div
                     className="up-hero"
                     style={{ background: bannerCss }}
@@ -319,7 +320,7 @@ export default function UserProfile() {
                     )}
                 </motion.div>
 
-                {/* ── Stats Row ── */}
+                {/* â”€â”€ Stats Row â”€â”€ */}
                 <motion.div
                     className="up-stats-row"
                     initial={{ opacity: 0, y: 20 }}
@@ -349,7 +350,7 @@ export default function UserProfile() {
 
 
 
-                {/* ── Activity Heatmap ── */}
+                {/* â”€â”€ Activity Heatmap â”€â”€ */}
                 {Object.keys(profile.activity || {}).length > 0 && (
                     <motion.div className="up-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
                         <div className="up-section-hdr">

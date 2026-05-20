@@ -1,3 +1,4 @@
+﻿import API_URL from '../config';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Crown, ArrowLeft, Zap, Search, Shield, Filter, RefreshCw, X } from 'lucide-react';
@@ -7,7 +8,7 @@ import { io } from 'socket.io-client';
 import axios from 'axios';
 import './Leaderboard.css';
 
-// ── XP-based level computation (client-side, always correct) ──────────────
+// â”€â”€ XP-based level computation (client-side, always correct) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const getLevelInfo = (xp) => {
     if (xp >= 10000) return { label: 'Grandmaster', color: '#fbbf24', bg: 'rgba(251,191,36,0.15)', border: 'rgba(251,191,36,0.35)' };
     if (xp >= 5000)  return { label: 'Expert',      color: '#818cf8', bg: 'rgba(99,102,241,0.15)', border: 'rgba(99,102,241,0.35)' };
@@ -49,7 +50,7 @@ const Leaderboard = () => {
         if (!silent) setLoading(true);
         else setIsRefreshing(true);
         try {
-            const response = await axios.get('http://localhost:5051/leaderboard', { timeout: 8000 });
+            const response = await axios.get(`${API_URL}/leaderboard`, { timeout: 8000 });
             const data = response.data || [];
             setRankers(data);
             
@@ -70,12 +71,12 @@ const Leaderboard = () => {
         }
     };
 
-    // ── Sync current user's fresh XP from server on mount ────────
+    // â”€â”€ Sync current user's fresh XP from server on mount â”€â”€â”€â”€â”€â”€â”€â”€
     const syncMyXP = async () => {
         const token = localStorage.getItem('token');
         if (!token) return;
         try {
-            const res = await axios.get('http://localhost:5051/me', {
+            const res = await axios.get(`${API_URL}/me`, {
                 headers: { Authorization: `Bearer ${token}` },
                 timeout: 4000
             });
@@ -86,7 +87,7 @@ const Leaderboard = () => {
                     react_level: res.data.react_level
                 });
             }
-        } catch { /* silent — non-critical */ }
+        } catch { /* silent â€” non-critical */ }
     };
 
     useEffect(() => {
@@ -95,8 +96,8 @@ const Leaderboard = () => {
         fetchRankings();
         syncMyXP();
 
-        // ── Live socket subscription for instant leaderboard updates ──
-        const socket = io('http://localhost:5051', { transports: ['websocket'] });
+        // â”€â”€ Live socket subscription for instant leaderboard updates â”€â”€
+        const socket = io(`${API_URL}`, { transports: ['websocket'] });
         socketRef.current = socket;
 
         socket.on('leaderboard-update', (freshData) => {
@@ -256,7 +257,7 @@ const Leaderboard = () => {
                                         <div className={`rank-badge${cfg.isFirst ? ' gold-badge' : ''}`}>{cfg.rank}</div>
                                         <div className={cfg.avatarClass} style={{ opacity: 0.2 }}>?</div>
                                         <h4 style={{ color: '#444' }}>Unranked</h4>
-                                        <div className="xp-tag" style={{ color: '#333' }}>—</div>
+                                        <div className="xp-tag" style={{ color: '#333' }}>â€”</div>
                                         <div className={`podium-bar ${cfg.barClass}`} style={{ opacity: 0.2 }}></div>
                                     </div>
                                 );

@@ -1,0 +1,42 @@
+# Render Blueprint — BrightCode
+# Deploys backend (Node/Express/Socket.IO) and frontend (Vite/React) on Render.
+# Backend CANNOT run on Vercel because it uses Socket.IO (WebSockets),
+# node-pty (native module), and file-system writes — all unsupported on serverless.
+
+services:
+  # ─── Backend: Express + Socket.IO ────────────────────────────────────────
+  - type: web
+    name: brightcode-server
+    env: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_CONNECTION_STRING
+        sync: false          # Set in Render dashboard → Environment
+      - key: JWT_SECRET
+        sync: false          # Strong random secret — set in dashboard
+      - key: FRONTEND_URL
+        sync: false          # e.g. https://brightcode-client.onrender.com
+      - key: SMTP_USER
+        sync: false          # Gmail address for OTP emails
+      - key: SMTP_PASS
+        sync: false          # Gmail app password
+
+  # ─── Frontend: Vite + React (Static Site) ────────────────────────────────
+  - type: static
+    name: brightcode-client
+    rootDir: client
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      # SPA fallback — all routes served by index.html
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_BACKEND_URL
+        sync: false          # e.g. https://brightcode-server.onrender.com

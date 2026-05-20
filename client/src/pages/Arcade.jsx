@@ -1,3 +1,4 @@
+﻿import API_URL from '../config';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
@@ -19,15 +20,15 @@ import {
 } from '../data/arcadeData';
 import { JAVA_LEVELS, CPP_LEVELS, PYTHON_LEVELS, GO_LEVELS, LANGUAGE_PHASES, LANGUAGE_THEORIES } from '../data/languageData';
 
-// ── SIDEBAR TABS CONFIG ───────────────────────────────────────────────
+// â”€â”€ SIDEBAR TABS CONFIG â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const BASE_TABS = [
     { id: 'frontend', label: 'Frontend', icon: Layout, active: true },
     { id: 'backend', label: 'Backend', icon: Server, active: false },
     { id: 'language', label: 'Language', icon: Code2, active: false },
 ];
 
-// ── CURRICULUM SUBJECT DATA ────────────────────────────────────────────
-// Content will be added later — all sections are empty placeholders
+// â”€â”€ CURRICULUM SUBJECT DATA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Content will be added later â€” all sections are empty placeholders
 const SUBJECT_RESOURCES = {
     'dsa-system': { 
         notes: [
@@ -109,7 +110,7 @@ const CURRICULUM_SUBJECTS = [
     },
 ];
 
-// ── CURRICULUM SUBJECT FULL PAGE ───────────────────────────────────────
+// â”€â”€ CURRICULUM SUBJECT FULL PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const CurriculumSubjectPage = ({ subject, onBack }) => {
     const [activeTab, setActiveTab] = useState('notes');
     const [mcqAnswers, setMcqAnswers] = useState({});
@@ -312,7 +313,7 @@ const CurriculumSubjectPage = ({ subject, onBack }) => {
     );
 };
 
-// ── LIBRARY LOBBY (Sidebar + Content) ─────────────────────────────────
+// â”€â”€ LIBRARY LOBBY (Sidebar + Content) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentLvlIdx }) => {
     const { user, setNavbarHidden } = useAuth();
@@ -332,7 +333,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
         sidebarTabs.push({ id: 'curriculum', label: 'Curriculum', icon: GraduationCap, active: true });
     }
 
-    // Map sidebar tab id → sections array id
+    // Map sidebar tab id â†’ sections array id
     const tabToSection = { 
         language: 'language', 
         frontend: 'frontend', 
@@ -342,7 +343,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
     const currentSection = sections.find(s => s.id === tabToSection[activeTab]);
     const hasContent = Boolean(currentSection && currentSection.games.length > 0);
 
-    // ── If a curriculum subject is active, show full page ─────────────
+    // â”€â”€ If a curriculum subject is active, show full page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (activeSubject) {
         return (
             <AnimatePresence mode="wait">
@@ -361,7 +362,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
             animate={{ opacity: 1 }}
             className="library-lobby"
         >
-            {/* ── Sidebar ── */}
+            {/* â”€â”€ Sidebar â”€â”€ */}
             <aside className="library-sidebar">
                 <div className="sidebar-brand">
                     <Layers size={18} color="var(--primary)" />
@@ -399,7 +400,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                 </div>
             </aside>
 
-            {/* ── Content Panel ── */}
+            {/* â”€â”€ Content Panel â”€â”€ */}
             <div className="library-content">
                 <AnimatePresence mode="wait">
                     {activeTab === 'curriculum' ? (
@@ -522,7 +523,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                                 {React.createElement(sidebarTabs.find(t => t.id === activeTab)?.icon || Lock, { size: 48, color: 'var(--primary)' })}
                             </div>
                             <h2>Coming Soon</h2>
-                            <p>We're engineering world-class <strong>{sidebarTabs.find(t => t.id === activeTab)?.label}</strong> challenges.<br />Stay tuned — this track is being forged.</p>
+                            <p>We're engineering world-class <strong>{sidebarTabs.find(t => t.id === activeTab)?.label}</strong> challenges.<br />Stay tuned â€” this track is being forged.</p>
                             <div className="lib-soon-chips">
                                 {['Challenges', 'Projects', 'Quizzes', 'Labs'].map(c => (
                                     <span key={c} className="lib-soon-chip">{c}</span>
@@ -732,11 +733,11 @@ const Arcade = () => {
         setSavedSolutions(updatedSolutions);
         localStorage.setItem(`${activeGame.replace(/-/g, '_')}_solutions`, JSON.stringify(updatedSolutions));
 
-        // ── AWARD 10 XP FOR NEW SOLVE ───────────────────────────────────
+        // â”€â”€ AWARD 10 XP FOR NEW SOLVE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if (isNewLevel && user) {
             try {
                 const token = localStorage.getItem('token');
-                const response = await axios.post('http://localhost:5051/add-xp', {
+                const response = await axios.post(`${API_URL}/add-xp`, {
                     amount: 10,
                     module: activeGame,
                     level: currentLvlIdx + 1
@@ -833,7 +834,7 @@ const Arcade = () => {
                 setLogicStatus('neutral');
                 
                 try {
-                    const response = await axios.post('http://localhost:5051/compile-java', {
+                    const response = await axios.post(`${API_URL}/compile-java`, {
                         code: code,
                         testCases: levelData.testCases || []
                     });
@@ -1067,7 +1068,7 @@ const Arcade = () => {
                         <div className="phase-view-title-group">
                             <h1 className="phase-view-title">
                                 {sections.flatMap(s => s.games).find(g => g.id === activeGame)?.title || 'Module'}
-                                <span className="phase-title-accent"> — Phases</span>
+                                <span className="phase-title-accent"> â€” Phases</span>
                             </h1>
                             <p className="phase-view-subtitle">Select a phase to begin. Complete all levels in a phase to unlock the next one.</p>
                         </div>
@@ -1159,13 +1160,13 @@ const Arcade = () => {
                                         <div className="phase-card-top">
                                             <div className="phase-card-num">Phase {String(globalIdx + 1).padStart(2, '0')}</div>
                                             {phasePct === 100 ? (
-                                                <span className="phase-complete-badge">✓ Complete</span>
+                                                <span className="phase-complete-badge">âœ“ Complete</span>
                                             ) : locked ? (
                                                 <span className="phase-locked-badge"><Lock size={12} /> Locked</span>
                                             ) : null}
                                         </div>
                                         <h3 className="phase-card-title">{phase.label}</h3>
-                                        <p className="phase-card-range">Levels {phase.start + 1} – {phase.end + 1}</p>
+                                        <p className="phase-card-range">Levels {phase.start + 1} â€“ {phase.end + 1}</p>
                                         <div className="phase-card-progress">
                                             <div className="phase-progress-bar">
                                                 <motion.div
@@ -1207,7 +1208,7 @@ const Arcade = () => {
                                 <span className="game-module-tag">
                                     {sections.flatMap(s => s.games).find(g => g.id === activeGame)?.title}
                                 </span>
-                                <span className="game-level-sep">›</span>
+                                <span className="game-level-sep">â€º</span>
                                 <span className="game-level-tag">
                                     {currentPhase ? `${currentPhase.label}: ` : ''}
                                     Level {relativeLvlIdx} / {totalInPhase}
@@ -1280,8 +1281,8 @@ const Arcade = () => {
                                                         disabled={answerRevealed}
                                                     />
                                                     <div className="css-forge-hint">
-                                                        <span>💡</span>
-                                                        <span>Changes appear live in the preview →</span>
+                                                        <span>ðŸ’¡</span>
+                                                        <span>Changes appear live in the preview â†’</span>
                                                     </div>
                                                 </div>
 
@@ -1340,7 +1341,7 @@ const Arcade = () => {
                                                     disabled={answerRevealed}
                                                 />
                                                 <div className="logic-forge-hint">
-                                                    <span>💡</span>
+                                                    <span>ðŸ’¡</span>
                                                     <span>Click Submit to compile and run your code.</span>
                                                 </div>
                                             </div>
@@ -1352,7 +1353,7 @@ const Arcade = () => {
                                                         {testResults.map((res, i) => (
                                                             <div key={i} className={`logic-test-item ${res.passed ? 'passed' : 'failed'}`}>
                                                                 <div className="logic-test-status">
-                                                                    {res.passed ? '✓' : '✗'}
+                                                                    {res.passed ? 'âœ“' : 'âœ—'}
                                                                 </div>
                                                                 <div className="logic-test-details">
                                                                     <div className="logic-test-args">
@@ -1443,7 +1444,7 @@ const Arcade = () => {
 
                             {!levelData && (
                                 <div className="game-victory-state">
-                                    <div className="game-victory-icon">🏆</div>
+                                    <div className="game-victory-icon">ðŸ†</div>
                                     <h3>Module Complete!</h3>
                                     <p>You've mastered all levels in this module.</p>
                                     <button className="game-submit-btn" onClick={() => { setActiveGame(null); setViewingSections(false); }}>
@@ -1521,7 +1522,7 @@ const Arcade = () => {
                 </motion.div>
             )}
 
-            {/* ── Custom Popup Modal ── */}
+            {/* â”€â”€ Custom Popup Modal â”€â”€ */}
             <AnimatePresence>
                 {showModal && (
                     <motion.div 

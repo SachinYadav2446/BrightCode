@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+﻿import API_URL from '../config';
+import React, { useState, useEffect, useRef } from 'react';
 
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -727,7 +728,7 @@ const EditorPage = () => {
 
 
 
-            const response = await axios.post('http://localhost:5051/execute', {
+            const response = await axios.post(`${API_URL}/execute`, {
 
                 language: lang,
 
@@ -747,7 +748,7 @@ const EditorPage = () => {
 
                     const xpAmount = 10;
 
-                    const xpRes = await axios.post('http://localhost:5051/add-xp', { amount: xpAmount },
+                    const xpRes = await axios.post(`${API_URL}/add-xp`, { amount: xpAmount },
 
                         { headers: { Authorization: `Bearer ${token}` } }
 

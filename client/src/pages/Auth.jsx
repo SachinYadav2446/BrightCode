@@ -1,3 +1,4 @@
+﻿import API_URL from '../config';
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -10,7 +11,7 @@ import {
 } from 'lucide-react';
 import './Auth.css';
 
-const API = 'http://localhost:5051';
+const API = API_URL;
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -204,7 +205,7 @@ const Auth = () => {
                           type="password" 
                           value={password} 
                           onChange={(e) => setPassword(e.target.value)} 
-                          placeholder="••••••••••••"
+                          placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                           required
                         />
                       </div>
@@ -271,7 +272,7 @@ const Auth = () => {
                             type="password" 
                             value={password} 
                             onChange={(e) => setPassword(e.target.value)} 
-                            placeholder="••••••••••••"
+                            placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                             required
                           />
                         </div>

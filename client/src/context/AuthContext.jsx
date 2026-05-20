@@ -1,3 +1,4 @@
+﻿import API_URL from '../config';
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 
@@ -89,7 +90,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       // Then sync fresh XP from server (non-blocking)
-      axios.get('http://localhost:5051/me', {
+      axios.get(`${API_URL}/me`, {
         headers: { Authorization: `Bearer ${token}` },
         timeout: 4000
       }).then(res => {
@@ -119,7 +120,7 @@ export const AuthProvider = ({ children }) => {
             ...d
           } : null);
         }
-      }).catch(() => { /* silent — offline is fine */ });
+      }).catch(() => { /* silent â€” offline is fine */ });
     } else {
       setSessionValid(false);
     }
@@ -128,7 +129,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const { data } = await axios.post('http://localhost:5051/login', { email, password });
+      const { data } = await axios.post(`${API_URL}/login`, { email, password });
       
       // Decode JWT to get user ID
       const decodedToken = decodeJWT(data.token);
@@ -193,7 +194,7 @@ export const AuthProvider = ({ children }) => {
 
   const sendOTP = async (email, username = '', type = 'register') => {
     try {
-      const { data } = await axios.post('http://localhost:5051/send-otp', 
+      const { data } = await axios.post(`${API_URL}/send-otp`, 
         { email, username, type },
         { timeout: 40000 } // 40 seconds timeout
       );
@@ -208,7 +209,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (username, email, password, otp) => {
     try {
-      await axios.post('http://localhost:5051/register', { username, email, password, otp });
+      await axios.post(`${API_URL}/register`, { username, email, password, otp });
       return { success: true };
     } catch (err) {
       const serverError = err.response?.data;
@@ -234,7 +235,7 @@ export const AuthProvider = ({ children }) => {
     } : null);
 
     try {
-      const { data } = await axios.post('http://localhost:5051/update-profile',
+      const { data } = await axios.post(`${API_URL}/update-profile`,
         updateData,
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
@@ -263,7 +264,7 @@ export const AuthProvider = ({ children }) => {
 
   const changePassword = async (currentPassword, newPassword) => {
     try {
-      const { data } = await axios.post('http://localhost:5051/change-password',
+      const { data } = await axios.post(`${API_URL}/change-password`,
         { currentPassword, newPassword },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
