@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 import { 
   Code2, Mail, Lock, User, ArrowRight, Trophy, 
-  Users, Zap, Shield, ChevronLeft
+  Users, Zap, Shield, ChevronLeft, Check, X, Loader
 } from 'lucide-react';
 import './Auth.css';
+
+const API = 'http://localhost:5051';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -17,6 +20,11 @@ const Auth = () => {
   const [username, setUsername] = useState('');
   const [otp, setOtp] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Username availability state
+  const [usernameStatus, setUsernameStatus] = useState(null); // null | 'checking' | 'available' | 'taken' | 'invalid'
+  const [usernameMsg, setUsernameMsg] = useState('');
+  const usernameTimeout = useRef(null);
   
   const { login, register, sendOTP } = useAuth();
   const navigate = useNavigate();
@@ -28,10 +36,50 @@ const Auth = () => {
     }
   }, [location.state]);
 
+  // Live username availability check
+  useEffect(() => {
+    if (isLogin) return;
+    if (usernameTimeout.current) clearTimeout(usernameTimeout.current);
+
+    if (!username || username.length < 3) {
+      setUsernameStatus(null);
+      setUsernameMsg('');
+      return;
+    }
+
+    setUsernameStatus('checking');
+    usernameTimeout.current = setTimeout(async () => {
+      try {
+        const { data } = await axios.get(`${API}/check-username?username=${encodeURIComponent(username)}`);
+        if (data.available) {
+          setUsernameStatus('available');
+          setUsernameMsg('Username is available!');
+        } else {
+          setUsernameStatus('taken');
+          setUsernameMsg(data.reason || 'Username unavailable');
+        }
+      } catch (e) {
+        setUsernameStatus(null);
+        setUsernameMsg('');
+      }
+    }, 500);
+
+    return () => clearTimeout(usernameTimeout.current);
+  }, [username, isLogin]);
+
   const handleSendOTP = async (e) => {
     e.preventDefault();
+
+    if (usernameStatus === 'taken' || usernameStatus === 'invalid') {
+      toast.error('Please choose a different username');
+      return;
+    }
+    if (usernameStatus === 'checking') {
+      toast.error('Please wait while we check your username');
+      return;
+    }
+
     setIsSubmitting(true);
-    
     const res = await sendOTP(email, username, 'register');
     if (res.success) {
       toast.success('Verification code sent to your email');
@@ -80,6 +128,13 @@ const Auth = () => {
     } finally {
         setIsSubmitting(false);
     }
+  };
+
+  const UsernameStatusIcon = () => {
+    if (usernameStatus === 'checking') return <Loader size={16} className="auth-username-spinner" />;
+    if (usernameStatus === 'available') return <Check size={16} color="#22c55e" />;
+    if (usernameStatus === 'taken') return <X size={16} color="#ef4444" />;
+    return null;
   };
 
   return (
@@ -164,18 +219,34 @@ const Auth = () => {
                       exit={{ opacity: 0, x: -20 }}
                       className="form-step"
                     >
+                      {/* Username with live check */}
                       <div className="input-group">
                         <label>Username</label>
-                        <div className="input-wrapper">
+                        <div className={`input-wrapper ${usernameStatus === 'available' ? 'valid' : usernameStatus === 'taken' ? 'invalid' : ''}`}>
                           <User className="input-icon" size={18} />
                           <input 
                             type="text" 
                             value={username} 
-                            onChange={(e) => setUsername(e.target.value)} 
+                            onChange={(e) => setUsername(e.target.value.replace(/\s/g, '').toLowerCase())} 
                             placeholder="architect_null"
                             required
+                            autoComplete="off"
                           />
+                          <span className="input-status-icon"><UsernameStatusIcon /></span>
                         </div>
+                        <AnimatePresence>
+                          {usernameMsg && (
+                            <motion.p
+                              key={usernameStatus}
+                              className={`username-hint ${usernameStatus}`}
+                              initial={{ opacity: 0, y: -4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0 }}
+                            >
+                              {usernameMsg}
+                            </motion.p>
+                          )}
+                        </AnimatePresence>
                       </div>
 
                       <div className="input-group">
@@ -242,7 +313,7 @@ const Auth = () => {
               <button 
                 type="submit" 
                 className={`auth-submit-btn ${isSubmitting ? 'loading' : ''}`}
-                disabled={isSubmitting}
+                disabled={isSubmitting || (!isLogin && step === 1 && (usernameStatus === 'taken' || usernameStatus === 'checking'))}
               >
                 {isSubmitting ? 'Processing...' : (
                   <>
@@ -276,6 +347,9 @@ const Auth = () => {
                     setIsLogin(!isLogin);
                     setStep(1);
                     setOtp('');
+                    setUsernameStatus(null);
+                    setUsernameMsg('');
+                    setUsername('');
                   }}>
                     {isLogin ? 'Create one' : 'Sign in'}
                   </button>

@@ -26,8 +26,12 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [sessionValid, setSessionValid] = useState(false);
   const [navbarHidden, setNavbarHidden] = useState(false);
+  const [friendsDrawerOpen, setFriendsDrawerOpen] = useState(false);
 
   useEffect(() => {
+    const savedDrawerOpen = sessionStorage.getItem('drawerOpen') === 'true';
+    setFriendsDrawerOpen(savedDrawerOpen);
+
     const token = localStorage.getItem('token');
     const username = localStorage.getItem('username');
     const email = localStorage.getItem('email');
@@ -42,6 +46,12 @@ export const AuthProvider = ({ children }) => {
     const createdCount = localStorage.getItem('created_count');
     const bio = localStorage.getItem('user_bio');
     const stack = localStorage.getItem('user_stack');
+    const avatarId = localStorage.getItem('user_avatar_id');
+    const bannerId = localStorage.getItem('user_banner_id');
+    const github = localStorage.getItem('user_github');
+    const leetcode = localStorage.getItem('user_leetcode');
+    const project1 = localStorage.getItem('user_project1');
+    const project2 = localStorage.getItem('user_project2');
     const createdAt = localStorage.getItem('user_joined');
     const sessionStart = localStorage.getItem('session_start');
 
@@ -66,9 +76,15 @@ export const AuthProvider = ({ children }) => {
         activity: activity ? JSON.parse(activity) : {},
         streak: parseInt(streak || '0'),
         joinedCount: parseInt(joinedCount || '0'),
-        createdCount: parseInt(createdCount || '0'),
+        createdCount: createdCount ? parseInt(createdCount) : 0,
         bio: bio || '',
         stack: stack ? JSON.parse(stack) : [],
+        avatarId: avatarId || 'Sniper',
+        bannerId: bannerId || 'crimson',
+        github: github || '',
+        leetcode: leetcode || '',
+        project1: project1 || '',
+        project2: project2 || '',
         createdAt: createdAt || null
       });
 
@@ -90,23 +106,17 @@ export const AuthProvider = ({ children }) => {
           if (d.createdCount !== undefined) localStorage.setItem('created_count', String(d.createdCount || 0));
           if (d.bio !== undefined) localStorage.setItem('user_bio', d.bio || '');
           if (d.stack !== undefined) localStorage.setItem('user_stack', JSON.stringify(d.stack || []));
+          if (d.avatarId) localStorage.setItem('user_avatar_id', d.avatarId);
+          if (d.bannerId) localStorage.setItem('user_banner_id', d.bannerId);
+          if (d.github !== undefined) localStorage.setItem('user_github', d.github);
+          if (d.leetcode !== undefined) localStorage.setItem('user_leetcode', d.leetcode);
+          if (d.project1 !== undefined) localStorage.setItem('user_project1', d.project1);
+          if (d.project2 !== undefined) localStorage.setItem('user_project2', d.project2);
           if (d.createdAt !== undefined) localStorage.setItem('user_joined', d.createdAt);
           
           setUser(prev => prev ? { 
             ...prev, 
-            id: d.id, // Add user ID from server response
-            xp: d.xp, 
-            css_level: d.css_level, 
-            logic_level: d.logic_level, 
-            react_level: d.react_level, 
-            mern_level: d.mern_level,
-            activity: d.activity || {}, 
-            streak: d.streak || 0, 
-            joinedCount: d.joinedCount || 0, 
-            createdCount: d.createdCount || 0,
-            bio: d.bio || '',
-            stack: d.stack || [],
-            createdAt: d.createdAt
+            ...d
           } : null);
         }
       }).catch(() => { /* silent — offline is fine */ });
@@ -138,6 +148,12 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('created_count', String(data.createdCount || 0));
       localStorage.setItem('user_bio', data.bio || '');
       localStorage.setItem('user_stack', JSON.stringify(data.stack || []));
+      if (data.avatarId) localStorage.setItem('user_avatar_id', data.avatarId);
+      if (data.bannerId) localStorage.setItem('user_banner_id', data.bannerId);
+      localStorage.setItem('user_github', data.github || '');
+      localStorage.setItem('user_leetcode', data.leetcode || '');
+      localStorage.setItem('user_project1', data.project1 || '');
+      localStorage.setItem('user_project2', data.project2 || '');
       localStorage.setItem('user_joined', data.createdAt || '');
       localStorage.setItem('session_start', String(Date.now())); // Set session start time
 
@@ -157,6 +173,12 @@ export const AuthProvider = ({ children }) => {
         createdCount: data.createdCount || 0,
         bio: data.bio || '',
         stack: data.stack || [],
+        avatarId: data.avatarId || 'Sniper',
+        bannerId: data.bannerId || 'crimson',
+        github: data.github || '',
+        leetcode: data.leetcode || '',
+        project1: data.project1 || '',
+        project2: data.project2 || '',
         createdAt: data.createdAt || null
       });
       setSessionValid(true);
@@ -203,6 +225,12 @@ export const AuthProvider = ({ children }) => {
       ...(updateData.username !== undefined && { username: updateData.username }),
       ...(updateData.bio !== undefined && { bio: updateData.bio }),
       ...(updateData.stack !== undefined && { stack: updateData.stack }),
+      ...(updateData.avatarId !== undefined && { avatarId: updateData.avatarId }),
+      ...(updateData.bannerId !== undefined && { bannerId: updateData.bannerId }),
+      ...(updateData.github !== undefined && { github: updateData.github }),
+      ...(updateData.leetcode !== undefined && { leetcode: updateData.leetcode }),
+      ...(updateData.project1 !== undefined && { project1: updateData.project1 }),
+      ...(updateData.project2 !== undefined && { project2: updateData.project2 }),
     } : null);
 
     try {
@@ -215,15 +243,16 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('email', data.email);
       localStorage.setItem('user_bio', data.bio || '');
       localStorage.setItem('user_stack', JSON.stringify(data.stack || []));
+      if (data.avatarId) localStorage.setItem('user_avatar_id', data.avatarId);
+      if (data.bannerId) localStorage.setItem('user_banner_id', data.bannerId);
+      if (data.github !== undefined) localStorage.setItem('user_github', data.github);
+      if (data.leetcode !== undefined) localStorage.setItem('user_leetcode', data.leetcode);
+      if (data.project1 !== undefined) localStorage.setItem('user_project1', data.project1);
+      if (data.project2 !== undefined) localStorage.setItem('user_project2', data.project2);
       
       setUser(prev => ({ 
         ...prev, 
-        token: data.token, 
-        username: data.username, 
-        email: data.email,
-        bio: data.bio || '',
-        stack: data.stack || [],
-        ...(data.createdAt !== undefined && { createdAt: data.createdAt }),
+        ...data
       }));
       if (data.createdAt) localStorage.setItem('user_joined', data.createdAt);
       return { success: true };
@@ -271,6 +300,15 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user_streak');
     localStorage.removeItem('joined_count');
     localStorage.removeItem('created_count');
+    localStorage.removeItem('user_bio');
+    localStorage.removeItem('user_stack');
+    localStorage.removeItem('user_avatar_id');
+    localStorage.removeItem('user_banner_id');
+    localStorage.removeItem('user_github');
+    localStorage.removeItem('user_leetcode');
+    localStorage.removeItem('user_project1');
+    localStorage.removeItem('user_project2');
+    localStorage.removeItem('user_joined');
     localStorage.removeItem('session_start');
     
     // Clear all game-specific progress to prevent leaking to other users
@@ -285,7 +323,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, sendOTP, logout, updateProfile, changePassword, updateXP, loading, sessionValid, navbarHidden, setNavbarHidden }}>
+    <AuthContext.Provider value={{ user, login, register, sendOTP, logout, updateProfile, changePassword, updateXP, loading, sessionValid, navbarHidden, setNavbarHidden, friendsDrawerOpen, setFriendsDrawerOpen }}>
       {children}
     </AuthContext.Provider>
   );
