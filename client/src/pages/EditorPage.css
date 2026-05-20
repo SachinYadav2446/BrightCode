@@ -4817,6 +4817,7 @@
     z-index: 900;
     box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s, padding 0.3s;
+}
 
 /* ── Header ── */
 .presence-header {

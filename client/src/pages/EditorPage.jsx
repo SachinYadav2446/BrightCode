@@ -355,11 +355,16 @@ const EditorPage = () => {
 
 
 
-                socket.on('connect_error', () => toast.error('Connection failed. Retrying...'));
-
-
-
+                let connectErrorCount = 0;
+                socket.on('connect_error', () => {
+                    connectErrorCount++;
+                    if (connectErrorCount >= 2) {
+                        toast.error('Connection failed. Retrying...', { id: 'socket-error' });
+                    }
+                });
                 socket.on('connect', () => {
+                    connectErrorCount = 0;
+                    toast.dismiss('socket-error');
                     console.log('Socket connected/reconnected. Re-joining room...');
                     socket.emit('join-room', { roomId, username: user?.username });
                 });
