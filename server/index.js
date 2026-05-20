@@ -9,7 +9,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
-const { Pool } = require('pg');
+const { neon } = require('@neondatabase/serverless');
 const { exec } = require('child_process');
 const nodemailer = require('nodemailer');
 const pty = require('node-pty');
@@ -135,12 +135,12 @@ const codeWarsArena = new CodeWarsArena(io, factions);
 const intraFactionArena = new IntraFactionArena(io, factions, memoryStore, useMemoryDB);
 
 // Prefetch popular LeetCode problems on server start
-const { prefetchLeetCodeProblems } = require('./codeWarQuestions');
-prefetchLeetCodeProblems().then(() => {
-    console.log('[LEETCODE] Prefetch complete - ready for battles!');
-}).catch(err => {
-    console.error('[LEETCODE] Prefetch failed:', err.message);
-});
+// const { prefetchLeetCodeProblems } = require('./codeWarQuestions');
+// prefetchLeetCodeProblems().then(() => {
+//     console.log('[LEETCODE] Prefetch complete - ready for battles!');
+// }).catch(err => {
+//     console.error('[LEETCODE] Prefetch failed:', err.message);
+// });
 
 // ── XP → Level computation (matches client-side) ─────────────
 const computeLevel = (xp) => {
@@ -186,21 +186,73 @@ const computeStreakFromActivity = (activity = {}) => {
     return streak;
 };
 
-// PostgreSQL Configuration
-const pool = new Pool({
-    user: process.env.DB_USER || 'postgres',
-    host: process.env.DB_HOST || 'localhost',
-    database: process.env.DB_NAME || 'postgres', // Changed to 'postgres' for better out-of-the-box compatibility
-    password: process.env.DB_PASSWORD || 'postgres',
-    port: process.env.DB_PORT || 5432,
-});
+// PostgreSQL Configuration using Neon serverless driver (HTTP)
+const connectionString = process.env.DB_CONNECTION_STRING;
+console.log('[DB] Using connection string:', connectionString.replace(/:([^:@]+)@/, ':***@'));
+
+const sql = neon(connectionString);
+
+// Create a pool-like wrapper for compatibility with existing code
+const pool = {
+    query: async (text, params = []) => {
+        try {
+            console.log('[DB Query]:', text.slice(0, 100), params);
+            
+            // For neon(), we need to build the query with parameters
+            // Create a helper to replace $1, $2 with ${param} for neon template literals
+            let queryText = text;
+            const paramPlaceholders = [];
+            
+            // Replace $n placeholders with neon's style
+            for (let i = 0; i < params.length; i++) {
+                queryText = queryText.replace(new RegExp(`\\$${i + 1}`, 'g'), `$${i + 1}`);
+                paramPlaceholders.push(params[i]);
+            }
+            
+            // Use neon's query method with parameterized query
+            const result = await sql.query(queryText, params);
+            
+            // Format result to match node-postgres format
+            return {
+                rows: result,
+                rowCount: result.length
+            };
+        } catch (err) {
+            console.error('[DB Query Error]:', text, params, err);
+            console.error('[DB Error Stack]:', err.stack);
+            throw err;
+        }
+    }
+};
+
+// Test Neon connection - temporarily disabled for now
+// (async () => {
+//     try {
+//         console.log('[DB] Testing Neon connection...');
+//         const client = await pool.connect();
+//         try {
+//             const result = await client.query('SELECT NOW()');
+//             console.log('[DB] ✅ Neon connection successful! Current time:', result.rows[0].now);
+//         } finally {
+//             client.release();
+//         }
+//     } catch (err) {
+//         console.error('[DB] ❌ Neon connection failed:', err);
+//         console.error('[DB] Full error details:', err.stack);
+//     }
+// })();
 
 // Initialize Database
 const initDB = async () => {
     try {
-        // Force drop if there is a type mismatch (Development Only)
-        // await pool.query('DROP TABLE IF EXISTS users CASCADE;'); 
-
+        console.log('[DB] Starting database initialization with Neon HTTP...');
+        
+        // Test simple query first
+        console.log('[DB] Testing Neon connection...');
+        const testResult = await pool.query('SELECT NOW() as current_time');
+        console.log('[DB] ✅ Neon connected successfully! Current time:', testResult.rows[0].current_time);
+        
+        // Create users table
         await pool.query(`
             CREATE TABLE IF NOT EXISTS users (
                 id TEXT PRIMARY KEY,
@@ -225,48 +277,15 @@ const initDB = async () => {
                 stack JSONB DEFAULT '[]',
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
-            
-            -- Safe migration for existing tables
-            DO $$ 
-            BEGIN 
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='bio') THEN
-                    ALTER TABLE users ADD COLUMN bio TEXT DEFAULT '';
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='stack') THEN
-                    ALTER TABLE users ADD COLUMN stack JSONB DEFAULT '[]';
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='created_at') THEN
-                    ALTER TABLE users ADD COLUMN created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
-                END IF;
-            END $$;
-            
-            -- Safe migration for existing tables missing the activity column
-            DO $$ 
-            BEGIN 
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='activity') THEN
-                    ALTER TABLE users ADD COLUMN activity JSONB DEFAULT '{}';
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='created_count') THEN
-                    ALTER TABLE users ADD COLUMN created_count INTEGER DEFAULT 0;
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='joined_count') THEN
-                    ALTER TABLE users ADD COLUMN joined_count INTEGER DEFAULT 0;
-                END IF;
-            END $$;
         `);
-        console.log('PostgreSQL Tables Initialized & Migrated');
-
-        // Initialize CodeVault notes and folders tables
-        const notesMigration = fs.readFileSync(path.join(__dirname, 'migrations', '001_create_notes_tables.sql'), 'utf8');
-        await pool.query(notesMigration);
-        console.log('CodeVault Notes Tables Initialized');
-
-        // Apply enhanced features migration
-        const enhancedFeaturesMigration = fs.readFileSync(path.join(__dirname, 'migrations', '002_add_notes_features.sql'), 'utf8');
-        await pool.query(enhancedFeaturesMigration);
-        console.log('CodeVault Enhanced Features Migration Applied');
+        console.log('[DB] ✅ Users table created');
+        
+        // Initialize CodeVault notes and folders tables (we'll handle migrations manually for now)
+        console.log('[DB] PostgreSQL Tables Initialized');
+        console.log('[DB] Database initialization complete!');
     } catch (err) {
-        console.error('DATABASE INIT ERROR:', err.message);
+        console.error('DATABASE INIT ERROR:', err);
+        console.error('Full error:', err.stack);
         console.log('--- SWAPPING TO MEMORY FALLBACK MODE (USING PERSISTENT users_db.json + notes_db.json) ---');
         useMemoryDB = true;
         loadStore();
@@ -340,6 +359,30 @@ app.post('/support', async (req, res) => {
 const sendError = (res, status, message, details = null) => {
     return res.status(status).json({ error: message, details });
 };
+
+// ── Username Availability Check ────────────────────────────────────────────
+app.get('/check-username', async (req, res) => {
+    const { username } = req.query;
+    if (!username || username.trim().length < 3) {
+        return res.json({ available: false, reason: 'Username must be at least 3 characters' });
+    }
+    const clean = username.trim().toLowerCase();
+    // Basic format validation
+    if (!/^[a-z0-9_]+$/.test(clean)) {
+        return res.json({ available: false, reason: 'Only letters, numbers, and underscores allowed' });
+    }
+    try {
+        if (useMemoryDB) {
+            const taken = memoryStore.users.some(u => u.username?.toLowerCase() === clean);
+            return res.json({ available: !taken, reason: taken ? 'Username already taken' : null });
+        }
+        const { rows } = await pool.query('SELECT id FROM users WHERE LOWER(username) = $1', [clean]);
+        const taken = rows.length > 0;
+        return res.json({ available: !taken, reason: taken ? 'Username already taken' : null });
+    } catch (e) {
+        return res.json({ available: true, reason: null }); // silent fail - server validates on register
+    }
+});
 
 app.post('/send-otp', async (req, res) => {
     let { email, username, type } = req.body;
@@ -518,6 +561,12 @@ app.post('/login', async (req, res) => {
             joinedCount: user.joined_count || 0,
             bio: user.bio || '',
             stack: Array.isArray(user.stack) ? user.stack : [],
+            avatarId: user.avatarId || user.avatar_id || 'Sniper',
+            bannerId: user.bannerId || user.banner_id || 'crimson',
+            github: user.github || '',
+            leetcode: user.leetcode || '',
+            project1: user.project1 || '',
+            project2: user.project2 || '',
             createdAt: user.created_at || user.joinedAt || null
         });
     } catch (err) {
@@ -537,8 +586,232 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+// ── FRIENDS SYSTEM ─────────────────────────────────────────────────────────
+
+// In-memory friends store (used as fallback when PostgreSQL is offline)
+let friendsMemoryStore = []; // { id, requester_id, recipient_id, status, created_at }
+const FRIENDS_FILE = path.join(__dirname, 'friends_db.json');
+
+const loadFriendsStore = () => {
+    if (fs.existsSync(FRIENDS_FILE)) {
+        try {
+            friendsMemoryStore = JSON.parse(fs.readFileSync(FRIENDS_FILE, 'utf8')) || [];
+        } catch (e) { friendsMemoryStore = []; }
+    }
+};
+const saveFriendsStore = () => {
+    try { fs.writeFileSync(FRIENDS_FILE, JSON.stringify(friendsMemoryStore, null, 2)); } catch (e) {}
+};
+loadFriendsStore();
+
+// Migrate friends table in PostgreSQL
+const initFriendsTable = async () => {
+    if (useMemoryDB) return;
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS friends (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                requester_id TEXT NOT NULL,
+                recipient_id TEXT NOT NULL,
+                status TEXT DEFAULT 'pending',
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(requester_id, recipient_id)
+            );
+        `);
+        console.log('[FRIENDS] Friends table ready');
+    } catch (e) {
+        console.error('[FRIENDS] Table init error:', e.message);
+    }
+};
+initFriendsTable();
+
+// Online presence: userId -> Set of socketIds
+const onlineUsers = new Map();
+
+// Helper: get a user's basic public profile
+const getUserPublicProfile = async (userId) => {
+    if (useMemoryDB) {
+        const u = memoryStore.users.find(u => u.id === userId);
+        if (!u) return null;
+        return { id: u.id, username: u.username, xp: u.xp || 0, level: u.level || 'Novice' };
+    }
+    try {
+        const { rows } = await pool.query('SELECT id, username, xp, level FROM users WHERE id = $1', [userId]);
+        return rows[0] || null;
+    } catch (e) { return null; }
+};
+
+// Search users by username (excluding self and existing friends)
+app.get('/friends/search', authenticateToken, async (req, res) => {
+    const { q } = req.query;
+    if (!q || q.length < 2) return res.json([]);
+    const myId = req.user.id;
+    console.log(`[FRIENDS SEARCH] q="${q}" myId="${myId}" useMemoryDB=${useMemoryDB} totalUsers=${memoryStore.users.length}`);
+    try {
+        let users;
+        if (useMemoryDB) {
+            users = memoryStore.users
+                .filter(u => u.id !== myId && u.username?.toLowerCase().includes(q.toLowerCase()))
+                .slice(0, 10)
+                .map(u => ({ id: u.id, username: u.username, xp: u.xp || 0, level: u.level || 'Novice' }));
+            console.log(`[FRIENDS SEARCH] Memory filter found ${users.length} users`);
+        } else {
+            const { rows } = await pool.query(
+                `SELECT id, username, xp, level FROM users WHERE id != $1 AND username ILIKE $2 LIMIT 10`,
+                [myId, `%${q}%`]
+            );
+            users = rows;
+        }
+        // Attach friendship status for each result
+        const results = await Promise.all(users.map(async (u) => {
+            let friendStatus = 'none';
+            if (useMemoryDB) {
+                const rel = friendsMemoryStore.find(f =>
+                    (f.requester_id === myId && f.recipient_id === u.id) ||
+                    (f.requester_id === u.id && f.recipient_id === myId)
+                );
+                if (rel) friendStatus = rel.requester_id === myId ? rel.status : (rel.status === 'pending' ? 'incoming' : rel.status);
+            } else {
+                const { rows } = await pool.query(
+                    `SELECT status, requester_id FROM friends WHERE (requester_id=$1 AND recipient_id=$2) OR (requester_id=$2 AND recipient_id=$1)`,
+                    [myId, u.id]
+                );
+                if (rows[0]) {
+                    friendStatus = rows[0].requester_id === myId ? rows[0].status : (rows[0].status === 'pending' ? 'incoming' : rows[0].status);
+                }
+            }
+            return { ...u, friendStatus, online: onlineUsers.has(u.id) };
+        }));
+        res.json(results);
+    } catch (e) {
+        console.error('[FRIENDS] Search error:', e.message);
+        res.status(500).json({ error: 'Search failed' });
+    }
+});
+
+// Send a friend request
+app.post('/friends/request', authenticateToken, async (req, res) => {
+    const { recipientId } = req.body;
+    const myId = req.user.id;
+    if (!recipientId || recipientId === myId) return res.status(400).json({ error: 'Invalid recipient' });
+    try {
+        if (useMemoryDB) {
+            const exists = friendsMemoryStore.find(f =>
+                (f.requester_id === myId && f.recipient_id === recipientId) ||
+                (f.requester_id === recipientId && f.recipient_id === myId)
+            );
+            if (exists) return res.status(409).json({ error: 'Request already exists' });
+            const newReq = { id: uuidV4(), requester_id: myId, recipient_id: recipientId, status: 'pending', created_at: new Date().toISOString() };
+            friendsMemoryStore.push(newReq);
+            saveFriendsStore();
+            // Notify recipient in real-time
+            const requesterUser = memoryStore.users.find(u => u.id === myId);
+            io.to(`user:${recipientId}`).emit('friend:request', { from: { id: myId, username: requesterUser?.username } });
+            return res.json({ success: true });
+        }
+        await pool.query(
+            `INSERT INTO friends (requester_id, recipient_id, status) VALUES ($1, $2, 'pending') ON CONFLICT DO NOTHING`,
+            [myId, recipientId]
+        );
+        const requester = await getUserPublicProfile(myId);
+        io.to(`user:${recipientId}`).emit('friend:request', { from: requester });
+        res.json({ success: true });
+    } catch (e) {
+        console.error('[FRIENDS] Request error:', e.message);
+        res.status(500).json({ error: 'Failed to send request' });
+    }
+});
+
+// Accept a friend request
+app.post('/friends/accept', authenticateToken, async (req, res) => {
+    const { requesterId } = req.body;
+    const myId = req.user.id;
+    try {
+        if (useMemoryDB) {
+            const idx = friendsMemoryStore.findIndex(f => f.requester_id === requesterId && f.recipient_id === myId && f.status === 'pending');
+            if (idx === -1) return res.status(404).json({ error: 'No pending request found' });
+            friendsMemoryStore[idx].status = 'accepted';
+            saveFriendsStore();
+            const accepter = memoryStore.users.find(u => u.id === myId);
+            io.to(`user:${requesterId}`).emit('friend:accepted', { by: { id: myId, username: accepter?.username } });
+            return res.json({ success: true });
+        }
+        await pool.query(
+            `UPDATE friends SET status='accepted' WHERE requester_id=$1 AND recipient_id=$2 AND status='pending'`,
+            [requesterId, myId]
+        );
+        const accepter = await getUserPublicProfile(myId);
+        io.to(`user:${requesterId}`).emit('friend:accepted', { by: accepter });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to accept' });
+    }
+});
+
+// Reject / cancel / remove a friend
+app.post('/friends/remove', authenticateToken, async (req, res) => {
+    const { otherId } = req.body;
+    const myId = req.user.id;
+    try {
+        if (useMemoryDB) {
+            friendsMemoryStore = friendsMemoryStore.filter(f =>
+                !((f.requester_id === myId && f.recipient_id === otherId) ||
+                  (f.requester_id === otherId && f.recipient_id === myId))
+            );
+            saveFriendsStore();
+            return res.json({ success: true });
+        }
+        await pool.query(
+            `DELETE FROM friends WHERE (requester_id=$1 AND recipient_id=$2) OR (requester_id=$2 AND recipient_id=$1)`,
+            [myId, otherId]
+        );
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to remove' });
+    }
+});
+
+// Get my friends list (accepted) + pending incoming requests
+app.get('/friends', authenticateToken, async (req, res) => {
+    const myId = req.user.id;
+    try {
+        let accepted = [], incoming = [], outgoing = [];
+        if (useMemoryDB) {
+            const myRels = friendsMemoryStore.filter(f => f.requester_id === myId || f.recipient_id === myId);
+            for (const rel of myRels) {
+                const otherId = rel.requester_id === myId ? rel.recipient_id : rel.requester_id;
+                const other = memoryStore.users.find(u => u.id === otherId);
+                if (!other) continue;
+                const profile = { id: other.id, username: other.username, xp: other.xp || 0, level: other.level || 'Novice', online: onlineUsers.has(other.id) };
+                if (rel.status === 'accepted') accepted.push(profile);
+                else if (rel.status === 'pending' && rel.recipient_id === myId) incoming.push({ ...profile, requesterId: rel.requester_id });
+                else if (rel.status === 'pending' && rel.requester_id === myId) outgoing.push(profile);
+            }
+        } else {
+            const { rows } = await pool.query(
+                `SELECT f.*, 
+                    CASE WHEN f.requester_id=$1 THEN f.recipient_id ELSE f.requester_id END as other_id
+                 FROM friends f WHERE f.requester_id=$1 OR f.recipient_id=$1`,
+                [myId]
+            );
+            for (const rel of rows) {
+                const profile = await getUserPublicProfile(rel.other_id);
+                if (!profile) continue;
+                profile.online = onlineUsers.has(rel.other_id);
+                if (rel.status === 'accepted') accepted.push(profile);
+                else if (rel.status === 'pending' && rel.recipient_id === myId) incoming.push({ ...profile, requesterId: rel.requester_id });
+                else if (rel.status === 'pending' && rel.requester_id === myId) outgoing.push(profile);
+            }
+        }
+        res.json({ friends: accepted, incoming, outgoing });
+    } catch (e) {
+        console.error('[FRIENDS] Get error:', e.message);
+        res.status(500).json({ error: 'Failed to get friends' });
+    }
+});
+
 app.post('/update-profile', authenticateToken, async (req, res) => {
-    const { username, bio, stack } = req.body;
+    const { username, bio, stack, avatarId, bannerId, github, leetcode, project1, project2 } = req.body;
     if (!username) return res.status(400).json({ error: 'Username cannot be empty' });
 
     const parsedStack = Array.isArray(stack) ? stack : [];
@@ -554,6 +827,12 @@ app.post('/update-profile', authenticateToken, async (req, res) => {
             user.username = username;
             user.bio = bio || '';
             user.stack = parsedStack;
+            if (avatarId !== undefined) user.avatarId = avatarId;
+            if (bannerId !== undefined) user.bannerId = bannerId;
+            if (github !== undefined) user.github = github;
+            if (leetcode !== undefined) user.leetcode = leetcode;
+            if (project1 !== undefined) user.project1 = project1;
+            if (project2 !== undefined) user.project2 = project2;
             normalizeMemoryUser(user);
             saveStore();
 
@@ -565,6 +844,12 @@ app.post('/update-profile', authenticateToken, async (req, res) => {
                 xp: user.xp || 0,
                 bio: user.bio || '',
                 stack: user.stack || [],
+                avatarId: user.avatarId || 'Sniper',
+                bannerId: user.bannerId || 'crimson',
+                github: user.github || '',
+                leetcode: user.leetcode || '',
+                project1: user.project1 || '',
+                project2: user.project2 || '',
                 createdAt: user.created_at || user.joinedAt || null
             });
         }
@@ -742,6 +1027,72 @@ app.get('/me', authenticateToken, async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch user data' });
+    }
+});
+
+// ── Public User Profile (by username) ─────────────────────────────────────
+app.get('/profile/:username', async (req, res) => {
+    const { username } = req.params;
+    if (!username) return res.status(400).json({ error: 'Username required' });
+    try {
+        let user;
+        if (useMemoryDB) {
+            user = memoryStore.users.find(u => u.username?.toLowerCase() === username.toLowerCase());
+        } else {
+            const { rows } = await pool.query(
+                `SELECT id, username, xp, level, bio, stack, activity, css_level, logic_level, react_level, 
+                        mern_level, java_level, cpp_level, python_level, go_level, created_at
+                 FROM users WHERE LOWER(username) = LOWER($1)`,
+                [username]
+            );
+            user = rows[0];
+        }
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        // Compute level from XP
+        const computedLevel = computeLevel(user.xp || 0);
+
+        // Total challenges solved (sum of all game levels)
+        const totalSolved = (user.css_level || 0) + (user.logic_level || 0) + (user.react_level || 0) +
+                            (user.mern_level || 0) + (user.java_level || 0) + (user.cpp_level || 0) +
+                            (user.python_level || 0) + (user.go_level || 0);
+
+        // Streak from activity
+        const streak = computeStreakFromActivity(user.activity || {});
+        const isOnline = onlineUsers.has(user.id);
+
+        res.json({
+            id: user.id,
+            username: user.username,
+            xp: user.xp || 0,
+            level: computedLevel,
+            bio: user.bio || '',
+            stack: user.stack || [],
+            avatarId: user.avatarId || user.avatar_id || 'Sniper',
+            bannerId: user.bannerId || user.banner_id || 'crimson',
+            github: user.github || '',
+            leetcode: user.leetcode || '',
+            project1: user.project1 || '',
+            project2: user.project2 || '',
+            activity: user.activity || {},
+            streak,
+            totalSolved,
+            skills: {
+                css: user.css_level || 0,
+                logic: user.logic_level || 0,
+                react: user.react_level || 0,
+                mern: user.mern_level || 0,
+                java: user.java_level || 0,
+                cpp: user.cpp_level || 0,
+                python: user.python_level || 0,
+                go: user.go_level || 0,
+            },
+            joinedAt: user.created_at || user.joinedAt || null,
+            online: isOnline,
+        });
+    } catch (e) {
+        console.error('[PROFILE] Error:', e.message);
+        res.status(500).json({ error: 'Failed to fetch profile' });
     }
 });
 
@@ -1745,6 +2096,45 @@ app.get('/workspace/:id', (req, res) => {
 const rooms = new Map();
 
 io.on('connection', (socket) => {
+    // ── Presence tracking ──────────────────────────────────────────────
+    socket.on('presence:join', (userId) => {
+        console.log(`[SOCKET] presence:join for userId: ${userId}, socket.id: ${socket.id}`);
+        if (!userId) return;
+        socket.data.userId = userId;
+        socket.join(`user:${userId}`);
+        if (!onlineUsers.has(userId)) onlineUsers.set(userId, new Set());
+        onlineUsers.get(userId).add(socket.id);
+        // Broadcast to all friends of this user that they are now online
+        io.emit('friend:online', { userId });
+    });
+
+    // ── Advanced Allies Systems (Whisper & Arena) ──────────────────────
+    socket.on('dm:send', ({ toId, fromId, fromUsername, message }) => {
+        console.log(`[SOCKET] dm:send from ${fromUsername}(${fromId}) to user:${toId} | msg: ${message}`);
+        console.log(`Rooms available:`, io.sockets.adapter.rooms);
+        io.to(`user:${toId}`).emit('dm:receive', { fromId, fromUsername, message, timestamp: Date.now() });
+    });
+
+    socket.on('arena:challenge', ({ toId, fromId, fromUsername }) => {
+        io.to(`user:${toId}`).emit('arena:challenge_received', { fromId, fromUsername, timestamp: Date.now() });
+    });
+
+    socket.on('arena:accept', ({ toId, fromId, fromUsername, roomId }) => {
+        io.to(`user:${toId}`).emit('arena:challenge_accepted', { fromId, fromUsername, roomId });
+    });
+
+    socket.on('disconnect', () => {
+        const userId = socket.data.userId;
+        if (userId && onlineUsers.has(userId)) {
+            onlineUsers.get(userId).delete(socket.id);
+            if (onlineUsers.get(userId).size === 0) {
+                onlineUsers.delete(userId);
+                io.emit('friend:offline', { userId });
+            }
+        }
+    });
+    // ──────────────────────────────────────────────────────────────────
+
     socket.on('join-room', ({ roomId, username }) => {
         socket.join(roomId);
         if (!rooms.has(roomId)) {

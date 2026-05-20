@@ -28,7 +28,13 @@
         "2026-05-18": 10
       },
       "bio": "",
-      "stack": []
+      "stack": [],
+      "avatarId": "Ghost",
+      "bannerId": "crimson",
+      "github": "",
+      "leetcode": "",
+      "project1": "",
+      "project2": ""
     },
     {
       "id": "952407e1-83b1-4ddf-8d2e-adf3637c38f3",
@@ -212,8 +218,10 @@
         "2026-05-19": 30
       },
       "joinedAt": "2026-05-19T11:17:23.664Z",
-      "bio": "",
-      "stack": [],
+      "bio": "Good",
+      "stack": [
+        "wed"
+      ],
       "created_at": "2026-05-19T11:17:23.664Z"
     }
   ]
