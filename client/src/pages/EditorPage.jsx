@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -33,7 +33,7 @@ import { useAuth } from '../context/AuthContext';
 
 import CodeBrightLogo from '../components/CodeBrightLogo';
 
-// ── RemoteVideoTile: renders a remote participant's video ─────────────────────
+// â”€â”€ RemoteVideoTile: renders a remote participant's video â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const RemoteVideoTile = ({ socketId, participant }) => {
     const videoRef = useRef(null);
 
@@ -79,7 +79,7 @@ const EditorPage = () => {
 
 
 
-    // ── Core Editor States ──────────────────────────────────────────────────
+    // â”€â”€ Core Editor States â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const [clients, setClients] = useState([]);
 
@@ -91,7 +91,7 @@ const EditorPage = () => {
 
     const [isRunning, setIsRunning] = useState(false);
     const [expandedFolders, setExpandedFolders] = useState(new Set(['/']));
-    
+
     const [language, setLanguage] = useState('javascript');
 
     const [modalConfig, setModalConfig] = useState({ isOpen: false, type: '', targetFile: '', defaultValue: '' });
@@ -99,13 +99,13 @@ const EditorPage = () => {
 
 
 
-    // ── Sidebar/Tab States (BUG FIX: both were missing) ─────────────────────
+    // â”€â”€ Sidebar/Tab States (BUG FIX: both were missing) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const [sidebarView, setSidebarView] = useState('files'); // 'files', 'collaborators', 'chat'
 
     const [snapshots, setSnapshots] = useState([]);
 
-    // ── Chat States ──────────────────────────────────────────────────────────
+    // â”€â”€ Chat States â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const [chatMessages, setChatMessages] = useState([]);
     const [chatInput, setChatInput] = useState('');
     const chatEndRef = useRef(null);
@@ -123,7 +123,7 @@ const EditorPage = () => {
 
 
 
-    // ── Whiteboard States ────────────────────────────────────────────────────
+    // â”€â”€ Whiteboard States â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const [viewMode, setViewMode] = useState('editor');
 
@@ -154,7 +154,7 @@ const EditorPage = () => {
 
 
 
-    // ── Terminal States ──────────────────────────────────────────────────────
+    // â”€â”€ Terminal States â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const [terminalLogs, setTerminalLogs] = useState([
 
@@ -170,7 +170,7 @@ const EditorPage = () => {
 
 
 
-    // ── Admin States ─────────────────────────────────────────────────────────
+    // â”€â”€ Admin States â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const [adminId, setAdminId] = useState(null);
     const [myId, setMyId] = useState(null);
@@ -188,7 +188,7 @@ const EditorPage = () => {
 
 
 
-    // ── AI Sentinel States ───────────────────────────────────────────────────
+    // â”€â”€ AI Sentinel States â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const [isSidekickOpen, setIsSidekickOpen] = useState(false);
 
@@ -204,13 +204,13 @@ const EditorPage = () => {
 
 
 
-    // ── Resizer & Modal Addition ─────────────────────────────────────────────
+    // â”€â”€ Resizer & Modal Addition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const [creationLang, setCreationLang] = useState('javascript');
 
 
 
-    // ── FEATURE 1: Multi-User Video Call (WebRTC) ────────────────────────────
+    // â”€â”€ FEATURE 1: Multi-User Video Call (WebRTC) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const [isVideoCallOpen, setIsVideoCallOpen] = useState(true); // Always open by default
     const [isCallActive, setIsCallActive] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
@@ -227,7 +227,7 @@ const EditorPage = () => {
 
 
 
-    // ── Resizer States ───────────────────────────────────────────────────────
+    // â”€â”€ Resizer States â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const sidebarWidth = 280; // Hardcoded fixed width
 
@@ -321,7 +321,7 @@ const EditorPage = () => {
 
 
 
-    // ── FEATURE 4: AI Translator ──────────────────────────────────────────────
+    // â”€â”€ FEATURE 4: AI Translator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const [isTranslatorOpen, setIsTranslatorOpen] = useState(false);
 
@@ -333,7 +333,7 @@ const EditorPage = () => {
 
 
 
-    // ── Socket.io Effect ─────────────────────────────────────────────────────
+    // â”€â”€ Socket.io Effect â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     useEffect(() => {
 
@@ -370,7 +370,7 @@ const EditorPage = () => {
                     setSnapshots(snapshots || []);
                     if (workspaceOwner) setWorkspaceOwner(workspaceOwner);
                     if (workspaceName) setWorkspaceName(workspaceName);
-                    // Don't auto-open any file — let user pick from tree
+                    // Don't auto-open any file â€” let user pick from tree
                 });
 
 
@@ -391,7 +391,7 @@ const EditorPage = () => {
 
                     toast(`WARP DETECTED: ${warpedBy} shifted to [${snapshotName}]`, {
 
-                        icon: '🌀', style: { background: '#6366f1', color: 'white' }
+                        icon: 'ðŸŒ€', style: { background: '#6366f1', color: 'white' }
 
                     });
 
@@ -429,7 +429,7 @@ const EditorPage = () => {
 
                     toast(`Permissions Updated: You are now [${permission.toUpperCase()}]`, {
 
-                        icon: permission === 'write' ? '✍️' : '🔒',
+                        icon: permission === 'write' ? 'âœï¸' : 'ðŸ”’',
 
                         style: { background: '#1c1917', color: '#fbbf24' }
 
@@ -545,7 +545,7 @@ const EditorPage = () => {
                             // Also rename nested expanded folders
                             const oldPrefix = oldPath + '/';
                             const newPrefix = newPath + '/';
-                            
+
                             prev.forEach(path => {
                                 if (path === oldPath) {
                                     newExpanded.delete(oldPath);
@@ -573,16 +573,16 @@ const EditorPage = () => {
 
                 });
 
-                // ── Chat Messages ────────────────────────────────────────────
+                // â”€â”€ Chat Messages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 socket.on('chat-message', ({ username, message, timestamp }) => {
                     if (!isStopped) {
                         setChatMessages(prev => [...prev, { username, message, timestamp, id: Date.now() }]);
                     }
                 });
 
-                // ── WebRTC Signaling ─────────────────────────────────────────
+                // â”€â”€ WebRTC Signaling â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-                // ── Multi-User WebRTC Video Call Signaling ───────────────────
+                // â”€â”€ Multi-User WebRTC Video Call Signaling â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 socket.on('webrtc-offer', async ({ offer, from }) => {
                     await handleIncomingOffer(offer, from);
                 });
@@ -590,20 +590,20 @@ const EditorPage = () => {
                 socket.on('webrtc-answer', async ({ answer, from }) => {
                     const pc = peerConnectionsRef.current[from];
                     if (pc) {
-                        try { await pc.setRemoteDescription(new RTCSessionDescription(answer)); } catch {}
+                        try { await pc.setRemoteDescription(new RTCSessionDescription(answer)); } catch { }
                     }
                 });
 
                 socket.on('webrtc-ice-candidate', async ({ candidate, from }) => {
                     const pc = peerConnectionsRef.current[from];
                     if (pc && candidate) {
-                        try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch {}
+                        try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch { }
                     }
                 });
 
-                // New peer joined the call — initiate connection to them
+                // New peer joined the call â€” initiate connection to them
                 socket.on('video-call-user-joined', async ({ socketId, username }) => {
-                    toast(`${username} joined the call`, { icon: '📹' });
+                    toast(`${username} joined the call`, { icon: 'ðŸ“¹' });
                     if (localStreamRef.current) {
                         await initiateCallToPeer(socketId, username);
                     }
@@ -611,7 +611,7 @@ const EditorPage = () => {
 
                 // Peer left the call
                 socket.on('video-call-user-left', ({ socketId, username }) => {
-                    toast(`${username} left the call`, { icon: '📵' });
+                    toast(`${username} left the call`, { icon: 'ðŸ“µ' });
                     closePeerConnection(socketId);
                 });
 
@@ -623,7 +623,7 @@ const EditorPage = () => {
                     }));
                 });
 
-                socket.on('call-ended', () => { endCall(); toast('Call ended by peer', { icon: '📵' }); });
+                socket.on('call-ended', () => { endCall(); toast('Call ended by peer', { icon: 'ðŸ“µ' }); });
 
 
 
@@ -666,16 +666,16 @@ const EditorPage = () => {
         }
     }, [clients.length]);
 
-    // ── Auto-refresh Preview ──────────────────────────────────────────────────
+    // â”€â”€ Auto-refresh Preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     useEffect(() => {
         if (viewMode === 'preview') {
             // If no frontend files exist, switch back to editor mode
             if (!hasFrontendFiles()) {
                 setViewMode('editor');
-                toast('Switched to IDE mode - no frontend files available', { icon: '📝' });
+                toast('Switched to IDE mode - no frontend files available', { icon: 'ðŸ“' });
                 return;
             }
-            
+
             const iframe = document.getElementById('preview-iframe');
             if (iframe) {
                 iframe.srcdoc = generatePreview();
@@ -685,7 +685,7 @@ const EditorPage = () => {
 
 
 
-    // ── Core Handlers ─────────────────────────────────────────────────────────
+    // â”€â”€ Core Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const handleCodeChange = (value) => {
 
@@ -775,7 +775,7 @@ const EditorPage = () => {
 
     };
 
-    // ── Export File Function ──────────────────────────────────────────────────
+    // â”€â”€ Export File Function â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const exportFile = () => {
         if (!activeFile) {
             return;
@@ -788,26 +788,26 @@ const EditorPage = () => {
 
         // Create a blob from the file content
         const blob = new Blob([currentFile.content], { type: 'text/plain' });
-        
+
         // Create a download link
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
         link.download = activeFile.split('/').pop(); // Get just the filename
-        
+
         // Trigger download
         document.body.appendChild(link);
         link.click();
-        
+
         // Cleanup
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
     };
 
-    // ── Download Single File Function ────────────────────────────────────────
+    // â”€â”€ Download Single File Function â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const downloadFile = (e, filePath) => {
         e.stopPropagation();
-        
+
         const fileData = files[filePath];
         if (!fileData) {
             toast.error('File not found');
@@ -819,22 +819,22 @@ const EditorPage = () => {
         const link = document.createElement('a');
         link.href = url;
         link.download = filePath.split('/').pop();
-        
+
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
-        
+
         toast.success(`Downloaded ${filePath.split('/').pop()}`);
     };
 
-    // ── Download Folder as ZIP Function ───────────────────────────────────────
+    // â”€â”€ Download Folder as ZIP Function â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const downloadFolder = async (e, folderPath) => {
         e.stopPropagation();
-        
+
         const zip = new JSZip();
         const folderName = folderPath.split('/').pop() || 'workspace';
-        
+
         // Get all files in this folder
         const folderFiles = Object.entries(files).filter(([path]) => {
             if (folderPath === '') {
@@ -859,17 +859,17 @@ const EditorPage = () => {
         try {
             toast.loading('Creating ZIP file...', { id: 'zip-download' });
             const content = await zip.generateAsync({ type: 'blob' });
-            
+
             const url = window.URL.createObjectURL(content);
             const link = document.createElement('a');
             link.href = url;
             link.download = `${folderName}.zip`;
-            
+
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
-            
+
             toast.success(`Downloaded ${folderName}.zip`, { id: 'zip-download' });
         } catch (error) {
             console.error('ZIP creation failed:', error);
@@ -877,7 +877,7 @@ const EditorPage = () => {
         }
     };
 
-    // ── Check if Frontend Files Exist ─────────────────────────────────────────
+    // â”€â”€ Check if Frontend Files Exist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const hasFrontendFiles = () => {
         const frontendExtensions = ['html', 'htm', 'css', 'scss', 'js', 'jsx', 'ts', 'tsx'];
         return Object.keys(files).some(fileName => {
@@ -886,7 +886,7 @@ const EditorPage = () => {
         });
     };
 
-    // ── Preview Generation Function ───────────────────────────────────────────
+    // â”€â”€ Preview Generation Function â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const generatePreview = () => {
         // Collect HTML, CSS, and JS files
         let htmlContent = '';
@@ -895,7 +895,7 @@ const EditorPage = () => {
 
         Object.entries(files).forEach(([fileName, fileData]) => {
             const ext = fileName.split('.').pop()?.toLowerCase();
-            
+
             if (ext === 'html' || ext === 'htm') {
                 htmlContent += fileData.content || '';
             } else if (ext === 'css' || ext === 'scss') {
@@ -933,16 +933,16 @@ const EditorPage = () => {
         return previewHTML;
     };
 
-    // ── Chat Functions ────────────────────────────────────────────────────────
+    // â”€â”€ Chat Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const sendChatMessage = () => {
         if (!chatInput.trim() || !socketRef.current) return;
-        
+
         const message = {
             username: user?.username || 'Anonymous',
             message: chatInput.trim(),
             timestamp: new Date().toISOString()
         };
-        
+
         socketRef.current.emit('chat-message', { roomId, ...message });
         setChatInput('');
     };
@@ -956,7 +956,7 @@ const EditorPage = () => {
 
 
 
-    // ── File System Helpers ───────────────────────────────────────────────────
+    // â”€â”€ File System Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const openModal = (config) => {
         setModalConfig({ ...config, isOpen: true });
         setModalInputValue(config.defaultValue || '');
@@ -973,19 +973,23 @@ const EditorPage = () => {
 
     const getFileLanguage = (name) => {
         const ext = (name.split('.').pop() || '').toLowerCase();
-        return { js:'javascript', jsx:'javascript', ts:'typescript', tsx:'typescript',
-                 py:'python', html:'html', htm:'html', css:'css', scss:'css',
-                 json:'json', md:'markdown', mdx:'markdown', cpp:'cpp', c:'cpp',
-                 h:'cpp', java:'java', sql:'sql', yaml:'yaml', yml:'yaml',
-                 sh:'shell', txt:'plaintext', env:'plaintext' }[ext] || 'plaintext';
+        return {
+            js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript',
+            py: 'python', html: 'html', htm: 'html', css: 'css', scss: 'css',
+            json: 'json', md: 'markdown', mdx: 'markdown', cpp: 'cpp', c: 'cpp',
+            h: 'cpp', java: 'java', sql: 'sql', yaml: 'yaml', yml: 'yaml',
+            sh: 'shell', txt: 'plaintext', env: 'plaintext'
+        }[ext] || 'plaintext';
     };
 
     const getFileColor = (name) => {
         const ext = (name.split('.').pop() || '').toLowerCase();
-        return { js:'#f7df1e', jsx:'#61dafb', ts:'#3178c6', tsx:'#61dafb',
-                 py:'#3572A5', html:'#e34f26', css:'#7c83fd', scss:'#c6538c',
-                 json:'#f5a623', md:'#aaaaaa', cpp:'#5a9fd4', c:'#5a9fd4',
-                 java:'#b07219', sql:'#336791', yaml:'#cc1018', sh:'#89e051' }[ext] || '#6b7280';
+        return {
+            js: '#f7df1e', jsx: '#61dafb', ts: '#3178c6', tsx: '#61dafb',
+            py: '#3572A5', html: '#e34f26', css: '#7c83fd', scss: '#c6538c',
+            json: '#f5a623', md: '#aaaaaa', cpp: '#5a9fd4', c: '#5a9fd4',
+            java: '#b07219', sql: '#336791', yaml: '#cc1018', sh: '#89e051'
+        }[ext] || '#6b7280';
     };
 
     const handleModalSubmit = () => {
@@ -1012,7 +1016,7 @@ const EditorPage = () => {
         } else if (type === 'create-folder') {
             const clean = inputVal;
             const folderPath = targetFile ? `${targetFile}/${clean}` : clean;
-            
+
             // Check if folder or file with same name exists
             const folderPrefix = folderPath + '/';
             const exists = Object.keys(files).some(f => f === folderPath || f.startsWith(folderPrefix));
@@ -1039,7 +1043,7 @@ const EditorPage = () => {
             parts.pop();
             const newPath = [...parts, inputVal].join('/');
             if (newPath === targetFile) { setModalConfig({ isOpen: false }); return; }
-            
+
             // Check if target name already exists
             const newPrefix = newPath + '/';
             const exists = Object.keys(files).some(f => f === newPath || f.startsWith(newPrefix));
@@ -1075,17 +1079,17 @@ const EditorPage = () => {
 
 
 
-    // ── Copy invite ───────────────────────────────────────────────────────────
+    // â”€â”€ Copy invite â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const copyInviteLink = async () => {
-        try { 
+        try {
             await navigator.clipboard.writeText(window.location.href);
         }
-        catch { 
+        catch {
             // Silent fail
         }
     };
 
-    // ── AI Sentinel ──────────────────────────────────────────────────────────
+    // â”€â”€ AI Sentinel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const sendMessageToAi = async () => { // BUG FIX: was handleAiSubmit, now properly named
 
@@ -1111,19 +1115,19 @@ const EditorPage = () => {
 
                 if (input.includes('optimize')) {
 
-                    response = "### ⚡ Optimization Protocol\nAnalysis complete. Recommend `.map()`/`.filter()` over explicit loops for ~15% better allocation. Consider `useMemo` for expensive computations.";
+                    response = "### âš¡ Optimization Protocol\nAnalysis complete. Recommend `.map()`/`.filter()` over explicit loops for ~15% better allocation. Consider `useMemo` for expensive computations.";
 
                 } else if (input.includes('explain')) {
 
-                    response = `### 🔍 Code Breakdown\nIn **${activeFile}**, the logic initializes a reactive state loop creating a data sink for incoming signals from the Code Sight server via WebSocket channels.`;
+                    response = `### ðŸ” Code Breakdown\nIn **${activeFile}**, the logic initializes a reactive state loop creating a data sink for incoming signals from the Code Sight server via WebSocket channels.`;
 
                 } else if (input.includes('generate') || input.includes('create')) {
 
-                    response = "### 🛠️ Boilerplate Generated\n```javascript\nconst handler = async (req, res) => {\n  try {\n    const data = await processRequest(req.body);\n    res.json({ success: true, data });\n  } catch (err) {\n    res.status(500).json({ error: err.message });\n  }\n};\n```";
+                    response = "### ðŸ› ï¸ Boilerplate Generated\n```javascript\nconst handler = async (req, res) => {\n  try {\n    const data = await processRequest(req.body);\n    res.json({ success: true, data });\n  } catch (err) {\n    res.status(500).json({ error: err.message });\n  }\n};\n```";
 
                 } else if (input.includes('bug') || input.includes('fix')) {
 
-                    response = "### 🐛 Diagnostic Mode\nActivate the **Watchdog** (Shield icon in toolbar) for a full security scan. Common issues: unhandled promise chains, missing null-checks, type coercion with `==`.";
+                    response = "### ðŸ› Diagnostic Mode\nActivate the **Watchdog** (Shield icon in toolbar) for a full security scan. Common issues: unhandled promise chains, missing null-checks, type coercion with `==`.";
 
                 } else {
 
@@ -1151,7 +1155,7 @@ const EditorPage = () => {
 
 
 
-    // ── FEATURE 4: AI Translator ──────────────────────────────────────────────
+    // â”€â”€ FEATURE 4: AI Translator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const translateCode = async () => {
 
@@ -1179,13 +1183,13 @@ const EditorPage = () => {
 
         const translations = {
 
-            python: `# AI Sentinel — Translated to Python\n# Source: ${activeFile}\n\ndef main():\n    ${sanitized}\n\nif __name__ == '__main__':\n    main()`,
+            python: `# AI Sentinel â€” Translated to Python\n# Source: ${activeFile}\n\ndef main():\n    ${sanitized}\n\nif __name__ == '__main__':\n    main()`,
 
-            rust: `// AI Sentinel — Translated to Rust\n// Source: ${activeFile}\n\nfn main() {\n    println!("Code Sight — Rust port");\n    // Note: Rust requires explicit type annotations\n    // Manual port recommended for production use\n}`,
+            rust: `// AI Sentinel â€” Translated to Rust\n// Source: ${activeFile}\n\nfn main() {\n    println!("Code Sight â€” Rust port");\n    // Note: Rust requires explicit type annotations\n    // Manual port recommended for production use\n}`,
 
-            go: `// AI Sentinel — Translated to Go\npackage main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Code Sight — Go port")\n    // Note: Go requires explicit type declarations\n}`,
+            go: `// AI Sentinel â€” Translated to Go\npackage main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Code Sight â€” Go port")\n    // Note: Go requires explicit type declarations\n}`,
 
-            java: `// AI Sentinel — Translated to Java\n// Source: ${activeFile}\n\npublic class Translated {\n    public static void main(String[] args) {\n        System.out.println("Code Sight — Java port");\n    }\n}`,
+            java: `// AI Sentinel â€” Translated to Java\n// Source: ${activeFile}\n\npublic class Translated {\n    public static void main(String[] args) {\n        System.out.println("Code Sight â€” Java port");\n    }\n}`,
 
         };
 
@@ -1199,12 +1203,14 @@ const EditorPage = () => {
 
 
 
-    // ── FEATURE 1: Multi-User WebRTC Video Call ──────────────────────────────
+    // â”€â”€ FEATURE 1: Multi-User WebRTC Video Call â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    const STUN_SERVERS = { iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-    ]};
+    const STUN_SERVERS = {
+        iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+        ]
+    };
 
     const createPeerConnection = (targetId) => {
         const pc = new RTCPeerConnection(STUN_SERVERS);
@@ -1329,7 +1335,7 @@ const EditorPage = () => {
         await pc.setLocalDescription(answer);
         socketRef.current?.emit('webrtc-answer', { roomId, answer, targetId: from });
 
-        toast(`${callerInfo?.username || 'Someone'} joined the call`, { icon: '📹' });
+        toast(`${callerInfo?.username || 'Someone'} joined the call`, { icon: 'ðŸ“¹' });
     };
 
     // Leave the call (only called when leaving workspace)
@@ -1371,14 +1377,14 @@ const EditorPage = () => {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
                 localStreamRef.current = stream;
                 if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-                
+
                 // Add tracks to all existing peer connections
                 Object.values(peerConnectionsRef.current).forEach(pc => {
                     stream.getTracks().forEach(track => {
                         pc.addTrack(track, stream);
                     });
                 });
-                
+
                 setIsVideoOn(true);
                 socketRef.current?.emit('video-call-state', { roomId, isMuted, isVideoOn: true, username: user?.username });
             } catch (err) {
@@ -1387,7 +1393,7 @@ const EditorPage = () => {
         } else {
             const newVideoOn = !isVideoOn;
             const videoTracks = localStreamRef.current.getVideoTracks();
-            
+
             if (videoTracks.length > 0) {
                 videoTracks.forEach(t => { t.enabled = newVideoOn; });
             } else if (newVideoOn) {
@@ -1396,7 +1402,7 @@ const EditorPage = () => {
                     const videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
                     const videoTrack = videoStream.getVideoTracks()[0];
                     localStreamRef.current.addTrack(videoTrack);
-                    
+
                     // Add to all peer connections
                     Object.values(peerConnectionsRef.current).forEach(pc => {
                         pc.addTrack(videoTrack, localStreamRef.current);
@@ -1406,7 +1412,7 @@ const EditorPage = () => {
                     return;
                 }
             }
-            
+
             setIsVideoOn(newVideoOn);
             socketRef.current?.emit('video-call-state', { roomId, isMuted, isVideoOn: newVideoOn, username: user?.username });
         }
@@ -1416,7 +1422,7 @@ const EditorPage = () => {
 
 
 
-    // ── Whiteboard ────────────────────────────────────────────────────────────
+    // â”€â”€ Whiteboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const getCoordinates = (nativeEvent) => {
 
@@ -1450,7 +1456,7 @@ const EditorPage = () => {
 
         const ctx = canvasRef.current.getContext('2d');
 
-        
+
 
         setStartPos({ x, y });
 
@@ -1472,7 +1478,7 @@ const EditorPage = () => {
 
         }
 
-        
+
 
         setIsDrawing(true);
 
@@ -1628,12 +1634,12 @@ const EditorPage = () => {
                     // Double-headed arrow for relationships
                     const headLength = 15;
                     const angle = Math.atan2(dy, dx);
-                    
+
                     // Main line
                     ctx.moveTo(startPos.x, startPos.y);
                     ctx.lineTo(startPos.x + dx, startPos.y + dy);
                     ctx.stroke();
-                    
+
                     // First arrowhead
                     ctx.beginPath();
                     ctx.moveTo(startPos.x + dx, startPos.y + dy);
@@ -1641,7 +1647,7 @@ const EditorPage = () => {
                     ctx.moveTo(startPos.x + dx, startPos.y + dy);
                     ctx.lineTo(startPos.x + dx - headLength * Math.cos(angle + Math.PI / 6), startPos.y + dy - headLength * Math.sin(angle + Math.PI / 6));
                     ctx.stroke();
-                    
+
                     // Second arrowhead (at start)
                     ctx.beginPath();
                     ctx.moveTo(startPos.x, startPos.y);
@@ -1679,7 +1685,7 @@ const EditorPage = () => {
 
 
 
-    // ── Terminal ──────────────────────────────────────────────────────────────
+    // â”€â”€ Terminal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const runTerminalCommand = (e) => {
 
@@ -1703,7 +1709,7 @@ const EditorPage = () => {
 
 
 
-    // ── FILE SYSTEM TREE ──────────────────────────────────────────────────────
+    // â”€â”€ FILE SYSTEM TREE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const fileTree = React.useMemo(() => {
         const root = { type: 'folder', children: {} };
         Object.keys(files).forEach(path => {
@@ -1739,7 +1745,7 @@ const EditorPage = () => {
             })
             .map(([name, childNode]) => {
                 const currentPath = path ? `${path}/${name}` : name;
-                
+
                 if (childNode.type === 'folder') {
                     const isExpanded = expandedFolders.has(currentPath);
                     return (
@@ -1800,7 +1806,7 @@ const EditorPage = () => {
             });
     };
 
-    // ── RENDER ────────────────────────────────────────────────────────────────
+    // â”€â”€ RENDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     return (
 
         <>
@@ -1815,9 +1821,9 @@ const EditorPage = () => {
                             <div className="custom-modal-header">
                                 <h3>
                                     {modalConfig.type === 'create' ? 'New File' :
-                                     modalConfig.type === 'create-folder' ? 'New Folder' :
-                                     (modalConfig.type === 'rename' || modalConfig.type === 'rename-folder') ? 'Rename' :
-                                     'Delete'}
+                                        modalConfig.type === 'create-folder' ? 'New Folder' :
+                                            (modalConfig.type === 'rename' || modalConfig.type === 'rename-folder') ? 'Rename' :
+                                                'Delete'}
                                 </h3>
                             </div>
 
@@ -1837,8 +1843,8 @@ const EditorPage = () => {
                                             {modalConfig.type === 'create'
                                                 ? 'File name (include extension)'
                                                 : modalConfig.type === 'create-folder'
-                                                ? 'Folder name'
-                                                : 'New name'}
+                                                    ? 'Folder name'
+                                                    : 'New name'}
                                         </label>
                                         <input
                                             type="text"
@@ -1847,8 +1853,8 @@ const EditorPage = () => {
                                             onChange={e => setModalInputValue(e.target.value)}
                                             placeholder={
                                                 modalConfig.type === 'create' ? 'e.g. index.js, App.tsx, style.css'
-                                                : modalConfig.type === 'create-folder' ? 'e.g. components'
-                                                : 'New name...'
+                                                    : modalConfig.type === 'create-folder' ? 'e.g. components'
+                                                        : 'New name...'
                                             }
                                             className="premium-input modal-input"
                                             onKeyDown={e => { if (e.key === 'Enter') handleModalSubmit(); }}
@@ -1881,13 +1887,13 @@ const EditorPage = () => {
 
 
 
-            {/* ── END SESSION MODAL ──────────────────────────────────────────── */}
+            {/* â”€â”€ END SESSION MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <AnimatePresence>
                 {showEndSessionModal && (
                     <div className="custom-modal-overlay" onClick={() => setShowEndSessionModal(false)}>
-                        <motion.div 
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }} 
-                            animate={{ opacity: 1, scale: 1, y: 0 }} 
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
                             className="end-session-modal"
                             onClick={e => e.stopPropagation()}
@@ -1897,22 +1903,22 @@ const EditorPage = () => {
                                     <Plus size={40} style={{ transform: 'rotate(45deg)' }} />
                                 </div>
                             </div>
-                            
+
                             <h2 className="end-modal-title">End Session Permanently?</h2>
                             <p className="end-modal-description">
-                                This will terminate the workspace for all users and cannot be undone. 
+                                This will terminate the workspace for all users and cannot be undone.
                                 All files and progress will be permanently lost.
                             </p>
 
                             <div className="end-modal-actions">
-                                <button 
-                                    className="end-modal-btn cancel-btn" 
+                                <button
+                                    className="end-modal-btn cancel-btn"
                                     onClick={() => setShowEndSessionModal(false)}
                                 >
                                     Cancel
                                 </button>
-                                <button 
-                                    className="end-modal-btn confirm-btn" 
+                                <button
+                                    className="end-modal-btn confirm-btn"
                                     onClick={() => {
                                         socketRef.current?.emit('end-session', { roomId });
                                         setShowEndSessionModal(false);
@@ -1928,7 +1934,7 @@ const EditorPage = () => {
                 )}
             </AnimatePresence>
 
-            {/* ── PRESENCE PANEL (Always Visible) ────────────────────────────────────────────── */}
+            {/* â”€â”€ PRESENCE PANEL (Always Visible) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -2030,7 +2036,7 @@ const EditorPage = () => {
 
 
 
-            {/* ── AI TRANSLATOR PANEL ─────────────────────────────────────────── */}
+            {/* â”€â”€ AI TRANSLATOR PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
 
             <AnimatePresence>
 
@@ -2052,7 +2058,7 @@ const EditorPage = () => {
 
                                 <span className="translator-label">From: <strong>{activeFile?.split('.').pop()?.toUpperCase() || 'JS'}</strong></span>
 
-                                <span className="translator-arrow">→</span>
+                                <span className="translator-arrow">â†’</span>
 
                                 <select value={translateTarget} onChange={e => { setTranslateTarget(e.target.value); setTranslatedCode(''); }} className="lang-select">
 
@@ -2098,7 +2104,7 @@ const EditorPage = () => {
 
                                 onClick={translateCode} disabled={isTranslating || !activeFile}>
 
-                                {isTranslating ? 'Translating...' : `Translate → ${translateTarget.charAt(0).toUpperCase() + translateTarget.slice(1)}`}
+                                {isTranslating ? 'Translating...' : `Translate â†’ ${translateTarget.charAt(0).toUpperCase() + translateTarget.slice(1)}`}
 
                             </button>
 
@@ -2112,593 +2118,593 @@ const EditorPage = () => {
 
 
 
-            {/* ── MAIN LAYOUT ─────────────────────────────────────────────────── */}
+            {/* â”€â”€ MAIN LAYOUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
 
             <div className="ide-shell">
 
-            {/* ── FULL-WIDTH TOPBAR ──────────────────────────────────────────── */}
-            <header className="editor-nav">
+                {/* â”€â”€ FULL-WIDTH TOPBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                <header className="editor-nav">
 
-                <div className="nav-left">
-                    <CodeBrightLogo size="small" />
-                </div>
-
-
-
-                <div className="nav-center">
-                    <div className="view-selector">
-                        <button className={`view-btn ${viewMode === 'editor' ? 'active' : ''}`} onClick={() => setViewMode('editor')}>
-                            <FileCode size={14} /> IDE
-                        </button>
-                        <button 
-                            className={`view-btn ${viewMode === 'preview' ? 'active' : ''}`} 
-                            onClick={() => hasFrontendFiles() && setViewMode('preview')}
-                            disabled={!hasFrontendFiles()}
-                            title={!hasFrontendFiles() ? 'Preview only available for HTML/CSS/JS files' : 'Preview'}
-                        >
-                            <Monitor size={14} /> Preview
-                        </button>
-                        <button className={`view-btn ${viewMode === 'whiteboard' ? 'active' : ''}`} onClick={() => setViewMode('whiteboard')}>
-                            <WhiteboardIcon size={14} /> Architect
-                        </button>
+                    <div className="nav-left">
+                        <CodeBrightLogo size="small" />
                     </div>
-                </div>
-
-                <div className="nav-right">
-                    <div className="editor-nav-actions">
-
-                        <button 
-                            className={`nav-icon-btn ${!isTerminalCollapsed ? 'active' : ''}`} 
-                            onClick={toggleTerminal} 
-                            title="Terminal"
-                        >
-                            <TerminalIcon size={18} />
-                        </button>
-                        <button className="export-btn" onClick={exportFile} disabled={!activeFile}>
-                            <Download size={16} /> Export
-                        </button>
-                        <button className={`nav-play-btn ${isRunning ? 'pulse' : ''}`} onClick={runCode} disabled={isRunning}>
-                            <Play size={18} fill="currentColor" />
-                        </button>
-                    </div>
-                </div>
-
-            </header>
-
-            <div className="editor-layout" style={{ gridTemplateColumns: `${isSidebarCollapsed ? 0 : sidebarWidth}px 1fr`, position: 'relative' }}>
-
-                <button 
-                    className={`sidebar-handle-toggle ${isSidebarCollapsed ? 'collapsed' : ''}`} 
-                    onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                    title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-                >
-                    {isSidebarCollapsed && <span className="handle-text">WORKSPACE</span>}
-                    <div className="handle-icon">
-                        {isSidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-                    </div>
-                </button>
 
 
 
-
-
-
-
-                <aside className="sidebar">
-
-                    <div className="sidebar-content">
-                        {/* Header with title and navigation arrows */}
-                        <div className="sidebar-header-bar">
-                            {/* Left arrow - only show if not on first view */}
-                            {sidebarView !== 'files' && (
-                                <button className="sidebar-nav-btn" onClick={goToPreviousView} title="Go back">
-                                    <ChevronLeft size={16} />
-                                </button>
-                            )}
-                            
-                            <span className="sidebar-title">
-                                {sidebarView === 'files' && 'EXPLORER'}
-                                {sidebarView === 'collaborators' && 'COLLABORATORS'}
-                                {sidebarView === 'chat' && 'TEAM CHAT'}
-                            </span>
-                            
-                            {/* Right arrow - only show if not on last view */}
-                            {sidebarView !== 'chat' && (
-                                <button className="sidebar-nav-btn" onClick={goToNextView} title="Next">
-                                    <ChevronRight size={16} />
-                                </button>
-                            )}
+                    <div className="nav-center">
+                        <div className="view-selector">
+                            <button className={`view-btn ${viewMode === 'editor' ? 'active' : ''}`} onClick={() => setViewMode('editor')}>
+                                <FileCode size={14} /> IDE
+                            </button>
+                            <button
+                                className={`view-btn ${viewMode === 'preview' ? 'active' : ''}`}
+                                onClick={() => hasFrontendFiles() && setViewMode('preview')}
+                                disabled={!hasFrontendFiles()}
+                                title={!hasFrontendFiles() ? 'Preview only available for HTML/CSS/JS files' : 'Preview'}
+                            >
+                                <Monitor size={14} /> Preview
+                            </button>
+                            <button className={`view-btn ${viewMode === 'whiteboard' ? 'active' : ''}`} onClick={() => setViewMode('whiteboard')}>
+                                <WhiteboardIcon size={14} /> Architect
+                            </button>
                         </div>
+                    </div>
 
-                        {/* Files View */}
-                        {sidebarView === 'files' && (
-                            <div className="sidebar-section">
-                                <div className="file-list">
-                                    <div className="folder-item root-folder">
-                                        <div className="folder-header root-folder-header" onClick={() => toggleFolder('/')}>
-                                            <span className="tree-arrow">{expandedFolders.has('/') ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</span>
-                                            {expandedFolders.has('/') ? <FolderOpen size={14} style={{ color: '#e2a04a', flexShrink: 0 }} /> : <Folder size={14} style={{ color: '#e2a04a', flexShrink: 0 }} />}
-                                            <span className="folder-name-text root-name" style={{ flex: 1 }}>{workspaceFolderName}</span>
-                                            {canWrite && (
-                                                <div className="folder-actions" style={{ display: 'flex', gap: '4px' }}>
-                                                    <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFile(''); }} title="New File in root"><FilePlus size={12} /></button>
-                                                    <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFolder(''); }} title="New Folder in root"><FolderPlus size={12} /></button>
-                                                </div>
-                                            )}
+                    <div className="nav-right">
+                        <div className="editor-nav-actions">
+
+                            <button
+                                className={`nav-icon-btn ${!isTerminalCollapsed ? 'active' : ''}`}
+                                onClick={toggleTerminal}
+                                title="Terminal"
+                            >
+                                <TerminalIcon size={18} />
+                            </button>
+                            <button className="export-btn" onClick={exportFile} disabled={!activeFile}>
+                                <Download size={16} /> Export
+                            </button>
+                            <button className={`nav-play-btn ${isRunning ? 'pulse' : ''}`} onClick={runCode} disabled={isRunning}>
+                                <Play size={18} fill="currentColor" />
+                            </button>
+                        </div>
+                    </div>
+
+                </header>
+
+                <div className="editor-layout" style={{ gridTemplateColumns: `${isSidebarCollapsed ? 0 : sidebarWidth}px 1fr`, position: 'relative' }}>
+
+                    <button
+                        className={`sidebar-handle-toggle ${isSidebarCollapsed ? 'collapsed' : ''}`}
+                        onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                        title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                    >
+                        {isSidebarCollapsed && <span className="handle-text">WORKSPACE</span>}
+                        <div className="handle-icon">
+                            {isSidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                        </div>
+                    </button>
+
+
+
+
+
+
+
+                    <aside className="sidebar">
+
+                        <div className="sidebar-content">
+                            {/* Header with title and navigation arrows */}
+                            <div className="sidebar-header-bar">
+                                {/* Left arrow - only show if not on first view */}
+                                {sidebarView !== 'files' && (
+                                    <button className="sidebar-nav-btn" onClick={goToPreviousView} title="Go back">
+                                        <ChevronLeft size={16} />
+                                    </button>
+                                )}
+
+                                <span className="sidebar-title">
+                                    {sidebarView === 'files' && 'EXPLORER'}
+                                    {sidebarView === 'collaborators' && 'COLLABORATORS'}
+                                    {sidebarView === 'chat' && 'TEAM CHAT'}
+                                </span>
+
+                                {/* Right arrow - only show if not on last view */}
+                                {sidebarView !== 'chat' && (
+                                    <button className="sidebar-nav-btn" onClick={goToNextView} title="Next">
+                                        <ChevronRight size={16} />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Files View */}
+                            {sidebarView === 'files' && (
+                                <div className="sidebar-section">
+                                    <div className="file-list">
+                                        <div className="folder-item root-folder">
+                                            <div className="folder-header root-folder-header" onClick={() => toggleFolder('/')}>
+                                                <span className="tree-arrow">{expandedFolders.has('/') ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</span>
+                                                {expandedFolders.has('/') ? <FolderOpen size={14} style={{ color: '#e2a04a', flexShrink: 0 }} /> : <Folder size={14} style={{ color: '#e2a04a', flexShrink: 0 }} />}
+                                                <span className="folder-name-text root-name" style={{ flex: 1 }}>{workspaceFolderName}</span>
+                                                {canWrite && (
+                                                    <div className="folder-actions" style={{ display: 'flex', gap: '4px' }}>
+                                                        <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFile(''); }} title="New File in root"><FilePlus size={12} /></button>
+                                                        <button className="icon-btn-ghost" onClick={(e) => { e.stopPropagation(); createNewFolder(''); }} title="New Folder in root"><FolderPlus size={12} /></button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <AnimatePresence>
+                                                {expandedFolders.has('/') && (
+                                                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
+                                                        {Object.keys(fileTree.children).length === 0 ? (
+                                                            <div className="empty-folder-hint">
+                                                                <span>No files yet.</span>
+                                                                {canWrite && <button onClick={() => createNewFile('')} className="hint-btn">+ New File</button>}
+                                                            </div>
+                                                        ) : renderFileTree(fileTree, '')}
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
                                         </div>
-                                        <AnimatePresence>
-                                            {expandedFolders.has('/') && (
-                                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
-                                                    {Object.keys(fileTree.children).length === 0 ? (
-                                                        <div className="empty-folder-hint">
-                                                            <span>No files yet.</span>
-                                                            {canWrite && <button onClick={() => createNewFile('')} className="hint-btn">+ New File</button>}
-                                                        </div>
-                                                    ) : renderFileTree(fileTree, '')}
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {/* Collaborators View */}
-                        {sidebarView === 'collaborators' && (
-                            <div className="sidebar-section">
-                                <div className="user-list-full">
-                                    {clients.map(c => {
-                                        const userRole = c?.id === adminId ? 'admin' : (c?.permission || 'viewer');
-                                        return (
-                                            <div key={c?.id} className="user-item-full">
-                                                <div className="user-info-group">
-                                                    <div className="user-status-dot online" />
-                                                    <span className="user-name">
-                                                        {c?.username}
-                                                        {c?.id === myId && <span className="you-tag"> (You)</span>}
-                                                    </span>
-                                                    <span className={`role-badge ${userRole}`}>
-                                                        {userRole === 'admin' ? 'ADMIN' : userRole === 'writer' ? 'WRITER' : 'VIEWER'}
-                                                    </span>
-                                                </div>
-                                                <div className="user-actions">
-                                                    {isAdmin && c?.id !== myId && c?.id !== adminId && (
-                                                        <>
-                                                            <button 
-                                                                className={`role-toggle-btn ${c?.permission === 'writer' ? 'active' : ''}`}
-                                                                onClick={() => {
-                                                                    if (socketRef.current) {
-                                                                        const newPermission = c?.permission === 'writer' ? 'viewer' : 'writer';
-                                                                        socketRef.current.emit('change-permission', { 
-                                                                            roomId, 
-                                                                            targetId: c?.id, 
-                                                                            permission: newPermission 
-                                                                        });
-                                                                    }
-                                                                }}
-                                                                title={c?.permission === 'writer' ? 'Revoke write access' : 'Grant write access'}
-                                                            >
-                                                                <Edit2 size={14} />
-                                                            </button>
-                                                            <button 
-                                                                className="kick-btn" 
-                                                                onClick={() => {
-                                                                    if (socketRef.current) {
-                                                                        socketRef.current.emit('kick-user', { roomId, targetId: c?.id });
-                                                                    }
-                                                                }}
-                                                                title="Remove user"
-                                                            >
-                                                                <X size={14} />
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Chat View */}
-                        {sidebarView === 'chat' && (
-                            <div className="sidebar-section chat-section">
-                                <div className="chat-messages">
-                                    {chatMessages.length === 0 ? (
-                                        <div className="chat-empty">
-                                            <Send size={32} style={{ opacity: 0.3 }} />
-                                            <p>No messages yet</p>
-                                            <span>Start the conversation!</span>
-                                        </div>
-                                    ) : (
-                                        chatMessages.map(msg => {
-                                            const isOwnMessage = msg.username === user?.username;
+                            {/* Collaborators View */}
+                            {sidebarView === 'collaborators' && (
+                                <div className="sidebar-section">
+                                    <div className="user-list-full">
+                                        {clients.map(c => {
+                                            const userRole = c?.id === adminId ? 'admin' : (c?.permission || 'viewer');
                                             return (
-                                                <div key={msg.id} className={`chat-message ${isOwnMessage ? 'own-message' : ''}`}>
-                                                    <div className="chat-message-header">
-                                                        <span className="chat-username">{isOwnMessage ? 'You' : msg.username}</span>
-                                                        <span className="chat-time">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <div key={c?.id} className="user-item-full">
+                                                    <div className="user-info-group">
+                                                        <div className="user-status-dot online" />
+                                                        <span className="user-name">
+                                                            {c?.username}
+                                                            {c?.id === myId && <span className="you-tag"> (You)</span>}
+                                                        </span>
+                                                        <span className={`role-badge ${userRole}`}>
+                                                            {userRole === 'admin' ? 'ADMIN' : userRole === 'writer' ? 'WRITER' : 'VIEWER'}
+                                                        </span>
                                                     </div>
-                                                    <div className="chat-message-text">{msg.message}</div>
+                                                    <div className="user-actions">
+                                                        {isAdmin && c?.id !== myId && c?.id !== adminId && (
+                                                            <>
+                                                                <button
+                                                                    className={`role-toggle-btn ${c?.permission === 'writer' ? 'active' : ''}`}
+                                                                    onClick={() => {
+                                                                        if (socketRef.current) {
+                                                                            const newPermission = c?.permission === 'writer' ? 'viewer' : 'writer';
+                                                                            socketRef.current.emit('change-permission', {
+                                                                                roomId,
+                                                                                targetId: c?.id,
+                                                                                permission: newPermission
+                                                                            });
+                                                                        }
+                                                                    }}
+                                                                    title={c?.permission === 'writer' ? 'Revoke write access' : 'Grant write access'}
+                                                                >
+                                                                    <Edit2 size={14} />
+                                                                </button>
+                                                                <button
+                                                                    className="kick-btn"
+                                                                    onClick={() => {
+                                                                        if (socketRef.current) {
+                                                                            socketRef.current.emit('kick-user', { roomId, targetId: c?.id });
+                                                                        }
+                                                                    }}
+                                                                    title="Remove user"
+                                                                >
+                                                                    <X size={14} />
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             );
-                                        })
-                                    )}
-                                    <div ref={chatEndRef} />
+                                        })}
+                                    </div>
                                 </div>
-                                <div className="chat-input-container">
-                                    <input
-                                        type="text"
-                                        className="chat-input"
-                                        placeholder="Type a message..."
-                                        value={chatInput}
-                                        onChange={(e) => setChatInput(e.target.value)}
-                                        onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
-                                    />
-                                    <button className="chat-send-btn" onClick={sendChatMessage}>
-                                        <Send size={16} />
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                            )}
 
-                    <div className="sidebar-action-bar">
-                        <button className="action-btn-circle" onClick={copyInviteLink} title="Share Link">
-                            <Share2 size={18} />
-                        </button>
-                        <button className="action-btn-leave" onClick={() => {
-                            // Leave workspace but keep it active
-                            if (socketRef.current) {
-                                socketRef.current.emit('leave-workspace', { 
-                                    roomId, 
-                                    username: user?.username 
-                                });
-                                socketRef.current.disconnect();
-                            }
-                            navigate('/workspace');
-                        }}>
-                            <LogOut size={16} />
-                            <span>Leave</span>
-                        </button>
-                        {isAdmin && (
-                            <button className="action-btn-end" onClick={() => setShowEndSessionModal(true)}>
-                                <Plus size={18} style={{ transform: 'rotate(45deg)' }} />
-                                <span>End</span>
-                            </button>
-                        )}
-                    </div>
-
-                </aside>
-
-
-
-
-
-
-
-                <main className="main-content" style={{ gridTemplateRows: `1fr ${isTerminalCollapsed ? 0 : 2}px ${terminalHeight}px` }}>
-
-
-
-
-                    <div className="editor-container" style={{ display: viewMode === 'editor' ? 'block' : 'none', minHeight: 0, overflow: 'hidden' }}>
-
-                        <div className="editor-wrapper">
-
-                            {activeFile ? (
-
-                                <Editor
-
-                                    height="100%"
-
-                                    language={language}
-
-                                    theme="vs-dark"
-
-                                    value={files[activeFile]?.content}
-
-                                    onChange={handleCodeChange}
-
-                                    options={{
-
-                                        fontSize: 14,
-
-                                        minimap: { enabled: true },
-
-                                        readOnly: !canWrite,
-
-                                        scrollBeyondLastLine: false,
-
-                                        automaticLayout: true,
-
-                                        colorDecorators: true,
-
-                                        quickSuggestions: true,
-
-                                        suggestOnTriggerCharacters: true,
-
-                                        parameterHints: { enabled: true },
-
-                                        bracketPairColorization: { enabled: true },
-
-                                        wordWrap: 'off',
-
-                                    }}
-
-                                />
-
-                            ) : (
-
-                                <div className="editor-empty-state">
-                                    <div className="empty-state-content">
-                                        <div className="empty-state-icon">
-                                            <FileCode size={48} strokeWidth={1} />
-                                        </div>
-                                        <h2>No file selected</h2>
-                                        <p>Select a file from the explorer to start building your vision.</p>
-                                        {canWrite && (
-                                            <div className="empty-state-actions">
-                                                <button onClick={() => createNewFile('')} className="empty-action-btn">
-                                                    <FilePlus size={16} /> New File
-                                                </button>
+                            {/* Chat View */}
+                            {sidebarView === 'chat' && (
+                                <div className="sidebar-section chat-section">
+                                    <div className="chat-messages">
+                                        {chatMessages.length === 0 ? (
+                                            <div className="chat-empty">
+                                                <Send size={32} style={{ opacity: 0.3 }} />
+                                                <p>No messages yet</p>
+                                                <span>Start the conversation!</span>
                                             </div>
+                                        ) : (
+                                            chatMessages.map(msg => {
+                                                const isOwnMessage = msg.username === user?.username;
+                                                return (
+                                                    <div key={msg.id} className={`chat-message ${isOwnMessage ? 'own-message' : ''}`}>
+                                                        <div className="chat-message-header">
+                                                            <span className="chat-username">{isOwnMessage ? 'You' : msg.username}</span>
+                                                            <span className="chat-time">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                        </div>
+                                                        <div className="chat-message-text">{msg.message}</div>
+                                                    </div>
+                                                );
+                                            })
                                         )}
+                                        <div ref={chatEndRef} />
+                                    </div>
+                                    <div className="chat-input-container">
+                                        <input
+                                            type="text"
+                                            className="chat-input"
+                                            placeholder="Type a message..."
+                                            value={chatInput}
+                                            onChange={(e) => setChatInput(e.target.value)}
+                                            onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
+                                        />
+                                        <button className="chat-send-btn" onClick={sendChatMessage}>
+                                            <Send size={16} />
+                                        </button>
                                     </div>
                                 </div>
-
                             )}
-
                         </div>
 
-
-
-
-
-                    </div>
-
-                    {/* ── PREVIEW CONTAINER ──────────────────────────────────────────── */}
-                    <div className="preview-container" style={{ display: viewMode === 'preview' ? 'flex' : 'none', minHeight: 0, overflow: 'hidden' }}>
-                        <div className="preview-main">
-                            <div className="preview-toolbar">
-                                <div className="preview-info">
-                                    <Monitor size={16} />
-                                    <span>Live Preview</span>
-                                </div>
-                                <button 
-                                    className="preview-refresh-btn"
-                                    onClick={() => {
-                                        const iframe = document.getElementById('preview-iframe');
-                                        if (iframe) {
-                                            iframe.srcdoc = generatePreview();
-                                        }
-                                    }}
-                                    title="Refresh Preview"
-                                >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-                                    </svg>
+                        <div className="sidebar-action-bar">
+                            <button className="action-btn-circle" onClick={copyInviteLink} title="Share Link">
+                                <Share2 size={18} />
+                            </button>
+                            <button className="action-btn-leave" onClick={() => {
+                                // Leave workspace but keep it active
+                                if (socketRef.current) {
+                                    socketRef.current.emit('leave-workspace', {
+                                        roomId,
+                                        username: user?.username
+                                    });
+                                    socketRef.current.disconnect();
+                                }
+                                navigate('/workspace');
+                            }}>
+                                <LogOut size={16} />
+                                <span>Leave</span>
+                            </button>
+                            {isAdmin && (
+                                <button className="action-btn-end" onClick={() => setShowEndSessionModal(true)}>
+                                    <Plus size={18} style={{ transform: 'rotate(45deg)' }} />
+                                    <span>End</span>
                                 </button>
-                            </div>
-                            <div className="preview-frame-wrapper">
-                                <iframe
-                                    id="preview-iframe"
-                                    className="preview-iframe"
-                                    title="Preview"
-                                    sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
-                                    srcDoc={generatePreview()}
-                                />
-                            </div>
+                            )}
                         </div>
-                    </div>
+
+                    </aside>
 
 
 
-                    <div className="whiteboard-container" style={{ display: viewMode === 'whiteboard' ? 'flex' : 'none', minHeight: 0, overflow: 'hidden' }}>
-
-                        <div className="whiteboard-main">
-
-                            <div className="floating-toolbar">
-                                <div className="toolbar-group">
-                                    <div className="color-swatches">
-                                        {['#fbbf24', 'var(--primary)', '#3b82f6', '#10b981', '#ffffff'].map(color => (
-                                            <button 
-                                                key={color} 
-                                                className={`swatch ${drawColor === color && drawTool !== 'eraser' ? 'active' : ''}`}
-                                                style={{ background: color }}
-                                                onClick={() => { setDrawColor(color); setDrawTool('pen'); }}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="toolbar-divider" />
-
-                                <div className="toolbar-group">
-                                    <button className={`icon-tool ${drawTool === 'pen' ? 'active' : ''}`} onClick={() => setDrawTool('pen')} title="Pen"><PenTool size={16} /></button>
-                                    <button className={`icon-tool ${drawTool === 'eraser' ? 'active' : ''}`} onClick={() => setDrawTool('eraser')} title="Eraser"><Eraser size={16} /></button>
-                                    <button className={`icon-tool ${drawTool === 'rect' ? 'active' : ''}`} onClick={() => setDrawTool('rect')} title="Rectangle"><div className="mini-shape rect"></div></button>
-                                    <button className={`icon-tool ${drawTool === 'circle' ? 'active' : ''}`} onClick={() => setDrawTool('circle')} title="Circle"><div className="mini-shape circle"></div></button>
-                                    <button className={`icon-tool ${drawTool === 'line' ? 'active' : ''}`} onClick={() => setDrawTool('line')} title="Line"><div className="mini-shape line"></div></button>
-                                    <button className={`icon-tool ${drawTool === 'triangle' ? 'active' : ''}`} onClick={() => setDrawTool('triangle')} title="Triangle"><div className="mini-shape triangle"></div></button>
-                                    <button className={`icon-tool ${drawTool === 'arrow' ? 'active' : ''}`} onClick={() => setDrawTool('arrow')} title="Arrow"><ChevronRight size={16} /></button>
-                                </div>
-
-                                <div className="toolbar-divider" />
-
-                                {/* Advanced Diagram Shapes */}
-                                <div className="toolbar-group">
-                                    <button className={`icon-tool ${drawTool === 'diamond' ? 'active' : ''}`} onClick={() => setDrawTool('diamond')} title="Diamond (Decision)"><div className="mini-shape diamond"></div></button>
-                                    <button className={`icon-tool ${drawTool === 'cylinder' ? 'active' : ''}`} onClick={() => setDrawTool('cylinder')} title="Cylinder (Database)"><div className="mini-shape cylinder"></div></button>
-                                    <button className={`icon-tool ${drawTool === 'hexagon' ? 'active' : ''}`} onClick={() => setDrawTool('hexagon')} title="Hexagon (Process)"><div className="mini-shape hexagon"></div></button>
-                                    <button className={`icon-tool ${drawTool === 'parallelogram' ? 'active' : ''}`} onClick={() => setDrawTool('parallelogram')} title="Parallelogram (Data)"><div className="mini-shape parallelogram"></div></button>
-                                    <button className={`icon-tool ${drawTool === 'doubleArrow' ? 'active' : ''}`} onClick={() => setDrawTool('doubleArrow')} title="Double Arrow (Relationship)"><div className="mini-shape double-arrow"></div></button>
-                                </div>
 
 
-                                <div className="toolbar-divider" />
 
-                                <div className="toolbar-group size-group">
-                                    <input 
-                                        type="range" 
-                                        min="1" 
-                                        max={drawTool === 'eraser' ? "100" : "20"} 
-                                        value={drawTool === 'eraser' ? eraserWidth : drawWidth}
-                                        onChange={(e) => drawTool === 'eraser' ? setEraserWidth(parseInt(e.target.value)) : setDrawWidth(parseInt(e.target.value))}
-                                        className="compact-slider"
+
+                    <main className="main-content" style={{ gridTemplateRows: `1fr ${isTerminalCollapsed ? 0 : 2}px ${terminalHeight}px` }}>
+
+
+
+
+                        <div className="editor-container" style={{ display: viewMode === 'editor' ? 'block' : 'none', minHeight: 0, overflow: 'hidden' }}>
+
+                            <div className="editor-wrapper">
+
+                                {activeFile ? (
+
+                                    <Editor
+
+                                        height="100%"
+
+                                        language={language}
+
+                                        theme="vs-dark"
+
+                                        value={files[activeFile]?.content}
+
+                                        onChange={handleCodeChange}
+
+                                        options={{
+
+                                            fontSize: 14,
+
+                                            minimap: { enabled: true },
+
+                                            readOnly: !canWrite,
+
+                                            scrollBeyondLastLine: false,
+
+                                            automaticLayout: true,
+
+                                            colorDecorators: true,
+
+                                            quickSuggestions: true,
+
+                                            suggestOnTriggerCharacters: true,
+
+                                            parameterHints: { enabled: true },
+
+                                            bracketPairColorization: { enabled: true },
+
+                                            wordWrap: 'off',
+
+                                        }}
+
                                     />
-                                    <span className="size-indicator">{drawTool === 'eraser' ? eraserWidth : drawWidth}px</span>
-                                </div>
 
-                                <div className="toolbar-divider" />
+                                ) : (
 
-                                <button className="compact-clear-btn" onClick={clearCanvas} title="Clear Canvas">
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
-
-                            <canvas 
-                                ref={canvasRef} 
-                                onMouseDown={startDrawing} 
-                                onMouseMove={draw}
-                                onMouseUp={stopDrawing} 
-                                onMouseLeave={stopDrawing} 
-                                width={1920} 
-                                height={1080} 
-                                className="main-canvas" 
-                            />
-                        </div>
-
-                    </div>
-
-
-
-                    {/* Terminal Resizer */}
-
-                    <div className={`resizer-y ${isTerminalCollapsed ? 'collapsed' : ''}`} onMouseDown={startTerminalResize}>
-                        {/* Collapse arrow removed per user request */}
-                    </div>
-
-
-
-                    <div className="terminal-panel" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                        <div className="terminal-header">
-                            <div className="terminal-title">
-                                <TerminalIcon size={14} style={{ marginRight: '8px' }} />
-                                <span>SENTINEL SHELL & DIAGNOSTICS</span>
-                            </div>
-                            <div className="terminal-status">
-                                {isRunning ? 'EXECUTING_CODE...' : 'SYSTEM_READY'}
-                            </div>
-                        </div>
-
-                        <div className="terminal-body" style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
-                            {/* Show combined logs: Execution output + Interactive shell logs */}
-                            {output && (
-                                <div className="log-line system">
-                                    <pre className="log-out">{output}</pre>
-                                </div>
-                            )}
-                            {terminalLogs.map((log, index) => (
-                                <div key={index} className={`log-line ${log.isError ? 'error' : ''} ${log.isSystem ? 'system' : ''}`}>
-                                    {log.command && <span className="log-prompt">$ {log.command}</span>}
-                                    <pre className="log-out">{log.output}</pre>
-                                </div>
-                            ))}
-                            <div ref={terminalEndRef} />
-                        </div>
-
-                        <div className="terminal-input-wrapper">
-                            <span className="prompt-symbol">λ</span>
-                            <input
-                                type="text"
-                                className="terminal-input"
-                                placeholder="Execute system command..."
-                                value={terminalInput}
-                                onChange={(e) => setTerminalInput(e.target.value)}
-                                onKeyDown={runTerminalCommand}
-                            />
-                        </div>
-                    </div>
-
-                </main>
-
-
-
-                {/* AI Trigger Bubble */}
-
-                <div className={`ai-trigger-bubble ${isSidekickOpen ? 'active' : ''}`} onClick={() => setIsSidekickOpen(o => !o)}>
-
-                    <Sparkles size={24} color="#fff" />
-
-                </div>
-
-
-
-                <AnimatePresence>
-
-                    {isSidekickOpen && (
-
-                        <motion.aside initial={{ x: 400 }} animate={{ x: 0 }} exit={{ x: 400 }} className="ai-sidekick">
-
-                            <div className="ai-header">
-
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-
-                                    <Bot size={22} color="#fbbf24" /><h3>AI Sentinel</h3>
-
-                                </div>
-
-                                <button className="icon-btn" onClick={() => setIsSidekickOpen(false)}><Plus size={20} style={{ transform: 'rotate(45deg)' }} /></button>
-
-                            </div>
-
-                            <div className="ai-messages">
-
-                                {aiMessages.map((msg, i) => (
-
-                                    <div key={i} className={`ai-message ${msg.role}`}>
-
-                                        <div className="avatar">{msg.role === 'ai' ? <Brain size={16} /> : <Users size={16} />}</div>
-
-                                        <div className="msg-content">{msg.content}</div>
-
-                                    </div>
-
-                                ))}
-
-                                {isAiThinking && (
-
-                                    <div className="ai-message ai thinking">
-
-                                        <div className="avatar"><Brain size={16} className="pulse-icon" /></div>
-
-                                        <div className="msg-content">Analyzing codebase...</div>
-
+                                    <div className="editor-empty-state">
+                                        <div className="empty-state-content">
+                                            <div className="empty-state-icon">
+                                                <FileCode size={48} strokeWidth={1} />
+                                            </div>
+                                            <h2>No file selected</h2>
+                                            <p>Select a file from the explorer to start building your vision.</p>
+                                            {canWrite && (
+                                                <div className="empty-state-actions">
+                                                    <button onClick={() => createNewFile('')} className="empty-action-btn">
+                                                        <FilePlus size={16} /> New File
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
                                 )}
 
                             </div>
 
-                            {/* BUG FIX: was onSubmit={handleAiSubmit} which didn't exist */}
 
-                            <form className="ai-input-area" onSubmit={(e) => { e.preventDefault(); sendMessageToAi(); }}>
 
-                                <input type="text" placeholder="Ask Sentinel..." value={aiInput} onChange={(e) => setAiInput(e.target.value)} />
 
-                                <button type="submit" disabled={!aiInput.trim() || isAiThinking}><Send size={18} /></button>
 
-                            </form>
+                        </div>
 
-                        </motion.aside>
+                        {/* â”€â”€ PREVIEW CONTAINER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                        <div className="preview-container" style={{ display: viewMode === 'preview' ? 'flex' : 'none', minHeight: 0, overflow: 'hidden' }}>
+                            <div className="preview-main">
+                                <div className="preview-toolbar">
+                                    <div className="preview-info">
+                                        <Monitor size={16} />
+                                        <span>Live Preview</span>
+                                    </div>
+                                    <button
+                                        className="preview-refresh-btn"
+                                        onClick={() => {
+                                            const iframe = document.getElementById('preview-iframe');
+                                            if (iframe) {
+                                                iframe.srcdoc = generatePreview();
+                                            }
+                                        }}
+                                        title="Refresh Preview"
+                                    >
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div className="preview-frame-wrapper">
+                                    <iframe
+                                        id="preview-iframe"
+                                        className="preview-iframe"
+                                        title="Preview"
+                                        sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
+                                        srcDoc={generatePreview()}
+                                    />
+                                </div>
+                            </div>
+                        </div>
 
-                    )}
 
-                </AnimatePresence>
 
-            </div>
+                        <div className="whiteboard-container" style={{ display: viewMode === 'whiteboard' ? 'flex' : 'none', minHeight: 0, overflow: 'hidden' }}>
+
+                            <div className="whiteboard-main">
+
+                                <div className="floating-toolbar">
+                                    <div className="toolbar-group">
+                                        <div className="color-swatches">
+                                            {['#fbbf24', 'var(--primary)', '#3b82f6', '#10b981', '#ffffff'].map(color => (
+                                                <button
+                                                    key={color}
+                                                    className={`swatch ${drawColor === color && drawTool !== 'eraser' ? 'active' : ''}`}
+                                                    style={{ background: color }}
+                                                    onClick={() => { setDrawColor(color); setDrawTool('pen'); }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="toolbar-divider" />
+
+                                    <div className="toolbar-group">
+                                        <button className={`icon-tool ${drawTool === 'pen' ? 'active' : ''}`} onClick={() => setDrawTool('pen')} title="Pen"><PenTool size={16} /></button>
+                                        <button className={`icon-tool ${drawTool === 'eraser' ? 'active' : ''}`} onClick={() => setDrawTool('eraser')} title="Eraser"><Eraser size={16} /></button>
+                                        <button className={`icon-tool ${drawTool === 'rect' ? 'active' : ''}`} onClick={() => setDrawTool('rect')} title="Rectangle"><div className="mini-shape rect"></div></button>
+                                        <button className={`icon-tool ${drawTool === 'circle' ? 'active' : ''}`} onClick={() => setDrawTool('circle')} title="Circle"><div className="mini-shape circle"></div></button>
+                                        <button className={`icon-tool ${drawTool === 'line' ? 'active' : ''}`} onClick={() => setDrawTool('line')} title="Line"><div className="mini-shape line"></div></button>
+                                        <button className={`icon-tool ${drawTool === 'triangle' ? 'active' : ''}`} onClick={() => setDrawTool('triangle')} title="Triangle"><div className="mini-shape triangle"></div></button>
+                                        <button className={`icon-tool ${drawTool === 'arrow' ? 'active' : ''}`} onClick={() => setDrawTool('arrow')} title="Arrow"><ChevronRight size={16} /></button>
+                                    </div>
+
+                                    <div className="toolbar-divider" />
+
+                                    {/* Advanced Diagram Shapes */}
+                                    <div className="toolbar-group">
+                                        <button className={`icon-tool ${drawTool === 'diamond' ? 'active' : ''}`} onClick={() => setDrawTool('diamond')} title="Diamond (Decision)"><div className="mini-shape diamond"></div></button>
+                                        <button className={`icon-tool ${drawTool === 'cylinder' ? 'active' : ''}`} onClick={() => setDrawTool('cylinder')} title="Cylinder (Database)"><div className="mini-shape cylinder"></div></button>
+                                        <button className={`icon-tool ${drawTool === 'hexagon' ? 'active' : ''}`} onClick={() => setDrawTool('hexagon')} title="Hexagon (Process)"><div className="mini-shape hexagon"></div></button>
+                                        <button className={`icon-tool ${drawTool === 'parallelogram' ? 'active' : ''}`} onClick={() => setDrawTool('parallelogram')} title="Parallelogram (Data)"><div className="mini-shape parallelogram"></div></button>
+                                        <button className={`icon-tool ${drawTool === 'doubleArrow' ? 'active' : ''}`} onClick={() => setDrawTool('doubleArrow')} title="Double Arrow (Relationship)"><div className="mini-shape double-arrow"></div></button>
+                                    </div>
+
+
+                                    <div className="toolbar-divider" />
+
+                                    <div className="toolbar-group size-group">
+                                        <input
+                                            type="range"
+                                            min="1"
+                                            max={drawTool === 'eraser' ? "100" : "20"}
+                                            value={drawTool === 'eraser' ? eraserWidth : drawWidth}
+                                            onChange={(e) => drawTool === 'eraser' ? setEraserWidth(parseInt(e.target.value)) : setDrawWidth(parseInt(e.target.value))}
+                                            className="compact-slider"
+                                        />
+                                        <span className="size-indicator">{drawTool === 'eraser' ? eraserWidth : drawWidth}px</span>
+                                    </div>
+
+                                    <div className="toolbar-divider" />
+
+                                    <button className="compact-clear-btn" onClick={clearCanvas} title="Clear Canvas">
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+
+                                <canvas
+                                    ref={canvasRef}
+                                    onMouseDown={startDrawing}
+                                    onMouseMove={draw}
+                                    onMouseUp={stopDrawing}
+                                    onMouseLeave={stopDrawing}
+                                    width={1920}
+                                    height={1080}
+                                    className="main-canvas"
+                                />
+                            </div>
+
+                        </div>
+
+
+
+                        {/* Terminal Resizer */}
+
+                        <div className={`resizer-y ${isTerminalCollapsed ? 'collapsed' : ''}`} onMouseDown={startTerminalResize}>
+                            {/* Collapse arrow removed per user request */}
+                        </div>
+
+
+
+                        <div className="terminal-panel" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                            <div className="terminal-header">
+                                <div className="terminal-title">
+                                    <TerminalIcon size={14} style={{ marginRight: '8px' }} />
+                                    <span>SENTINEL SHELL & DIAGNOSTICS</span>
+                                </div>
+                                <div className="terminal-status">
+                                    {isRunning ? 'EXECUTING_CODE...' : 'SYSTEM_READY'}
+                                </div>
+                            </div>
+
+                            <div className="terminal-body" style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
+                                {/* Show combined logs: Execution output + Interactive shell logs */}
+                                {output && (
+                                    <div className="log-line system">
+                                        <pre className="log-out">{output}</pre>
+                                    </div>
+                                )}
+                                {terminalLogs.map((log, index) => (
+                                    <div key={index} className={`log-line ${log.isError ? 'error' : ''} ${log.isSystem ? 'system' : ''}`}>
+                                        {log.command && <span className="log-prompt">$ {log.command}</span>}
+                                        <pre className="log-out">{log.output}</pre>
+                                    </div>
+                                ))}
+                                <div ref={terminalEndRef} />
+                            </div>
+
+                            <div className="terminal-input-wrapper">
+                                <span className="prompt-symbol">Î»</span>
+                                <input
+                                    type="text"
+                                    className="terminal-input"
+                                    placeholder="Execute system command..."
+                                    value={terminalInput}
+                                    onChange={(e) => setTerminalInput(e.target.value)}
+                                    onKeyDown={runTerminalCommand}
+                                />
+                            </div>
+                        </div>
+
+                    </main>
+
+
+
+                    {/* AI Trigger Bubble */}
+
+                    <div className={`ai-trigger-bubble ${isSidekickOpen ? 'active' : ''}`} onClick={() => setIsSidekickOpen(o => !o)}>
+
+                        <Sparkles size={24} color="#fff" />
+
+                    </div>
+
+
+
+                    <AnimatePresence>
+
+                        {isSidekickOpen && (
+
+                            <motion.aside initial={{ x: 400 }} animate={{ x: 0 }} exit={{ x: 400 }} className="ai-sidekick">
+
+                                <div className="ai-header">
+
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+
+                                        <Bot size={22} color="#fbbf24" /><h3>AI Sentinel</h3>
+
+                                    </div>
+
+                                    <button className="icon-btn" onClick={() => setIsSidekickOpen(false)}><Plus size={20} style={{ transform: 'rotate(45deg)' }} /></button>
+
+                                </div>
+
+                                <div className="ai-messages">
+
+                                    {aiMessages.map((msg, i) => (
+
+                                        <div key={i} className={`ai-message ${msg.role}`}>
+
+                                            <div className="avatar">{msg.role === 'ai' ? <Brain size={16} /> : <Users size={16} />}</div>
+
+                                            <div className="msg-content">{msg.content}</div>
+
+                                        </div>
+
+                                    ))}
+
+                                    {isAiThinking && (
+
+                                        <div className="ai-message ai thinking">
+
+                                            <div className="avatar"><Brain size={16} className="pulse-icon" /></div>
+
+                                            <div className="msg-content">Analyzing codebase...</div>
+
+                                        </div>
+
+                                    )}
+
+                                </div>
+
+                                {/* BUG FIX: was onSubmit={handleAiSubmit} which didn't exist */}
+
+                                <form className="ai-input-area" onSubmit={(e) => { e.preventDefault(); sendMessageToAi(); }}>
+
+                                    <input type="text" placeholder="Ask Sentinel..." value={aiInput} onChange={(e) => setAiInput(e.target.value)} />
+
+                                    <button type="submit" disabled={!aiInput.trim() || isAiThinking}><Send size={18} /></button>
+
+                                </form>
+
+                            </motion.aside>
+
+                        )}
+
+                    </AnimatePresence>
+
+                </div>
 
             </div>
 
