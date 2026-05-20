@@ -113,6 +113,7 @@ const CURRICULUM_SUBJECTS = [
 const CurriculumSubjectPage = ({ subject, onBack }) => {
     const [activeTab, setActiveTab] = useState('notes');
     const [mcqAnswers, setMcqAnswers] = useState({});
+    const [viewingPdf, setViewingPdf] = useState(null);
     const resources = SUBJECT_RESOURCES[subject.id] || { notes: [], mcqs: [], resources: [] };
 
     return (
@@ -162,14 +163,12 @@ const CurriculumSubjectPage = ({ subject, onBack }) => {
                                     <div className="curr-note-card-header">
                                         <h4 className="curr-note-card-title">{note.title}</h4>
                                         {note.pdfUrl && (
-                                            <a 
-                                                href={note.pdfUrl} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer"
+                                            <button 
+                                                onClick={() => setViewingPdf(note.pdfUrl)}
                                                 className="curr-note-pdf-btn"
                                             >
                                                 <FileText size={16} /> View PDF
-                                            </a>
+                                            </button>
                                         )}
                                     </div>
                                     <p className="curr-note-card-body">{note.content}</p>
@@ -195,14 +194,12 @@ const CurriculumSubjectPage = ({ subject, onBack }) => {
                                         <div key={qi} className="curr-note-card">
                                             <div className="curr-note-card-header">
                                                 <h4 className="curr-note-card-title">{q.title}</h4>
-                                                <a 
-                                                    href={q.pdfUrl} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer"
+                                                <button 
+                                                    onClick={() => setViewingPdf(q.pdfUrl)}
                                                     className="curr-note-pdf-btn"
                                                 >
                                                     <FileText size={16} /> View PDF
-                                                </a>
+                                                </button>
                                             </div>
                                             <p className="curr-note-card-body">{q.content}</p>
                                         </div>
@@ -269,14 +266,12 @@ const CurriculumSubjectPage = ({ subject, onBack }) => {
                                         </div>
                                     </div>
                                     {r.pdfUrl ? (
-                                        <a 
-                                            href={r.pdfUrl} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
+                                        <button 
+                                            onClick={() => setViewingPdf(r.pdfUrl)}
                                             className="curr-resource-btn"
                                         >
                                             <span>View PDF</span> <ArrowRight size={12}/>
-                                        </a>
+                                        </button>
                                     ) : (
                                         <a href={r.link} className="curr-resource-btn" onClick={e => e.preventDefault()}>
                                             <span>{r.type}</span> <ArrowRight size={12}/>
@@ -288,6 +283,31 @@ const CurriculumSubjectPage = ({ subject, onBack }) => {
                     </motion.div>
                 )}
             </div>
+
+            {/* SECURE PDF VIEWER MODAL */}
+            <AnimatePresence>
+                {viewingPdf && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="secure-pdf-modal"
+                    >
+                        <button className="secure-pdf-back" onClick={() => setViewingPdf(null)}>
+                            <ArrowLeft size={18} />
+                            <span>Back</span>
+                        </button>
+                        <div className="secure-pdf-body" onContextMenu={(e) => e.preventDefault()}>
+                            {/* Appending #toolbar=0&navpanes=0 disables Chrome/Firefox built-in download buttons */}
+                            <iframe 
+                                src={`${viewingPdf}#toolbar=0&navpanes=0&scrollbar=0`}
+                                title="Secure Document Viewer"
+                                className="secure-pdf-iframe"
+                            />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 };
@@ -295,9 +315,14 @@ const CurriculumSubjectPage = ({ subject, onBack }) => {
 // ── LIBRARY LOBBY (Sidebar + Content) ─────────────────────────────────
 
 const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentLvlIdx }) => {
-    const { user } = useAuth();
+    const { user, setNavbarHidden } = useAuth();
     const [activeTab, setActiveTab] = useState('frontend');
     const [activeSubject, setActiveSubject] = useState(null);
+
+    useEffect(() => {
+        setNavbarHidden(!!activeSubject);
+        return () => setNavbarHidden(false);
+    }, [activeSubject, setNavbarHidden]);
 
     // Dynamic Sidebar Tabs based on user email
     const isMedhaviUser = user?.email?.endsWith('@medhaviskillsuniversity.edu.in');
@@ -513,7 +538,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
 
 
 const Arcade = () => {
-    const { user, updateXP, setNavbarHidden } = useAuth();
+    const { user, updateXP, navbarHidden, setNavbarHidden } = useAuth();
     
     const navigate = useNavigate();
     const goBackPreserveScroll = () => {
@@ -1018,7 +1043,7 @@ const Arcade = () => {
     };
 
     return (
-        <div className={`arcade-page ${activeGame ? 'no-navbar' : ''}`}>
+        <div className={`arcade-page ${navbarHidden ? 'no-navbar' : ''}`}>
 
 
             {!activeGame ? (
