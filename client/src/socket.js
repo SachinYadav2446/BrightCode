@@ -1,42 +1,41 @@
 import { io } from 'socket.io-client';
 
+let socketInstance = null;
+
 export const initSocket = () => {
-    const options = {
-        'force new connection': true,
+    if (socketInstance) {
+        return socketInstance;
+    }
+
+    const backendUrl = window.location.hostname === 'localhost'
+        ? 'http://localhost:5051'
+        : `http://${window.location.hostname}:5051`;
+
+    socketInstance = io(backendUrl, {
         reconnectionAttempts: 10,
         reconnectionDelay: 1000,
         timeout: 10000,
-        transports: ['websocket', 'polling'], // Try both transports
+        transports: ['websocket', 'polling'],
         autoConnect: true,
-    };
-    
-    const socket = io('http://localhost:5051', options);
-    
-    // Add connection logging
-    socket.on('connect', () => {
-        console.log('✅ Socket connected successfully, ID:', socket.id);
     });
-    
-    socket.on('connect_error', (error) => {
+
+    socketInstance.on('connect', () => {
+        console.log('✅ Socket connected, ID:', socketInstance.id);
+    });
+
+    socketInstance.on('connect_error', (error) => {
         console.error('❌ Socket connection error:', error.message);
-        console.error('Make sure the server is running on http://localhost:5051');
     });
-    
-    socket.on('disconnect', (reason) => {
+
+    socketInstance.on('disconnect', (reason) => {
         console.warn('⚠️ Socket disconnected:', reason);
+        // If the server disconnects us, reset so next call reconnects
+        if (reason === 'io server disconnect') {
+            socketInstance = null;
+        }
     });
-    
-    socket.on('reconnect_attempt', (attemptNumber) => {
-        console.log(`🔄 Reconnection attempt ${attemptNumber}...`);
-    });
-    
-    socket.on('reconnect', (attemptNumber) => {
-        console.log(`✅ Socket reconnected after ${attemptNumber} attempts`);
-    });
-    
-    socket.on('reconnect_failed', () => {
-        console.error('❌ Socket reconnection failed after all attempts');
-    });
-    
-    return socket;
+
+    return socketInstance;
 };
+
+export const getSocket = () => socketInstance;
