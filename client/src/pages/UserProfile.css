@@ -1,0 +1,595 @@
+/* UserProfile.css - Advanced Game/Esports Edition */
+
+.up-page {
+    position: relative;
+    min-height: 100vh;
+    background-color: #050508;
+    background-image: 
+        radial-gradient(circle at top right, rgba(239, 68, 68, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at bottom left, rgba(0, 217, 255, 0.1) 0%, transparent 40%),
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+    color: var(--text-main);
+    padding: 30px 24px;
+    font-family: 'Share Tech Mono', 'Orbitron', var(--font-sans);
+    overflow-x: hidden;
+}
+
+/* Ambient glow */
+.up-bg-glow {
+    position: absolute;
+    top: -30%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100vw;
+    height: 80vh;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(120px);
+    opacity: 0.5;
+}
+
+.up-content {
+    position: relative;
+    z-index: 1;
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ── Custom Scrollbar for this page ── */
+.up-page::-webkit-scrollbar { width: 8px; }
+.up-page::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+.up-page::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+/* ── Back Button ── */
+.up-back-btn {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    padding: 10px 20px;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.up-back-btn:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateX(-5px);
+}
+
+/* ── Hero / ID Card ── */
+.up-hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 24px;
+    background: linear-gradient(135deg, rgba(20,20,25,0.9) 0%, rgba(10,10,15,0.95) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 24px;
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.02);
+    overflow: hidden;
+}
+
+.up-hero-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+      linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%),
+      radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.5) 100%),
+      url("data:image/svg+xml,%3Csvg width='20' height='34' viewBox='0 0 20 34' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 0l10 5.774v11.548l-10 5.774-10-5.774V5.774L10 0zm0 34l10-5.774V16.678l-10-5.774-10 5.774v11.548L10 34z' fill='rgba(255,255,255,0.02)' fill-rule='evenodd'/%3E%3C/svg%3E");
+    z-index: 0;
+    pointer-events: none;
+}
+
+.up-hero > *:not(.up-hero-overlay) {
+    position: relative;
+    z-index: 1;
+}
+
+/* Sci-fi corners */
+.up-hero::before, .up-hero::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid;
+    opacity: 0.5;
+    pointer-events: none;
+}
+.up-hero::before { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+.up-hero::after { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+
+.up-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+    margin-left: 20px;
+}
+
+/* Hexagon Avatar */
+.up-avatar-hex {
+    width: 100px;
+    height: 110px; /* w * 1.1 */
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    background: var(--bg-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    background-size: cover;
+    background-position: center;
+}
+
+.up-avatar-hex img {
+    width: 120%;
+    height: auto;
+    transform: translateY(10px);
+    transition: transform 0.3s;
+}
+
+.up-avatar-wrap:hover .up-avatar-hex img {
+    transform: scale(1.1) translateY(5px);
+}
+
+/* The glow ring around hex */
+.up-avatar-glow {
+    position: absolute;
+    top: -4px; left: -4px; right: -4px; bottom: -4px;
+    background: inherit;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    z-index: -1;
+    filter: blur(8px);
+    opacity: 0.7;
+    animation: pulseGlow 2s infinite alternate;
+}
+
+@keyframes pulseGlow {
+    from { opacity: 0.5; transform: scale(1); }
+    to { opacity: 1; transform: scale(1.02); }
+}
+
+.up-level-badge {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f0f0f;
+    border: 1px solid;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+    z-index: 2;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+.up-identity {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.up-name-row {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+}
+
+.up-username {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 2px 2px 0px rgba(0,0,0,0.5), -1px -1px 0px rgba(255,255,255,0.1);
+}
+
+.up-online-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.up-status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    box-shadow: 0 0 8px currentColor;
+}
+
+.up-bio {
+    margin: 0;
+    color: rgba(255,255,255,0.6);
+    font-size: 13px;
+    line-height: 1.6;
+    max-width: 500px;
+    font-family: var(--font-sans);
+}
+
+/* Tech Stack Tags */
+.up-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.up-stack-tag {
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 2px solid var(--primary);
+    color: rgba(255,255,255,0.8);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    letter-spacing: 1px;
+}
+
+/* Social Links */
+.up-social-links {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.social-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--primary);
+    text-decoration: none;
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 1px solid rgba(var(--primary-rgb), 0.3);
+    padding: 4px 10px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+}
+
+.social-link:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
+/* Action Buttons */
+.up-friend-action {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 180px;
+}
+
+.up-action-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 24px;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    white-space: nowrap;
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+}
+
+.up-action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border: 1px solid rgba(255,255,255,0.1);
+    clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+    pointer-events: none;
+}
+
+.up-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.up-action-btn.add {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+.up-action-btn.add:hover:not(:disabled) {
+    background: #fff;
+    color: var(--primary);
+}
+
+.up-action-btn.accept {
+    background: #22c55e;
+    color: #000;
+    box-shadow: 0 0 15px rgba(34,197,94,0.4);
+}
+
+.up-action-btn.remove {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-left: 3px solid #ef4444;
+}
+
+/* ── Stats Dossier ── */
+.up-stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.up-stat-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.5) 100%);
+    border-top: 2px solid;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.up-stat-card::after {
+    content: '';
+    position: absolute;
+    right: -10px; top: 10px;
+    font-size: 80px;
+    opacity: 0.05;
+    font-weight: 900;
+}
+.up-stat-card.xp::after { content: 'XP'; }
+.up-stat-card.challenges::after { content: 'CH'; }
+.up-stat-card.streak::after { content: 'ST'; }
+.up-stat-card.rank::after { content: 'RK'; }
+
+.up-stat-icon {
+    margin-bottom: 12px;
+    filter: drop-shadow(0 0 8px currentColor);
+}
+
+.up-stat-value {
+    font-size: 24px;
+    font-weight: 900;
+    margin: 0;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.up-stat-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+/* ── Section ── */
+.up-section {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    position: relative;
+}
+.up-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: var(--primary);
+    opacity: 0.5;
+}
+
+.up-section-hdr {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #fff;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 12px;
+}
+
+/* ── Skills Progress (Cyberpunk Style) ── */
+.up-skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.up-skill-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.up-skill-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.up-skill-name {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.up-skill-count {
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.up-skill-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+    overflow: hidden;
+    transform: skewX(-15deg);
+}
+
+.up-skill-bar-fill {
+    height: 100%;
+    position: relative;
+}
+
+.up-skill-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3) 50%, transparent);
+    animation: shine 2s infinite;
+}
+
+@keyframes shine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* ── Heatmap (Tactical grid) ── */
+.up-heatmap-container {
+    width: 100%;
+    padding-bottom: 16px;
+}
+
+.up-heatmap-months {
+    display: grid;
+    grid-template-columns: repeat(53, 1fr);
+    margin-bottom: 8px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.up-month-label {
+    text-align: left;
+}
+
+.up-heatmap {
+    display: grid;
+    grid-template-columns: repeat(53, 1fr);
+    gap: 3px;
+    width: 100%;
+}
+
+.up-heatmap-week {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.up-heatmap-day {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: transform 0.1s, border-color 0.1s;
+    cursor: crosshair;
+}
+
+.up-heatmap-day:hover {
+    transform: scale(1.2);
+    border-color: #fff;
+    z-index: 2;
+}
+
+.up-heatmap-day.level-1 { background: rgba(var(--primary-rgb), 0.2); border-color: rgba(var(--primary-rgb), 0.4); }
+.up-heatmap-day.level-2 { background: rgba(var(--primary-rgb), 0.5); border-color: rgba(var(--primary-rgb), 0.7); }
+.up-heatmap-day.level-3 { background: rgba(var(--primary-rgb), 0.8); border-color: rgba(var(--primary-rgb), 1); }
+.up-heatmap-day.level-4 { background: var(--primary); box-shadow: 0 0 10px var(--primary-glow); border-color: #fff; }
+
+.up-heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+}
+
+.up-heatmap-legend .up-heatmap-day {
+    width: 12px;
+    height: 12px;
+}
+
+/* ── States ── */
+.up-loading, .up-not-found {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #050508;
+    color: var(--text-muted);
+}
+.up-nf-card {
+    background: rgba(255,255,255,0.02);
+    padding: 60px;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-top: 4px solid #ef4444;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+}
+.up-nf-code {
+    font-size: 80px;
+    font-weight: 900;
+    color: #ef4444;
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+    letter-spacing: 4px;
+}
+.up-nf-card h2 {
+    margin: 0;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
