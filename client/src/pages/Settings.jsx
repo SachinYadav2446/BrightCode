@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, User, Settings as SettingsIcon, Save, Plus, X, LogOut, Shield, Info, Globe, Terminal, Mail, Calendar, ShieldCheck, ChevronRight, Layers, Zap, Users, Activity } from 'lucide-react';
+import { ArrowLeft, User, Settings as SettingsIcon, Save, Plus, X, LogOut, Shield, Info, Globe, Terminal, Mail, Calendar, ShieldCheck, ChevronRight, Layers, Zap, Users, Activity, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import Chatbot from '../components/Chatbot';
 import './Settings.css';
 
 const Settings = () => {
@@ -23,8 +24,39 @@ const Settings = () => {
   const [formData, setFormData] = useState({
     username: user?.username || '',
     bio: user?.bio || '',
-    stack: user?.stack || []
+    stack: user?.stack || [],
+    avatarId: user?.avatarId || user?.username || '',
+    bannerId: user?.bannerId || 'crimson',
+    github: user?.github || '',
+    leetcode: user?.leetcode || '',
+    project1: user?.project1 || '',
+    project2: user?.project2 || ''
   });
+
+  const AVATARS = [
+    { seed: 'Sniper', rank: 1 }, { seed: 'Ghost', rank: 1 },
+    { seed: 'Ninja', rank: 2 }, { seed: 'Viper', rank: 2 },
+    { seed: 'Nova', rank: 3 }, { seed: 'Titan', rank: 3 },
+    { seed: 'Apex', rank: 4 }, { seed: 'Zero', rank: 4 },
+    { seed: 'Hunter', rank: 5 }, { seed: 'Reaper', rank: 5 }
+  ];
+  const BANNERS = [
+    { id: 'crimson', name: 'Crimson Flare', css: 'linear-gradient(135deg, rgba(127, 29, 29, 0.8) 0%, rgba(10, 10, 12, 1) 100%)', rank: 1 },
+    { id: 'cyber', name: 'Cyber Neon', css: 'linear-gradient(135deg, rgba(0, 217, 255, 0.6) 0%, rgba(10, 10, 12, 1) 100%)', rank: 2 },
+    { id: 'toxic', name: 'Toxic Viper', css: 'linear-gradient(135deg, rgba(34, 197, 94, 0.6) 0%, rgba(10, 10, 12, 1) 100%)', rank: 3 },
+    { id: 'void', name: 'Void Phantom', css: 'linear-gradient(135deg, rgba(30, 27, 75, 0.8) 0%, rgba(5, 5, 5, 1) 100%)', rank: 4 },
+    { id: 'gold', name: 'Golden Crown', css: 'linear-gradient(135deg, rgba(245, 158, 11, 0.6) 0%, rgba(10, 10, 12, 1) 100%)', rank: 5 },
+  ];
+
+  const computeUserRank = (xp) => {
+    if (xp >= 10000) return 5;
+    if (xp >= 5000) return 4;
+    if (xp >= 2000) return 3;
+    if (xp >= 500) return 2;
+    return 1;
+  };
+
+  const userRank = computeUserRank(user?.xp || 0);
 
   // Config Modal States
   const [configData, setConfigData] = useState({
@@ -54,8 +86,14 @@ const Settings = () => {
       ...prev,
       username: user?.username || '',
       stack: user?.stack || [],
+      avatarId: user?.avatarId || user?.username || '',
+      bannerId: user?.bannerId || 'crimson',
+      github: user?.github || '',
+      leetcode: user?.leetcode || '',
+      project1: user?.project1 || '',
+      project2: user?.project2 || ''
     }));
-  }, [user?.username, user?.stack]);
+  }, [user?.username, user?.stack, user?.avatarId, user?.bannerId, user?.github, user?.leetcode, user?.project1, user?.project2]);
 
   useEffect(() => () => {
     if (bioSaveTimer.current) clearTimeout(bioSaveTimer.current);
@@ -182,11 +220,17 @@ const Settings = () => {
 
   if (!user) return null;
 
-  const persistProfile = async ({ bio, stack }) => {
+  const persistProfile = async ({ bio, stack, avatarId, bannerId, github, leetcode, project1, project2 }) => {
     const res = await updateProfile({
       username: user.username,
       bio: bio !== undefined ? bio : (user.bio || ''),
       stack: stack !== undefined ? stack : (user.stack || []),
+      avatarId: avatarId !== undefined ? avatarId : (user.avatarId || user.username),
+      bannerId: bannerId !== undefined ? bannerId : (user.bannerId || 'crimson'),
+      github: github !== undefined ? github : (user.github || ''),
+      leetcode: leetcode !== undefined ? leetcode : (user.leetcode || ''),
+      project1: project1 !== undefined ? project1 : (user.project1 || ''),
+      project2: project2 !== undefined ? project2 : (user.project2 || '')
     });
     if (!res.success) {
       toast.error(res.error || 'Failed to save profile');
@@ -217,15 +261,44 @@ const Settings = () => {
   };
 
   const addStackItem = () => {
-    if (!newStackItem.trim()) return;
-    const updatedStack = [...formData.stack, newStackItem.trim()];
-    handleUpdateStack(updatedStack);
-    setNewStackItem('');
+    if (newStackItem.trim() && !formData.stack.includes(newStackItem.trim()) && formData.stack.length < 4) {
+      const updatedStack = [...formData.stack, newStackItem.trim()];
+      handleUpdateStack(updatedStack);
+      setNewStackItem('');
+    }
   };
 
   const removeStackItem = (indexToRemove) => {
     const updatedStack = formData.stack.filter((_, index) => index !== indexToRemove);
     handleUpdateStack(updatedStack);
+  };
+
+  const handleAvatarSelect = async (seed, reqRank) => {
+    if (userRank < reqRank) {
+      toast.error(`Reach Level ${reqRank} to unlock!`);
+      return;
+    }
+    setFormData(prev => ({ ...prev, avatarId: seed }));
+    await persistProfile({ avatarId: seed });
+  };
+
+  const handleBannerSelect = async (bannerId, reqRank) => {
+    if (userRank < reqRank) {
+      toast.error(`Reach Level ${reqRank} to unlock!`);
+      return;
+    }
+    setFormData(prev => ({ ...prev, bannerId: bannerId }));
+    await persistProfile({ bannerId: bannerId });
+  };
+
+  const handleLinkChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (bioSaveTimer.current) clearTimeout(bioSaveTimer.current);
+    bioSaveTimer.current = setTimeout(async () => {
+      setIsSavingBio(true);
+      await persistProfile({ [field]: value });
+      setIsSavingBio(false);
+    }, 800);
   };
 
   const formatDate = (dateString) => {
@@ -372,112 +445,188 @@ const Settings = () => {
                 className="dashboard-content"
               >
                 {/* Profile Header Card */}
-                <div className="profile-header-card">
+                <div 
+                  className="profile-header-card premium-header" 
+                  style={{ background: BANNERS.find(b => b.id === formData.bannerId)?.css || 'linear-gradient(135deg, rgba(20,20,25,0.9) 0%, rgba(10,10,15,0.95) 100%)' }}
+                >
+                  <div className="premium-overlay" />
                   <div className="profile-info-group">
-                    <div className="profile-avatar">
-                      {user.username?.[0]?.toUpperCase() || 'U'}
-                      <div className="avatar-status-badge">
-                        <ShieldCheck size={12} />
+                    <div className="premium-avatar-wrap">
+                      <div className="premium-avatar-hex">
+                        <img src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${formData.avatarId || 'Sniper'}&backgroundColor=transparent`} alt="Avatar" />
                       </div>
                     </div>
                     <div className="profile-text">
                       <div className="name-row">
                         <h1>{user.username}</h1>
-                        <span className="tier-badge">ENTERPRISE</span>
+                        <span className="premium-rank-badge">LVL {userRank} {userRank === 5 ? 'MAX' : ''}</span>
                       </div>
                       <div className="email-row">
                         <Mail size={14} />
                         <span>{user.email}</span>
+                      </div>
+                      <div className="premium-stats-row">
+                        <span className="stat-pill"><Calendar size={12}/> Joined {formatDate(user.createdAt)}</span>
+                        <span className="stat-pill"><Activity size={12}/> {activeDays} Sessions</span>
                       </div>
                     </div>
                   </div>
                   <div className="profile-actions">
                     <button type="button" className="action-btn primary" onClick={() => setShowConfigModal(true)}>
                       <Terminal size={16} />
-                      <span>Configure Profile</span>
+                      <span>Configure System</span>
                     </button>
                     <button
                       type="button"
-                      className="action-btn"
+                      className="action-btn secondary"
                       onClick={() => navigate('/user-guide', { state: { returnTo: '/settings', activeTab: 'details' } })}
                     >
                       <Info size={16} />
-                      <span>User Guide</span>
+                      <span>Intel Guide</span>
                     </button>
                   </div>
                 </div>
 
                 {/* Details Grid */}
-                <div className="details-grid">
-                  {/* Identity Card */}
-                  <div className="dashboard-card identity-card">
-                    <div className="card-header">
-                      <div className="header-icon">
-                        <User size={18} />
+                <div className="premium-details-grid">
+                  
+                  {/* Left Column: Core Identity & Links */}
+                  <div className="premium-col">
+                    <div className="dashboard-card identity-card">
+                      <div className="card-header">
+                        <div className="header-icon"><User size={18} /></div>
+                        <h3>Identity & Intel</h3>
                       </div>
-                      <h3>Identity Details</h3>
-                    </div>
-                    <div className="card-body">
-                      <div className="data-row">
-                        <span className="data-label">Joined</span>
-                        <div className="data-value">
-                          <Calendar size={14} />
-                          <span>{formatDate(user.createdAt)}</span>
+                      <div className="card-body">
+                        <div className="premium-input-group">
+                          <label>Operative Bio (Max 30 Chars)</label>
+                          <input
+                            type="text"
+                            className="premium-input"
+                            value={formData.bio}
+                            maxLength={30}
+                            onChange={(e) => handleBioChange(e.target.value)}
+                            placeholder="Brief operative bio..."
+                          />
+                          <span className="save-indicator">{isSavingBio ? 'Saving...' : 'Auto-saves on typing'}</span>
                         </div>
-                      </div>
-                      <div className="data-row">
-                        <span className="data-label">Active Days</span>
-                        <div className="data-value">
-                          <Activity size={14} />
-                          <span>{activeDays} Sessions</span>
-                        </div>
-                      </div>
-                      <div className="data-row">
-                        <span className="data-label">Bio</span>
-                        <div className="bio-container">
-                          <div className="bio-edit-wrapper">
-                            <textarea
-                              value={formData.bio}
-                              onChange={(e) => handleBioChange(e.target.value)}
-                              placeholder="Write your bio — saves automatically..."
-                              rows={4}
-                            />
-                            <span className="edit-hint">
-                              {isSavingBio ? 'Saving to profile...' : 'Shown on your home page · auto-saves'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="data-row">
-                        <span className="data-label">Stack</span>
-                        <div className="stack-container">
-                          <div className="stack-list">
-                            {formData.stack.map((item, index) => (
-                              <div key={index} className="stack-tag">
-                                <span>{item}</span>
-                                <button className="remove-tag" onClick={() => removeStackItem(index)}>
-                                  <X size={12} />
-                                </button>
-                              </div>
-                            ))}
-                            <div className="add-stack-wrapper">
+
+                        <div className="premium-input-group mt-4">
+                          <label>Tech Arsenal</label>
+                          <div className="stack-container" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <div className="premium-add-stack">
                               <input
                                 type="text"
                                 value={newStackItem}
                                 onChange={(e) => setNewStackItem(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && addStackItem()}
-                                placeholder="Add tech..."
+                                placeholder={formData.stack.length >= 4 ? "Arsenal full (Max 4)" : "Add weapon (e.g. React)..."}
+                                disabled={formData.stack.length >= 4}
                               />
-                              <button className="add-tag-btn" onClick={addStackItem} disabled={isSaving}>
-                                <Plus size={14} />
+                              <button className="premium-add-btn" onClick={addStackItem} disabled={isSaving || formData.stack.length >= 4}>
+                                Add
                               </button>
+                            </div>
+                            
+                            <div className="stack-list">
+                              {formData.stack.map((item, index) => (
+                                <div key={index} className="stack-tag">
+                                  <span>{item}</span>
+                                  <button className="remove-tag" onClick={() => removeStackItem(index)}>
+                                    <X size={12} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="premium-section-divider"></div>
+                        
+                        <div className="premium-input-group">
+                          <label><Globe size={12} style={{display:'inline', marginRight:'4px'}}/> External Intel Links</label>
+                          <div className="premium-links-grid">
+                            <div className="intel-input-wrap">
+                              <span className="intel-prefix">GH</span>
+                              <input type="text" placeholder="GitHub URL..." value={formData.github} onChange={(e) => handleLinkChange('github', e.target.value)} />
+                            </div>
+                            <div className="intel-input-wrap">
+                              <span className="intel-prefix">LC</span>
+                              <input type="text" placeholder="LeetCode URL..." value={formData.leetcode} onChange={(e) => handleLinkChange('leetcode', e.target.value)} />
+                            </div>
+                            <div className="intel-input-wrap">
+                              <span className="intel-prefix">P1</span>
+                              <input type="text" placeholder="Project Alpha URL..." value={formData.project1} onChange={(e) => handleLinkChange('project1', e.target.value)} />
+                            </div>
+                            <div className="intel-input-wrap">
+                              <span className="intel-prefix">P2</span>
+                              <input type="text" placeholder="Project Beta URL..." value={formData.project2} onChange={(e) => handleLinkChange('project2', e.target.value)} />
                             </div>
                           </div>
                         </div>
                       </div>
-                      <div className="status-intel">
-                        <span className="intel-label">STATUS INTELLIGENCE</span>
-                        <p>Your account is in excellent standing</p>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Customization */}
+                  <div className="premium-col">
+                    <div className="dashboard-card identity-card customization-card">
+                      <div className="card-header">
+                        <div className="header-icon"><Layers size={18} /></div>
+                        <h3>Armory</h3>
+                      </div>
+                      <div className="card-body">
+                        <div className="premium-section">
+                          <div className="premium-section-header">
+                            <h4>Operative Avatars</h4>
+                            <span className="premium-badge">Unlock via XP</span>
+                          </div>
+                          <div className="avatar-selection-grid">
+                            {AVATARS.map(({ seed, rank }) => {
+                              const isLocked = userRank < rank;
+                              return (
+                                <div 
+                                  key={seed} 
+                                  className={`avatar-option premium ${formData.avatarId === seed ? 'selected' : ''} ${isLocked ? 'locked' : ''}`}
+                                  onClick={() => handleAvatarSelect(seed, rank)}
+                                >
+                                  <img src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}&backgroundColor=transparent`} alt={seed} style={{ opacity: isLocked ? 0.3 : 1 }} />
+                                  <div className="avatar-name">{seed}</div>
+                                  {isLocked && <div className="lock-overlay"><Lock size={16} /></div>}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="premium-section mt-4">
+                          <div className="premium-section-header">
+                            <h4>Profile Banners</h4>
+                            <span className="premium-badge">Unlock via XP</span>
+                          </div>
+                          <div className="banner-selection-grid">
+                            {BANNERS.map(banner => {
+                              const isLocked = userRank < banner.rank;
+                              return (
+                                <div 
+                                  key={banner.id} 
+                                  className={`banner-option premium ${formData.bannerId === banner.id ? 'selected' : ''} ${isLocked ? 'locked' : ''}`}
+                                  style={{ background: banner.css }}
+                                  onClick={() => handleBannerSelect(banner.id, banner.rank)}
+                                >
+                                  <div className="banner-name">{banner.name}</div>
+                                  {formData.bannerId === banner.id && <div className="banner-check"><ShieldCheck size={16} /></div>}
+                                  {isLocked && <div className="lock-overlay"><Lock size={20} /></div>}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        
+                        <div className="status-intel mt-4">
+                          <span className="intel-label">SYSTEM CHECK</span>
+                          <p>All loadouts secure. Earn XP in Arena to unlock more.</p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -492,10 +641,7 @@ const Settings = () => {
                 className="dashboard-content"
               >
                 {/* System Settings Content */}
-                <div className="section-title">
-                  <h1>System Configuration</h1>
-                  <p>Manage preferences, security, and application settings.</p>
-                </div>
+
 
                 {/* Theme Section */}
                 <div className="system-section">
@@ -770,6 +916,7 @@ const Settings = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <Chatbot isSidebarOpen={true} />
     </div>
   );
 };
