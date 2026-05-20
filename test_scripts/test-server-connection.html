@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .test-section.error {
+            border-left-color: #f44336;
+        }
+        .test-section.warning {
+            border-left-color: #ff9800;
+        }
+        h1 { color: #4CAF50; }
+        h2 { color: #64B5F6; margin-top: 0; }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #45a049; }
+        .status { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .status.success { background: #1b5e20; }
+        .status.error { background: #b71c1c; }
+        .status.info { background: #01579b; }
+        pre {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 CodeBright Server Connection Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Server Health Check</h2>
+        <button onclick="testServerHealth()">Test Server Connection</button>
+        <div id="server-status"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Socket.IO Connection Test</h2>
+        <button onclick="testSocketConnection()">Test Socket Connection</button>
+        <div id="socket-status"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Factions API Test</h2>
+        <button onclick="testFactionsAPI()">Test Factions Endpoint</button>
+        <div id="factions-status"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Code Wars Socket Events Test</h2>
+        <button onclick="testCodeWarsSocket()">Test Code Wars Events</button>
+        <div id="codewars-status"></div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const SERVER_URL = 'http://localhost:5051';
+        let socket = null;
+
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            element.appendChild(statusDiv);
+        }
+
+        async function testServerHealth() {
+            const statusDiv = document.getElementById('server-status');
+            statusDiv.innerHTML = '<div class="status info">Testing server connection...</div>';
+            
+            try {
+                const response = await fetch(`${SERVER_URL}/health`);
+                if (response.ok) {
+                    log('server-status', '✅ Server is running and responding!', 'success');
+                } else {
+                    log('server-status', `⚠️ Server responded with status: ${response.status}`, 'warning');
+                }
+            } catch (error) {
+                log('server-status', `❌ Cannot connect to server: ${error.message}`, 'error');
+                log('server-status', '💡 Make sure the server is running: cd server && npm start', 'info');
+            }
+        }
+
+        function testSocketConnection() {
+            const statusDiv = document.getElementById('socket-status');
+            statusDiv.innerHTML = '<div class="status info">Connecting to Socket.IO...</div>';
+            
+            if (socket) {
+                socket.disconnect();
+            }
+
+            socket = io(SERVER_URL, {
+                transports: ['websocket'],
+                timeout: 5000
+            });
+
+            socket.on('connect', () => {
+                log('socket-status', `✅ Socket connected! ID: ${socket.id}`, 'success');
+                log('socket-status', `🔌 Transport: ${socket.io.engine.transport.name}`, 'info');
+            });
+
+            socket.on('connect_error', (error) => {
+                log('socket-status', `❌ Socket connection error: ${error.message}`, 'error');
+                log('socket-status', '💡 Check if server is running on port 5051', 'info');
+            });
+
+            socket.on('disconnect', (reason) => {
+                log('socket-status', `⚠️ Socket disconnected: ${reason}`, 'warning');
+            });
+
+            setTimeout(() => {
+                if (!socket.connected) {
+                    log('socket-status', '❌ Socket failed to connect within 5 seconds', 'error');
+                }
+            }, 5000);
+        }
+
+        async function testFactionsAPI() {
+            const statusDiv = document.getElementById('factions-status');
+            statusDiv.innerHTML = '<div class="status info">Testing factions endpoint...</div>';
+            
+            try {
+                const response = await fetch(`${SERVER_URL}/factions`);
+                if (response.ok) {
+                    const data = await response.json();
+                    log('factions-status', `✅ Factions API working! Found ${data.length} factions`, 'success');
+                    log('factions-status', `Factions: ${data.map(f => f.name).join(', ')}`, 'info');
+                } else {
+                    log('factions-status', `❌ Factions API error: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log('factions-status', `❌ Cannot reach factions API: ${error.message}`, 'error');
+            }
+        }
+
+        function testCodeWarsSocket() {
+            const statusDiv = document.getElementById('codewars-status');
+            statusDiv.innerHTML = '<div class="status info">Testing Code Wars socket events...</div>';
+            
+            if (!socket || !socket.connected) {
+                log('codewars-status', '❌ Socket not connected. Run Socket Connection Test first!', 'error');
+                return;
+            }
+
+            // Test cw-get-faction-rooms event
+            log('codewars-status', '📤 Emitting cw-get-faction-rooms...', 'info');
+            
+            socket.once('cw-faction-rooms', (data) => {
+                log('codewars-status', `✅ Received cw-faction-rooms response!`, 'success');
+                log('codewars-status', `📋 Rooms received: ${data.rooms.length}`, 'info');
+            });
+
+            socket.once('cw-error', (error) => {
+                log('codewars-status', `❌ Code Wars error: ${error.error}`, 'error');
+            });
+
+            // Emit with a test faction ID
+            socket.emit('cw-get-faction-rooms', { factionId: 'test-faction-id' });
+
+            setTimeout(() => {
+                log('codewars-status', '✅ Code Wars socket events are registered', 'success');
+            }, 1000);
+        }
+
+        // Auto-run tests on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testServerHealth();
+                setTimeout(() => testSocketConnection(), 1000);
+            }, 500);
+        });
+    </script>
+</body>
+</html>
