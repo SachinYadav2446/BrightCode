@@ -846,7 +846,7 @@ const Home = () => {
 
                     <span key={idx} className="ticker-item">
 
-                      <span className="ticker-bullet">âœ¦</span>
+                      <span className="ticker-bullet">&#10022;</span>
 
                       {quote}
 
