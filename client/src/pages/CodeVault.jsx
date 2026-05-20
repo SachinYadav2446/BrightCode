@@ -637,7 +637,7 @@ const CodeVault = () => {
         onClose={() => setModalConfig(null)}
         config={modalConfig}
       />
-      <Chatbot />
+      <Chatbot isSidebarOpen={true} />
     </div>
   );
 };

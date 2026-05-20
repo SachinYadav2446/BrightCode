@@ -1360,10 +1360,8 @@ const Home = () => {
 
       )}
 
-      {/* AI Chatbot */}
       <Chatbot />
     </div>
-
   );
 
 };

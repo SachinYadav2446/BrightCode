@@ -15,6 +15,7 @@ import CodeVault from './pages/CodeVault';
 import CodeWarsArena from './pages/CodeWarsArena';
 import BattleArena from './pages/BattleArena';
 import UserModule from './pages/UserModule';
+import UserProfile from './pages/UserProfile';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
@@ -40,7 +41,7 @@ const NavbarWrapper = () => {
   const location = useLocation();
   const { navbarHidden } = useAuth();
   
-  const hideOnPaths = ['/auth', '/editor', '/code-wars', '/battle-arena'];
+  const hideOnPaths = ['/auth', '/editor', '/code-wars', '/battle-arena', '/u'];
   const isLanding = location.pathname === '/';
   const shouldHide = navbarHidden || isLanding || hideOnPaths.some(p => location.pathname.startsWith(p));
   
@@ -333,6 +334,10 @@ function App() {
             <Route 
               path="/user-guide" 
               element={<UserModule />} 
+            />
+            <Route 
+              path="/u/:username" 
+              element={<UserProfile />} 
             />
             {/* Catch-all: redirect any unknown path to landing */}
             <Route path="*" element={<Navigate to="/" replace />} />
