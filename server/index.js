@@ -1166,7 +1166,11 @@ app.get('/api/notes', authenticateToken, async (req, res) => {
         query += ' ORDER BY updated_at DESC';
 
         const result = await pool.query(query, params);
-        res.json(result.rows);
+        const notes = result.rows.map(n => ({
+            ...n,
+            tags: Array.isArray(n.tags) ? n.tags : []
+        }));
+        res.json(notes);
     } catch (err) {
         console.error('GET /api/notes ERROR:', err);
         res.status(500).json({ error: 'Failed to fetch notes' });

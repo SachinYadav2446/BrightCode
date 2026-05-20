@@ -319,7 +319,7 @@ const CodeVault = () => {
     const matchesSearch = !searchQuery ||
       note.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       note.content?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTag = !selectedTag || (note.tags && note.tags.includes(selectedTag));
+    const matchesTag = !selectedTag || (Array.isArray(note.tags) && note.tags.includes(selectedTag));
     return matchesSearch && matchesTag;
   });
 
@@ -340,7 +340,7 @@ const CodeVault = () => {
   const displayNotes = sortedNotes.filter(note => !selectedFolder || note.folder_id === selectedFolder);
 
   // Get all unique tags from notes
-  const allTags = [...new Set(notes.flatMap(note => note.tags || []))].sort();
+  const allTags = [...new Set(notes.flatMap(note => Array.isArray(note.tags) ? note.tags : []))].sort();
 
   return (
     <div className="codevault-container">

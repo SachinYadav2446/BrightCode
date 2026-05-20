@@ -4736,6 +4736,73 @@
    ================================================================ */
 
 /* Fixed right-side panel showing all workspace participants */
+/* ── Presence Panel Collapse Toggle (mirrors left sidebar-handle-toggle) ── */
+.presence-panel-toggle {
+    position: fixed;
+    right: 240px;
+    top: 50%;
+    transform: translate(50%, -50%);
+    z-index: 1001;
+    width: 20px;
+    height: 40px;
+    background: var(--bg-surface);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    color: var(--workspace-text-muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+}
+
+.presence-panel-toggle:hover {
+    background: var(--bg-surface);
+    color: #ffffff;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.presence-panel-toggle.collapsed {
+    right: 0;
+    height: 180px;
+    width: 32px;
+    border-radius: 12px 0 0 12px;
+    background: var(--bg-dark);
+    border-right: none;
+    padding: 15px 0;
+    gap: 15px;
+    justify-content: flex-start;
+    transform: translate(0, -50%);
+}
+
+.presence-panel-toggle.collapsed .handle-text {
+    writing-mode: vertical-lr;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: var(--workspace-text-muted);
+    text-transform: uppercase;
+    transform: rotate(180deg);
+    display: block;
+    white-space: nowrap;
+}
+
+.presence-panel-toggle.collapsed:hover {
+    width: 38px;
+    background: var(--bg-surface);
+}
+
+.presence-panel-toggle.collapsed:hover .handle-text {
+    color: var(--workspace-accent);
+}
+
+.presence-panel-toggle:not(.collapsed):hover .handle-icon {
+    transform: translateX(2px);
+}
+
 .presence-panel {
     position: fixed;
     top: 52px; /* Below navbar */
@@ -4749,7 +4816,7 @@
     overflow: hidden;
     z-index: 900;
     box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
-}
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s, padding 0.3s;
 
 /* ── Header ── */
 .presence-header {

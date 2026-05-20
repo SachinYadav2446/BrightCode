@@ -236,6 +236,7 @@ const EditorPage = () => {
 
 
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [isPresencePanelCollapsed, setIsPresencePanelCollapsed] = useState(false);
 
     const [isTerminalCollapsed, setIsTerminalCollapsed] = useState(false);
 
@@ -1942,11 +1943,28 @@ const EditorPage = () => {
             </AnimatePresence>
 
             {/* â”€â”€ PRESENCE PANEL (Always Visible) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* Collapsible Right Presence Panel Toggle */}
+            <button
+                className={`presence-panel-toggle ${isPresencePanelCollapsed ? 'collapsed' : ''}`}
+                onClick={() => setIsPresencePanelCollapsed(p => !p)}
+                title={isPresencePanelCollapsed ? 'Expand Workspace' : 'Collapse Workspace'}
+            >
+                {isPresencePanelCollapsed && <span className="handle-text">WORKSPACE</span>}
+                <div className="handle-icon">
+                    {isPresencePanelCollapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+                </div>
+            </button>
             <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
                 className="presence-panel"
+                style={{
+                    width: isPresencePanelCollapsed ? 0 : undefined,
+                    minWidth: isPresencePanelCollapsed ? 0 : undefined,
+                    overflow: isPresencePanelCollapsed ? 'hidden' : undefined,
+                    padding: isPresencePanelCollapsed ? 0 : undefined,
+                }}
             >
                 {/* Header */}
                 <div className="presence-header">
@@ -2638,78 +2656,6 @@ const EditorPage = () => {
                     </main>
 
 
-
-                    {/* AI Trigger Bubble */}
-
-                    <div className={`ai-trigger-bubble ${isSidekickOpen ? 'active' : ''}`} onClick={() => setIsSidekickOpen(o => !o)}>
-
-                        <Sparkles size={24} color="#fff" />
-
-                    </div>
-
-
-
-                    <AnimatePresence>
-
-                        {isSidekickOpen && (
-
-                            <motion.aside initial={{ x: 400 }} animate={{ x: 0 }} exit={{ x: 400 }} className="ai-sidekick">
-
-                                <div className="ai-header">
-
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-
-                                        <Bot size={22} color="#fbbf24" /><h3>AI Sentinel</h3>
-
-                                    </div>
-
-                                    <button className="icon-btn" onClick={() => setIsSidekickOpen(false)}><Plus size={20} style={{ transform: 'rotate(45deg)' }} /></button>
-
-                                </div>
-
-                                <div className="ai-messages">
-
-                                    {aiMessages.map((msg, i) => (
-
-                                        <div key={i} className={`ai-message ${msg.role}`}>
-
-                                            <div className="avatar">{msg.role === 'ai' ? <Brain size={16} /> : <Users size={16} />}</div>
-
-                                            <div className="msg-content">{msg.content}</div>
-
-                                        </div>
-
-                                    ))}
-
-                                    {isAiThinking && (
-
-                                        <div className="ai-message ai thinking">
-
-                                            <div className="avatar"><Brain size={16} className="pulse-icon" /></div>
-
-                                            <div className="msg-content">Analyzing codebase...</div>
-
-                                        </div>
-
-                                    )}
-
-                                </div>
-
-                                {/* BUG FIX: was onSubmit={handleAiSubmit} which didn't exist */}
-
-                                <form className="ai-input-area" onSubmit={(e) => { e.preventDefault(); sendMessageToAi(); }}>
-
-                                    <input type="text" placeholder="Ask Sentinel..." value={aiInput} onChange={(e) => setAiInput(e.target.value)} />
-
-                                    <button type="submit" disabled={!aiInput.trim() || isAiThinking}><Send size={18} /></button>
-
-                                </form>
-
-                            </motion.aside>
-
-                        )}
-
-                    </AnimatePresence>
 
                 </div>
 
