@@ -1,4 +1,4 @@
-﻿import API_URL from '../config';
+import API_URL from '../config';
 import React, { useState, useEffect, useRef } from 'react';
 
 import { useNavigate, useParams } from 'react-router-dom';
@@ -358,7 +358,13 @@ const EditorPage = () => {
 
 
 
-                socket.emit('join-room', { roomId, username: user?.username });
+                socket.on('connect', () => {
+                    console.log('Socket connected/reconnected. Re-joining room...');
+                    socket.emit('join-room', { roomId, username: user?.username });
+                });
+                if (socket.connected) {
+                    socket.emit('join-room', { roomId, username: user?.username });
+                }
 
 
 
