@@ -440,22 +440,18 @@ app.post('/send-otp', async (req, res) => {
             `
         };
 
-        // ✅ Respond IMMEDIATELY — don't wait for email delivery
-        res.json({
-            message: `Check your email for the code. If it doesn't arrive, use: ${otp}`,
-            devMode: true,
-            otp: otp
-        });
-
-        // 🔥 Fire-and-forget: try to send email in the background
-        transporter.sendMail(mailOptions)
-            .then(() => console.log(`[MAIL] Email sent successfully to ${email}`))
-            .catch(mailErr => {
-                console.error(`[MAIL] Failed to send email:`, mailErr.message);
-                try {
-                    fs.appendFileSync(path.join(__dirname, 'mail-error.log'), `[${new Date().toISOString()}] To: ${email} Error: ${mailErr.message}\n`);
-                } catch (e) {}
-            });
+        try {
+            await transporter.sendMail(mailOptions);
+            console.log(`[MAIL] Email sent successfully to ${email}`);
+            res.json({ message: "Verification code sent to your email." });
+        } catch (mailErr) {
+            console.error(`[MAIL] Failed to send email:`, mailErr.message);
+            try {
+                fs.appendFileSync(path.join(__dirname, 'mail-error.log'), `[${new Date().toISOString()}] To: ${email} Error: ${mailErr.message}\n`);
+            } catch (e) {}
+            // Send back the SMTP error so the user knows what went wrong
+            return sendError(res, 500, "Failed to send email", mailErr.message);
+        }
     } catch (err) {
         sendError(res, 500, "Server error", err.message);
     }
