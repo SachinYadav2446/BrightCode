@@ -1,4 +1,4 @@
-﻿import API_URL from '../config';
+import API_URL from '../config';
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -205,7 +205,7 @@ const Auth = () => {
                           type="password" 
                           value={password} 
                           onChange={(e) => setPassword(e.target.value)} 
-                          placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                          placeholder="Enter your password"
                           required
                         />
                       </div>
@@ -229,7 +229,7 @@ const Auth = () => {
                             type="text" 
                             value={username} 
                             onChange={(e) => setUsername(e.target.value.replace(/\s/g, '').toLowerCase())} 
-                            placeholder="architect_null"
+                            placeholder="your_username"
                             required
                             autoComplete="off"
                           />
@@ -272,7 +272,7 @@ const Auth = () => {
                             type="password" 
                             value={password} 
                             onChange={(e) => setPassword(e.target.value)} 
-                            placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                            placeholder="Create a password"
                             required
                           />
                         </div>
