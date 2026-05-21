@@ -752,6 +752,10 @@ const Arcade = () => {
                 }
             } catch (err) {
                 console.error('[XP SYNC ERROR]', err);
+                // Fallback: Update local XP state if API fails
+                const currentXP = user.xp || 0;
+                updateXP(currentXP + 10, { [activeGame]: currentLvlIdx + 1 });
+                console.log(`[XP] Fallback: Awarded 10 XP locally for ${activeGame} Level ${currentLvlIdx + 1}`);
             }
         }
     };
@@ -795,7 +799,7 @@ const Arcade = () => {
                 return;
             }
             
-            const userAnswer = parseInt(code);
+            const userAnswer = selectedOption;
             const isCorrect = userAnswer === levelData.answer;
             
             setAnswerRevealed(true);
@@ -803,7 +807,7 @@ const Arcade = () => {
                 setWrongSelection(userAnswer);
                 triggerModal('error', 'Incorrect Answer', 'That\'s not quite right. Try again!');
             } else {
-                await saveProgress(code);
+                await saveProgress(String(userAnswer));
                 triggerModal('success', 'Perfect! +10 XP', 'Great job! You\'ve selected the correct answer and earned 10 XP.');
             }
             // No automatic progression anymore - let user click "Next"
