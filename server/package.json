@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
-    "@socket.io/postgres-adapter": "^8.0.0",
+    "@socket.io/postgres-adapter": "latest",
     "axios": "^1.15.2",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
