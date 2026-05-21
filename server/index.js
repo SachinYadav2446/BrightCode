@@ -286,6 +286,13 @@ const initDB = async () => {
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         `);
+        
+        try {
+            await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS session_id TEXT;');
+        } catch (e) {
+            console.log('[DB] Note: Could not add session_id column, it may already exist or there was an error.');
+        }
+
         console.log('[DB] ✅ Users table created');
         
         // Initialize CodeVault notes and folders tables (we'll handle migrations manually for now)
@@ -551,7 +558,15 @@ app.post('/login', async (req, res) => {
             return sendError(res, 401, "Invalid credentials", "Please check your email and password.");
         }
 
-        const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1d' });
+        const sessionId = uuidV4();
+        if (useMemoryDB) {
+            user.session_id = sessionId;
+            saveStore();
+        } else {
+            await pool.query('UPDATE users SET session_id = $1 WHERE id = $2', [sessionId, user.id]);
+        }
+
+        const token = jwt.sign({ id: user.id, username: user.username, sessionId }, JWT_SECRET, { expiresIn: '1d' });
         const activity = user.activity || {};
         res.json({
             token,
@@ -582,15 +597,38 @@ app.post('/login', async (req, res) => {
     }
 });
 
-const authenticateToken = (req, res, next) => {
+const authenticateToken = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     if (!authHeader) return res.status(401).json({ error: 'Access denied' });
     const token = authHeader.split(' ')[1];
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) return res.status(403).json({ error: 'Invalid token' });
+    
+    try {
+        const user = jwt.verify(token, JWT_SECRET);
+        
+        // Concurrent login check
+        let currentSessionId = null;
+        if (useMemoryDB) {
+            const memUser = memoryStore.users.find(u => u.id === user.id);
+            if (memUser) currentSessionId = memUser.session_id;
+        } else {
+            try {
+                const { rows } = await pool.query('SELECT session_id FROM users WHERE id = $1', [user.id]);
+                if (rows.length > 0) currentSessionId = rows[0].session_id;
+            } catch (e) {
+                console.error('[AUTH] DB error fetching session_id', e);
+            }
+        }
+        
+        // If currentSessionId exists in DB and user token has a sessionId, and they don't match -> invalidate
+        if (currentSessionId && user.sessionId && currentSessionId !== user.sessionId) {
+            return res.status(401).json({ error: 'Logged in from another device. Session invalidated.', code: 'CONCURRENT_LOGIN' });
+        }
+
         req.user = user;
         next();
-    });
+    } catch (err) {
+        return res.status(403).json({ error: 'Invalid token' });
+    }
 };
 
 // ── FRIENDS SYSTEM ─────────────────────────────────────────────────────────

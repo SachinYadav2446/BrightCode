@@ -1,4 +1,4 @@
-﻿import API_URL from '../config';
+import API_URL from '../config';
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 
@@ -322,6 +322,22 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setSessionValid(false);
   };
+
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401 && error.response?.data?.code === 'CONCURRENT_LOGIN') {
+          logout();
+          window.location.href = '/?error=concurrent_login';
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, login, register, sendOTP, logout, updateProfile, changePassword, updateXP, loading, sessionValid, navbarHidden, setNavbarHidden, friendsDrawerOpen, setFriendsDrawerOpen }}>
