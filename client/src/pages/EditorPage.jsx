@@ -1218,15 +1218,18 @@ const EditorPage = () => {
 
     // â”€â”€ FEATURE 1: Multi-User WebRTC Video Call â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    const STUN_SERVERS = {
+    const ICE_SERVERS = {
         iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun4.l.google.com:19302' },
         ]
     };
 
     const createPeerConnection = (targetId) => {
-        const pc = new RTCPeerConnection(STUN_SERVERS);
+        const pc = new RTCPeerConnection(ICE_SERVERS);
         peerConnectionsRef.current[targetId] = pc;
         // Legacy single ref
         peerConnectionRef.current = pc;
@@ -1268,20 +1271,30 @@ const EditorPage = () => {
 
     // Get local media stream (audio + optional video)
     const getLocalStream = async (withVideo = true) => {
+        // Check if HTTPS is required
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+            console.error('WebRTC requires HTTPS in production');
+            toast.error('Camera and microphone require HTTPS connection', { duration: 5000 });
+            return null;
+        }
+
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: withVideo });
             localStreamRef.current = stream;
             if (localVideoRef.current) localVideoRef.current.srcObject = stream;
             return stream;
         } catch (err) {
+            console.error('Media access error:', err);
             // Try audio only if video fails
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                 localStreamRef.current = stream;
                 if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+                toast('Camera access denied, using audio only', { icon: '🎤' });
                 return stream;
-            } catch {
-                console.log('Microphone/Camera access denied - user can enable later');
+            } catch (audioErr) {
+                console.error('Audio access error:', audioErr);
+                toast.error('Microphone access denied. Please allow permissions in browser settings.', { duration: 5000 });
                 return null;
             }
         }
