@@ -72,14 +72,22 @@ const Home = () => {
 
   const [isMonitorActive, setIsMonitorActive] = useState(false);
   const [topRankers, setTopRankers] = useState([]);
+  const [rankersLoading, setRankersLoading] = useState(true);
+  const [rankersError, setRankersError] = useState(false);
 
   useEffect(() => {
     const fetchTopRankers = async () => {
+      setRankersLoading(true);
+      setRankersError(false);
       try {
-        const response = await axios.get(`${API_URL}/leaderboard`);
-        setTopRankers(response.data.slice(0, 3));
+        const response = await axios.get(`${API_URL}/leaderboard`, { timeout: 5000 });
+        const data = response.data || [];
+        setTopRankers(data.slice(0, 3));
       } catch (err) {
         console.error('Failed to fetch top rankers', err);
+        setRankersError(true);
+      } finally {
+        setRankersLoading(false);
       }
     };
     fetchTopRankers();
@@ -869,62 +877,92 @@ const Home = () => {
               </div>
 
               <div className="hall-of-fame-grid">
-                {(() => {
-                  // Reorder: 2nd place (index 1) first, 1st place (index 0) middle, 3rd place (index 2) last
-                  const orderedRankers = [
-                    topRankers[1], // 2nd place - left
-                    topRankers[0], // 1st place - middle
-                    topRankers[2]  // 3rd place - right
-                  ].filter(Boolean); // Remove undefined if less than 3 rankers
-
-                  return orderedRankers.map((ranker, displayIdx) => {
-                    // Find the actual index for rank calculation
-                    const actualIdx = topRankers.indexOf(ranker);
-
-                    return (
-                      <motion.div
-                        key={ranker.username}
-                        className={`fame-card rank-${actualIdx + 1}`}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: displayIdx * 0.1, duration: 0.5 }}
-                        whileHover={{ scale: 1.02, y: -5 }}
-                        onClick={() => navigate(`/u/${ranker.username}`)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <div className="fame-rank-wrapper">
-                          <div className="fame-rank-badge">
-                            {actualIdx === 0 ? <Crown size={18} /> : `#${actualIdx + 1}`}
-                          </div>
+                {rankersLoading ? (
+                  // Loading state
+                  [1, 2, 3].map((i) => (
+                    <div key={i} className="fame-card fame-card-skeleton">
+                      <div className="fame-rank-wrapper">
+                        <div className="fame-rank-badge skeleton-badge"></div>
+                      </div>
+                      <div className="fame-avatar-wrapper">
+                        <div className="fame-avatar skeleton-avatar"></div>
+                        <div className="fame-rank-ring skeleton-ring"></div>
+                      </div>
+                      <div className="fame-content">
+                        <div className="fame-username skeleton-text"></div>
+                        <div className="fame-meta">
+                          <div className="fame-stat skeleton-text"></div>
+                          <div className="fame-divider"></div>
+                          <div className="fame-stat skeleton-text"></div>
                         </div>
+                      </div>
+                    </div>
+                  ))
+                ) : rankersError || topRankers.length === 0 ? (
+                  // Error or empty state
+                  <div className="fame-error-state">
+                    <Trophy size={48} className="fame-error-icon" />
+                    <p>Rankings temporarily unavailable</p>
+                  </div>
+                ) : (
+                  // Normal state with data
+                  (() => {
+                    // Reorder: 2nd place (index 1) first, 1st place (index 0) middle, 3rd place (index 2) last
+                    const orderedRankers = [
+                      topRankers[1], // 2nd place - left
+                      topRankers[0], // 1st place - middle
+                      topRankers[2]  // 3rd place - right
+                    ].filter(Boolean); // Remove undefined if less than 3 rankers
 
-                        <div className="fame-avatar-wrapper">
-                          <div className="fame-avatar">
-                            {ranker.username[0].toUpperCase()}
-                          </div>
-                          <div className="fame-rank-ring"></div>
-                        </div>
+                    return orderedRankers.map((ranker, displayIdx) => {
+                      // Find the actual index for rank calculation
+                      const actualIdx = topRankers.indexOf(ranker);
 
-                        <div className="fame-content">
-                          <h3 className="fame-username">{ranker.username}</h3>
-                          <div className="fame-meta">
-                            <div className="fame-stat">
-                              <Zap size={12} className="fame-icon" />
-                              <span>{ranker.xp.toLocaleString()}</span>
+                      return (
+                        <motion.div
+                          key={ranker.username}
+                          className={`fame-card rank-${actualIdx + 1}`}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: displayIdx * 0.1, duration: 0.5 }}
+                          whileHover={{ scale: 1.02, y: -5 }}
+                          onClick={() => navigate(`/u/${ranker.username}`)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <div className="fame-rank-wrapper">
+                            <div className="fame-rank-badge">
+                              {actualIdx === 0 ? <Crown size={18} /> : `#${actualIdx + 1}`}
                             </div>
-                            <div className="fame-divider"></div>
-                            <div className="fame-stat">
-                              <Shield size={12} className="fame-icon" />
-                              <span>LVL {ranker.level}</span>
+                          </div>
+
+                          <div className="fame-avatar-wrapper">
+                            <div className="fame-avatar">
+                              {ranker.username[0].toUpperCase()}
+                            </div>
+                            <div className="fame-rank-ring"></div>
+                          </div>
+
+                          <div className="fame-content">
+                            <h3 className="fame-username">{ranker.username}</h3>
+                            <div className="fame-meta">
+                              <div className="fame-stat">
+                                <Zap size={12} className="fame-icon" />
+                                <span>{ranker.xp.toLocaleString()}</span>
+                              </div>
+                              <div className="fame-divider"></div>
+                              <div className="fame-stat">
+                                <Shield size={12} className="fame-icon" />
+                                <span>LVL {ranker.level}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        {actualIdx === 0 && <div className="fame-glow"></div>}
-                      </motion.div>
-                    );
-                  });
-                })()}
+                          {actualIdx === 0 && <div className="fame-glow"></div>}
+                        </motion.div>
+                      );
+                    });
+                  })()
+                )}
               </div>
 
               {/* View All Rankings Button */}
