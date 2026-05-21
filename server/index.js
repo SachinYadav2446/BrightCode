@@ -24,23 +24,20 @@ const questionsAPI = require('./questionsAPI');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || '*';
 const JWT_SECRET = process.env.JWT_SECRET || 'brightcode_secret_key_123';
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
 const app = express();
 const server = http.createServer(app);
 
-// Configure Socket.io with Redis adapter for multi-instance support
+// Configure Socket.io with PostgreSQL adapter for multi-instance support (FREE - uses existing Neon DB)
 let io;
-if (process.env.NODE_ENV === 'production' && process.env.REDIS_URL) {
-    const { createClient } = require('redis');
-    const redisClient = createClient({ url: REDIS_URL });
-    redisClient.connect().catch(err => console.error('[REDIS] Connection error:', err));
-
+if (process.env.NODE_ENV === 'production' && process.env.DB_CONNECTION_STRING) {
     const { Server } = require('socket.io');
-    const { createAdapter } = require('@socket.io/redis-adapter');
-    const pubClient = redisClient;
-    const subClient = redisClient.duplicate();
-    subClient.connect().catch(err => console.error('[REDIS] Sub client connection error:', err));
+    const { createAdapter } = require('@socket.io/postgres-adapter');
+    const { Pool } = require('pg');
+
+    const pgPool = new Pool({
+        connectionString: process.env.DB_CONNECTION_STRING,
+    });
 
     io = new Server(server, {
         cors: {
@@ -52,9 +49,9 @@ if (process.env.NODE_ENV === 'production' && process.env.REDIS_URL) {
         allowUpgrades: true,
         pingTimeout: 60000,
         pingInterval: 25000,
-        adapter: createAdapter(pubClient, subClient),
+        adapter: createAdapter(pgPool),
     });
-    console.log('[SOCKET] Using Redis adapter for multi-instance support');
+    console.log('[SOCKET] Using PostgreSQL adapter for multi-instance support (FREE)');
 } else {
     io = new Server(server, {
         cors: {
