@@ -120,7 +120,7 @@ export const AuthProvider = ({ children }) => {
             ...d
           } : null);
         }
-      }).catch(() => { /* silent â€” offline is fine */ });
+      }).catch(() => { /* silent --��-� offline is fine */ });
     } else {
       setSessionValid(false);
     }
@@ -347,3 +347,5 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
+
+
