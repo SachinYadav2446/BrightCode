@@ -2475,7 +2475,7 @@ io.on('connection', (socket) => {
     socket.on('code-change', ({ roomId, fileName, content }) => {
         const room = rooms.get(roomId);
         if (room && room.fs && room.fs.updateFileContent(fileName, content)) {
-            socket.to(roomId).emit('code-update', { fileName, content });
+            socket.to(roomId).emit('code-update', { fileName, content, socketId: socket.id });
         }
     });
 

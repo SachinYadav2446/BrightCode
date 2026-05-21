@@ -98,6 +98,11 @@ const EditorPage = () => {
     const [modalConfig, setModalConfig] = useState({ isOpen: false, type: '', targetFile: '', defaultValue: '' });
     const [modalInputValue, setModalInputValue] = useState('');
 
+    // Remote cursor tracking
+    const [remoteCursors, setRemoteCursors] = useState({});
+    const editorRef = useRef(null);
+    const cursorDecorationsRef = useRef({});
+
 
 
     // â”€â”€ Sidebar/Tab States (BUG FIX: both were missing) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -458,10 +463,11 @@ const EditorPage = () => {
 
                 socket.on('get-kicked', () => { toast.error("Removed from workspace by admin."); navigate('/'); });
 
-                socket.on('code-update', ({ fileName, content }) => {
-
-                    if (!isStopped) setFiles(prev => ({ ...prev, [fileName]: { ...prev[fileName], content } }));
-
+                socket.on('code-update', ({ fileName, content, socketId }) => {
+                    // Don't update if the change is from the current user (avoids blinking)
+                    if (!isStopped && socketId !== socket.id) {
+                        setFiles(prev => ({ ...prev, [fileName]: { ...prev[fileName], content } }));
+                    }
                 });
 
                 socket.on('file-created', ({ fileName, language, content }) => {
@@ -638,6 +644,29 @@ const EditorPage = () => {
 
                 socket.on('call-ended', () => { endCall(); toast('Call ended by peer', { icon: 'ðŸ“µ' }); });
 
+                // Cursor tracking
+                socket.on('cursor-update', ({ socketId, fileName, cursor, username }) => {
+                    if (!isStopped && fileName === activeFile) {
+                        setRemoteCursors(prev => ({
+                            ...prev,
+                            [socketId]: { position: cursor, username, fileName }
+                        }));
+                    }
+                });
+
+                // Remove cursor when user leaves
+                socket.on('user-left', ({ id, username }) => {
+                    if (!isStopped) {
+                        toast.success(`${username} left`);
+                        setClients(prev => prev.filter(c => c.id !== id));
+                        setRemoteCursors(prev => {
+                            const newCursors = { ...prev };
+                            delete newCursors[id];
+                            return newCursors;
+                        });
+                    }
+                });
+
 
 
             } catch (err) {
@@ -679,6 +708,38 @@ const EditorPage = () => {
         }
     }, [clients.length]);
 
+    // Update cursor decorations when remote cursors change
+    useEffect(() => {
+        if (!editorRef.current) return;
+
+        const editor = editorRef.current;
+        const decorations = [];
+
+        Object.entries(remoteCursors).forEach(([socketId, cursor]) => {
+            if (cursor.fileName === activeFile && cursor.position) {
+                decorations.push({
+                    range: new monaco.Range(
+                        cursor.position.lineNumber,
+                        cursor.position.column,
+                        cursor.position.lineNumber,
+                        cursor.position.column
+                    ),
+                    options: {
+                        className: 'remote-cursor-decoration',
+                        hoverMessage: { value: `${cursor.username} is here` }
+                    }
+                });
+            }
+        });
+
+        // Remove old decorations and add new ones
+        const oldDecorations = cursorDecorationsRef.current;
+        cursorDecorationsRef.current = editor.deltaDecorations(
+            Object.values(oldDecorations).flat(),
+            decorations
+        );
+    }, [remoteCursors, activeFile]);
+
     // â”€â”€ Auto-refresh Preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     useEffect(() => {
         if (viewMode === 'preview') {
@@ -708,6 +769,16 @@ const EditorPage = () => {
 
         socketRef.current.emit('code-change', { roomId, fileName: activeFile, content: value });
 
+    };
+
+    const handleCursorChange = (cursorPosition) => {
+        if (!activeFile || !socketRef.current) return;
+        socketRef.current.emit('cursor-change', {
+            roomId,
+            fileName: activeFile,
+            cursor: cursorPosition,
+            username: user?.username
+        });
     };
 
 
@@ -2449,6 +2520,17 @@ const EditorPage = () => {
                                         value={files[activeFile]?.content}
 
                                         onChange={handleCodeChange}
+
+                                        onMount={(editor) => {
+                                            editorRef.current = editor;
+                                            // Emit cursor position changes
+                                            editor.onDidChangeCursorPosition((e) => {
+                                                handleCursorChange({
+                                                    lineNumber: e.position.lineNumber,
+                                                    column: e.position.column
+                                                });
+                                            });
+                                        }}
 
                                         options={{
 
