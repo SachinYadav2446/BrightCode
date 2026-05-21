@@ -2273,7 +2273,7 @@ io.on('connection', (socket) => {
 
         // --- Prevent Ghost Duplicate Users on Refresh ---
         // If this user is already in the room with an old stale socket, remove the old one.
-        const staleIndex = room.users.findIndex(u => u.username === username);
+        const staleIndex = room.users.findIndex(u => u.username === username && u.id !== socket.id);
         if (staleIndex !== -1) {
             const staleId = room.users[staleIndex].id;
             room.users.splice(staleIndex, 1);
