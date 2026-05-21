@@ -18,7 +18,8 @@ import {
   Gamepad2,
   Sword,
   Layout,
-  HelpCircle
+  HelpCircle,
+  AlertTriangle
 } from 'lucide-react';
 import PixelTrail from '../components/PixelTrail';
 import './Landing.css';
@@ -26,6 +27,7 @@ import './Landing.css';
 const Landing = () => {
   const navigate = useNavigate();
   const [currentCard, setCurrentCard] = useState(0);
+  const [sessionBanner, setSessionBanner] = useState(false);
 
   const exploreCards = [
     {
@@ -52,6 +54,18 @@ const Landing = () => {
     return () => clearInterval(timer);
   }, [exploreCards.length]);
 
+  // Detect concurrent login redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('error') === 'concurrent_login') {
+      setSessionBanner(true);
+      // Clean the URL without reload
+      window.history.replaceState({}, '', '/');
+      const t = setTimeout(() => setSessionBanner(false), 6000);
+      return () => clearTimeout(t);
+    }
+  }, []);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -74,6 +88,23 @@ const Landing = () => {
 
   return (
     <div className="landing-wrapper">
+      {/* Concurrent login banner */}
+      <AnimatePresence>
+        {sessionBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: -60 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -60 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+            className="concurrent-login-banner"
+          >
+            <AlertTriangle size={16} />
+            <span>Your session was ended because the same account logged in on another device.</span>
+            <button onClick={() => setSessionBanner(false)} className="concurrent-close">✕</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Navbar */}
       <nav className="landing-nav">
         <div className="nav-container">

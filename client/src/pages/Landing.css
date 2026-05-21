@@ -1286,3 +1286,49 @@
     gap: 40px;
   }
 }
+
+/* ── Concurrent login banner ── */
+.concurrent-login-banner {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: rgba(15, 10, 10, 0.95);
+  border: 1px solid rgba(var(--primary-rgb), 0.5);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(var(--primary-rgb), 0.1);
+  backdrop-filter: blur(16px);
+  color: var(--primary-light);
+  font-size: 0.85rem;
+  font-weight: 600;
+  max-width: 520px;
+  width: calc(100vw - 40px);
+}
+
+.concurrent-login-banner svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.concurrent-login-banner span {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.concurrent-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+.concurrent-close:hover { color: var(--primary); }

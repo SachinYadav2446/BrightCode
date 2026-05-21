@@ -198,7 +198,15 @@ export default function UserProfile() {
 
     if (loading) return (
         <div className="up-loading">
-            <h1 style={{ color: 'var(--primary)', letterSpacing: 4 }}>LOADING DATA...</h1>
+            <div className="up-loading-inner">
+                <div className="up-loading-logo">
+                    <span className="up-logo-bright">BRIGHT</span><span className="up-logo-code">CODE</span>
+                </div>
+                <div className="up-loading-bar-wrap">
+                    <div className="up-loading-bar-fill" />
+                </div>
+                <p className="up-loading-label">LOADING OPERATIVE DATA...</p>
+            </div>
         </div>
     );
 

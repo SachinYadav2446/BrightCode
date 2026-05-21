@@ -1,4 +1,4 @@
-﻿import API_URL from '../config';
+﻿﻿import API_URL from '../config';
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot, User, Maximize2, Minimize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

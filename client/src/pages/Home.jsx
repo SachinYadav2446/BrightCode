@@ -1,4 +1,4 @@
-﻿import API_URL from '../config';
+import API_URL from '../config';
 import React, { useState, useEffect } from 'react';
 
 import { useNavigate, Link } from 'react-router-dom';
@@ -72,7 +72,6 @@ const Home = () => {
 
   const [isMonitorActive, setIsMonitorActive] = useState(false);
   const [topRankers, setTopRankers] = useState([]);
-  const [selectedRanker, setSelectedRanker] = useState(null);
 
   useEffect(() => {
     const fetchTopRankers = async () => {
@@ -360,7 +359,7 @@ const Home = () => {
     if (xp >= 5000)  return { label: 'Expert',      color: '#f97316' };  // Orange
     if (xp >= 2000)  return { label: 'Advanced',    color: '#fb923c' };  // Light orange
     if (xp >= 500)   return { label: 'Apprentice',  color: '#fbbf24' };  // Amber
-    return             { label: 'Initiate',    color: '#fffdd0' };  // Cream â€“ visible on dark
+    return             { label: 'Initiate',    color: '#fffdd0' };  // Cream – visible on dark
   };
 
 
@@ -640,7 +639,7 @@ const Home = () => {
 
       {user && user.activity ? (
 
-        /* â”€â”€ USER DASHBOARD: MISSION CONTROL â”€â”€ */
+        /* ── USER DASHBOARD: MISSION CONTROL ── */
 
         <motion.section
 
@@ -890,7 +889,7 @@ const Home = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: displayIdx * 0.1, duration: 0.5 }}
                         whileHover={{ scale: 1.02, y: -5 }}
-                        onClick={() => setSelectedRanker(ranker)}
+                        onClick={() => navigate(`/u/${ranker.username}`)}
                         style={{ cursor: 'pointer' }}
                       >
                         <div className="fame-rank-wrapper">
@@ -1040,123 +1039,6 @@ const Home = () => {
               </div>
             </div>
 
-
-
-
-
-
-
-            {/* Quick View Modal */}
-
-            <AnimatePresence>
-
-              {selectedRanker && (
-
-                <motion.div
-
-                  className="ranker-modal-overlay"
-
-                  initial={{ opacity: 0 }}
-
-                  animate={{ opacity: 1 }}
-
-                  exit={{ opacity: 0 }}
-
-                  onClick={() => setSelectedRanker(null)}
-
-                >
-
-                  <motion.div
-
-                    className="ranker-quick-card"
-
-                    initial={{ scale: 0.9, y: 20 }}
-
-                    animate={{ scale: 1, y: 0 }}
-
-                    exit={{ scale: 0.9, y: 20 }}
-
-                    onClick={(e) => e.stopPropagation()}
-
-                  >
-
-                    <div className="card-accent-line"></div>
-
-                    <div className="card-header">
-
-                      <div className="ranker-large-avatar">
-
-                        {selectedRanker.username.charAt(0).toUpperCase()}
-
-                      </div>
-
-                      <div className="ranker-main-info">
-
-                        <h3>{selectedRanker.username}</h3>
-
-                        <div className="level-badge" style={{ color: getLevelInfo(selectedRanker.xp).color }}>
-
-                          {getLevelInfo(selectedRanker.xp).label}
-
-                        </div>
-
-                      </div>
-
-                    </div>
-
-
-
-                    <div className="card-body">
-
-                      <div className="info-section">
-
-                        <label>BIOGRAPHY</label>
-
-                        <p>{selectedRanker.bio || 'No transmission recorded for this operative.'}</p>
-
-                      </div>
-
-                      <div className="info-section">
-
-                        <label>TECH STACK</label>
-
-                        <div className="stack-tags">
-
-                          {selectedRanker.stack && selectedRanker.stack.length > 0 ? (
-
-                            selectedRanker.stack.map((tech, i) => (
-
-                              <span key={i} className="stack-tag">{tech}</span>
-
-                            ))
-
-                          ) : (
-
-                            <span className="stack-tag empty">Undefined</span>
-
-                          )}
-
-                        </div>
-
-                      </div>
-
-                    </div>
-
-
-
-                    <button className="close-card-btn" onClick={() => setSelectedRanker(null)}>
-
-                      DISMISS
-
-                    </button>
-
-                  </motion.div>
-
-                </motion.div>
-
-              )}
-
-            </AnimatePresence>
 
 
 
