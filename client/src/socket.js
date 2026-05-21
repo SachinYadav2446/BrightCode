@@ -16,14 +16,22 @@ export const initSocket = () => {
         timeout: 10000,
         transports: ['websocket', 'polling'],
         autoConnect: true,
+        forceNew: true,
+        withCredentials: true,
     });
 
     socketInstance.on('connect', () => {
         console.log('✅ Socket connected, ID:', socketInstance.id);
+        console.log('✅ Socket transport:', socketInstance.io.engine.transport.name);
     });
 
     socketInstance.on('connect_error', (error) => {
         console.error('❌ Socket connection error:', error.message);
+        console.error('❌ Socket error details:', error);
+        // Check if it's an HTTPS/WSS issue
+        if (location.protocol === 'https:' && backendUrl.startsWith('http:')) {
+            console.error('❌ HTTPS page connecting to HTTP WebSocket - this will fail!');
+        }
     });
 
     socketInstance.on('disconnect', (reason) => {
