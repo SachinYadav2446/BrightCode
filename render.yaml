@@ -25,6 +25,8 @@ services:
         sync: false          # Gmail address for OTP emails
       - key: SMTP_PASS
         sync: false          # Gmail app password
+      - key: REDIS_URL
+        sync: false          # Redis URL for Socket.io multi-instance support
 
   # ─── Frontend: Vite + React (Static Site) ────────────────────────────────
   - type: static
