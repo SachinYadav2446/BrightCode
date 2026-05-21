@@ -19,7 +19,8 @@ import {
   Sword,
   Layout,
   HelpCircle,
-  AlertTriangle
+  AlertTriangle,
+  Mail
 } from 'lucide-react';
 import PixelTrail from '../components/PixelTrail';
 import './Landing.css';
@@ -283,21 +284,37 @@ const Landing = () => {
           >
             <div className="about-text">
               <span className="about-subtitle">OUR MISSION</span>
-              <h2>Beyond the Code</h2>
+              <h2>Engineering Excellence, Redefined</h2>
               <p>
-                BrightCode isn't just a platform; it's a digital ecosystem engineered
-                to bridge the gap between theoretical knowledge and industrial-scale
-                system architecture. We provide the tools you need to build the future.
+                BrightCode is the definitive platform for engineers who demand more. We've built an ecosystem where real-time collaboration meets competitive coding, where learning factions drive innovation, and where every challenge brings you closer to mastering the craft.
               </p>
 
               <div className="about-features-grid">
                 <div className="about-feature-item">
                   <div className="feat-icon">
-                    <Zap size={20} />
+                    <Users size={20} />
                   </div>
                   <div className="feat-content">
-                    <h4>Real-time Synergy</h4>
-                    <p>Collaborate with low-latency sync and AI-assisted pair programming.</p>
+                    <h4>Faction-Based Learning</h4>
+                    <p>Join engineering guilds, compete in syndicate wars, and climb global leaderboards.</p>
+                  </div>
+                </div>
+                <div className="about-feature-item">
+                  <div className="feat-icon">
+                    <Terminal size={20} />
+                  </div>
+                  <div className="feat-content">
+                    <h4>Live Collaborative Coding</h4>
+                    <p>Pair program in real-time with low-latency sync and AI-powered assistance.</p>
+                  </div>
+                </div>
+                <div className="about-feature-item">
+                  <div className="feat-icon">
+                    <Trophy size={20} />
+                  </div>
+                  <div className="feat-content">
+                    <h4>Skill Forge Challenges</h4>
+                    <p>Master system design through timed challenges and earn XP rewards.</p>
                   </div>
                 </div>
                 <div className="about-feature-item">
@@ -305,44 +322,75 @@ const Landing = () => {
                     <Shield size={20} />
                   </div>
                   <div className="feat-content">
-                    <h4>Sandboxed Precision</h4>
-                    <p>Execute complex architectures in secure, isolated environments.</p>
+                    <h4>Secure Execution</h4>
+                    <p>Run code in isolated sandboxes with enterprise-grade security.</p>
                   </div>
                 </div>
 
               </div>
+
+              <button className="about-cta-btn" onClick={() => navigate('/auth', { state: { mode: 'register' } })}>
+                Start Your Journey <ArrowRight size={18} />
+              </button>
             </div>
 
             <div className="about-visual">
-              <div className="ide-mockup-container">
-                <div className="ide-header">
-                  <div className="ide-dots">
-                    <span className="ide-dot"></span>
-                    <span className="ide-dot"></span>
-                    <span className="ide-dot"></span>
+              <div className="stats-showcase">
+                <motion.div 
+                  className="stat-card"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                >
+                  <div className="stat-icon">
+                    <Users size={32} color="var(--primary)" />
                   </div>
-                  <div className="ide-tab">
-                    <Code2 size={14} />
-                    <span>Forge.engine.js</span>
+                  <div className="stat-number">1,247</div>
+                  <div className="stat-label">Faction Challenges</div>
+                </motion.div>
+
+                <motion.div 
+                  className="stat-card"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                  <div className="stat-icon">
+                    <Gamepad2 size={32} color="var(--primary)" />
                   </div>
-                </div>
-                <div className="ide-content">
-                  <pre>
-                    <code>
-                      <span className="code-keyword">async function</span> <span className="code-func">initializeForge</span>(config) {'{'}<br />
-                      {'  '}<span className="code-keyword">const</span> core = <span className="code-keyword">new</span> <span className="code-class">Engine</span>(config);<br />
-                      <br />
-                      {'  '}<span className="code-comment">// Optimize for high-performance clusters</span><br />
-                      {'  '}<span className="code-keyword">await</span> core.<span className="code-func">deploy</span>({'{'}<br />
-                      {'    '}target: <span className="code-str">'production'</span>,<br />
-                      {'    '}mode: <span className="code-str">'performance'</span>,<br />
-                      {'    '}autoScale: <span className="code-keyword">true</span><br />
-                      {'  '}{'}'});<br />
-                      {'}'}
-                    </code>
-                  </pre>
-                </div>
-                <div className="ide-glow"></div>
+                  <div className="stat-number">89</div>
+                  <div className="stat-label">XP Challenges</div>
+                </motion.div>
+
+                <motion.div 
+                  className="stat-card"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                >
+                  <div className="stat-icon">
+                    <Sword size={32} color="var(--primary)" />
+                  </div>
+                  <div className="stat-number">8</div>
+                  <div className="stat-label">Library</div>
+                </motion.div>
+
+                <motion.div 
+                  className="stat-card"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                >
+                  <div className="stat-icon">
+                    <Zap size={32} color="var(--primary)" />
+                  </div>
+                  <div className="stat-number">99.2%</div>
+                  <div className="stat-label">Vault</div>
+                </motion.div>
               </div>
             </div>
           </motion.div>
@@ -395,7 +443,7 @@ const Landing = () => {
               <div className="module-cta-row">
                 <button
                   className="premium-module-btn"
-                  onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
+                  onClick={() => navigate('/user-guide')}
                 >
                   <span className="btn-content">
                     Learn More <ArrowRight size={16} />
@@ -449,76 +497,183 @@ const Landing = () => {
 
       {/* Footer */}
       <footer className="landing-footer" id="about">
-        <div className="footer-glow"></div>
         <div className="footer-container">
-          <div className="footer-top-grid">
-            <div className="footer-brand">
-              <div className="footer-logo" onClick={() => navigate('/')}>
-                <div className="logo-box">
-                  <Code2 size={24} color="#fff" />
+          <motion.div 
+            className="footer-content"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <div className="footer-brand-section">
+              <motion.div 
+                className="footer-logo-large"
+                onClick={() => navigate('/')}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <div className="logo-icon-wrapper">
+                  <Code2 size={32} color="var(--primary)" />
                 </div>
-                <span className="logo-text">BrightCode</span>
-              </div>
-              <p className="footer-description">
-                Elevating the standard of technical excellence. The definitive platform for the next generation of engineers.
+                <div className="logo-text-wrapper">
+                  <span className="logo-text-large">BrightCode</span>
+                  <span className="logo-tagline">Engineering Excellence</span>
+                </div>
+              </motion.div>
+              
+              <p className="footer-tagline">
+                The definitive platform for engineers who demand more. Master your craft through competitive coding and collaborative learning.
               </p>
-              <div className="footer-social-links">
-                <motion.a whileHover={{ y: -3 }} href="#" className="social-icon-btn" title="GitHub">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.28 1.15-.28 2.35 0 3.5-.73 1.02-1.08 2.25-1 3.5 0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" /><path d="M9 18c-4.51 2-5-2-7-2" /></svg>
-                </motion.a>
-                <motion.a whileHover={{ y: -3 }} href="#" className="social-icon-btn" title="Twitter">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" /></svg>
-                </motion.a>
-                <motion.a whileHover={{ y: -3 }} href="#" className="social-icon-btn" title="LinkedIn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" /><rect width="4" height="12" x="2" y="9" /><circle cx="4" cy="4" r="2" /></svg>
-                </motion.a>
-                <motion.a whileHover={{ y: -3 }} href="#" className="social-icon-btn" title="More">
-                  <ExternalLink size={20} />
-                </motion.a>
+
+              <div className="footer-cta">
+                <motion.button 
+                  className="footer-cta-btn"
+                  onClick={() => navigate('/auth', { state: { mode: 'register' } })}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Start Building <ArrowRight size={16} />
+                </motion.button>
               </div>
             </div>
 
-            <div className="footer-nav-groups">
-              <div className="footer-nav-col">
-                <h5 className="footer-nav-title">Platform</h5>
-                <ul className="footer-nav-list">
-                  <li><a href="#">Explore</a></li>
-                  <li><a href="#">Challenges</a></li>
-                  <li><a href="#">Factions</a></li>
-                  <li><a href="#">Leaderboard</a></li>
-                </ul>
+            <div className="footer-links-section">
+              <div className="footer-link-group">
+                <h4 className="footer-link-title">Platform</h4>
+                <div className="footer-link-list">
+                  <motion.a 
+                    href="#" 
+                    className="footer-link"
+                    whileHover={{ x: 5 }}
+                  >
+                    <span className="link-dot"></span>
+                    Explore
+                  </motion.a>
+                  <motion.a 
+                    href="#" 
+                    className="footer-link"
+                    whileHover={{ x: 5 }}
+                  >
+                    <span className="link-dot"></span>
+                    Challenges
+                  </motion.a>
+                  <motion.a 
+                    href="#" 
+                    className="footer-link"
+                    whileHover={{ x: 5 }}
+                  >
+                    <span className="link-dot"></span>
+                    Factions
+                  </motion.a>
+                  <motion.a 
+                    href="#" 
+                    className="footer-link"
+                    whileHover={{ x: 5 }}
+                  >
+                    <span className="link-dot"></span>
+                    Leaderboard
+                  </motion.a>
+                </div>
               </div>
-              <div className="footer-nav-col">
-                <h5 className="footer-nav-title">Resources</h5>
-                <ul className="footer-nav-list">
-                  <li><a href="/user-guide">User Guide</a></li>
-                  <li><a href="#">Documentation</a></li>
-                  <li><a href="#">System Status</a></li>
-                  <li><a href="#">Community</a></li>
-                  <li><a href="#">Guidelines</a></li>
-                </ul>
-              </div>
-              <div className="footer-nav-col">
-                <h5 className="footer-nav-title">Legal</h5>
-                <ul className="footer-nav-list">
-                  <li><a href="#">Privacy Policy</a></li>
-                  <li><a href="#">Terms of Service</a></li>
-                  <li><a href="#">Cookie Policy</a></li>
-                </ul>
-              </div>
-            </div>
-          </div>
 
-          <div className="footer-divider"></div>
+              <div className="footer-link-group">
+                <h4 className="footer-link-title">Resources</h4>
+                <div className="footer-link-list">
+                  <motion.a 
+                    href="/user-guide" 
+                    className="footer-link"
+                    whileHover={{ x: 5 }}
+                  >
+                    <span className="link-dot"></span>
+                    User Guide
+                  </motion.a>
+                  <motion.a 
+                    href="#" 
+                    className="footer-link"
+                    whileHover={{ x: 5 }}
+                  >
+                    <span className="link-dot"></span>
+                    Documentation
+                  </motion.a>
+                  <motion.a 
+                    href="#" 
+                    className="footer-link"
+                    whileHover={{ x: 5 }}
+                  >
+                    <span className="link-dot"></span>
+                    API Reference
+                  </motion.a>
+                  <motion.a 
+                    href="#" 
+                    className="footer-link"
+                    whileHover={{ x: 5 }}
+                  >
+                    <span className="link-dot"></span>
+                    Community
+                  </motion.a>
+                </div>
+              </div>
 
-          <div className="footer-bottom-bar">
-            <div className="copyright">
-              &copy; {new Date().getFullYear()} BrightCode Ecosystem. All rights reserved.
+              <div className="footer-link-group">
+                <h4 className="footer-link-title">Connect</h4>
+                <div className="footer-social-grid">
+                  <motion.a 
+                    href="#" 
+                    className="social-card"
+                    whileHover={{ y: -5, scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.28 1.15-.28 2.35 0 3.5-.73 1.02-1.08 2.25-1 3.5 0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" /><path d="M9 18c-4.51 2-5-2-7-2" /></svg>
+                  </motion.a>
+                  <motion.a 
+                    href="#" 
+                    className="social-card"
+                    whileHover={{ y: -5, scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" /></svg>
+                  </motion.a>
+                  <motion.a 
+                    href="#" 
+                    className="social-card"
+                    whileHover={{ y: -5, scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" /><rect width="4" height="12" x="2" y="9" /><circle cx="4" cy="4" r="2" /></svg>
+                  </motion.a>
+                  <motion.a 
+                    href="#" 
+                    className="social-card"
+                    whileHover={{ y: -5, scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Mail size={20} />
+                  </motion.a>
+                </div>
+              </div>
             </div>
-            <div className="footer-bottom-links">
-              <span className="built-with">Built for the Elite</span>
+          </motion.div>
+
+          <motion.div 
+            className="footer-bottom"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <div className="footer-bottom-content">
+              <span className="footer-copyright">
+                &copy; {new Date().getFullYear()} BrightCode. Crafted with precision.
+              </span>
+              <div className="footer-legal-links">
+                <a href="#" className="footer-legal-link">Privacy</a>
+                <span className="footer-separator">•</span>
+                <a href="#" className="footer-legal-link">Terms</a>
+                <span className="footer-separator">•</span>
+                <a href="#" className="footer-legal-link">Cookies</a>
+              </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </footer>
     </div>

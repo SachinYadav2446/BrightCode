@@ -1,4 +1,4 @@
-﻿import API_URL from '../config';
+import API_URL from '../config';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Users, Zap, Plus, Crown, Shield, Code, Swords, Trophy, Target, Award, Calendar, Sparkles, Search, Filter, TrendingUp, Globe, Lock, Trash2, UserMinus, MoreVertical, MessageSquare } from 'lucide-react';
@@ -12,7 +12,7 @@ import ChatPanel from '../components/ChatPanel';
 import { initSocket } from '../socket';
 import './Factions.css';
 
-const EMBLEMS = ['âš”ï¸', 'ðŸ›¡ï¸', 'ðŸ”¥', 'âš¡', 'ðŸŒ™', 'ðŸ’Ž', 'ðŸ¦…', 'ðŸ‰', 'ðŸŒŠ', 'â˜„ï¸', 'ðŸ§ª', 'ðŸŽ¯'];
+const EMBLEMS = ['⚔️', '🛡️', '🔥', '⚡', '🌙', '💎', '🦅', '🐉', '🌊', '☄️', '🧪', '🎯'];
 
 const FEATURE_CARDS = [
     { id: 'rankings', title: 'Global Rankings', icon: <Trophy size={32} />, desc: 'Dominate the global leaderboard and establish your syndicate\'s legacy.', color: 'var(--primary-dark)' },
@@ -36,7 +36,7 @@ const Factions = () => {
     const [myFactionEmblem, setMyFactionEmblem] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [newFaction, setNewFaction] = useState({ name: '', description: '', emblem: 'âš”ï¸', isPublic: true });
+    const [newFaction, setNewFaction] = useState({ name: '', description: '', emblem: '⚔️', isPublic: true });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showHQ, setShowHQ] = useState(false);
     const [activeMemberMenu, setActiveMemberMenu] = useState(null);
@@ -55,7 +55,7 @@ const Factions = () => {
 
             const roomId = `faction_${myFactionId}`;
 
-            // Wait for connection before joining â€” fixes the race condition
+            // Wait for connection before joining — fixes the race condition
             s.on('connect', () => {
                 console.log('[Chat] Connected, joining room:', roomId);
                 s.emit('join-chat-room', { roomId });
@@ -119,7 +119,7 @@ const Factions = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setShowCreateModal(false);
-            setNewFaction({ name: '', description: '', emblem: 'âš”ï¸', isPublic: true });
+            setNewFaction({ name: '', description: '', emblem: '⚔️', isPublic: true });
             fetchFactions();
         } catch (err) {
             // Silently handle error
@@ -248,9 +248,7 @@ const Factions = () => {
                         onClick={(e) => { if (e.target === e.currentTarget) setShowCreateModal(false); }}>
                         <motion.div className="faction-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
                             <div className="faction-modal-header">
-                                <Code size={22} color="#818cf8" />
                                 <h3>Found a New Guild</h3>
-                                <p>Unite engineers under your banner and collaborate for global ranking.</p>
                             </div>
 
                             <div className="emblem-picker">
@@ -349,7 +347,7 @@ const Factions = () => {
                 </div>
 
                 <div className="faction-hero-cta">
-                    <div className="faction-hero-tag">âš”ï¸ Developer Guilds</div>
+                    <div className="faction-hero-tag">Developer Guilds</div>
                     <h1 className="faction-hero-title">
                         Choose Your <span className="faction-hero-red">Faction.</span><br />
                         Prove Your Worth.
@@ -815,7 +813,7 @@ const Factions = () => {
                         </div>
                     ) : factions.filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
                         <motion.div className="factions-empty" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
-                            <div className="empty-emblem">{searchTerm ? 'ðŸ”' : 'âš”ï¸'}</div>
+                            <div className="empty-emblem">{searchTerm ? '🔍' : '⚔️'}</div>
                             <h3>{searchTerm ? 'No matches found' : 'No active syndicates found in the global registry'}</h3>
                         </motion.div>
                     ) : (
@@ -858,7 +856,7 @@ const Factions = () => {
                                                     <td className="col-rank">{idx + 1}</td>
                                                     <td className="col-guild">
                                                         <div className="guild-identity">
-                                                            <span className="guild-emblem-mini">{faction.emblem || 'âš”ï¸'}</span>
+                                                            <span className="guild-emblem-mini">{faction.emblem || '⚔️'}</span>
                                                             <div className="guild-name-group">
                                                                 <span className="guild-name-text">{faction.name}</span>
                                                                 {isMine && <span className="your-guild-tag">Your Guild</span>}

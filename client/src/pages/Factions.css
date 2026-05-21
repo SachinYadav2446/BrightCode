@@ -199,60 +199,62 @@
 
 .faction-modal {
     background: var(--f-surface);
-    border: 1px solid var(--f-border-strong);
-    border-radius: 20px;
+    border: 1px solid var(--f-border);
+    border-radius: 12px;
     width: 100%;
-    max-width: 520px;
+    max-width: 400px;
     overflow: hidden;
-    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(var(--primary-rgb), 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
 .faction-modal-header {
-    padding: 28px 28px 20px;
+    padding: 12px 20px 10px;
     border-bottom: 1px solid var(--f-border);
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 2px;
 }
 
 .faction-modal-header h3 {
-    font-size: 1.3rem;
-    font-weight: 800;
-    color: var(--f-cream);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--f-text);
+    letter-spacing: 0;
 }
 
 .faction-modal-header p {
-    font-size: 0.82rem;
+    font-size: 0.7rem;
     color: var(--f-text-muted);
-    line-height: 1.5;
+    line-height: 1.2;
 }
 
 .emblem-picker {
-    padding: 20px 28px 0;
+    padding: 18px 20px 0;
+    margin-bottom: 12px;
 }
 
 .emblem-picker label {
     display: block;
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--f-text-muted);
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--f-text);
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
 }
 
 .emblems-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    gap: 8px;
+    gap: 4px;
 }
 
 .emblem-btn {
     aspect-ratio: 1;
-    font-size: 1.4rem;
+    font-size: 1rem;
     border: 1px solid var(--f-border);
     background: var(--f-surface-2);
-    border-radius: 10px;
+    border-radius: 5px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -266,23 +268,23 @@
 }
 
 .emblem-btn.selected {
-    border-color: var(--f-red);
-    background: rgba(var(--primary-rgb), 0.1);
-    box-shadow: 0 0 12px var(--f-red-glow);
-    transform: scale(1.1);
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.15);
+    transform: scale(1.05);
 }
 
 .faction-form-group {
-    padding: 16px 28px 0;
+    padding: 16px 20px 0;
+    margin-bottom: 16px;
 }
 
 .faction-form-group label {
     display: block;
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--f-text-muted);
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--f-text);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     margin-bottom: 8px;
 }
 
@@ -291,10 +293,10 @@
     width: 100%;
     background: var(--f-surface-2);
     border: 1px solid var(--f-border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    color: var(--f-cream);
-    font-size: 0.9rem;
+    border-radius: 5px;
+    padding: 6px 10px;
+    color: var(--f-text);
+    font-size: 0.8rem;
     font-family: var(--font-sans), sans-serif;
     outline: none;
     transition: border-color 0.2s;
@@ -303,8 +305,8 @@
 
 .faction-input:focus,
 .faction-textarea:focus {
-    border-color: var(--f-red);
-    box-shadow: 0 0 0 3px var(--f-red-glow);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
 }
 
 .faction-input::placeholder,
@@ -314,16 +316,18 @@
 
 .faction-modal-footer {
     display: flex;
-    gap: 12px;
-    padding: 24px 28px;
+    gap: 8px;
+    padding: 16px 20px;
     border-top: 1px solid var(--f-border);
-    margin-top: 20px;
+    margin-top: 16px;
 }
 
 .faction-modal-footer .secondary-btn,
 .faction-modal-footer .primary-btn {
     flex: 1;
     justify-content: center;
+    padding: 8px 12px;
+    font-size: 0.8rem;
 }
 
 /* ══════════════════════════════════════════════
@@ -1017,6 +1021,7 @@
     width: 100%;
     position: relative;
     z-index: 10;
+    border: 1px solid var(--f-border);
 }
 
 .factions-container {
@@ -2136,8 +2141,9 @@
 /* Privacy Toggle in Modal */
 .privacy-toggle-group {
     display: flex;
-    gap: 12px;
-    margin-top: 10px;
+    gap: 8px;
+    margin-top: 8px;
+    margin-bottom: 12px;
 }
 
 .privacy-opt {
@@ -2145,13 +2151,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 12px;
+    gap: 4px;
+    padding: 8px;
     background: #fff;
     border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+    border-radius: 6px;
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     cursor: pointer;
     transition: all 0.2s;
     color: #8a7f72;
