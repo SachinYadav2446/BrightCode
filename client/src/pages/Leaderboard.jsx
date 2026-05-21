@@ -33,6 +33,7 @@ const Leaderboard = () => {
 
     const [rankers, setRankers]           = useState([]);
     const [loading, setLoading]           = useState(true);
+    const [minLoadingComplete, setMinLoadingComplete] = useState(false);
     const [dbError, setDbError]           = useState(null);
     const [searchQuery, setSearchQuery]   = useState('');
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -92,6 +93,12 @@ const Leaderboard = () => {
         window.scrollTo(0, 0);
         fetchRankings();
         syncMyXP();
+        
+        // Set minimum loading duration for branding animation (2.5 seconds)
+        const minLoadingTimer = setTimeout(() => {
+            setMinLoadingComplete(true);
+        }, 2500);
+        
         const socket = io(`${API_URL}`, { transports: ['websocket'] });
         socketRef.current = socket;
         socket.on('leaderboard-update', (freshData) => {
@@ -102,7 +109,11 @@ const Leaderboard = () => {
             }
             setLastUpdated(new Date());
         });
-        return () => { socket.disconnect(); socketRef.current = null; };
+        return () => { 
+            clearTimeout(minLoadingTimer);
+            socket.disconnect(); 
+            socketRef.current = null; 
+        };
     }, []);
 
     useEffect(() => {
@@ -218,6 +229,72 @@ const Leaderboard = () => {
                 {dbError && (
                     <motion.div initial={{ opacity:0, y:-10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }} className="lb-error-banner">
                         <Shield size={13}/> {dbError}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Branded Loading Overlay ── */}
+            <AnimatePresence>
+                {(loading || !minLoadingComplete) && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="lb-branded-loader"
+                    >
+                        <div className="lb-loader-content">
+                            <motion.div
+                                className="lb-loader-logo"
+                                initial={{ scale: 0, rotate: -180 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                            >
+                                <Trophy size={64} className="lb-loader-icon" />
+                            </motion.div>
+                            <motion.h1
+                                className="lb-loader-title"
+                                initial={{ y: 20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.3, duration: 0.6 }}
+                            >
+                                BRIGHTCODE
+                            </motion.h1>
+                            <motion.p
+                                className="lb-loader-subtitle"
+                                initial={{ y: 20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.5, duration: 0.6 }}
+                            >
+                                HALL OF FAME
+                            </motion.p>
+                            <motion.div
+                                className="lb-loader-dots"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.7 }}
+                            >
+                                {[0, 1, 2].map((i) => (
+                                    <motion.div
+                                        key={i}
+                                        className="lb-loader-dot"
+                                        animate={{
+                                            scale: [1, 1.5, 1],
+                                            opacity: [0.5, 1, 0.5]
+                                        }}
+                                        transition={{
+                                            duration: 1.2,
+                                            repeat: Infinity,
+                                            delay: i * 0.2
+                                        }}
+                                    />
+                                ))}
+                            </motion.div>
+                        </div>
+                        <div className="lb-loader-bg">
+                            <div className="lb-loader-grid" />
+                            <div className="lb-loader-glow lb-loader-glow-1" />
+                            <div className="lb-loader-glow lb-loader-glow-2" />
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
