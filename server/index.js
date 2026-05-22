@@ -21,6 +21,7 @@ const IntraFactionArena = require('./intraFactionArena');
 const rateLimiter = require('./utils/rateLimiter');
 const chatbotAPI = require('./chatbotAPI');
 const questionsAPI = require('./questionsAPI');
+const logger = require('./logger');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || '*';
 const JWT_SECRET = process.env.JWT_SECRET || 'brightcode_secret_key_123';
@@ -51,7 +52,7 @@ if (process.env.NODE_ENV === 'production' && process.env.DB_CONNECTION_STRING) {
         pingInterval: 25000,
         adapter: createAdapter(pgPool),
     });
-    console.log('[SOCKET] Using PostgreSQL adapter for multi-instance support (FREE)');
+    logger.info('[SOCKET] Using PostgreSQL adapter for multi-instance support (FREE)');
 } else {
     io = new Server(server, {
         cors: {
@@ -64,7 +65,7 @@ if (process.env.NODE_ENV === 'production' && process.env.DB_CONNECTION_STRING) {
         pingTimeout: 60000,
         pingInterval: 25000,
     });
-    console.log('[SOCKET] Using in-memory adapter (single instance)');
+    logger.info('[SOCKET] Using in-memory adapter (single instance)');
 }
 
 // Chat History Store: roomId -> Array of messages
@@ -103,9 +104,9 @@ const loadNotesStore = () => {
             const data = JSON.parse(fs.readFileSync(NOTES_DB_FILE, 'utf8'));
             notesMemoryStore.push(...(data.notes || []));
             foldersMemoryStore.push(...(data.folders || []));
-            console.log(`[NOTES PERSISTENCE] Loaded ${notesMemoryStore.length} notes and ${foldersMemoryStore.length} folders from notes_db.json`);
+            logger.info(`[NOTES PERSISTENCE] Loaded ${notesMemoryStore.length} notes and ${foldersMemoryStore.length} folders from notes_db.json`);
         } catch (e) {
-            console.error('[NOTES PERSISTENCE] Error loading notes DB file:', e);
+            logger.error('[NOTES PERSISTENCE] Error loading notes DB file:', e);
         }
     }
 };
@@ -114,7 +115,7 @@ const saveNotesStore = () => {
     try {
         fs.writeFileSync(NOTES_DB_FILE, JSON.stringify({ notes: notesMemoryStore, folders: foldersMemoryStore }, null, 2));
     } catch (e) {
-        console.error('[NOTES PERSISTENCE] Error saving notes DB file:', e);
+        logger.error('[NOTES PERSISTENCE] Error saving notes DB file:', e);
     }
 };
 
@@ -132,9 +133,9 @@ const loadStore = () => {
         try {
             memoryStore = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
             memoryStore.users = (memoryStore.users || []).map(normalizeMemoryUser);
-            console.log(`[PERSISTENCE] Loaded ${memoryStore.users.length} users from users_db.json`);
+            logger.info(`[PERSISTENCE] Loaded ${memoryStore.users.length} users from users_db.json`);
         } catch (e) {
-            console.error('[PERSISTENCE] Error loading memory DB file:', e);
+            logger.error('[PERSISTENCE] Error loading memory DB file:', e);
         }
     }
 };
@@ -144,7 +145,7 @@ const saveStore = () => {
     try {
         fs.writeFileSync(DB_FILE, JSON.stringify(memoryStore, null, 2));
     } catch (e) {
-        console.error('[PERSISTENCE] Error saving memory DB file:', e);
+        logger.error('[PERSISTENCE] Error saving memory DB file:', e);
     }
 };
 
@@ -157,15 +158,15 @@ const loadFactions = () => {
         try {
             const data = JSON.parse(fs.readFileSync(FACTIONS_FILE, 'utf8'));
             (data || []).forEach(f => factions.set(f.id, f));
-            console.log(`[FACTIONS] Loaded ${factions.size} factions from factions_db.json`);
-        } catch (e) { console.error('[FACTIONS] Load error:', e); }
+            logger.info(`[FACTIONS] Loaded ${factions.size} factions from factions_db.json`);
+        } catch (e) { logger.error('[FACTIONS] Load error:', e); }
     }
 };
 
 const saveFactions = () => {
     try {
         fs.writeFileSync(FACTIONS_FILE, JSON.stringify(Array.from(factions.values()), null, 2));
-    } catch (e) { console.error('[FACTIONS] Save error:', e); }
+    } catch (e) { logger.error('[FACTIONS] Save error:', e); }
 };
 
 loadFactions();
@@ -228,7 +229,7 @@ const computeStreakFromActivity = (activity = {}) => {
 
 // PostgreSQL Configuration using Neon serverless driver (HTTP)
 const connectionString = process.env.DB_CONNECTION_STRING;
-console.log('[DB] Using connection string:', connectionString.replace(/:([^:@]+)@/, ':***@'));
+logger.info('[DB] Using connection string:', connectionString.replace(/:([^:@]+)@/, ':***@'));
 
 const sql = neon(connectionString);
 
@@ -236,7 +237,7 @@ const sql = neon(connectionString);
 const pool = {
     query: async (text, params = []) => {
         try {
-            console.log('[DB Query]:', text.slice(0, 100), params);
+            logger.debug('[DB Query]:', text.slice(0, 100), params);
             
             // For neon(), we need to build the query with parameters
             // Create a helper to replace $1, $2 with ${param} for neon template literals
@@ -258,8 +259,8 @@ const pool = {
                 rowCount: result.length
             };
         } catch (err) {
-            console.error('[DB Query Error]:', text, params, err);
-            console.error('[DB Error Stack]:', err.stack);
+            logger.error('[DB Query Error]:', text, params, err);
+            logger.error('[DB Error Stack]:', err.stack);
             throw err;
         }
     }
@@ -285,12 +286,12 @@ const pool = {
 // Initialize Database
 const initDB = async () => {
     try {
-        console.log('[DB] Starting database initialization with Neon HTTP...');
+        logger.info('[DB] Starting database initialization with Neon HTTP...');
         
         // Test simple query first
-        console.log('[DB] Testing Neon connection...');
+        logger.info('[DB] Testing Neon connection...');
         const testResult = await pool.query('SELECT NOW() as current_time');
-        console.log('[DB] ✅ Neon connected successfully! Current time:', testResult.rows[0].current_time);
+        logger.info('[DB] ✅ Neon connected successfully! Current time:', testResult.rows[0].current_time);
         
         // Create users table
         await pool.query(`
@@ -322,18 +323,18 @@ const initDB = async () => {
         try {
             await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS session_id TEXT;');
         } catch (e) {
-            console.log('[DB] Note: Could not add session_id column, it may already exist or there was an error.');
+            logger.warn('[DB] Note: Could not add session_id column, it may already exist or there was an error.');
         }
 
-        console.log('[DB] ✅ Users table created');
+        logger.info('[DB] ✅ Users table created');
         
         // Initialize CodeVault notes and folders tables (we'll handle migrations manually for now)
-        console.log('[DB] PostgreSQL Tables Initialized');
-        console.log('[DB] Database initialization complete!');
+        logger.info('[DB] PostgreSQL Tables Initialized');
+        logger.info('[DB] Database initialization complete!');
     } catch (err) {
-        console.error('DATABASE INIT ERROR:', err);
-        console.error('Full error:', err.stack);
-        console.log('--- SWAPPING TO MEMORY FALLBACK MODE (USING PERSISTENT users_db.json + notes_db.json) ---');
+        logger.error('DATABASE INIT ERROR:', err);
+        logger.error('Full error:', err.stack);
+        logger.warn('--- SWAPPING TO MEMORY FALLBACK MODE (USING PERSISTENT users_db.json + notes_db.json) ---');
         useMemoryDB = true;
         loadStore();
         loadNotesStore();
@@ -345,14 +346,14 @@ initDB();
 const otps = new Map(); // Store OTPs: email -> { otp, userData, expires }
 
 // Use Resend for email (works on Render free tier, unlike SMTP)
-console.log("[MAIL] RESEND_API_KEY present:", !!process.env.RESEND_API_KEY);
+logger.info("[MAIL] RESEND_API_KEY present:", !!process.env.RESEND_API_KEY);
 const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Fallback to nodemailer for local development if RESEND_API_KEY is not set
 let transporter = null;
 if (!process.env.RESEND_API_KEY && process.env.SMTP_USER && process.env.SMTP_PASS) {
-    console.log("[MAIL] Using SMTP fallback (RESEND_API_KEY not set)");
+    logger.info("[MAIL] Using SMTP fallback (RESEND_API_KEY not set)");
     transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -365,9 +366,9 @@ if (!process.env.RESEND_API_KEY && process.env.SMTP_USER && process.env.SMTP_PAS
     });
     transporter.verify(function (error, success) {
         if (error) {
-            console.log("[MAIL] Connection Error:", error);
+            logger.error("[MAIL] Connection Error:", error);
         } else {
-            console.log("[MAIL] Server is ready to take our messages");
+            logger.info("[MAIL] Server is ready to take our messages");
         }
     });
 }
@@ -428,7 +429,7 @@ app.post('/support', async (req, res) => {
         }
         res.json({ message: "Your message has been sent to our support team." });
     } catch (err) {
-        console.error('SUPPORT MAIL ERROR:', err);
+        logger.error('SUPPORT MAIL ERROR:', err);
         res.status(500).json({ error: 'Failed to send support message' });
     }
 });
@@ -492,9 +493,9 @@ app.post('/send-otp', async (req, res) => {
 
         otps.set(email, { otp, expires });
 
-        console.log(`\n[OTP] Verification Code for ${email}: ${otp}\n`);
+        logger.info(`[OTP] Verification Code for ${email}: ${otp}`);
 
-        console.log(`[MAIL] Attempting to send email to ${email}...`);
+        logger.info(`[MAIL] Attempting to send email to ${email}...`);
 
         try {
             if (process.env.RESEND_API_KEY) {
@@ -541,10 +542,10 @@ app.post('/send-otp', async (req, res) => {
             } else {
                 throw new Error('No email service configured');
             }
-            console.log(`[MAIL] Email sent successfully to ${email}`);
+            logger.info(`[MAIL] Email sent successfully to ${email}`);
             res.json({ message: "Verification code sent to your email." });
         } catch (mailErr) {
-            console.error(`[MAIL] Failed to send email:`, mailErr.message);
+            logger.error(`[MAIL] Failed to send email:`, mailErr.message);
             try {
                 fs.appendFileSync(path.join(__dirname, 'mail-error.log'), `[${new Date().toISOString()}] To: ${email} Error: ${mailErr.message}\n`);
             } catch (e) {}
@@ -566,12 +567,12 @@ app.post('/register', async (req, res) => {
     email = email.toLowerCase().trim();
     otp = otp.toString().trim();
 
-    console.log(`[AUTH] Registering ${email} with OTP: ${otp}`);
+    logger.info(`[AUTH] Registering ${email} with OTP: ${otp}`);
     const record = otps.get(email);
-    console.log(`[AUTH] Found Record:`, record);
+    logger.debug(`[AUTH] Found Record:`, record);
 
     if (!record || record.otp !== otp) {
-        console.log(`[AUTH] OTP Mismatch: Expected ${record?.otp}, Got ${otp}`);
+        logger.warn(`[AUTH] OTP Mismatch: Expected ${record?.otp}, Got ${otp}`);
         return sendError(res, 400, "Invalid OTP", "The verification code is incorrect.");
     }
 
@@ -625,7 +626,7 @@ app.post('/register', async (req, res) => {
             mern_level: 0
         });
     } catch (err) {
-        console.error('SERVER REGISTER ERROR:', err);
+        logger.error('SERVER REGISTER ERROR:', err);
         sendError(res, 500, "Database fault", err.message);
     }
 });
@@ -681,7 +682,7 @@ app.post('/login', async (req, res) => {
             createdAt: user.created_at || user.joinedAt || null
         });
     } catch (err) {
-        console.error('SERVER LOGIN ERROR:', err);
+        logger.error('SERVER LOGIN ERROR:', err);
         sendError(res, 500, "Login failed", err.message);
     }
 });
@@ -704,7 +705,7 @@ const authenticateToken = async (req, res, next) => {
                 const { rows } = await pool.query('SELECT session_id FROM users WHERE id = $1', [user.id]);
                 if (rows.length > 0) currentSessionId = rows[0].session_id;
             } catch (e) {
-                console.error('[AUTH] DB error fetching session_id', e);
+                logger.error('[AUTH] DB error fetching session_id', e);
             }
         }
         
@@ -752,9 +753,9 @@ const initFriendsTable = async () => {
                 UNIQUE(requester_id, recipient_id)
             );
         `);
-        console.log('[FRIENDS] Friends table ready');
+        logger.info('[FRIENDS] Friends table ready');
     } catch (e) {
-        console.error('[FRIENDS] Table init error:', e.message);
+        logger.error('[FRIENDS] Table init error:', e.message);
     }
 };
 initFriendsTable();
@@ -780,7 +781,7 @@ app.get('/friends/search', authenticateToken, async (req, res) => {
     const { q } = req.query;
     if (!q || q.length < 2) return res.json([]);
     const myId = req.user.id;
-    console.log(`[FRIENDS SEARCH] q="${q}" myId="${myId}" useMemoryDB=${useMemoryDB} totalUsers=${memoryStore.users.length}`);
+    logger.debug(`[FRIENDS SEARCH] q="${q}" myId="${myId}" useMemoryDB=${useMemoryDB} totalUsers=${memoryStore.users.length}`);
     try {
         let users;
         if (useMemoryDB) {
@@ -788,7 +789,7 @@ app.get('/friends/search', authenticateToken, async (req, res) => {
                 .filter(u => u.id !== myId && u.username?.toLowerCase().includes(q.toLowerCase()))
                 .slice(0, 10)
                 .map(u => ({ id: u.id, username: u.username, xp: u.xp || 0, level: u.level || 'Novice' }));
-            console.log(`[FRIENDS SEARCH] Memory filter found ${users.length} users`);
+            logger.debug(`[FRIENDS SEARCH] Memory filter found ${users.length} users`);
         } else {
             const { rows } = await pool.query(
                 `SELECT id, username, xp, level FROM users WHERE id != $1 AND username ILIKE $2 LIMIT 10`,
@@ -818,7 +819,7 @@ app.get('/friends/search', authenticateToken, async (req, res) => {
         }));
         res.json(results);
     } catch (e) {
-        console.error('[FRIENDS] Search error:', e.message);
+        logger.error('[FRIENDS] Search error:', e.message);
         res.status(500).json({ error: 'Search failed' });
     }
 });
@@ -851,7 +852,7 @@ app.post('/friends/request', authenticateToken, async (req, res) => {
         io.to(`user:${recipientId}`).emit('friend:request', { from: requester });
         res.json({ success: true });
     } catch (e) {
-        console.error('[FRIENDS] Request error:', e.message);
+        logger.error('[FRIENDS] Request error:', e.message);
         res.status(500).json({ error: 'Failed to send request' });
     }
 });
@@ -939,7 +940,7 @@ app.get('/friends', authenticateToken, async (req, res) => {
         }
         res.json({ friends: accepted, incoming, outgoing });
     } catch (e) {
-        console.error('[FRIENDS] Get error:', e.message);
+        logger.error('[FRIENDS] Get error:', e.message);
         res.status(500).json({ error: 'Failed to get friends' });
     }
 });
@@ -1014,7 +1015,7 @@ app.post('/update-profile', authenticateToken, async (req, res) => {
             createdAt: user.created_at
         });
     } catch (err) {
-        console.error('UPDATE PROFILE ERROR:', err);
+        logger.error('UPDATE PROFILE ERROR:', err);
         res.status(500).json({ error: 'Database error: ' + err.message });
     }
 });
@@ -1079,7 +1080,7 @@ app.post('/change-password', authenticateToken, async (req, res) => {
         
         res.json({ success: true, message: 'Password changed successfully' });
     } catch (err) {
-        console.error('CHANGE PASSWORD ERROR:', err);
+        logger.error('CHANGE PASSWORD ERROR:', err);
         res.status(500).json({ error: 'Database error: ' + err.message });
     }
 });
@@ -1225,7 +1226,7 @@ app.get('/profile/:username', async (req, res) => {
             online: isOnline,
         });
     } catch (e) {
-        console.error('[PROFILE] Error:', e.message);
+        logger.error('[PROFILE] Error:', e.message);
         res.status(500).json({ error: 'Failed to fetch profile' });
     }
 });
@@ -1298,7 +1299,7 @@ app.get('/api/notes', authenticateToken, async (req, res) => {
         }));
         res.json(notes);
     } catch (err) {
-        console.error('GET /api/notes ERROR:', err);
+        logger.error('GET /api/notes ERROR:', err);
         res.status(500).json({ error: 'Failed to fetch notes' });
     }
 });
@@ -1319,7 +1320,7 @@ app.get('/api/notes/related/:challengeId', authenticateToken, async (req, res) =
         );
         res.json(result.rows);
     } catch (err) {
-        console.error('GET /api/notes/related/:challengeId ERROR:', err);
+        logger.error('GET /api/notes/related/:challengeId ERROR:', err);
         res.status(500).json({ error: 'Failed to fetch related notes' });
     }
 });
@@ -1340,7 +1341,7 @@ app.get('/api/notes/:id', authenticateToken, async (req, res) => {
         if (result.rows.length === 0) return res.status(404).json({ error: 'Note not found' });
         res.json(result.rows[0]);
     } catch (err) {
-        console.error('GET /api/notes/:id ERROR:', err);
+        logger.error('GET /api/notes/:id ERROR:', err);
         res.status(500).json({ error: 'Failed to fetch note' });
     }
 });
@@ -1389,7 +1390,7 @@ app.post('/api/notes', authenticateToken, async (req, res) => {
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
-        console.error('POST /api/notes ERROR:', err);
+        logger.error('POST /api/notes ERROR:', err);
         res.status(500).json({ error: 'Failed to create note' });
     }
 });
@@ -1432,7 +1433,7 @@ app.put('/api/notes/:id', authenticateToken, async (req, res) => {
         );
         res.json(result.rows[0]);
     } catch (err) {
-        console.error('PUT /api/notes/:id ERROR:', err);
+        logger.error('PUT /api/notes/:id ERROR:', err);
         res.status(500).json({ error: 'Failed to update note' });
     }
 });
@@ -1458,7 +1459,7 @@ app.delete('/api/notes/:id', authenticateToken, async (req, res) => {
         );
         res.json({ message: 'Note deleted successfully' });
     } catch (err) {
-        console.error('DELETE /api/notes/:id ERROR:', err);
+        logger.error('DELETE /api/notes/:id ERROR:', err);
         res.status(500).json({ error: 'Failed to delete note' });
     }
 });
@@ -1488,7 +1489,7 @@ app.get('/api/folders', authenticateToken, async (req, res) => {
         );
         res.json(result.rows);
     } catch (err) {
-        console.error('GET /api/folders ERROR:', err);
+        logger.error('GET /api/folders ERROR:', err);
         res.status(500).json({ error: 'Failed to fetch folders' });
     }
 });
@@ -1530,7 +1531,7 @@ app.post('/api/folders', authenticateToken, async (req, res) => {
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
-        console.error('POST /api/folders ERROR:', err);
+        logger.error('POST /api/folders ERROR:', err);
         res.status(500).json({ error: 'Failed to create folder' });
     }
 });
@@ -1572,7 +1573,7 @@ app.put('/api/folders/:id', authenticateToken, async (req, res) => {
         );
         res.json(result.rows[0]);
     } catch (err) {
-        console.error('PUT /api/folders/:id ERROR:', err);
+        logger.error('PUT /api/folders/:id ERROR:', err);
         res.status(500).json({ error: 'Failed to rename folder' });
     }
 });
@@ -1603,7 +1604,7 @@ app.delete('/api/folders/:id', authenticateToken, async (req, res) => {
         await pool.query('DELETE FROM folders WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
         res.json({ message: 'Folder deleted successfully' });
     } catch (err) {
-        console.error('DELETE /api/folders/:id ERROR:', err);
+        logger.error('DELETE /api/folders/:id ERROR:', err);
         res.status(500).json({ error: 'Failed to delete folder' });
     }
 });
@@ -1638,7 +1639,7 @@ app.get('/api/search', authenticateToken, async (req, res) => {
         );
         res.json(result.rows);
     } catch (err) {
-        console.error('GET /api/search ERROR:', err);
+        logger.error('GET /api/search ERROR:', err);
         res.status(500).json({ error: 'Search failed' });
     }
 });

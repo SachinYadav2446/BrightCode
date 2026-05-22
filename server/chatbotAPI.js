@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
+const logger = require('./logger');
 
 const SYSTEM_PROMPT = `You are "Pal" - a friendly, witty AI coding buddy for BrightCode, an elite collaborative coding platform.
 
@@ -385,7 +386,7 @@ router.post('/', async (req, res) => {
                 timeout: 30000
             });
         } catch (error) {
-            console.warn('[Pal] gemini-2.5-flash experienced high demand or error, falling back to gemini-1.5-flash...', error.message);
+            logger.warn('[Pal] gemini-2.5-flash experienced high demand or error, falling back to gemini-1.5-flash...', error.message);
             try {
                 const fallbackEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
                 response = await axios.post(fallbackEndpoint, payload, {
@@ -393,7 +394,7 @@ router.post('/', async (req, res) => {
                     timeout: 30000
                 });
             } catch (fallbackError) {
-                console.error('[Pal] Fallback model gemini-1.5-flash also failed:', fallbackError.message);
+                logger.error('[Pal] Fallback model gemini-1.5-flash also failed:', fallbackError.message);
                 throw error; // Throw the original error if fallback also fails
             }
         }
@@ -409,12 +410,12 @@ router.post('/', async (req, res) => {
             
             res.json({ text: aiResponse });
         } else {
-            console.error('[Pal] Invalid response format:', JSON.stringify(response.data, null, 2));
+            logger.error('[Pal] Invalid response format:', JSON.stringify(response.data, null, 2));
             throw new Error('Invalid response format from AI provider');
         }
         
     } catch (error) {
-        console.error('[Pal] Error:', error.response?.data || error.message);
+        logger.error('[Pal] Error:', error.response?.data || error.message);
         res.status(500).json({ 
             error: 'I encountered a technical hiccup. Please try again in a moment!', 
             details: error.response?.data || error.message 

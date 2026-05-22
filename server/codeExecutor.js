@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { compileAndRunJava } = require('./javaCompiler');
+const logger = require('./logger');
 
 const PISTON_API = 'https://emkc.org/api/v2/piston';
 
@@ -11,8 +12,11 @@ const PISTON_API = 'https://emkc.org/api/v2/piston';
  * @returns {Promise<Object>} - Execution results
  */
 async function executeCode(code, language, testCases = []) {
+    logger.info(`[CODE EXECUTOR] Executing ${language} code with ${testCases.length} test cases`);
+    
     // Validate input
     if (!code || code.trim().length === 0) {
+        logger.warn('[CODE EXECUTOR] Empty code submitted');
         return {
             success: false,
             error: 'Please write some code before submitting.',
@@ -23,6 +27,7 @@ async function executeCode(code, language, testCases = []) {
     }
 
     if (!testCases || testCases.length === 0) {
+        logger.warn('[CODE EXECUTOR] No test cases configured');
         return {
             success: false,
             error: 'This question has no test cases configured.',
@@ -34,10 +39,12 @@ async function executeCode(code, language, testCases = []) {
 
     // Use existing Java compiler for Java
     if (language === 'java') {
+        logger.debug('[CODE EXECUTOR] Using Java compiler');
         return await compileAndRunJava(code, testCases);
     }
 
     // Use Piston API for other languages
+    logger.debug('[CODE EXECUTOR] Using Piston API');
     return await executePiston(code, language, testCases);
 }
 
@@ -55,6 +62,8 @@ async function executePiston(code, language, testCases) {
     const results = [];
 
     try {
+        logger.debug(`[CODE EXECUTOR] Running ${testCases.length} test cases via Piston API`);
+        
         // Run each test case
         for (let i = 0; i < testCases.length; i++) {
             const testCase = testCases[i];
@@ -108,6 +117,8 @@ async function executePiston(code, language, testCases) {
         const allPassed = results.every(r => r.passed);
         const testsPassed = results.filter(r => r.passed).length;
 
+        logger.info(`[CODE EXECUTOR] Execution complete: ${testsPassed}/${results.length} tests passed`);
+        
         return {
             success: allPassed,
             results,
@@ -117,6 +128,7 @@ async function executePiston(code, language, testCases) {
         };
 
     } catch (error) {
+        logger.error('[CODE EXECUTOR] Piston API error:', error.message);
         return {
             success: false,
             error: error.message || 'Execution error',
