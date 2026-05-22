@@ -22,7 +22,6 @@ const rateLimiter = require('./utils/rateLimiter');
 const chatbotAPI = require('./chatbotAPI');
 const questionsAPI = require('./questionsAPI');
 const logger = require('./logger');
-const passport = require('./googleAuth');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || '*';
 const JWT_SECRET = process.env.JWT_SECRET || 'brightcode_secret_key_123';
@@ -81,9 +80,6 @@ app.use(cors({
     credentials: true,
 }));
 app.use(express.json({ limit: '20mb' }));
-
-// Initialize Passport
-app.use(passport.initialize());
 
 // ── Mount Chatbot API ───────────────────────────────────────
 app.use('/api/chat', chatbotAPI);
@@ -328,19 +324,6 @@ const initDB = async () => {
             await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS session_id TEXT;');
         } catch (e) {
             logger.warn('[DB] Note: Could not add session_id column, it may already exist or there was an error.');
-        }
-
-        // Add OAuth columns for Google sign-in
-        try {
-            await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT;');
-        } catch (e) {
-            logger.warn('[DB] Note: Could not add google_id column, it may already exist or there was an error.');
-        }
-
-        try {
-            await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS provider TEXT;');
-        } catch (e) {
-            logger.warn('[DB] Note: Could not add provider column, it may already exist or there was an error.');
         }
 
         logger.info('[DB] ✅ Users table created');
@@ -4183,125 +4166,6 @@ app.post('/code-wars/create-game', authenticateToken, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
-// ── Google OAuth Routes ───────────────────────────────────────────────────────
-
-// Route to initiate Google OAuth
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-// Google OAuth callback route
-app.get('/auth/google/callback', 
-  passport.authenticate('google', { failureRedirect: `${FRONTEND_URL}/login?error=oauth_failed` }),
-  async (req, res) => {
-    try {
-      const profile = req.user;
-      const email = profile.emails[0].value;
-      const googleId = profile.id;
-      const username = profile.displayName || email.split('@')[0];
-      
-      logger.info('[GOOGLE AUTH] Callback received:', { email, googleId, username });
-      
-      // Check if user exists by email
-      let user;
-      if (useMemoryDB) {
-        user = memoryStore.users.find(u => u.email === email);
-      } else {
-        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        user = result.rows[0];
-      }
-      
-      if (user) {
-        // User exists, update Google ID if not set
-        if (!user.google_id) {
-          if (useMemoryDB) {
-            user.google_id = googleId;
-            user.provider = 'google';
-            saveStore();
-          } else {
-            await pool.query('UPDATE users SET google_id = $1, provider = $2 WHERE email = $3', [googleId, 'google', email]);
-          }
-        }
-        logger.info('[GOOGLE AUTH] Existing user logged in:', { email, userId: user.id });
-      } else {
-        // Create new user
-        const userId = uuidV4();
-        const newUser = {
-          id: userId,
-          username: username,
-          email: email,
-          google_id: googleId,
-          provider: 'google',
-          xp: 0,
-          css_level: 0,
-          logic_level: 0,
-          react_level: 0,
-          mern_level: 0,
-          java_level: 0,
-          cpp_level: 0,
-          python_level: 0,
-          go_level: 0,
-          level: 'Apprentice',
-          activity: {},
-          created_count: 0,
-          joined_count: 0,
-          avatar: 'Sniper',
-          bio: '',
-          stack: [],
-          created_at: new Date().toISOString()
-        };
-        
-        if (useMemoryDB) {
-          memoryStore.users.push(newUser);
-          saveStore();
-        } else {
-          await pool.query(`
-            INSERT INTO users (id, username, email, google_id, provider, xp, css_level, logic_level, react_level, mern_level, java_level, cpp_level, python_level, go_level, level, activity, created_count, joined_count, avatar, bio, stack, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
-          `, [
-            newUser.id, newUser.username, newUser.email, newUser.google_id, newUser.provider,
-            newUser.xp, newUser.css_level, newUser.logic_level, newUser.react_level, newUser.mern_level,
-            newUser.java_level, newUser.cpp_level, newUser.python_level, newUser.go_level, newUser.level,
-            JSON.stringify(newUser.activity), newUser.created_count, newUser.joined_count,
-            newUser.avatar, newUser.bio, JSON.stringify(newUser.stack), newUser.created_at
-          ]);
-        }
-        
-        user = newUser;
-        logger.info('[GOOGLE AUTH] New user created:', { email, userId });
-      }
-      
-      // Generate JWT token
-      const token = jwt.sign(
-        { 
-          id: user.id, 
-          email: user.email, 
-          username: user.username,
-          sessionId: uuidV4()
-        }, 
-        JWT_SECRET, 
-        { expiresIn: '7d' }
-      );
-      
-      // Update session_id
-      if (useMemoryDB) {
-        user.session_id = uuidV4();
-        saveStore();
-      } else {
-        const sessionId = uuidV4();
-        await pool.query('UPDATE users SET session_id = $1 WHERE id = $2', [sessionId, user.id]);
-      }
-      
-      // Redirect to frontend with token
-      const redirectUrl = `${FRONTEND_URL}/auth/callback?token=${token}`;
-      logger.info('[GOOGLE AUTH] Redirecting to frontend:', { redirectUrl });
-      res.redirect(redirectUrl);
-      
-    } catch (error) {
-      logger.error('[GOOGLE AUTH] Callback error:', error);
-      res.redirect(`${FRONTEND_URL}/login?error=server_error`);
-    }
-  }
-);
 
 const PORT = process.env.PORT || 5051;
 server.listen(PORT, () => logger.info(`Server running on port ${PORT}`));

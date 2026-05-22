@@ -330,36 +330,3 @@
   border: 1px solid rgba(239, 68, 68, 0.15);
 }
 
-/* Google OAuth Button */
-.google-oauth-btn {
-  background-color: #fff;
-  color: #333;
-  border: 1px solid #dadce0;
-  padding: 10px;
-  border-radius: 0;
-  font-weight: 600;
-  font-size: 0.85rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 8px;
-}
-
-.google-oauth-btn:hover {
-  background-color: #f8f9fa;
-  border-color: #c2c8d0;
-  transform: translateY(-1px);
-}
-
-.google-oauth-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-.google-oauth-btn svg {
-  flex-shrink: 0;
-}

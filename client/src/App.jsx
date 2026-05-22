@@ -5,7 +5,6 @@ import Home from './pages/Home';
 import Landing from './pages/Landing';
 import EditorPage from './pages/EditorPage';
 import Auth from './pages/Auth';
-import AuthCallback from './pages/AuthCallback';
 import Settings from './pages/Settings';
 import Arcade from './pages/Arcade';
 import Leaderboard from './pages/Leaderboard';
@@ -256,7 +255,6 @@ function App() {
               } 
             />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route 
               path="/library" 
               element={
