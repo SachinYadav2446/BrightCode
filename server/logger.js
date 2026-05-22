@@ -27,7 +27,8 @@ const consoleFormat = winston.format.combine(
       msg += ` ${JSON.stringify(metadata)}`;
     }
     return msg;
-  })
+  }),
+  winston.format.simple()
 );
 
 // Create transports

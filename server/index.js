@@ -346,7 +346,7 @@ initDB();
 const otps = new Map(); // Store OTPs: email -> { otp, userData, expires }
 
 // Use Resend for email (works on Render free tier, unlike SMTP)
-logger.info("[MAIL] RESEND_API_KEY present:", !!process.env.RESEND_API_KEY);
+logger.info("[MAIL] RESEND_API_KEY present:", { present: !!process.env.RESEND_API_KEY });
 const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
