@@ -346,7 +346,8 @@ const otps = new Map(); // Store OTPs: email -> { otp, userData, expires }
 
 // Use Resend for email (works on Render free tier, unlike SMTP)
 console.log("[MAIL] RESEND_API_KEY present:", !!process.env.RESEND_API_KEY);
-const resend = require('resend')(process.env.RESEND_API_KEY);
+const { Resend } = require('resend');
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Fallback to nodemailer for local development if RESEND_API_KEY is not set
 let transporter = null;
