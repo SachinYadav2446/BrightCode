@@ -344,25 +344,32 @@ initDB();
 // --- AUTHENTICATION REWRITE ---
 const otps = new Map(); // Store OTPs: email -> { otp, userData, expires }
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-    },
-    connectionTimeout: 5000,
-    greetingTimeout: 5000,
-    socketTimeout: 5000
-});
+// Use Resend for email (works on Render free tier, unlike SMTP)
+console.log("[MAIL] RESEND_API_KEY present:", !!process.env.RESEND_API_KEY);
+const resend = require('resend')(process.env.RESEND_API_KEY);
 
-// Verify connection configuration
-transporter.verify(function (error, success) {
-    if (error) {
-        console.log("[MAIL] Connection Error:", error);
-    } else {
-        console.log("[MAIL] Server is ready to take our messages");
-    }
-});
+// Fallback to nodemailer for local development if RESEND_API_KEY is not set
+let transporter = null;
+if (!process.env.RESEND_API_KEY && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    console.log("[MAIL] Using SMTP fallback (RESEND_API_KEY not set)");
+    transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS
+        },
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
+        socketTimeout: 5000
+    });
+    transporter.verify(function (error, success) {
+        if (error) {
+            console.log("[MAIL] Connection Error:", error);
+        } else {
+            console.log("[MAIL] Server is ready to take our messages");
+        }
+    });
+}
 
 app.post('/support', async (req, res) => {
     const { email, subject, message, username } = req.body;
@@ -371,28 +378,53 @@ app.post('/support', async (req, res) => {
         return res.status(400).json({ error: 'Email and message are required' });
     }
 
-    const mailOptions = {
-        from: '"BrightCode Support" <codebrightlim@gmail.com>',
-        to: 'codebrightlim@gmail.com', // Your email for receiving inquiries
-        subject: `[SUPPORT INQUIRY] ${subject || 'New Message'}`,
-        html: `
-            <div style="font-family: 'Poppins', sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb; background: #000; color: #fff;">
-                <h2 style="color: #ef4444; text-align: center; border-bottom: 2px solid #ef4444; padding-bottom: 10px;">Support Inquiry</h2>
-                <div style="padding: 20px;">
-                    <p style="margin-bottom: 10px;"><strong style="color: #ef4444;">From:</strong> ${username || 'User'} (${email})</p>
-                    <p style="margin-bottom: 10px;"><strong style="color: #ef4444;">Subject:</strong> ${subject || 'No Subject'}</p>
-                    <div style="background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; margin-top: 20px;">
-                        <p style="white-space: pre-wrap; line-height: 1.6;">${message}</p>
-                    </div>
-                </div>
-                <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
-                <p style="text-align: center; color: #666; font-size: 12px;">&copy; 2026 BrightCode Command Center.</p>
-            </div>
-        `
-    };
-
     try {
-        await transporter.sendMail(mailOptions);
+        if (process.env.RESEND_API_KEY) {
+            // Use Resend API (works on Render)
+            await resend.emails.send({
+                from: 'BrightCode Support <onboarding@resend.dev>',
+                to: 'codebrightlim@gmail.com',
+                subject: `[SUPPORT INQUIRY] ${subject || 'New Message'}`,
+                html: `
+                    <div style="font-family: 'Poppins', sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb; background: #000; color: #fff;">
+                        <h2 style="color: #ef4444; text-align: center; border-bottom: 2px solid #ef4444; padding-bottom: 10px;">Support Inquiry</h2>
+                        <div style="padding: 20px;">
+                            <p style="margin-bottom: 10px;"><strong style="color: #ef4444;">From:</strong> ${username || 'User'} (${email})</p>
+                            <p style="margin-bottom: 10px;"><strong style="color: #ef4444;">Subject:</strong> ${subject || 'No Subject'}</p>
+                            <div style="background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; margin-top: 20px;">
+                                <p style="white-space: pre-wrap; line-height: 1.6;">${message}</p>
+                            </div>
+                        </div>
+                        <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
+                        <p style="text-align: center; color: #666; font-size: 12px;">&copy; 2026 BrightCode Command Center.</p>
+                    </div>
+                `
+            });
+        } else if (transporter) {
+            // Fallback to SMTP for local development
+            const mailOptions = {
+                from: '"BrightCode Support" <codebrightlim@gmail.com>',
+                to: 'codebrightlim@gmail.com',
+                subject: `[SUPPORT INQUIRY] ${subject || 'New Message'}`,
+                html: `
+                    <div style="font-family: 'Poppins', sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb; background: #000; color: #fff;">
+                        <h2 style="color: #ef4444; text-align: center; border-bottom: 2px solid #ef4444; padding-bottom: 10px;">Support Inquiry</h2>
+                        <div style="padding: 20px;">
+                            <p style="margin-bottom: 10px;"><strong style="color: #ef4444;">From:</strong> ${username || 'User'} (${email})</p>
+                            <p style="margin-bottom: 10px;"><strong style="color: #ef4444;">Subject:</strong> ${subject || 'No Subject'}</p>
+                            <div style="background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; margin-top: 20px;">
+                                <p style="white-space: pre-wrap; line-height: 1.6;">${message}</p>
+                            </div>
+                        </div>
+                        <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
+                        <p style="text-align: center; color: #666; font-size: 12px;">&copy; 2026 BrightCode Command Center.</p>
+                    </div>
+                `
+            };
+            await transporter.sendMail(mailOptions);
+        } else {
+            throw new Error('No email service configured');
+        }
         res.json({ message: "Your message has been sent to our support team." });
     } catch (err) {
         console.error('SUPPORT MAIL ERROR:', err);
@@ -463,27 +495,51 @@ app.post('/send-otp', async (req, res) => {
 
         console.log(`[MAIL] Attempting to send email to ${email}...`);
 
-        const mailOptions = {
-            from: '"CodeBright" <codebrightlim@gmail.com>',
-            to: email,
-            subject: 'Verify your CodeBright Account',
-            html: `
-                <div style="font-family: 'Poppins', sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb;">
-                    <h2 style="color: #ef4444; text-align: center;">Welcome to CodeBright</h2>
-                    <p>Hello <strong>${username || 'Engineer'}</strong>,</p>
-                    <p>Your verification code is:</p>
-                    <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #111827; border: 1px solid #e5e7eb;">
-                        ${otp}
-                    </div>
-                    <p style="margin-top: 20px; color: #6b7280; font-size: 14px;">This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
-                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-                    <p style="text-align: center; color: #9ca3af; font-size: 12px;">&copy; 2026 BrightCode. Built for the Architect.</p>
-                </div>
-            `
-        };
-
         try {
-            await transporter.sendMail(mailOptions);
+            if (process.env.RESEND_API_KEY) {
+                // Use Resend API (works on Render)
+                await resend.emails.send({
+                    from: 'CodeBright <onboarding@resend.dev>',
+                    to: email,
+                    subject: 'Verify your CodeBright Account',
+                    html: `
+                        <div style="font-family: 'Poppins', sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb;">
+                            <h2 style="color: #ef4444; text-align: center;">Welcome to CodeBright</h2>
+                            <p>Hello <strong>${username || 'Engineer'}</strong>,</p>
+                            <p>Your verification code is:</p>
+                            <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #111827; border: 1px solid #e5e7eb;">
+                                ${otp}
+                            </div>
+                            <p style="margin-top: 20px; color: #6b7280; font-size: 14px;">This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
+                            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+                            <p style="text-align: center; color: #9ca3af; font-size: 12px;">&copy; 2026 BrightCode. Built for the Architect.</p>
+                        </div>
+                    `
+                });
+            } else if (transporter) {
+                // Fallback to SMTP for local development
+                const mailOptions = {
+                    from: '"CodeBright" <codebrightlim@gmail.com>',
+                    to: email,
+                    subject: 'Verify your CodeBright Account',
+                    html: `
+                        <div style="font-family: 'Poppins', sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb;">
+                            <h2 style="color: #ef4444; text-align: center;">Welcome to CodeBright</h2>
+                            <p>Hello <strong>${username || 'Engineer'}</strong>,</p>
+                            <p>Your verification code is:</p>
+                            <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #111827; border: 1px solid #e5e7eb;">
+                                ${otp}
+                            </div>
+                            <p style="margin-top: 20px; color: #6b7280; font-size: 14px;">This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
+                            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+                            <p style="text-align: center; color: #9ca3af; font-size: 12px;">&copy; 2026 BrightCode. Built for the Architect.</p>
+                        </div>
+                    `
+                };
+                await transporter.sendMail(mailOptions);
+            } else {
+                throw new Error('No email service configured');
+            }
             console.log(`[MAIL] Email sent successfully to ${email}`);
             res.json({ message: "Verification code sent to your email." });
         } catch (mailErr) {
