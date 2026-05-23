@@ -29,7 +29,7 @@ function ParticlesCanvas() {
         this.vy = (Math.random() - 0.5) * 0.25;
         this.a = Math.random() * 0.4 + 0.08;
         this.color = Math.random() > 0.65
-          ? "#f0e4c8"
+          ? "#3a7bd5"
           : Math.random() > 0.5
           ? "#c8222f"
           : "#2d3f56";
@@ -200,7 +200,7 @@ export default function CodeBright() {
         <div className="nav-inner">
           <a className="nav-logo" href="#" onClick={e => e.preventDefault()}>
             <div className="nav-logo-mark">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#c8222f" strokeWidth="2" strokeLinecap="round">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#3a7bd5" strokeWidth="2" strokeLinecap="round">
                 <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
               </svg>
             </div>
@@ -279,7 +279,7 @@ export default function CodeBright() {
           <div className="hero-right">
             <div className="chip chip-a">
               <div className="chip-ico slate-ico">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#f0e4c8" strokeWidth="2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#7aacdc" strokeWidth="2">
                   <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                 </svg>
               </div>
@@ -378,7 +378,7 @@ export default function CodeBright() {
                 num:"02", type:"blue-card", iconType:"blue-icon", tag:"AI-POWERED", tagType:"blue-tag",
                 title:"The Sentinel",
                 desc:"Context-aware AI assistant for inline code suggestions, debug analysis, and architecture recommendations in real time.",
-                icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0e4c8" strokeWidth="2"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>
+                icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3a7bd5" strokeWidth="2"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>
               },
               {
                 num:"03", type:"red-card", iconType:"red-icon", tag:"COMPETITIVE", tagType:"red-tag",
@@ -396,7 +396,7 @@ export default function CodeBright() {
                 num:"05", type:"blue-card", iconType:"blue-icon", tag:"TEMPORAL", tagType:"blue-tag",
                 title:"Warp Drive",
                 desc:"Visual code history navigation with snapshot diffing and instant restore. Time-travel through every edit.",
-                icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0e4c8" strokeWidth="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>
+                icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3a7bd5" strokeWidth="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>
               },
               {
                 num:"06", type:"red-card", iconType:"red-icon", tag:"ANALYTICS", tagType:"red-tag",
@@ -408,7 +408,7 @@ export default function CodeBright() {
                 num:"07", type:"blue-card", iconType:"blue-icon", tag:"SOCIAL", tagType:"blue-tag",
                 title:"Factions & Syndicates",
                 desc:"Join engineering guilds, compete in sprint battles, and climb faction-specific and global rankings with your crew.",
-                icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0e4c8" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3a7bd5" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
               },
               {
                 num:"08", type:"red-card", iconType:"red-icon", tag:"ENTERPRISE", tagType:"red-tag",
@@ -547,9 +547,9 @@ export default function CodeBright() {
                       { ln:9, content: <span className="ct"><span className="cv">&nbsp;&nbsp;{"}"});</span></span> },
                       { ln:10, content: <span>&nbsp;</span> },
                       { ln:11, content: <span className="ct"><span className="cc">// ZR: cursor broadcasting</span><span className="ic ic-b" style={{animationDelay:"0.35s"}} /></span> },
-                      { ln:12, bg:"rgba(240,228,200,0.06)", content: <span className="ct"><span className="cv">&nbsp;&nbsp;socket.</span><span className="cf">emit</span><span className="cv">(</span><span className="cs">'join-room'</span><span className="cv">, {"{"}</span></span> },
-                      { ln:13, bg:"rgba(240,228,200,0.06)", content: <span className="ct"><span className="cv">&nbsp;&nbsp;&nbsp;&nbsp;room: config.</span><span className="cp">roomId</span><span className="cv">, user: config.</span><span className="cp">userId</span></span> },
-                      { ln:14, bg:"rgba(240,228,200,0.06)", content: <span className="ct"><span className="cv">&nbsp;&nbsp;{"}"});</span></span> },
+                      { ln:12, bg:"rgba(58,123,213,0.06)", content: <span className="ct"><span className="cv">&nbsp;&nbsp;socket.</span><span className="cf">emit</span><span className="cv">(</span><span className="cs">'join-room'</span><span className="cv">, {"{"}</span></span> },
+                      { ln:13, bg:"rgba(58,123,213,0.06)", content: <span className="ct"><span className="cv">&nbsp;&nbsp;&nbsp;&nbsp;room: config.</span><span className="cp">roomId</span><span className="cv">, user: config.</span><span className="cp">userId</span></span> },
+                      { ln:14, bg:"rgba(58,123,213,0.06)", content: <span className="ct"><span className="cv">&nbsp;&nbsp;{"}"});</span></span> },
                       { ln:15, content: <span>&nbsp;</span> },
                       { ln:16, content: <span className="ct"><span className="cc">// MS: return session object</span><span className="ic ic-c" style={{animationDelay:"0.7s"}} /></span> },
                       { ln:17, bg:"rgba(26,80,80,0.08)", content: <span className="ct"><span className="cv">&nbsp;&nbsp;</span><span className="ck">return</span><span className="cv"> {"{ socket, "}</span><span className="cf">sync</span><span className="cv">{": true, latency: "}</span><span className="cp">23</span><span className="cv"> {"};"}</span></span> },
@@ -587,11 +587,11 @@ export default function CodeBright() {
               <div className="pillars">
                 {[
                   { title:"Faction-Based Learning", desc:"Join engineering guilds, compete in syndicate wars, and climb global leaderboards.", type:"blue-pillar",
-                    icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0e4c8" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+                    icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3a7bd5" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
                   { title:"Live Collaborative Coding", desc:"Pair program in real-time with low-latency sync and AI-powered assistance built in.", type:"red-pillar",
                     icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8222f" strokeWidth="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></svg> },
                   { title:"Skill Forge Challenges", desc:"Master system design through timed challenges and earn XP rewards that matter.", type:"blue-pillar",
-                    icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0e4c8" strokeWidth="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> },
+                    icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3a7bd5" strokeWidth="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> },
                   { title:"Secure Execution", desc:"Run code in isolated sandboxes with enterprise-grade AES-256 security. Zero-trust.", type:"red-pillar",
                     icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8222f" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> },
                 ].map(p => (
@@ -610,11 +610,11 @@ export default function CodeBright() {
               <div className="stats-grid">
                 {[
                   { num:"1247", suffix:"", lbl:"Faction Challenges", type:"blue-block",
-                    icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0e4c8" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+                    icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3a7bd5" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
                   { num:"89", suffix:"", lbl:"XP Challenges", type:"red-block",
                     icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8222f" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> },
                   { num:"8", suffix:"", lbl:"Active Factions", type:"blue-block",
-                    icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0e4c8" strokeWidth="2"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg> },
+                    icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3a7bd5" strokeWidth="2"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg> },
                   { num:"99.9", suffix:"%", lbl:"Uptime", type:"red-block", isFloat:true,
                     icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8222f" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
                 ].map(s => (
@@ -675,7 +675,7 @@ export default function CodeBright() {
             <div className="footer-brand">
               <div className="footer-logo">
                 <div className="footer-logo-mark">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c8222f" strokeWidth="2" strokeLinecap="round">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3a7bd5" strokeWidth="2" strokeLinecap="round">
                     <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
                   </svg>
                 </div>
