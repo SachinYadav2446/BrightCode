@@ -340,7 +340,7 @@ const Home = () => {
               <p className="home-section-desc">{new Date().getFullYear()} contribution timeline — every pixel represents XP earned.</p>
             </motion.div>
 
-            <TiltCard className="home-heatmap-card" variants={fadeUp} intensity={2}>
+            <motion.div className="home-heatmap-card" variants={fadeUp}>
               <div className="home-heatmap-inner">
                 <div className="home-heatmap-months">
                   {monthLabels.map((lbl, i) => (
@@ -365,7 +365,7 @@ const Home = () => {
                   <span>More</span>
                 </div>
               </div>
-            </TiltCard>
+            </motion.div>
           </motion.section>
 
           {/* ── SKILL RADAR ── */}
@@ -426,6 +426,129 @@ const Home = () => {
                   </TiltCard>
                 );
               })}
+            </div>
+          </motion.section>
+
+          {/* ── ACTIVE MISSIONS ── */}
+          <motion.section className="home-section" initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger}>
+            <motion.div className="home-section-header" variants={fadeUp}>
+              <span className="home-section-eyebrow">TACTICAL OPERATIONS</span>
+              <h2 className="home-section-title">Active Missions</h2>
+              <p className="home-section-desc">Deploy to active challenges and earn bonus commendations.</p>
+            </motion.div>
+
+            <div className="home-missions-grid">
+              {[
+                { id: 1, title: "Array Sentinel", type: "DAILY QUEST", reward: "250 XP", difficulty: "Medium", progress: 60, accent: "#fb923c", desc: "Optimize searching in sorted matrices using binary partition techniques." },
+                { id: 2, title: "System Overload", type: "FACTION STRIKE", reward: "750 XP", difficulty: "Hard", progress: 20, accent: "#ef4444", desc: "Collaborative event: resolve memory leaks in the mock backend stream container." },
+                { id: 3, title: "CSS Morphism", type: "WEEKLY SPRINT", reward: "500 XP", difficulty: "Easy", progress: 90, accent: "#06b6d4", desc: "Rebuild a fully fluid 3D glassmorphic card library with zero framework code." }
+              ].map((mission, idx) => (
+                <TiltCard key={mission.id} className="home-mission-card" style={{ '--mission-color': mission.accent }} intensity={3}>
+                  <div className="mission-badge" style={{ '--badge-color': mission.accent }}>{mission.type}</div>
+                  <h3 className="mission-title">{mission.title}</h3>
+                  <p className="mission-desc">{mission.desc}</p>
+                  
+                  <div className="mission-progress-section">
+                    <div className="mission-progress-label">
+                      <span>SYNC RATIO</span>
+                      <span>{mission.progress}%</span>
+                    </div>
+                    <div className="mission-progress-bar">
+                      <motion.div 
+                        className="mission-progress-fill" 
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${mission.progress}%` }}
+                        transition={{ duration: 1, delay: idx * 0.1 }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mission-footer">
+                    <span className="mission-difficulty">DIFFICULTY: {mission.difficulty}</span>
+                    <span className="mission-reward">+{mission.reward}</span>
+                  </div>
+                </TiltCard>
+              ))}
+            </div>
+          </motion.section>
+
+          {/* ── BATTLE RECORDS & TECH RADAR ── */}
+          <motion.section className="home-section" initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger}>
+            <div className="home-double-grid">
+              
+              {/* Left Side: Recent PvP Battles */}
+              <div className="home-double-col">
+                <motion.div className="home-section-header" variants={fadeUp}>
+                  <span className="home-section-eyebrow">COMBAT TELEMETRY</span>
+                  <h2 className="home-section-title">Battle Records</h2>
+                  <p className="home-section-desc">Telemetry from recent 1v1 PvP Code Wars.</p>
+                </motion.div>
+
+                <motion.div className="home-terminal-log" variants={fadeUp}>
+                  <div className="terminal-header">
+                    <div className="terminal-dots">
+                      <span className="terminal-dot red" />
+                      <span className="terminal-dot yellow" />
+                      <span className="terminal-dot green" />
+                    </div>
+                    <span className="terminal-title">SYS://BATTLE_REC/LOG</span>
+                  </div>
+                  <div className="terminal-body">
+                    {[
+                      { outcome: "VICTORY", opponent: "cyber_ninja", language: "Javascript", xp: "+120 XP", time: "2m 14s", date: "10 mins ago", win: true },
+                      { outcome: "DEFEAT", opponent: "void_pointer", language: "Java", xp: "-35 XP", time: "4m 02s", date: "2 hours ago", win: false },
+                      { outcome: "VICTORY", opponent: "stack_overflow", language: "CSS", xp: "+90 XP", time: "1m 45s", date: "1 day ago", win: true },
+                      { outcome: "VICTORY", opponent: "kernel_panic", language: "Javascript", xp: "+150 XP", time: "3m 10s", date: "3 days ago", win: true }
+                    ].map((log, li) => (
+                      <div key={li} className={`terminal-row ${log.win ? 'row-win' : 'row-loss'}`}>
+                        <span className="row-outcome">{log.outcome}</span>
+                        <span className="row-opponent">vs. {log.opponent}</span>
+                        <span className="row-lang">{log.language}</span>
+                        <span className="row-time">{log.time}</span>
+                        <span className="row-xp">{log.xp}</span>
+                        <span className="row-date">{log.date}</span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Right Side: Learning Tracks progress */}
+              <div className="home-double-col">
+                <motion.div className="home-section-header" variants={fadeUp}>
+                  <span className="home-section-eyebrow">LEARNING RADAR</span>
+                  <h2 className="home-section-title">Mastery Tracks</h2>
+                  <p className="home-section-desc">Progress in standard developer engineering paths.</p>
+                </motion.div>
+
+                <div className="home-tracks-list">
+                  {[
+                    { name: "Frontend Architecture", progress: 78, level: "Lvl 4", color: "#3b82f6" },
+                    { name: "Backend Engines", progress: 42, level: "Lvl 2", color: "#22c55e" },
+                    { name: "Algorithms & Logic", progress: 85, level: "Lvl 5", color: "#8b5cf6" },
+                    { name: "System Operations", progress: 15, level: "Lvl 1", color: "#fb923c" }
+                  ].map((track, ti) => (
+                    <TiltCard key={track.name} className="home-track-item" style={{ '--track-color': track.color }} intensity={2}>
+                      <div className="track-info">
+                        <div>
+                          <h4 className="track-name">{track.name}</h4>
+                          <span className="track-level">{track.level}</span>
+                        </div>
+                        <span className="track-pct">{track.progress}%</span>
+                      </div>
+                      <div className="track-progress-bar">
+                        <motion.div 
+                          className="track-progress-fill" 
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${track.progress}%` }}
+                          transition={{ duration: 0.8, delay: ti * 0.1 }}
+                        />
+                      </div>
+                    </TiltCard>
+                  ))}
+                </div>
+              </div>
+
             </div>
           </motion.section>
 
