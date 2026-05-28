@@ -258,11 +258,60 @@
 /* ─── 3D Tilt Card Base ─── */
 .tilt-card {
   transform-style: preserve-3d;
-  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s, box-shadow 0.3s;
+  position: relative;
+  overflow: hidden;
 }
 
 .tilt-card > * {
   transform: translateZ(20px);
+  position: relative;
+  z-index: 2;
+}
+
+/* Interactive Cursor Border-Glow Effect */
+.tilt-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(
+    280px circle at var(--mouse-x-local, 0px) var(--mouse-y-local, 0px),
+    rgba(var(--primary-rgb), 0.3),
+    transparent 60%
+  );
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 3;
+}
+
+/* Interactive Cursor Background-Glow Effect */
+.tilt-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    350px circle at var(--mouse-x-local, 0px) var(--mouse-y-local, 0px),
+    rgba(var(--primary-rgb), 0.05),
+    transparent 60%
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 1;
+}
+
+.tilt-card:hover::before,
+.tilt-card:hover::after {
+  opacity: 1;
 }
 
 /* ─── General Section Header ─── */

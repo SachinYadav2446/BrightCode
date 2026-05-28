@@ -26,27 +26,57 @@ const stagger = {
 };
 
 /* ─── Floating Particle Component ─── */
-const FloatingOrb = ({ style }) => (
-  <div className="floating-orb" style={style} />
+const FloatingOrb = ({ style, delay = 0 }) => (
+  <motion.div
+    className="floating-orb"
+    style={style}
+    animate={{
+      y: [0, -40, 20, 0],
+      x: [0, 20, -30, 0],
+      scale: [1, 1.06, 0.94, 1],
+    }}
+    transition={{
+      duration: 18,
+      delay,
+      repeat: Infinity,
+      ease: "easeInOut"
+    }}
+  />
 );
 
 /* ─── 3D Tilt Card Component ─── */
-const TiltCard = ({ children, className = '', intensity = 8 }) => {
+const TiltCard = ({ children, className = '', intensity = 8, onClick, style, ...props }) => {
   const ref = useRef(null);
   const handleMove = (e) => {
     if (!ref.current) return;
     const rect = ref.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
     const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
-    ref.current.style.transform = `perspective(1000px) rotateY(${x * intensity}deg) rotateX(${-y * intensity}deg) translateZ(10px)`;
+    ref.current.style.transform = `perspective(1000px) rotateY(${x * intensity}deg) rotateX(${-y * intensity}deg) translateZ(15px)`;
+    
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+    ref.current.style.setProperty('--mouse-x-local', `${px}px`);
+    ref.current.style.setProperty('--mouse-y-local', `${py}px`);
   };
   const handleLeave = () => {
-    if (ref.current) ref.current.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg) translateZ(0)';
+    if (ref.current) {
+      ref.current.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg) translateZ(0)';
+    }
   };
   return (
-    <div ref={ref} className={`tilt-card ${className}`} onMouseMove={handleMove} onMouseLeave={handleLeave}>
+    <motion.div
+      ref={ref}
+      className={`tilt-card ${className}`}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      onClick={onClick}
+      style={style}
+      whileHover={{ scale: 1.025, transition: { duration: 0.25, ease: "easeOut" } }}
+      {...props}
+    >
       {children}
-    </div>
+    </motion.div>
   );
 };
 
@@ -202,9 +232,9 @@ const Home = () => {
       <div className="home-bg">
         <div className="bg-grid" />
         <div className="bg-cursor-glow" />
-        <FloatingOrb style={{ top: '10%', left: '5%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(239,68,68,0.06) 0%, transparent 70%)' }} />
-        <FloatingOrb style={{ top: '50%', right: '5%', width: 500, height: 500, background: 'radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)', animationDelay: '-3s' }} />
-        <FloatingOrb style={{ bottom: '20%', left: '30%', width: 350, height: 350, background: 'radial-gradient(circle, rgba(6,182,212,0.04) 0%, transparent 70%)', animationDelay: '-7s' }} />
+        <FloatingOrb style={{ top: '10%', left: '5%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(var(--primary-rgb, 239, 68, 68), 0.06) 0%, transparent 70%)' }} />
+        <FloatingOrb delay={3} style={{ top: '50%', right: '5%', width: 500, height: 500, background: 'radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)' }} />
+        <FloatingOrb delay={7} style={{ bottom: '20%', left: '30%', width: 350, height: 350, background: 'radial-gradient(circle, rgba(6,182,212,0.04) 0%, transparent 70%)' }} />
       </div>
 
       {/* ═══════ AUTHENTICATED USER DASHBOARD ═══════ */}
@@ -364,11 +394,15 @@ const Home = () => {
                 const pct = Math.min((skill.val / skill.max) * 100, 100);
                 const label = pct >= 100 ? 'MASTER' : pct >= 75 ? 'EXPERT' : pct >= 50 ? 'ADVANCED' : pct >= 25 ? 'INTERMEDIATE' : pct > 0 ? 'BEGINNER' : 'INITIATE';
                 return (
-                  <motion.div key={skill.id} className={`home-skill-card ${activeSkill === skill.id ? 'active' : ''}`}
-                    variants={fadeUp} custom={i * 0.06}
-                    whileHover={{ y: -4 }}
+                  <TiltCard
+                    key={skill.id}
+                    className={`home-skill-card ${activeSkill === skill.id ? 'active' : ''}`}
+                    variants={fadeUp}
+                    custom={i * 0.06}
                     onClick={() => setActiveSkill(activeSkill === skill.id ? null : skill.id)}
-                    style={{ '--skill-color': skill.color }}>
+                    style={{ '--skill-color': skill.color }}
+                    intensity={6}
+                  >
                     <div className="home-skill-top">
                       <div className="home-skill-icon">
                         <skill.icon size={20} />
@@ -396,7 +430,7 @@ const Home = () => {
                       <span>{(skill.val * 10).toLocaleString()} XP earned</span>
                     </div>
                     <div className="home-skill-glow" />
-                  </motion.div>
+                  </TiltCard>
                 );
               })}
             </div>
@@ -446,12 +480,15 @@ const Home = () => {
                     const medalEmoji = ['🥈', '🥇', '🥉'];
                     const isFirst = actualIdx === 0;
                     return (
-                      <motion.div key={ranker.username}
+                      <TiltCard
+                        key={ranker.username}
                         className={`home-fame-card rank-${actualIdx + 1} ${isFirst ? 'is-first' : ''}`}
-                        variants={fadeUp} custom={di * 0.08}
-                        whileHover={{ y: -8, scale: 1.02 }}
+                        variants={fadeUp}
+                        custom={di * 0.08}
                         onClick={() => navigate(`/u/${ranker.username}`)}
-                        style={{ '--medal-color': medalColors[di] }}>
+                        style={{ '--medal-color': medalColors[di] }}
+                        intensity={4}
+                      >
                         {isFirst && <div className="fame-crown-glow" />}
                         <div className="home-fame-rank">{medalEmoji[di]}</div>
                         <div className="home-fame-avatar">
@@ -466,7 +503,7 @@ const Home = () => {
                           </div>
                         </div>
                         <div className="home-fame-shimmer" />
-                      </motion.div>
+                      </TiltCard>
                     );
                   });
                 })()
