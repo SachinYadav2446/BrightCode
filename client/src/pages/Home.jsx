@@ -334,7 +334,8 @@ const Home = () => {
       </div>
 
       {user ? (
-        <div className="home-dashboard-layout">
+        <div className="home-dashboard">
+          <div className="home-dashboard-layout">
           
           {/* ── LEFT SIDEBAR: OPERATIVE PROFILE ── */}
           <div className="home-sidebar">
@@ -461,77 +462,71 @@ const Home = () => {
                   {/* TAB 1: INTEL & MISSIONS */}
                   {activeTab === 'missions' && (
                     <div className="tab-pane-content">
-                      <div className="tab-pane-grid-2">
-                        <div>
-                          <div className="home-section-header">
-                            <span className="home-section-eyebrow">MISSIONS</span>
-                            <h2 className="home-section-title">Active Assignments</h2>
-                            <p className="home-section-desc">Dynamic objectives scaled to your lowest level proficiency tracks.</p>
-                          </div>
-                          
-                          <div className="home-missions-list-vertical">
-                            {missions.map((mission, idx) => (
-                              <TiltCard key={mission.id} className="home-mission-card" style={{ '--mission-color': mission.accent }} intensity={2}>
-                                <div className="mission-badge" style={{ '--badge-color': mission.accent }}>{mission.type}</div>
-                                <h3 className="mission-title">{mission.title}</h3>
-                                <p className="mission-desc">{mission.desc}</p>
-                                
-                                <div className="mission-progress-section">
-                                  <div className="mission-progress-label">
-                                    <span>SYNC RATIO</span>
-                                    <span>{mission.progress}%</span>
-                                  </div>
-                                  <div className="mission-progress-bar">
-                                    <motion.div 
-                                      className="mission-progress-fill" 
-                                      initial={{ width: 0 }}
-                                      whileInView={{ width: `${mission.progress}%` }}
-                                      transition={{ duration: 1, delay: idx * 0.1 }}
-                                    />
-                                  </div>
-                                </div>
-
-                                <div className="mission-footer">
-                                  <span className="mission-difficulty">DIFFICULTY: {mission.difficulty}</span>
-                                  <span className="mission-reward">+{mission.reward}</span>
-                                </div>
-                              </TiltCard>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div>
-                          <div className="home-section-header">
-                            <span className="home-section-eyebrow">CHRONOLOGY</span>
-                            <h2 className="home-section-title">Activity Grid</h2>
-                            <p className="home-section-desc">Commit logs and contribution cells mapping current year XP.</p>
-                          </div>
-                          
-                          <div className="home-heatmap-card">
-                            <div className="home-heatmap-inner">
-                              <div className="home-heatmap-months">
-                                {monthLabels.map((lbl, i) => (
-                                  <span key={i} className="home-heatmap-month" style={{ gridColumnStart: lbl.index + 1 }}>{lbl.month}</span>
-                                ))}
+                      <div className="home-section-header">
+                        <span className="home-section-eyebrow">MISSIONS</span>
+                        <h2 className="home-section-title">Active Assignments</h2>
+                        <p className="home-section-desc">Dynamic objectives scaled to your lowest level proficiency tracks.</p>
+                      </div>
+                      
+                      <div className="home-missions-grid">
+                        {missions.map((mission, idx) => (
+                          <TiltCard key={mission.id} className="home-mission-card" style={{ '--mission-color': mission.accent }} intensity={2}>
+                            <div className="mission-badge" style={{ '--badge-color': mission.accent }}>{mission.type}</div>
+                            <h3 className="mission-title">{mission.title}</h3>
+                            <p className="mission-desc">{mission.desc}</p>
+                            
+                            <div className="mission-progress-section">
+                              <div className="mission-progress-label">
+                                <span>SYNC RATIO</span>
+                                <span>{mission.progress}%</span>
                               </div>
-                              <div className="home-heatmap-grid">
-                                {heatmapData.map((week, wi) => (
-                                  <div key={wi} className="home-heatmap-week">
-                                    {week.map((day, di) => (
-                                      <div key={di}
-                                        className={`home-heatmap-day level-${day.level}`}
-                                        title={`${day.date}: ${day.xp} XP`}
-                                      />
-                                    ))}
-                                  </div>
-                                ))}
-                              </div>
-                              <div className="home-heatmap-legend">
-                                <span>Less</span>
-                                {[0, 1, 2, 3, 4].map(l => <div key={l} className={`home-heatmap-day level-${l}`} />)}
-                                <span>More</span>
+                              <div className="mission-progress-bar">
+                                <motion.div 
+                                  className="mission-progress-fill" 
+                                  initial={{ width: 0 }}
+                                  whileInView={{ width: `${mission.progress}%` }}
+                                  transition={{ duration: 1, delay: idx * 0.1 }}
+                                />
                               </div>
                             </div>
+
+                            <div className="mission-footer">
+                              <span className="mission-difficulty">DIFFICULTY: {mission.difficulty}</span>
+                              <span className="mission-reward">+{mission.reward}</span>
+                            </div>
+                          </TiltCard>
+                        ))}
+                      </div>
+
+                      <div className="home-section-header" style={{ marginTop: '40px' }}>
+                        <span className="home-section-eyebrow">CHRONOLOGY</span>
+                        <h2 className="home-section-title">Activity Grid</h2>
+                        <p className="home-section-desc">Commit logs and contribution cells mapping current year XP.</p>
+                      </div>
+                      
+                      <div className="home-heatmap-card">
+                        <div className="home-heatmap-inner">
+                          <div className="home-heatmap-months">
+                            {monthLabels.map((lbl, i) => (
+                              <span key={i} className="home-heatmap-month" style={{ gridColumnStart: lbl.index + 1 }}>{lbl.month}</span>
+                            ))}
+                          </div>
+                          <div className="home-heatmap-grid">
+                            {heatmapData.map((week, wi) => (
+                              <div key={wi} className="home-heatmap-week">
+                                {week.map((day, di) => (
+                                  <div key={di}
+                                    className={`home-heatmap-day level-${day.level}`}
+                                    title={`${day.date}: ${day.xp} XP`}
+                                  />
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                          <div className="home-heatmap-legend">
+                            <span>Less</span>
+                            {[0, 1, 2, 3, 4].map(l => <div key={l} className={`home-heatmap-day level-${l}`} />)}
+                            <span>More</span>
                           </div>
                         </div>
                       </div>
@@ -818,8 +813,8 @@ const Home = () => {
             </div>
             
           </div>
-
         </div>
+      </div>
       ) : (
         /* ──═══════════════ GUEST INDEX ═══════════════── */
         <motion.section className="home-guest-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
