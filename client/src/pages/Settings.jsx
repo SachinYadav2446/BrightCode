@@ -110,7 +110,9 @@ const Settings = () => {
     setSelectedTheme(savedTheme);
     setSelectedFont(savedFont);
     applyTheme(savedTheme);
-    applyFont(savedFont);
+    if (savedTheme !== 'amber' && savedTheme !== 'neo-noir' && savedTheme !== 'leetcode') {
+      applyFont(savedFont);
+    }
   }, []);
 
   const applyTheme = (theme) => {
@@ -161,6 +163,26 @@ const Settings = () => {
       root.style.setProperty('--text-mid', '#00d9ff');
       root.style.setProperty('--text-lo', '#ff0080');
       root.style.setProperty('--font-sans', "'Orbitron', 'Share Tech Mono', sans-serif");
+    } else if (theme === 'leetcode') {
+      // ── LeetCode theme ──────────────────────────────
+      root.style.setProperty('--primary', '#ffa116');
+      root.style.setProperty('--primary-rgb', '255, 161, 22');
+      root.style.setProperty('--primary-dark', '#b36b00');
+      root.style.setProperty('--primary-dark-rgb', '179, 107, 0');
+      root.style.setProperty('--primary-light', '#ffc059');
+      root.style.setProperty('--primary-light-rgb', '255, 192, 89');
+      root.style.setProperty('--primary-glow', 'rgba(255, 161, 22, 0.4)');
+      root.style.setProperty('--complementary', '#2cbb5d');
+      root.style.setProperty('--text-complementary', '#ffffff');
+      root.style.setProperty('--panel-text', '#ffa116');
+      root.style.setProperty('--bg-dark', '#1a1a1a');
+      root.style.setProperty('--bg-surface', '#282828');
+      root.style.setProperty('--text-main', '#eff1f6');
+      root.style.setProperty('--text-muted', '#8c8c8c');
+      root.style.setProperty('--text-hi', '#ffffff');
+      root.style.setProperty('--text-mid', '#eff1f6');
+      root.style.setProperty('--text-lo', '#bfbfbf');
+      root.style.setProperty('--font-sans', "'Inter', sans-serif");
     } else {
       // ── Scarlet Flare theme (default) ──────────────────────────
       root.style.setProperty('--primary', '#ef4444');
@@ -712,6 +734,29 @@ const Settings = () => {
                       <div className="theme-info">
                         <h3>Night City</h3>
                         <p>Cyberpunk neon grid</p>
+                      </div>
+                      <div className="theme-check">
+                        <ShieldCheck size={16} />
+                      </div>
+                    </div>
+
+                    <div
+                      className={`theme-option ${selectedTheme === 'leetcode' ? 'active' : ''}`}
+                      onClick={() => handleThemeChange('leetcode')}
+                    >
+                      <div className="theme-preview leetcode-theme">
+                        <div className="preview-header"></div>
+                        <div className="preview-content">
+                          <div className="preview-sidebar"></div>
+                          <div className="preview-main">
+                            <div className="preview-line"></div>
+                            <div className="preview-line short"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="theme-info">
+                        <h3>LeetCode Dark</h3>
+                        <p>Clean, basic developer mode</p>
                       </div>
                       <div className="theme-check">
                         <ShieldCheck size={16} />

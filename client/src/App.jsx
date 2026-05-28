@@ -103,6 +103,26 @@ const applyGlobalTheme = (theme) => {
     root.style.setProperty('--text-mid', '#00d9ff');
     root.style.setProperty('--text-lo', '#ff0080');
     root.style.setProperty('--font-sans', "'Orbitron', 'Share Tech Mono', sans-serif");
+  } else if (activeTheme === 'leetcode') {
+    // ── LeetCode theme ──────────────────────────────
+    root.style.setProperty('--primary', '#ffa116');
+    root.style.setProperty('--primary-rgb', '255, 161, 22');
+    root.style.setProperty('--primary-dark', '#b36b00');
+    root.style.setProperty('--primary-dark-rgb', '179, 107, 0');
+    root.style.setProperty('--primary-light', '#ffc059');
+    root.style.setProperty('--primary-light-rgb', '255, 192, 89');
+    root.style.setProperty('--primary-glow', 'rgba(255, 161, 22, 0.4)');
+    root.style.setProperty('--complementary', '#2cbb5d');
+    root.style.setProperty('--text-complementary', '#ffffff');
+    root.style.setProperty('--panel-text', '#ffa116');
+    root.style.setProperty('--bg-dark', '#1a1a1a');
+    root.style.setProperty('--bg-surface', '#282828');
+    root.style.setProperty('--text-main', '#eff1f6');
+    root.style.setProperty('--text-muted', '#8c8c8c');
+    root.style.setProperty('--text-hi', '#ffffff');
+    root.style.setProperty('--text-mid', '#eff1f6');
+    root.style.setProperty('--text-lo', '#bfbfbf');
+    root.style.setProperty('--font-sans', "'Inter', sans-serif");
   } else {
     // ── Scarlet Flare theme (default) ──────────────────────────
     root.style.setProperty('--primary', '#ef4444');
@@ -187,7 +207,7 @@ const ThemeManager = () => {
       const savedFont = localStorage.getItem('app_font') || 'poppins';
       applyGlobalTheme(savedTheme);
       // Only apply font override if not a special theme (those set their own font)
-      if (savedTheme !== 'amber' && savedTheme !== 'neo-noir') {
+      if (savedTheme !== 'amber' && savedTheme !== 'neo-noir' && savedTheme !== 'leetcode') {
         applyGlobalFont(savedFont);
       }
     }
@@ -208,7 +228,7 @@ function App() {
       const savedTheme = localStorage.getItem('app_theme') || 'crimson';
       const savedFont = localStorage.getItem('app_font') || 'poppins';
       applyGlobalTheme(savedTheme);
-      if (savedTheme !== 'amber' && savedTheme !== 'neo-noir') {
+      if (savedTheme !== 'amber' && savedTheme !== 'neo-noir' && savedTheme !== 'leetcode') {
         applyGlobalFont(savedFont);
       }
     }

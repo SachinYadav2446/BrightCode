@@ -1110,6 +1110,30 @@
   box-shadow: 0 0 6px #ff0080;
 }
 
+/* LeetCode Dark Theme preview */
+.theme-preview.leetcode-theme {
+  background: #1a1a1a;
+  position: relative;
+}
+
+.theme-preview.leetcode-theme .preview-header {
+  background: #282828;
+  border-bottom: 1px solid rgba(255, 161, 22, 0.15);
+}
+
+.theme-preview.leetcode-theme .preview-sidebar {
+  background: #202020;
+  border-right: 1px solid rgba(255, 161, 22, 0.08);
+}
+
+.theme-preview.leetcode-theme .preview-line {
+  background: #ffa116;
+}
+
+.theme-preview.leetcode-theme .preview-line.short {
+  background: #303030;
+}
+
 .preview-header {
   height: 20px;
 }
