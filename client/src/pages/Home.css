@@ -64,195 +64,260 @@
   z-index: 1;
 }
 
-/* ─── Hero Section ─── */
-.home-hero-section {
-  padding: 40px 0 60px;
-  display: flex;
-  flex-direction: column;
+/* ─── Cyber HUD Panel ─── */
+.home-hud-panel {
+  width: 100%;
+  background: rgba(20, 20, 20, 0.25) !important;
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  border-radius: 24px;
+  padding: 36px;
+  box-shadow: 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.04),
+    0 20px 50px rgba(0, 0, 0, 0.5);
+  margin-top: 10px;
+  margin-bottom: 40px;
 }
 
-.home-hero-inner {
+.home-hud-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 40px;
+  align-items: center;
+  padding-bottom: 30px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 24px;
+}
+
+/* Left Column: Identity & Radial */
+.home-hud-identity {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.home-hud-radial-wrap {
+  width: 100px;
+  height: 100px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.home-hud-radial {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.hud-radial-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.02);
+  stroke-width: 6;
+}
+
+.hud-radial-fill {
+  fill: none;
+  stroke: var(--xp-color, var(--primary));
+  stroke-width: 6;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px var(--xp-color, var(--primary)));
+}
+
+.home-hud-radial-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.hud-radial-percent {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--text-hi, #ffffff);
+  line-height: 1;
+}
+
+.hud-radial-sub {
+  font-size: 0.55rem;
+  font-weight: 850;
+  color: var(--text-muted, #a0a0a0);
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.home-hud-bio {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  gap: 4px;
 }
 
-.home-greeting-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 9999px;
-  font-size: 0.7rem;
-  font-weight: 800;
+.hud-bio-eyebrow {
+  font-size: 0.6rem;
+  font-weight: 850;
+  color: var(--text-muted, #a0a0a0);
   letter-spacing: 1.5px;
-  color: var(--primary);
   text-transform: uppercase;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.home-greeting-dot {
-  width: 6px;
-  height: 6px;
-  background-color: var(--primary);
-  border-radius: 50%;
-  box-shadow: 0 0 8px var(--primary);
-  animation: pulse-dot 1.8s infinite;
-}
-
-@keyframes pulse-dot {
-  0% { transform: scale(0.9); opacity: 0.6; }
-  50% { transform: scale(1.2); opacity: 1; }
-  100% { transform: scale(0.9); opacity: 0.6; }
-}
-
-.home-hero-title {
-  font-size: 3rem;
+.home-hud-username {
+  font-size: 2rem;
   font-weight: 900;
-  letter-spacing: -1.5px;
-  line-height: 1.1;
-  margin-bottom: 12px;
-  color: var(--text-hi, #ffffff);
-}
-
-.home-hero-name {
-  color: var(--primary);
-  position: relative;
-  background: linear-gradient(135deg, var(--text-hi) 20%, var(--primary) 100%);
+  letter-spacing: -1px;
+  background: linear-gradient(135deg, var(--text-hi) 30%, var(--primary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  line-height: 1.1;
+  margin-bottom: 2px;
 }
 
-.home-hero-subtitle {
-  font-size: 1.1rem;
-  color: var(--text-muted, #a0a0a0);
-  max-width: 600px;
-  line-height: 1.6;
-  margin-bottom: 40px;
-}
-
-/* ─── Hero Stats ─── */
-.home-hero-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  width: 100%;
-  margin-bottom: 40px;
-}
-
-.home-stat-card {
-  background: rgba(var(--bg-surface, 26, 26, 26), 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 16px;
-  padding: 20px 24px;
+.home-hud-rank-pill {
   display: flex;
   align-items: center;
-  gap: 16px;
-  cursor: pointer;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-  transition: border-color 0.3s, box-shadow 0.3s;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 750;
+  color: var(--rank-color, var(--primary));
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.home-stat-card:hover {
-  border-color: rgba(var(--primary-rgb), 0.3);
-  box-shadow: 0 15px 40px rgba(var(--primary-rgb), 0.1);
+/* Middle Column: Stats */
+.home-hud-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 18px;
+  padding: 20px 28px;
+  width: 100%;
 }
 
-.home-stat-icon {
-  width: 44px;
-  height: 44px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 12px;
+.hud-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  position: relative;
+}
+
+.hud-stat-icon-wrap {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--stat-color, var(--primary));
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
-.home-stat-info {
+.hud-stat-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.home-stat-val {
-  font-size: 1.3rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-}
-
-.home-stat-label {
-  font-size: 0.75rem;
-  font-weight: 600;
+.hud-stat-label {
+  font-size: 0.65rem;
+  font-weight: 700;
   color: var(--text-muted, #a0a0a0);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-/* ─── XP Progress Bar ─── */
-.home-xp-bar-wrap {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: rgba(var(--bg-surface, 26, 26, 26), 0.3);
-  border: 1px solid rgba(255,255,255,0.04);
-  border-radius: 16px;
-  padding: 18px 24px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+.hud-stat-value {
+  font-size: 1.15rem;
+  font-weight: 850;
+  color: var(--text-hi, #ffffff);
+  line-height: 1;
 }
 
-.home-xp-bar-labels {
+.hud-stat-suffix {
+  font-size: 0.75rem;
+  color: var(--text-muted, #a0a0a0);
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.hud-stat-divider {
+  position: absolute;
+  right: 0;
+  top: 10%;
+  height: 80%;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.06), transparent);
+}
+
+/* Bottom Progress Tube */
+.home-hud-progress-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.home-hud-progress-labels {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--text-muted, #a0a0a0);
 }
 
-.home-xp-bar-pct {
-  color: var(--primary);
-  font-size: 0.75rem;
-  letter-spacing: 1px;
+.hud-prog-level {
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.7rem;
 }
 
-.home-xp-bar-track {
+.hud-prog-level.next {
+  color: var(--primary);
+}
+
+.hud-prog-xp {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  color: var(--text-hi, #ffffff);
+}
+
+.home-hud-progress-tube {
+  height: 10px;
   width: 100%;
-  height: 8px;
-  background: rgba(255,255,255,0.03);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.03);
   border-radius: 9999px;
   position: relative;
   overflow: visible;
 }
 
-.home-xp-bar-fill {
+.home-hud-progress-charge {
   height: 100%;
-  background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light, var(--primary)) 100%);
+  background: linear-gradient(90deg, var(--xp-color, var(--primary)) 0%, var(--primary-light, var(--xp-color, var(--primary))) 100%);
   border-radius: 9999px;
   box-shadow: 0 0 10px var(--primary-glow);
 }
 
-.home-xp-bar-glow {
+.home-hud-progress-glow {
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   background: var(--xp-color, var(--primary));
-  border: 3px solid var(--bg-dark, #0f0f0f);
+  border: 4.5px solid var(--bg-dark, #0f0f0f);
   border-radius: 50%;
-  box-shadow: 0 0 15px var(--xp-color, var(--primary));
+  box-shadow: 0 0 12px var(--xp-color, var(--primary));
 }
 
 /* ─── 3D Tilt Card Base ─── */
@@ -474,13 +539,16 @@
 
 /* ─── Heatmap Card ─── */
 .home-heatmap-card {
-  background: rgba(var(--bg-surface, 26, 26, 26), 0.3);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 20px;
+  background: rgba(20, 20, 20, 0.2) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.04) !important;
+  border-radius: 24px;
   padding: 30px;
   overflow-x: auto;
+  box-shadow: 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.04),
+    0 20px 45px rgba(0, 0, 0, 0.4);
 }
 
 .home-heatmap-inner {
@@ -516,24 +584,30 @@
 
 .home-heatmap-day {
   aspect-ratio: 1;
-  border-radius: 2.5px;
+  border-radius: 4px;
   background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.01);
-  transition: transform 0.2s, filter 0.2s;
+  border: none;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s;
   cursor: pointer;
 }
 
 .home-heatmap-day:hover {
-  transform: scale(1.2);
-  filter: brightness(1.2);
+  transform: scale(1.3) translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
   z-index: 10;
 }
 
 .home-heatmap-day.level-0 { background: rgba(255,255,255,0.03); }
-.home-heatmap-day.level-1 { background: rgba(var(--primary-rgb), 0.2); }
-.home-heatmap-day.level-2 { background: rgba(var(--primary-rgb), 0.45); }
-.home-heatmap-day.level-3 { background: rgba(var(--primary-rgb), 0.7); }
-.home-heatmap-day.level-4 { background: var(--primary); box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.5); }
+.home-heatmap-day.level-1 { background: rgba(var(--primary-rgb), 0.2) !important; }
+.home-heatmap-day.level-2 { background: rgba(var(--primary-rgb), 0.45) !important; }
+.home-heatmap-day.level-3 { 
+  background: rgba(var(--primary-rgb), 0.7) !important; 
+  box-shadow: 0 0 6px rgba(var(--primary-rgb), 0.25);
+}
+.home-heatmap-day.level-4 { 
+  background: var(--primary) !important; 
+  box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.5); 
+}
 
 .home-heatmap-legend {
   display: flex;
@@ -555,137 +629,241 @@
 .home-skills-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 20px;
+  margin-top: 15px;
 }
 
 .home-skill-card {
-  background: rgba(var(--bg-surface, 26, 26, 26), 0.3);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 20px;
-  padding: 24px;
+  background-color: rgba(16, 16, 16, 0.45) !important;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+  background-size: 18px 18px;
+  background-position: center;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.03) !important;
+  border-radius: 24px;
+  padding: 28px 24px;
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.02),
+    0 15px 35px rgba(0, 0, 0, 0.4);
 }
 
 .home-skill-card:hover {
-  border-color: rgba(var(--skill-color), 0.25);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  border-color: rgba(var(--skill-color-rgb), 0.3) !important;
+  box-shadow: 
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.05),
+    0 20px 40px rgba(0, 0, 0, 0.5),
+    0 0 25px rgba(var(--skill-color-rgb), 0.05);
+  background-color: rgba(18, 18, 18, 0.55) !important;
 }
 
 .home-skill-card.active {
-  border-color: var(--skill-color);
-  box-shadow: 0 10px 40px rgba(var(--skill-color), 0.15);
+  border-color: var(--skill-color) !important;
+  box-shadow: 
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.08),
+    0 20px 50px rgba(var(--skill-color-rgb), 0.12);
+  background-color: rgba(22, 22, 22, 0.6) !important;
+}
+
+/* Local Skill-Specific Glow Settings */
+.home-skill-card::before {
+  background: radial-gradient(
+    220px circle at var(--mouse-x-local, 0px) var(--mouse-y-local, 0px),
+    rgba(var(--skill-color-rgb), 0.35),
+    transparent 60%
+  ) !important;
+}
+
+.home-skill-card::after {
+  background: radial-gradient(
+    260px circle at var(--mouse-x-local, 0px) var(--mouse-y-local, 0px),
+    rgba(var(--skill-color-rgb), 0.06),
+    transparent 60%
+  ) !important;
 }
 
 .home-skill-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 2;
 }
 
 .home-skill-icon {
-  width: 40px;
-  height: 40px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 10px;
+  width: 48px;
+  height: 48px;
+  background: radial-gradient(circle at center, rgba(var(--skill-color-rgb), 0.12) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border: 1px solid rgba(var(--skill-color-rgb), 0.3);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--skill-color);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    0 0 15px rgba(var(--skill-color-rgb), 0.15),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.home-skill-card:hover .home-skill-icon {
+  transform: scale(1.12) rotate(4deg);
+  border-color: rgba(var(--skill-color-rgb), 0.6);
+  box-shadow: 
+    0 6px 16px rgba(0, 0, 0, 0.3),
+    0 0 25px rgba(var(--skill-color-rgb), 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  background: rgba(var(--skill-color-rgb), 0.25);
 }
 
 .home-skill-badge {
-  font-size: 0.58rem;
-  font-weight: 850;
-  letter-spacing: 1px;
-  padding: 4px 10px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   color: var(--text-muted, #a0a0a0);
   border-radius: 9999px;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.02);
+}
+
+.home-skill-card:hover .home-skill-badge {
+  background: rgba(var(--skill-color-rgb), 0.1);
+  border-color: rgba(var(--skill-color-rgb), 0.3);
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(var(--skill-color-rgb), 0.15);
 }
 
 .home-skill-card.active .home-skill-badge {
-  background: rgba(var(--skill-color), 0.15);
-  color: var(--skill-color);
-  border-color: rgba(var(--skill-color), 0.3);
+  background: rgba(var(--skill-color-rgb), 0.2);
+  color: #ffffff;
+  border-color: rgba(var(--skill-color-rgb), 0.5);
+  box-shadow: 0 0 12px rgba(var(--skill-color-rgb), 0.25);
 }
 
 .home-skill-name {
-  font-size: 1.05rem;
-  font-weight: 800;
+  font-size: 1.2rem;
+  font-weight: 900;
   color: var(--text-hi, #ffffff);
-  margin-bottom: 6px;
-  letter-spacing: -0.1px;
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+  position: relative;
+  z-index: 2;
+  transition: color 0.3s ease;
+}
+
+.home-skill-card:hover .home-skill-name {
+  color: #ffffff;
 }
 
 .home-skill-desc {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--text-muted, #a0a0a0);
-  line-height: 1.4;
+  line-height: 1.5;
   margin-bottom: 24px;
+  position: relative;
+  z-index: 2;
 }
 
 .home-skill-progress-wrap {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 18px;
+  gap: 8px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 2;
 }
 
 .home-skill-progress-track {
   width: 100%;
-  height: 4px;
-  background: rgba(255,255,255,0.03);
+  height: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.02);
   border-radius: 9999px;
   overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .home-skill-progress-fill {
   height: 100%;
-  background: var(--skill-color);
+  background: linear-gradient(90deg, rgba(var(--skill-color-rgb), 0.7) 0%, var(--skill-color) 100%);
   border-radius: 9999px;
+  box-shadow: 0 0 8px rgba(var(--skill-color-rgb), 0.5);
+  position: relative;
+}
+
+/* Energy tube animation along progress track */
+.home-skill-progress-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  animation: energy-pulse 2.5s infinite linear;
+  background-size: 200% 100%;
+}
+
+@keyframes energy-pulse {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 .home-skill-progress-meta {
   display: flex;
   justify-content: space-between;
-  font-size: 0.65rem;
-  font-weight: 700;
+  font-size: 0.7rem;
+  font-weight: 750;
   color: var(--text-muted, #a0a0a0);
+}
+
+.home-skill-card:hover .home-skill-progress-meta {
+  color: var(--text-hi, #ffffff);
 }
 
 .home-skill-xp {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.7rem;
-  font-weight: 700;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
   color: var(--skill-color);
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.home-skill-card:hover .home-skill-xp {
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(var(--skill-color-rgb), 0.5);
 }
 
 .home-skill-glow {
   position: absolute;
-  bottom: -50px;
-  left: -50px;
-  width: 120px;
-  height: 120px;
-  background: radial-gradient(circle, var(--skill-color) 0%, transparent 70%);
+  inset: 0;
+  background: 
+    radial-gradient(circle at 80% 20%, rgba(var(--skill-color-rgb), 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(var(--skill-color-rgb), 0.04) 0%, transparent 50%);
   opacity: 0;
-  filter: blur(25px);
-  transition: opacity 0.4s;
+  transition: opacity 0.5s ease;
   pointer-events: none;
+  z-index: 1;
 }
 
 .home-skill-card:hover .home-skill-glow,
 .home-skill-card.active .home-skill-glow {
-  opacity: 0.12;
+  opacity: 1;
 }
 
 /* ─── Motivational Ticker ─── */

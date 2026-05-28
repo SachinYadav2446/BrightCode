@@ -241,108 +241,95 @@ const Home = () => {
       {user ? (
         <div className="home-dashboard">
 
-          {/* ── HERO SECTION ── */}
+          {/* ── CYBER HUD PANEL ── */}
           <motion.section ref={heroRef} className="home-hero-section" style={{ y: heroY, opacity: heroOpacity }}>
             <motion.div className="home-hero-inner" variants={stagger} initial="hidden" animate="visible">
-
-              {/* Greeting */}
+              
               <motion.div className="home-greeting-badge" variants={fadeUp} custom={0}>
                 <span className="home-greeting-dot" />
                 <span>MISSION CONTROL · ACTIVE SESSION</span>
               </motion.div>
 
-              <motion.h1 className="home-hero-title" variants={fadeUp} custom={0.05}>
-                Welcome back,{' '}
-                <span className="home-hero-name">{user.username}</span>
-              </motion.h1>
-
-              <motion.p className="home-hero-subtitle" variants={fadeUp} custom={0.1}>
-                Your progress is tracked. Your mission is live. Keep pushing the frontier.
-              </motion.p>
-
-              {/* XP Stats Row */}
-              <motion.div className="home-hero-stats" variants={stagger}>
-                {[
-                  { icon: Zap, label: 'Total XP', value: xp.toLocaleString(), suffix: ' XP', color: '#ffd700' },
-                  { icon: Crown, label: 'Rank', value: levelInfo.label, suffix: '', color: levelInfo.color },
-                  { icon: Flame, label: 'Today\'s XP', value: todaysXp, suffix: ' XP', color: '#ef4444' },
-                  { icon: Activity, label: 'Active Days', value: activeDays, suffix: '', color: '#22c55e' },
-                ].map((stat, i) => (
-                  <motion.div key={stat.label} className="home-stat-card" variants={fadeUp} custom={i * 0.05}
-                    whileHover={{ y: -6, scale: 1.02 }}>
-                    <div className="home-stat-icon" style={{ '--stat-color': stat.color }}>
-                      <stat.icon size={18} />
+              <TiltCard className="home-hud-panel" intensity={3} variants={fadeUp} custom={0.05}>
+                <div className="home-hud-grid">
+                  {/* Left Column: operative identity & progress radial */}
+                  <div className="home-hud-identity">
+                    <div className="home-hud-radial-wrap">
+                      <svg className="home-hud-radial" viewBox="0 0 100 100">
+                        <circle className="hud-radial-track" cx="50" cy="50" r="42" />
+                        <motion.circle 
+                          className="hud-radial-fill" 
+                          cx="50" 
+                          cy="50" 
+                          r="42" 
+                          strokeDasharray="263.8"
+                          initial={{ strokeDashoffset: 263.8 }}
+                          animate={{ strokeDashoffset: 263.8 - (263.8 * xpPercent) / 100 }}
+                          transition={{ duration: 1.5, ease: "easeOut", delay: 0.3 }}
+                          style={{ '--xp-color': levelInfo.color }}
+                        />
+                      </svg>
+                      <div className="home-hud-radial-content">
+                        <span className="hud-radial-percent">{Math.round(xpPercent)}%</span>
+                        <span className="hud-radial-sub">NEXT LEVEL</span>
+                      </div>
                     </div>
-                    <div className="home-stat-info">
-                      <span className="home-stat-val" style={{ color: stat.color }}>
-                        <AnimatedCounter end={typeof stat.value === 'number' ? stat.value : 0} />
-                        {typeof stat.value === 'string' ? stat.value : ''}{stat.suffix}
-                      </span>
-                      <span className="home-stat-label">{stat.label}</span>
+                    
+                    <div className="home-hud-bio">
+                      <span className="hud-bio-eyebrow">OPERATIVE STATUS</span>
+                      <h1 className="home-hud-username">{user.username}</h1>
+                      <div className="home-hud-rank-pill" style={{ '--rank-color': levelInfo.color }}>
+                        <Crown size={12} />
+                        <span>{levelInfo.label}</span>
+                      </div>
                     </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-
-              {/* XP Progress Bar */}
-              {levelInfo.next && (
-                <motion.div className="home-xp-bar-wrap" variants={fadeUp} custom={0.2}>
-                  <div className="home-xp-bar-labels">
-                    <span>{levelInfo.label}</span>
-                    <span className="home-xp-bar-pct">{Math.round(xpPercent)}% → Next Rank</span>
-                    <span>{xp >= 5000 ? 'Expert' : xp >= 2000 ? 'Advanced' : xp >= 500 ? 'Apprentice' : 'Apprentice'}</span>
                   </div>
-                  <div className="home-xp-bar-track">
-                    <motion.div className="home-xp-bar-fill"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${xpPercent}%` }}
-                      transition={{ duration: 1.4, ease: 'easeOut', delay: 0.3 }}
-                      style={{ '--xp-color': levelInfo.color }}
-                    />
-                    <div className="home-xp-bar-glow" style={{ left: `${xpPercent}%`, '--xp-color': levelInfo.color }} />
-                  </div>
-                </motion.div>
-              )}
-            </motion.div>
-          </motion.section>
 
-          {/* ── QUICK ACTIONS GRID ── */}
-          <motion.section className="home-section" initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger}>
-            <motion.div className="home-section-header" variants={fadeUp}>
-              <span className="home-section-eyebrow">NAVIGATION</span>
-              <h2 className="home-section-title">Command Center</h2>
-              <p className="home-section-desc">Your high-priority modules, ready for deployment.</p>
-            </motion.div>
-
-            <div className="home-actions-grid">
-              {quickActions.map((action, i) => (
-                <motion.div key={action.label} variants={fadeUp} custom={i * 0.04}>
-                  <TiltCard className="home-action-card" intensity={6}
-                    onClick={() => navigate(action.path)}
-                    style={{ '--card-color': action.color }}>
-                    <div className="home-action-card-inner">
-                      <div className="home-action-top">
-                        <div className="home-action-icon" style={{ background: `${action.color}15`, border: `1px solid ${action.color}30` }}>
-                          <action.icon size={22} style={{ color: action.color }} />
+                  {/* Middle Column: Stats Display */}
+                  <div className="home-hud-stats">
+                    {[
+                      { icon: Zap, label: 'Total XP', value: xp, suffix: ' XP', color: '#ffa116' },
+                      { icon: Flame, label: 'Today\'s XP', value: todaysXp, suffix: ' XP', color: '#ef4444' },
+                      { icon: Activity, label: 'Active Days', value: activeDays, suffix: ' Days', color: '#22c55e' },
+                    ].map((stat, idx) => (
+                      <div key={stat.label} className="hud-stat-item">
+                        <div className="hud-stat-icon-wrap" style={{ '--stat-color': stat.color }}>
+                          <stat.icon size={16} />
                         </div>
-                        {action.badge && (
-                          <span className="home-action-badge" style={{ background: `${action.color}20`, color: action.color, border: `1px solid ${action.color}40` }}>
-                            {action.badge}
+                        <div className="hud-stat-text">
+                          <span className="hud-stat-label">{stat.label}</span>
+                          <span className="hud-stat-value">
+                            <AnimatedCounter end={stat.value} />
+                            <span className="hud-stat-suffix">{stat.suffix.replace(stat.value, '')}</span>
                           </span>
-                        )}
+                        </div>
+                        {idx < 2 && <div className="hud-stat-divider" />}
                       </div>
-                      <h3 className="home-action-title">{action.label}</h3>
-                      <p className="home-action-desc">{action.desc}</p>
-                      <div className="home-action-arrow">
-                        <ArrowUpRight size={16} style={{ color: action.color }} />
-                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bottom Row: Progress Tube */}
+                {levelInfo.next && (
+                  <div className="home-hud-progress-section">
+                    <div className="home-hud-progress-labels">
+                      <span className="hud-prog-level">{levelInfo.label}</span>
+                      <span className="hud-prog-xp">{xp.toLocaleString()} / {levelInfo.next.toLocaleString()} XP</span>
+                      <span className="hud-prog-level next">{xp >= 5000 ? 'Expert' : xp >= 2000 ? 'Advanced' : xp >= 500 ? 'Apprentice' : 'Apprentice'}</span>
                     </div>
-                    <div className="home-action-shimmer" />
-                    <div className="home-action-glow" style={{ '--card-color': action.color }} />
-                  </TiltCard>
-                </motion.div>
-              ))}
-            </div>
+                    <div className="home-hud-progress-tube">
+                      <motion.div className="home-hud-progress-charge"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${xpPercent}%` }}
+                        transition={{ duration: 1.4, ease: 'easeOut', delay: 0.3 }}
+                        style={{ '--xp-color': levelInfo.color }}
+                      />
+                      <div className="home-hud-progress-glow" style={{ left: `${xpPercent}%`, '--xp-color': levelInfo.color }} />
+                    </div>
+                  </div>
+                )}
+              </TiltCard>
+            </motion.div>
           </motion.section>
 
           {/* ── ACTIVITY HEATMAP ── */}
@@ -353,7 +340,7 @@ const Home = () => {
               <p className="home-section-desc">{new Date().getFullYear()} contribution timeline — every pixel represents XP earned.</p>
             </motion.div>
 
-            <motion.div className="home-heatmap-card" variants={fadeUp}>
+            <TiltCard className="home-heatmap-card" variants={fadeUp} intensity={2}>
               <div className="home-heatmap-inner">
                 <div className="home-heatmap-months">
                   {monthLabels.map((lbl, i) => (
@@ -378,7 +365,7 @@ const Home = () => {
                   <span>More</span>
                 </div>
               </div>
-            </motion.div>
+            </TiltCard>
           </motion.section>
 
           {/* ── SKILL RADAR ── */}
@@ -400,7 +387,13 @@ const Home = () => {
                     variants={fadeUp}
                     custom={i * 0.06}
                     onClick={() => setActiveSkill(activeSkill === skill.id ? null : skill.id)}
-                    style={{ '--skill-color': skill.color }}
+                    style={{
+                      '--skill-color': skill.color,
+                      '--skill-color-rgb': skill.id === 'css' ? '59, 130, 246'
+                        : skill.id === 'logic' ? '139, 92, 246'
+                        : skill.id === 'react' ? '6, 182, 212'
+                        : '34, 197, 94'
+                    }}
                     intensity={6}
                   >
                     <div className="home-skill-top">
