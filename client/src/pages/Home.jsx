@@ -105,6 +105,10 @@ const Home = () => {
   const [rankersError, setRankersError] = useState(false);
   const [activeSkill, setActiveSkill] = useState(null);
   const [supportForm, setSupportForm] = useState({ subject: '', message: '', isSending: false, sent: false });
+  const [friendsCount, setFriendsCount] = useState(0);
+  const [factionsCount, setFactionsCount] = useState(0);
+  const [notesCount, setNotesCount] = useState(0);
+  const [activePvPGames, setActivePvPGames] = useState([]);
   const heroRef = useRef(null);
 
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
@@ -121,17 +125,53 @@ const Home = () => {
     return () => window.removeEventListener('mousemove', handler);
   }, []);
 
-  /* ── Fetch top rankers ── */
+  /* ── Fetch dynamic dashboard data ── */
   useEffect(() => {
-    const fetch = async () => {
+    const loadDashboard = async () => {
       try {
-        const { data } = await axios.get(`${API_URL}/leaderboard`, { timeout: 5000 });
-        setTopRankers((data || []).slice(0, 3));
-      } catch { setRankersError(true); }
-      finally { setRankersLoading(false); }
+        const { data: leaderboardData } = await axios.get(`${API_URL}/leaderboard`, { timeout: 5000 });
+        setTopRankers((leaderboardData || []).slice(0, 3));
+      } catch {
+        setRankersError(true);
+      } finally {
+        setRankersLoading(false);
+      }
+
+      if (!user) return;
+
+      try {
+        const { data: friendsData } = await axios.get(`${API_URL}/friends`);
+        setFriendsCount((friendsData || []).length);
+      } catch (err) {
+        console.error("Friends fetch failed:", err);
+      }
+
+      try {
+        const { data: factionsData } = await axios.get(`${API_URL}/factions`);
+        const userFactions = (factionsData || []).filter(fac => 
+          fac.members?.some(m => m.username === user.username || m.id === user.id || m === user.username)
+        );
+        setFactionsCount(userFactions.length);
+      } catch (err) {
+        console.error("Factions fetch failed:", err);
+      }
+
+      try {
+        const { data: notesData } = await axios.get(`${API_URL}/api/notes`);
+        setNotesCount((notesData || []).length);
+      } catch (err) {
+        console.error("Vault notes fetch failed:", err);
+      }
+
+      try {
+        const { data: gamesData } = await axios.get(`${API_URL}/code-wars/active-games`);
+        setActivePvPGames(gamesData || []);
+      } catch (err) {
+        console.error("Active games fetch failed:", err);
+      }
     };
-    fetch();
-  }, []);
+    loadDashboard();
+  }, [user]);
 
   /* ── Derived Data ── */
   const xp = Number(user?.xp || 0);
@@ -157,6 +197,47 @@ const Home = () => {
     { id: 'react', label: 'React Forge', val: Number(user?.react_level || 0), max: 500, color: '#06b6d4', icon: Globe, desc: 'Component architecture' },
     { id: 'java', label: 'Java Protocol', val: Number(user?.java_level || 0), max: 400, color: '#22c55e', icon: Terminal, desc: 'Systems & backend' },
   ];
+
+  const getDynamicMissions = () => {
+    if (!user) return [];
+    const sortedSkills = [...skillDistribution].sort((a, b) => a.val - b.val);
+    const primarySkill = sortedSkills[0];
+    const secondarySkill = sortedSkills[1];
+    
+    return [
+      {
+        id: 1,
+        title: primarySkill.id === 'css' ? 'Centering Genesis' : primarySkill.id === 'logic' ? 'Matrix Decryptor' : primarySkill.id === 'react' ? 'Concurrent Threading' : 'Buffer Overflow Shield',
+        type: 'DAILY PRIORITY',
+        reward: `${(primarySkill.max - primarySkill.val) * 10 || 150} XP`,
+        difficulty: primarySkill.val < primarySkill.max * 0.3 ? 'Beginner' : primarySkill.val < primarySkill.max * 0.7 ? 'Intermediate' : 'Expert',
+        progress: Math.round((primarySkill.val / primarySkill.max) * 100),
+        accent: primarySkill.color,
+        desc: `Level up lowest proficiency skill (${primarySkill.label}). Complete code challenges.`
+      },
+      {
+        id: 2,
+        title: secondarySkill.id === 'css' ? 'Flexbox Grid Design' : secondarySkill.id === 'logic' ? 'Binary Pathfinder' : secondarySkill.id === 'react' ? 'Redux Store Context Sync' : 'Spring Bean Injection',
+        type: 'SECONDARY QUEST',
+        reward: `${(secondarySkill.max - secondarySkill.val) * 8 || 120} XP`,
+        difficulty: secondarySkill.val < secondarySkill.max * 0.5 ? 'Intermediate' : 'Advanced',
+        progress: Math.round((secondarySkill.val / secondarySkill.max) * 100),
+        accent: secondarySkill.color,
+        desc: `Bridge the skill gap in ${secondarySkill.label} to unlock master grade rankings.`
+      },
+      {
+        id: 3,
+        title: 'Faction Code Nexus',
+        type: 'GLOBAL CO-OP',
+        reward: '500 XP',
+        difficulty: 'Hard',
+        progress: Math.min(factionsCount * 25, 100),
+        accent: '#fb7185',
+        desc: `Join forces with faction members. Currently active in ${factionsCount} groups.`
+      }
+    ];
+  };
+  const missions = getDynamicMissions();
 
   /* ── Heatmap ── */
   const generateHeatmapData = () => {
@@ -235,6 +316,9 @@ const Home = () => {
         <FloatingOrb style={{ top: '10%', left: '5%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(var(--primary-rgb, 239, 68, 68), 0.06) 0%, transparent 70%)' }} />
         <FloatingOrb delay={3} style={{ top: '50%', right: '5%', width: 500, height: 500, background: 'radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)' }} />
         <FloatingOrb delay={7} style={{ bottom: '20%', left: '30%', width: 350, height: 350, background: 'radial-gradient(circle, rgba(6,182,212,0.04) 0%, transparent 70%)' }} />
+        <div className="cyber-glass-box box-1" />
+        <div className="cyber-glass-box box-2" />
+        <div className="cyber-glass-box box-3" />
       </div>
 
       {/* ═══════ AUTHENTICATED USER DASHBOARD ═══════ */}
@@ -438,11 +522,7 @@ const Home = () => {
             </motion.div>
 
             <div className="home-missions-grid">
-              {[
-                { id: 1, title: "Array Sentinel", type: "DAILY QUEST", reward: "250 XP", difficulty: "Medium", progress: 60, accent: "#fb923c", desc: "Optimize searching in sorted matrices using binary partition techniques." },
-                { id: 2, title: "System Overload", type: "FACTION STRIKE", reward: "750 XP", difficulty: "Hard", progress: 20, accent: "#ef4444", desc: "Collaborative event: resolve memory leaks in the mock backend stream container." },
-                { id: 3, title: "CSS Morphism", type: "WEEKLY SPRINT", reward: "500 XP", difficulty: "Easy", progress: 90, accent: "#06b6d4", desc: "Rebuild a fully fluid 3D glassmorphic card library with zero framework code." }
-              ].map((mission, idx) => (
+              {missions.map((mission, idx) => (
                 <TiltCard key={mission.id} className="home-mission-card" style={{ '--mission-color': mission.accent }} intensity={3}>
                   <div className="mission-badge" style={{ '--badge-color': mission.accent }}>{mission.type}</div>
                   <h3 className="mission-title">{mission.title}</h3>
@@ -494,21 +574,45 @@ const Home = () => {
                     <span className="terminal-title">SYS://BATTLE_REC/LOG</span>
                   </div>
                   <div className="terminal-body">
-                    {[
-                      { outcome: "VICTORY", opponent: "cyber_ninja", language: "Javascript", xp: "+120 XP", time: "2m 14s", date: "10 mins ago", win: true },
-                      { outcome: "DEFEAT", opponent: "void_pointer", language: "Java", xp: "-35 XP", time: "4m 02s", date: "2 hours ago", win: false },
-                      { outcome: "VICTORY", opponent: "stack_overflow", language: "CSS", xp: "+90 XP", time: "1m 45s", date: "1 day ago", win: true },
-                      { outcome: "VICTORY", opponent: "kernel_panic", language: "Javascript", xp: "+150 XP", time: "3m 10s", date: "3 days ago", win: true }
-                    ].map((log, li) => (
-                      <div key={li} className={`terminal-row ${log.win ? 'row-win' : 'row-loss'}`}>
-                        <span className="row-outcome">{log.outcome}</span>
-                        <span className="row-opponent">vs. {log.opponent}</span>
-                        <span className="row-lang">{log.language}</span>
-                        <span className="row-time">{log.time}</span>
-                        <span className="row-xp">{log.xp}</span>
-                        <span className="row-date">{log.date}</span>
-                      </div>
-                    ))}
+                    {activePvPGames.length > 0 ? (
+                      activePvPGames.map((game, gi) => (
+                        <div key={gi} className="terminal-row row-win">
+                          <span className="row-outcome">LIVE MATCH</span>
+                          <span className="row-opponent">{game.creatorUsername || 'Lobby'}</span>
+                          <span className="row-lang">{game.language || 'Any'}</span>
+                          <span className="row-time">{game.participants?.length || 0} players</span>
+                          <span className="row-xp">+{game.xpReward || 100} XP</span>
+                          <span className="row-date"><Link to={`/code-wars/game/${game.id}`} className="join-active-game-btn">JOIN</Link></span>
+                        </div>
+                      ))
+                    ) : (
+                      <>
+                        <div className="terminal-row row-win">
+                          <span className="row-outcome">READY</span>
+                          <span className="row-opponent">Operative: {user.username}</span>
+                          <span className="row-lang">Status: Active</span>
+                          <span className="row-time">Session: Online</span>
+                          <span className="row-xp">Level {user.level || 1}</span>
+                          <span className="row-date">Now</span>
+                        </div>
+                        <div className="terminal-row row-win">
+                          <span className="row-outcome">LOG</span>
+                          <span className="row-opponent">Latest XP deposit</span>
+                          <span className="row-lang">Total: {user.xp} XP</span>
+                          <span className="row-time">Activity: Checked</span>
+                          <span className="row-xp">+{todaysXp} today</span>
+                          <span className="row-date">Session</span>
+                        </div>
+                        <div className="terminal-row row-win">
+                          <span className="row-outcome">BLUEPRINTS</span>
+                          <span className="row-opponent">Vault Records</span>
+                          <span className="row-lang">{notesCount} Items</span>
+                          <span className="row-time">Vault: Configured</span>
+                          <span className="row-xp">Secure</span>
+                          <span className="row-date">Online</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </motion.div>
               </div>
