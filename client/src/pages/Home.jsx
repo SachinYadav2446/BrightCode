@@ -110,7 +110,6 @@ const Home = () => {
   const [factionsList, setFactionsList] = useState([]);
   const [notesCount, setNotesCount] = useState(0);
   const [activePvPGames, setActivePvPGames] = useState([]);
-  const [activeTab, setActiveTab] = useState('missions');
   const heroRef = useRef(null);
 
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
@@ -150,7 +149,7 @@ const Home = () => {
 
       try {
         const { data: factionsData } = await axios.get(`${API_URL}/factions`);
-        setFactionsList(factionsData || []);
+        setFactionsList((factionsData || []).slice(0, 3)); // show top 3 factions on home
         const userFactions = (factionsData || []).filter(fac => 
           fac.members?.some(m => m.username === user.username || m.id === user.id || m === user.username)
         );
@@ -279,12 +278,12 @@ const Home = () => {
   const monthLabels = getMonthLabels();
 
   const quickActions = [
-    { label: 'Code Editor', desc: 'Launch collaborative workspace', icon: Code2, path: '/editor/new', color: '#ef4444', badge: 'LIVE' },
-    { label: 'Arcade', desc: 'Skill challenges & missions', icon: Target, path: '/library', color: '#8b5cf6', badge: 'HOT' },
-    { label: 'Code Wars', desc: 'Competitive coding battles', icon: Zap, path: '/code-wars', color: '#f97316', badge: 'PVP' },
-    { label: 'Factions', desc: 'Join elite developer groups', icon: Users, path: '/factions', color: '#22c55e', badge: null },
-    { label: 'Code Vault', desc: 'Your personal code library', icon: BookOpen, path: '/codevault', color: '#06b6d4', badge: null },
-    { label: 'Leaderboard', desc: 'Global rankings & glory', icon: Trophy, path: '/leaderboard', color: '#ffd700', badge: 'RANK' },
+    { label: 'Code Editor', desc: 'Collaborative Workspace', icon: Code2, path: '/editor/new', color: '#ef4444' },
+    { label: 'Arcade', desc: 'Challenges & Missions', icon: Target, path: '/library', color: '#8b5cf6' },
+    { label: 'Code Wars', desc: 'Competitive PvP Battles', icon: Zap, path: '/code-wars', color: '#f97316' },
+    { label: 'Factions', desc: 'Developer Collectives', icon: Users, path: '/factions', color: '#22c55e' },
+    { label: 'Code Vault', desc: 'Personal Library', icon: BookOpen, path: '/codevault', color: '#06b6d4' },
+    { label: 'Leaderboard', desc: 'Rankings & Glory', icon: Trophy, path: '/leaderboard', color: '#ffd700' },
   ];
 
   const motivationalQuotes = [
@@ -309,15 +308,6 @@ const Home = () => {
     }
   };
 
-  const tabs = [
-    { id: 'missions', label: 'MISSIONS', icon: Target },
-    { id: 'skills', label: 'SKILLS', icon: Layers },
-    { id: 'pvp', label: 'ARENA', icon: Zap },
-    { id: 'factions', label: 'FACTIONS', icon: Users },
-    { id: 'fame', label: 'HALL OF FAME', icon: Trophy },
-    { id: 'support', label: 'SUPPORT', icon: Terminal }
-  ];
-
   /* ──═════════════════════════ RENDER ═════════════════════════── */
   return (
     <div className="home-wrapper">
@@ -335,488 +325,486 @@ const Home = () => {
 
       {user ? (
         <div className="home-dashboard">
-          <div className="home-dashboard-layout">
           
-          {/* ── LEFT SIDEBAR: OPERATIVE PROFILE ── */}
-          <div className="home-sidebar">
-            <TiltCard className="sidebar-hud-panel" intensity={2}>
-              <div className="sidebar-hud-header">
-                <div className="sidebar-radial-wrap">
-                  <svg className="sidebar-radial" viewBox="0 0 100 100">
-                    <circle className="hud-radial-track" cx="50" cy="50" r="42" />
-                    <motion.circle 
-                      className="hud-radial-fill" 
-                      cx="50" 
-                      cy="50" 
-                      r="42" 
-                      strokeDasharray="263.8"
-                      initial={{ strokeDashoffset: 263.8 }}
-                      animate={{ strokeDashoffset: 263.8 - (263.8 * xpPercent) / 100 }}
-                      transition={{ duration: 1.5, ease: "easeOut", delay: 0.3 }}
-                      style={{ '--xp-color': levelInfo.color }}
-                    />
-                  </svg>
-                  <div className="sidebar-radial-content">
-                    <span className="hud-radial-percent">{Math.round(xpPercent)}%</span>
-                  </div>
-                </div>
-                
-                <div className="sidebar-identity">
-                  <span className="hud-bio-eyebrow">OPERATIVE ID</span>
-                  <h1 className="sidebar-username">{user.username}</h1>
-                  <div className="home-hud-rank-pill" style={{ '--rank-color': levelInfo.color }}>
-                    <Crown size={12} />
-                    <span>{levelInfo.label}</span>
-                  </div>
-                </div>
-              </div>
+          {/* ── 1. CYBER HUD PANEL ── */}
+          <motion.section ref={heroRef} className="home-hero-section" style={{ y: heroY, opacity: heroOpacity }}>
+            <motion.div className="home-hero-inner" variants={stagger} initial="hidden" animate="visible">
+              
+              <motion.div className="home-greeting-badge" variants={fadeUp} custom={0}>
+                <span className="home-greeting-dot" />
+                <span>MISSION CONTROL · ACTIVE SESSION</span>
+              </motion.div>
 
-              <div className="sidebar-stats-divider" />
-
-              <div className="sidebar-stats-list">
-                {[
-                  { icon: Zap, label: 'TOTAL XP', value: xp, color: '#ffa116' },
-                  { icon: Flame, label: 'TODAY XP', value: todaysXp, color: '#ef4444' },
-                  { icon: Activity, label: 'ACTIVE DAYS', value: activeDays, color: '#22c55e' },
-                  { icon: Users, label: 'FRIENDS', value: friendsCount, color: '#06b6d4' },
-                  { icon: Code2, label: 'FACTIONS', value: factionsCount, color: '#8b5cf6' },
-                  { icon: BookOpen, label: 'VAULT NOTES', value: notesCount, color: '#ec4899' },
-                ].map((stat) => (
-                  <div key={stat.label} className="sidebar-stat-row">
-                    <div className="sidebar-stat-label-wrap">
-                      <stat.icon size={14} style={{ color: stat.color }} />
-                      <span>{stat.label}</span>
+              <TiltCard className="home-hud-panel" intensity={2} variants={fadeUp} custom={0.05}>
+                <div className="home-hud-grid">
+                  {/* Left: Operative Identification */}
+                  <div className="home-hud-identity">
+                    <div className="home-hud-radial-wrap">
+                      <svg className="home-hud-radial" viewBox="0 0 100 100">
+                        <circle className="hud-radial-track" cx="50" cy="50" r="42" />
+                        <motion.circle 
+                          className="hud-radial-fill" 
+                          cx="50" 
+                          cy="50" 
+                          r="42" 
+                          strokeDasharray="263.8"
+                          initial={{ strokeDashoffset: 263.8 }}
+                          animate={{ strokeDashoffset: 263.8 - (263.8 * xpPercent) / 100 }}
+                          transition={{ duration: 1.5, ease: "easeOut", delay: 0.3 }}
+                          style={{ '--xp-color': levelInfo.color }}
+                        />
+                      </svg>
+                      <div className="home-hud-radial-content">
+                        <span className="hud-radial-percent">{Math.round(xpPercent)}%</span>
+                        <span className="hud-radial-sub">NEXT LEVEL</span>
+                      </div>
                     </div>
-                    <span className="sidebar-stat-value">
-                      <AnimatedCounter end={stat.value} />
-                    </span>
+                    
+                    <div className="home-hud-bio">
+                      <span className="hud-bio-eyebrow">OPERATIVE STATUS</span>
+                      <h1 className="home-hud-username">{user.username}</h1>
+                      <div className="home-hud-rank-pill" style={{ '--rank-color': levelInfo.color }}>
+                        <Crown size={12} />
+                        <span>{levelInfo.label}</span>
+                      </div>
+                    </div>
                   </div>
-                ))}
-              </div>
 
-              {levelInfo.next && (
-                <div className="sidebar-hud-progress">
-                  <div className="sidebar-progress-text">
-                    <span>Level Progress</span>
-                    <span>{xp.toLocaleString()} / {levelInfo.next.toLocaleString()}</span>
-                  </div>
-                  <div className="home-hud-progress-tube">
-                    <motion.div className="home-hud-progress-charge"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${xpPercent}%` }}
-                      transition={{ duration: 1.4, ease: 'easeOut', delay: 0.3 }}
-                      style={{ '--xp-color': levelInfo.color }}
-                    />
+                  {/* Right: Primary Telemetry Counters */}
+                  <div className="home-hud-stats">
+                    {[
+                      { icon: Zap, label: 'TOTAL XP', value: xp, color: '#ffa116' },
+                      { icon: Flame, label: 'TODAY XP', value: todaysXp, color: '#ef4444' },
+                      { icon: Activity, label: 'ACTIVE DAYS', value: activeDays, color: '#22c55e' },
+                    ].map((stat, idx) => (
+                      <div key={stat.label} className="hud-stat-item">
+                        <div className="hud-stat-icon-wrap" style={{ '--stat-color': stat.color }}>
+                          <stat.icon size={16} />
+                        </div>
+                        <div className="hud-stat-text">
+                          <span className="hud-stat-label">{stat.label}</span>
+                          <span className="hud-stat-value">
+                            <AnimatedCounter end={stat.value} />
+                          </span>
+                        </div>
+                        {idx < 2 && <div className="hud-stat-divider" />}
+                      </div>
+                    ))}
                   </div>
                 </div>
-              )}
-            </TiltCard>
 
-            {/* QUICK LINK ACTIONS DECK */}
-            <div className="sidebar-quick-actions">
-              <span className="sidebar-subtitle-eyebrow">QUICK DECK</span>
-              <div className="sidebar-actions-grid">
-                {quickActions.map((act) => (
-                  <Link key={act.label} to={act.path} className="sidebar-action-pill" style={{ '--act-color': act.color }}>
-                    <act.icon size={14} />
-                    <span>{act.label}</span>
-                    {act.badge && <span className="action-pill-badge">{act.badge}</span>}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
+                {/* Sub-HUD secondary grid panel */}
+                <div className="home-hud-sub-grid">
+                  {[
+                    { icon: Users, label: 'ONLINE FRIENDS', value: friendsCount, color: '#06b6d4' },
+                    { icon: Code2, label: 'JOINED FACTIONS', value: factionsCount, color: '#8b5cf6' },
+                    { icon: BookOpen, label: 'VAULT NOTES', value: notesCount, color: '#ec4899' },
+                  ].map((stat) => (
+                    <div key={stat.label} className="sub-hud-stat">
+                      <stat.icon size={14} style={{ color: stat.color }} />
+                      <span className="sub-hud-label">{stat.label}:</span>
+                      <span className="sub-hud-value"><AnimatedCounter end={stat.value} /></span>
+                    </div>
+                  ))}
+                </div>
 
-          {/* ── RIGHT PANELS: INTERACTIVE CYBER DECK ── */}
-          <div className="home-content-deck">
-            
-            {/* CYBER TAB BAR SELECTOR */}
-            <div className="deck-tab-bar">
-              {tabs.map((t) => (
-                <button
-                  key={t.id}
-                  className={`deck-tab-btn ${activeTab === t.id ? 'active' : ''}`}
-                  onClick={() => setActiveTab(t.id)}
-                >
-                  <t.icon size={16} />
-                  <span>{t.label}</span>
-                  {activeTab === t.id && (
-                    <motion.div className="active-tab-glow" layoutId="activeTabGlow" />
-                  )}
-                </button>
+                {/* Bottom Row: Progress Tube */}
+                {levelInfo.next && (
+                  <div className="home-hud-progress-section">
+                    <div className="home-hud-progress-labels">
+                      <span className="hud-prog-level">{levelInfo.label}</span>
+                      <span className="hud-prog-xp">{xp.toLocaleString()} / {levelInfo.next.toLocaleString()} XP</span>
+                      <span className="hud-prog-level next">{xp >= 5000 ? 'Expert' : xp >= 2000 ? 'Advanced' : xp >= 500 ? 'Apprentice' : 'Apprentice'}</span>
+                    </div>
+                    <div className="home-hud-progress-tube">
+                      <motion.div className="home-hud-progress-charge"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${xpPercent}%` }}
+                        transition={{ duration: 1.4, ease: 'easeOut', delay: 0.3 }}
+                        style={{ '--xp-color': levelInfo.color }}
+                      />
+                      <div className="home-hud-progress-glow" style={{ left: `${xpPercent}%`, '--xp-color': levelInfo.color }} />
+                    </div>
+                  </div>
+                )}
+              </TiltCard>
+            </motion.div>
+          </motion.section>
+
+          {/* ── 2. QUICK ACTIONS DECK ── */}
+          <motion.section className="home-section" initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger}>
+            <div className="home-actions-grid">
+              {quickActions.map((act) => (
+                <TiltCard key={act.label} className="home-action-card" onClick={() => navigate(act.path)} style={{ '--card-color': act.color }} intensity={4}>
+                  <div className="home-action-card-inner">
+                    <div className="home-action-top">
+                      <div className="home-action-icon" style={{ background: `rgba(255, 255, 255, 0.02)`, border: `1px solid rgba(255, 255, 255, 0.06)`, color: act.color }}>
+                        <act.icon size={22} />
+                      </div>
+                    </div>
+                    <h3 className="home-action-title">{act.label}</h3>
+                    <p className="home-action-desc">{act.desc}</p>
+                    <div className="home-action-arrow">
+                      <ChevronRight size={14} />
+                    </div>
+                  </div>
+                  <div className="home-action-shimmer" />
+                  <div className="home-action-glow" />
+                </TiltCard>
               ))}
             </div>
+          </motion.section>
 
-            {/* TAB CONTAINER CONTENT PANELS */}
-            <div className="deck-panel-container">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.25 }}
-                  className="deck-tab-panel"
-                >
-                  
-                  {/* TAB 1: INTEL & MISSIONS */}
-                  {activeTab === 'missions' && (
-                    <div className="tab-pane-content">
-                      <div className="home-section-header">
-                        <span className="home-section-eyebrow">MISSIONS</span>
-                        <h2 className="home-section-title">Active Assignments</h2>
-                        <p className="home-section-desc">Dynamic objectives scaled to your lowest level proficiency tracks.</p>
-                      </div>
-                      
-                      <div className="home-missions-grid">
-                        {missions.map((mission, idx) => (
-                          <TiltCard key={mission.id} className="home-mission-card" style={{ '--mission-color': mission.accent }} intensity={2}>
-                            <div className="mission-badge" style={{ '--badge-color': mission.accent }}>{mission.type}</div>
-                            <h3 className="mission-title">{mission.title}</h3>
-                            <p className="mission-desc">{mission.desc}</p>
-                            
-                            <div className="mission-progress-section">
-                              <div className="mission-progress-label">
-                                <span>SYNC RATIO</span>
-                                <span>{mission.progress}%</span>
-                              </div>
-                              <div className="mission-progress-bar">
-                                <motion.div 
-                                  className="mission-progress-fill" 
-                                  initial={{ width: 0 }}
-                                  whileInView={{ width: `${mission.progress}%` }}
-                                  transition={{ duration: 1, delay: idx * 0.1 }}
-                                />
-                              </div>
-                            </div>
+          {/* ── 3. CHRONOLOGY HEATMAP ── */}
+          <motion.section className="home-section" initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger}>
+            <motion.div className="home-section-header" variants={fadeUp}>
+              <span className="home-section-eyebrow">CHRONOLOGY</span>
+              <h2 className="home-section-title">Activity Grid</h2>
+              <p className="home-section-desc">Contribution grid logging developer commit outputs and accumulated daily XP.</p>
+            </motion.div>
 
-                            <div className="mission-footer">
-                              <span className="mission-difficulty">DIFFICULTY: {mission.difficulty}</span>
-                              <span className="mission-reward">+{mission.reward}</span>
-                            </div>
-                          </TiltCard>
-                        ))}
-                      </div>
-
-                      <div className="home-section-header" style={{ marginTop: '40px' }}>
-                        <span className="home-section-eyebrow">CHRONOLOGY</span>
-                        <h2 className="home-section-title">Activity Grid</h2>
-                        <p className="home-section-desc">Commit logs and contribution cells mapping current year XP.</p>
-                      </div>
-                      
-                      <div className="home-heatmap-card">
-                        <div className="home-heatmap-inner">
-                          <div className="home-heatmap-months">
-                            {monthLabels.map((lbl, i) => (
-                              <span key={i} className="home-heatmap-month" style={{ gridColumnStart: lbl.index + 1 }}>{lbl.month}</span>
-                            ))}
-                          </div>
-                          <div className="home-heatmap-grid">
-                            {heatmapData.map((week, wi) => (
-                              <div key={wi} className="home-heatmap-week">
-                                {week.map((day, di) => (
-                                  <div key={di}
-                                    className={`home-heatmap-day level-${day.level}`}
-                                    title={`${day.date}: ${day.xp} XP`}
-                                  />
-                                ))}
-                              </div>
-                            ))}
-                          </div>
-                          <div className="home-heatmap-legend">
-                            <span>Less</span>
-                            {[0, 1, 2, 3, 4].map(l => <div key={l} className={`home-heatmap-day level-${l}`} />)}
-                            <span>More</span>
-                          </div>
-                        </div>
-                      </div>
+            <motion.div className="home-heatmap-card" variants={fadeUp}>
+              <div className="home-heatmap-inner">
+                <div className="home-heatmap-months">
+                  {monthLabels.map((lbl, i) => (
+                    <span key={i} className="home-heatmap-month" style={{ gridColumnStart: lbl.index + 1 }}>{lbl.month}</span>
+                  ))}
+                </div>
+                <div className="home-heatmap-grid">
+                  {heatmapData.map((week, wi) => (
+                    <div key={wi} className="home-heatmap-week">
+                      {week.map((day, di) => (
+                        <div key={di}
+                          className={`home-heatmap-day level-${day.level}`}
+                          title={`${day.date}: ${day.xp} XP`}
+                        />
+                      ))}
                     </div>
-                  )}
+                  ))}
+                </div>
+                <div className="home-heatmap-legend">
+                  <span>Less</span>
+                  {[0, 1, 2, 3, 4].map(l => <div key={l} className={`home-heatmap-day level-${l}`} />)}
+                  <span>More</span>
+                </div>
+              </div>
+            </motion.div>
+          </motion.section>
 
-                  {/* TAB 2: SKILLS MATRIX */}
-                  {activeTab === 'skills' && (
-                    <div className="tab-pane-content">
-                      <div className="home-section-header">
-                        <span className="home-section-eyebrow">PROFICIENCY</span>
-                        <h2 className="home-section-title">Skill Arsenal</h2>
-                        <p className="home-section-desc">Track and specialize across different development cores.</p>
-                      </div>
-
-                      <div className="home-skills-grid">
-                        {skillDistribution.map((skill, i) => {
-                          const pct = Math.min((skill.val / skill.max) * 100, 100);
-                          const label = pct >= 100 ? 'MASTER' : pct >= 75 ? 'EXPERT' : pct >= 50 ? 'ADVANCED' : pct >= 25 ? 'INTERMEDIATE' : pct > 0 ? 'BEGINNER' : 'INITIATE';
-                          return (
-                            <TiltCard
-                              key={skill.id}
-                              className={`home-skill-card ${activeSkill === skill.id ? 'active' : ''}`}
-                              variants={fadeUp}
-                              custom={i * 0.06}
-                              onClick={() => setActiveSkill(activeSkill === skill.id ? null : skill.id)}
-                              style={{
-                                '--skill-color': skill.color,
-                                '--skill-color-rgb': skill.id === 'css' ? '59, 130, 246'
-                                  : skill.id === 'logic' ? '139, 92, 246'
-                                  : skill.id === 'react' ? '6, 182, 212'
-                                  : '34, 197, 94'
-                              }}
-                              intensity={6}
-                            >
-                              <div className="home-skill-top">
-                                <div className="home-skill-icon">
-                                  <skill.icon size={20} />
-                                </div>
-                                <div className="home-skill-badge">{label}</div>
-                              </div>
-                              <h3 className="home-skill-name">{skill.label}</h3>
-                              <p className="home-skill-desc">{skill.desc}</p>
-                              <div className="home-skill-progress-wrap">
-                                <div className="home-skill-progress-track">
-                                  <motion.div className="home-skill-progress-fill"
-                                    initial={{ width: 0 }}
-                                    whileInView={{ width: `${pct}%` }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 1.2, delay: i * 0.1, ease: 'easeOut' }}
-                                  />
-                                </div>
-                                <div className="home-skill-progress-meta">
-                                  <span>{Math.round(pct)}%</span>
-                                  <span>{skill.val}/{skill.max} challenges</span>
-                                </div>
-                              </div>
-                              <div className="home-skill-xp">
-                                <Zap size={12} />
-                                <span>{(skill.val * 10).toLocaleString()} XP earned</span>
-                              </div>
-                              <div className="home-skill-glow" />
-                            </TiltCard>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TAB 3: PVP ARENA */}
-                  {activeTab === 'pvp' && (
-                    <div className="tab-pane-content">
-                      <div className="home-section-header">
-                        <span className="home-section-eyebrow">COMBAT TELEMETRY</span>
-                        <h2 className="home-section-title">PvP Battle Logs & Lobbies</h2>
-                        <p className="home-section-desc">Join active lobbies or inspect live combat details.</p>
-                      </div>
-
-                      <div className="home-terminal-log">
-                        <div className="terminal-header">
-                          <div className="terminal-dots">
-                            <span className="terminal-dot red" />
-                            <span className="terminal-dot yellow" />
-                            <span className="terminal-dot green" />
-                          </div>
-                          <span className="terminal-title">SYS://BATTLE_REC/LOG</span>
-                        </div>
-                        <div className="terminal-body">
-                          {activePvPGames.length > 0 ? (
-                            activePvPGames.map((game, gi) => (
-                              <div key={gi} className="terminal-row row-win">
-                                <span className="row-outcome">LIVE MATCH</span>
-                                <span className="row-opponent">{game.creatorUsername || 'Lobby'}</span>
-                                <span className="row-lang">{game.language || 'Any'}</span>
-                                <span className="row-time">{game.participants?.length || 0} players</span>
-                                <span className="row-xp">+{game.xpReward || 100} XP</span>
-                                <span className="row-date"><Link to={`/code-wars/game/${game.id}`} className="join-active-game-btn">JOIN</Link></span>
-                              </div>
-                            ))
-                          ) : (
-                            <>
-                              <div className="terminal-row row-win">
-                                <span className="row-outcome">READY</span>
-                                <span className="row-opponent">Operative: {user.username}</span>
-                                <span className="row-lang">Status: Active</span>
-                                <span className="row-time">Session: Online</span>
-                                <span className="row-xp">Level {user.level || 1}</span>
-                                <span className="row-date">Now</span>
-                              </div>
-                              <div className="terminal-row row-win">
-                                <span className="row-outcome">LOG</span>
-                                <span className="row-opponent">Latest XP deposit</span>
-                                <span className="row-lang">Total: {user.xp} XP</span>
-                                <span className="row-time">Activity: Checked</span>
-                                <span className="row-xp">+{todaysXp} today</span>
-                                <span className="row-date">Session</span>
-                              </div>
-                              <div className="terminal-row row-win">
-                                <span className="row-outcome">BLUEPRINTS</span>
-                                <span className="row-opponent">Vault Records</span>
-                                <span className="row-lang">{notesCount} Items</span>
-                                <span className="row-time">Vault: Configured</span>
-                                <span className="row-xp">Secure</span>
-                                <span className="row-date">Online</span>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TAB 4: NETWORK FACTIONS */}
-                  {activeTab === 'factions' && (
-                    <div className="tab-pane-content">
-                      <div className="home-section-header">
-                        <span className="home-section-eyebrow">COLLECTIVES</span>
-                        <h2 className="home-section-title">Network Factions</h2>
-                        <p className="home-section-desc">Synchronize with active alliances or explore group ranks.</p>
-                      </div>
-
-                      <div className="factions-tab-grid">
-                        {factionsList.length > 0 ? (
-                          factionsList.map((fac) => {
-                            const isMember = fac.members?.some(m => m.username === user.username || m.id === user.id || m === user.username);
-                            return (
-                              <TiltCard key={fac._id || fac.id} className={`faction-list-card ${isMember ? 'joined' : ''}`} style={{ '--faction-accent': fac.color || 'var(--primary)' }} intensity={3}>
-                                <div className="faction-card-header">
-                                  <h4 className="faction-name">{fac.name}</h4>
-                                  <span className="faction-privacy-badge">{fac.isPrivate ? 'PRIVATE' : 'PUBLIC'}</span>
-                                </div>
-                                <p className="faction-description">{fac.description || 'No description set.'}</p>
-                                <div className="faction-card-meta">
-                                  <span>{fac.members?.length || 0} members</span>
-                                  {isMember && <span className="joined-indicator">✓ MEMBER</span>}
-                                </div>
-                              </TiltCard>
-                            );
-                          })
-                        ) : (
-                          <div className="factions-empty-state">
-                            <Users size={32} />
-                            <p>No factions registered. Navigate to Factions to initialize a network node!</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TAB 5: APEX HALL OF FAME */}
-                  {activeTab === 'fame' && (
-                    <div className="tab-pane-content">
-                      <div className="home-section-header">
-                        <span className="home-section-eyebrow">ELITE TIER</span>
-                        <h2 className="home-section-title">Hall of Fame</h2>
-                        <p className="home-section-desc">The apex developers on the network leaderboard.</p>
-                      </div>
-
-                      <div className="home-fame-grid">
-                        {rankersLoading ? (
-                          [1, 2, 3].map(i => (
-                            <div key={i} className="home-fame-card skeleton">
-                              <div className="fame-skeleton-avatar" />
-                              <div className="fame-skeleton-text" />
-                              <div className="fame-skeleton-text short" />
-                            </div>
-                          ))
-                        ) : rankersError || !topRankers.length ? (
-                          <div className="home-fame-empty">
-                            <Trophy size={48} />
-                            <p>Leaderboard node temporarily offline.</p>
-                          </div>
-                        ) : (
-                          (() => {
-                            const ordered = [topRankers[1], topRankers[0], topRankers[2]].filter(Boolean);
-                            return ordered.map((ranker, di) => {
-                              const actualIdx = topRankers.indexOf(ranker);
-                              const medalColors = ['#c0c0c0', '#ffd700', '#cd7f32'];
-                              const medalEmoji = ['🥈', '🥇', '🥉'];
-                              const isFirst = actualIdx === 0;
-                              return (
-                                <TiltCard
-                                  key={ranker.username}
-                                  className={`home-fame-card rank-${actualIdx + 1} ${isFirst ? 'is-first' : ''}`}
-                                  variants={fadeUp}
-                                  custom={di * 0.08}
-                                  onClick={() => navigate(`/u/${ranker.username}`)}
-                                  style={{ '--medal-color': medalColors[di] }}
-                                  intensity={4}
-                                >
-                                  {isFirst && <div className="fame-crown-glow" />}
-                                  <div className="home-fame-rank">{medalEmoji[di]}</div>
-                                  <div className="home-fame-avatar">
-                                    {ranker.username[0].toUpperCase()}
-                                    <div className="home-fame-avatar-ring" />
-                                  </div>
-                                  <div className="home-fame-info">
-                                    <h3>{ranker.username}</h3>
-                                    <div className="home-fame-meta">
-                                      <span><Zap size={12} />{ranker.xp?.toLocaleString()} XP</span>
-                                      <span><Shield size={12} />LVL {ranker.level}</span>
-                                    </div>
-                                  </div>
-                                  <div className="home-fame-shimmer" />
-                                </TiltCard>
-                              );
-                            });
-                          })()
-                        )}
-                      </div>
-                      <div className="home-fame-cta">
-                        <Link to="/leaderboard" className="home-fame-btn">
-                          <Trophy size={16} />
-                          <span>View Full Leaderboards</span>
-                          <ChevronRight size={16} />
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TAB 6: SUPPORT CHANNELS */}
-                  {activeTab === 'support' && (
-                    <div className="tab-pane-content">
-                      <div className="home-support-inner">
-                        <div className="home-support-info">
-                          <span className="home-section-eyebrow">TRANSMISSIONS</span>
-                          <h2 className="home-section-title">Direct Line</h2>
-                          <p className="home-section-desc">Establish secure socket link to system operators.</p>
-                          <div className="home-support-meta">
-                            <div className="home-support-meta-item"><span className="meta-dot active" />Response latency: &lt;24h</div>
-                            <div className="home-support-meta-item"><span className="meta-dot active" />Signal strength: Optimal</div>
-                          </div>
-                        </div>
-
-                        <form className="home-support-form" onSubmit={handleSupportSubmit}>
-                          {supportForm.sent ? (
-                            <motion.div className="home-support-sent" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
-                              <div className="home-sent-icon">✓</div>
-                              <h3>Transmission Dispatched</h3>
-                              <p>System operators will respond shortly.</p>
-                            </motion.div>
-                          ) : (
-                            <>
-                              <input className="home-support-input" type="text" placeholder="Subject of inquiry"
-                                value={supportForm.subject} onChange={e => setSupportForm(p => ({ ...p, subject: e.target.value }))} />
-                              <textarea className="home-support-textarea" placeholder="Describe inquiry parameters..."
-                                value={supportForm.message} onChange={e => setSupportForm(p => ({ ...p, message: e.target.value }))} required />
-                              <button className="home-support-btn" type="submit" disabled={supportForm.isSending}>
-                                {supportForm.isSending ? (
-                                  <><span className="home-btn-spinner" />Dispatched...</>
-                                ) : (
-                                  <><ArrowUpRight size={16} />Dispatch Signal</>
-                                )}
-                              </button>
-                            </>
-                          )}
-                        </form>
-                      </div>
-                    </div>
-                  )}
-                  
+          {/* ── 4. DYNAMIC QUESTS & LIVE COMBAT TELEMETRY (Double column) ── */}
+          <motion.section className="home-section" initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger}>
+            <div className="home-double-grid">
+              
+              {/* Left column: Active missions */}
+              <div className="home-double-col">
+                <motion.div className="home-section-header" variants={fadeUp}>
+                  <span className="home-section-eyebrow">TACTICAL OPERATIONS</span>
+                  <h2 className="home-section-title">Active Missions</h2>
+                  <p className="home-section-desc">Dynamic assignments generated dynamically relative to your lowest skill indexes.</p>
                 </motion.div>
-              </AnimatePresence>
+
+                <div className="home-missions-list-vertical">
+                  {missions.map((mission, idx) => (
+                    <TiltCard key={mission.id} className="home-mission-card" style={{ '--mission-color': mission.accent }} intensity={2}>
+                      <div className="mission-badge" style={{ '--badge-color': mission.accent }}>{mission.type}</div>
+                      <h3 className="mission-title">{mission.title}</h3>
+                      <p className="mission-desc">{mission.desc}</p>
+                      
+                      <div className="mission-progress-section">
+                        <div className="mission-progress-label">
+                          <span>SYNC RATIO</span>
+                          <span>{mission.progress}%</span>
+                        </div>
+                        <div className="mission-progress-bar">
+                          <motion.div 
+                            className="mission-progress-fill" 
+                            initial={{ width: 0 }}
+                            whileInView={{ width: `${mission.progress}%` }}
+                            transition={{ duration: 1, delay: idx * 0.1 }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mission-footer">
+                        <span className="mission-difficulty">DIFFICULTY: {mission.difficulty}</span>
+                        <span className="mission-reward">+{mission.reward}</span>
+                      </div>
+                    </TiltCard>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right column: Battle terminal logs */}
+              <div className="home-double-col">
+                <motion.div className="home-section-header" variants={fadeUp}>
+                  <span className="home-section-eyebrow">COMBAT TELEMETRY</span>
+                  <h2 className="home-section-title">Battle Records</h2>
+                  <p className="home-section-desc">Inspect active PvP Code Wars lobbies or verify session outputs.</p>
+                </motion.div>
+
+                <div className="home-terminal-log">
+                  <div className="terminal-header">
+                    <div className="terminal-dots">
+                      <span className="terminal-dot red" />
+                      <span className="terminal-dot yellow" />
+                      <span className="terminal-dot green" />
+                    </div>
+                    <span className="terminal-title">SYS://BATTLE_REC/LOG</span>
+                  </div>
+                  <div className="terminal-body">
+                    {activePvPGames.length > 0 ? (
+                      activePvPGames.map((game, gi) => (
+                        <div key={gi} className="terminal-row row-win">
+                          <span className="row-outcome">LIVE MATCH</span>
+                          <span className="row-opponent">{game.creatorUsername || 'Lobby'}</span>
+                          <span className="row-lang">{game.language || 'Any'}</span>
+                          <span className="row-time">{game.participants?.length || 0} players</span>
+                          <span className="row-xp">+{game.xpReward || 100} XP</span>
+                          <span className="row-date"><Link to={`/code-wars/game/${game.id}`} className="join-active-game-btn">JOIN</Link></span>
+                        </div>
+                      ))
+                    ) : (
+                      <>
+                        <div className="terminal-row row-win">
+                          <span className="row-outcome">READY</span>
+                          <span className="row-opponent">Operative: {user.username}</span>
+                          <span className="row-lang">Status: Active</span>
+                          <span className="row-time">Session: Online</span>
+                          <span className="row-xp">Level {user.level || 1}</span>
+                          <span className="row-date">Now</span>
+                        </div>
+                        <div className="terminal-row row-win">
+                          <span className="row-outcome">LOG</span>
+                          <span className="row-opponent">Latest XP deposit</span>
+                          <span className="row-lang">Total: {user.xp} XP</span>
+                          <span className="row-time">Activity: Checked</span>
+                          <span className="row-xp">+{todaysXp} today</span>
+                          <span className="row-date">Session</span>
+                        </div>
+                        <div className="terminal-row row-win">
+                          <span className="row-outcome">BLUEPRINTS</span>
+                          <span className="row-opponent">Vault Records</span>
+                          <span className="row-lang">{notesCount} Items</span>
+                          <span className="row-time">Vault: Configured</span>
+                          <span className="row-xp">Secure</span>
+                          <span className="row-date">Online</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
             </div>
-            
-          </div>
+          </motion.section>
+
+          {/* ── 5. SKILL ARSENAL (4-Column Grid) ── */}
+          <motion.section className="home-section" initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger}>
+            <motion.div className="home-section-header" variants={fadeUp}>
+              <span className="home-section-eyebrow">PROFICIENCY</span>
+              <h2 className="home-section-title">Skill Arsenal</h2>
+              <p className="home-section-desc">Track and master your capabilities across development cores.</p>
+            </motion.div>
+
+            <div className="home-skills-grid">
+              {skillDistribution.map((skill, i) => {
+                const pct = Math.min((skill.val / skill.max) * 100, 100);
+                const label = pct >= 100 ? 'MASTER' : pct >= 75 ? 'EXPERT' : pct >= 50 ? 'ADVANCED' : pct >= 25 ? 'INTERMEDIATE' : pct > 0 ? 'BEGINNER' : 'INITIATE';
+                return (
+                  <TiltCard
+                    key={skill.id}
+                    className={`home-skill-card ${activeSkill === skill.id ? 'active' : ''}`}
+                    variants={fadeUp}
+                    custom={i * 0.06}
+                    onClick={() => setActiveSkill(activeSkill === skill.id ? null : skill.id)}
+                    style={{
+                      '--skill-color': skill.color,
+                      '--skill-color-rgb': skill.id === 'css' ? '59, 130, 246'
+                        : skill.id === 'logic' ? '139, 92, 246'
+                        : skill.id === 'react' ? '6, 182, 212'
+                        : '34, 197, 94'
+                    }}
+                    intensity={6}
+                  >
+                    <div className="home-skill-top">
+                      <div className="home-skill-icon">
+                        <skill.icon size={20} />
+                      </div>
+                      <div className="home-skill-badge">{label}</div>
+                    </div>
+                    <h3 className="home-skill-name">{skill.label}</h3>
+                    <p className="home-skill-desc">{skill.desc}</p>
+                    <div className="home-skill-progress-wrap">
+                      <div className="home-skill-progress-track">
+                        <motion.div className="home-skill-progress-fill"
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${pct}%` }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 1.2, delay: i * 0.1, ease: 'easeOut' }}
+                        />
+                      </div>
+                      <div className="home-skill-progress-meta">
+                        <span>{Math.round(pct)}%</span>
+                        <span>{skill.val}/{skill.max} challenges</span>
+                      </div>
+                    </div>
+                    <div className="home-skill-xp">
+                      <Zap size={12} />
+                      <span>{(skill.val * 10).toLocaleString()} XP earned</span>
+                    </div>
+                    <div className="home-skill-glow" />
+                  </TiltCard>
+                );
+              })}
+            </div>
+          </motion.section>
+
+          {/* ── 6. APEX FACTIONS DECK (3-Column Grid) ── */}
+          <motion.section className="home-section" initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger}>
+            <motion.div className="home-section-header" variants={fadeUp}>
+              <span className="home-section-eyebrow">COLLECTIVES</span>
+              <h2 className="home-section-title">Network Factions</h2>
+              <p className="home-section-desc">Coordinate PvP actions with registered groups and alliances.</p>
+            </motion.div>
+
+            <div className="home-factions-grid">
+              {factionsList.length > 0 ? (
+                factionsList.map((fac) => {
+                  const isMember = fac.members?.some(m => m.username === user.username || m.id === user.id || m === user.username);
+                  return (
+                    <TiltCard key={fac._id || fac.id} className={`faction-list-card ${isMember ? 'joined' : ''}`} style={{ '--faction-accent': fac.color || 'var(--primary)' }} intensity={3}>
+                      <div className="faction-card-header">
+                        <h4 className="faction-name">{fac.name}</h4>
+                        <span className="faction-privacy-badge">{fac.isPrivate ? 'PRIVATE' : 'PUBLIC'}</span>
+                      </div>
+                      <p className="faction-description">{fac.description || 'No description set.'}</p>
+                      <div className="faction-card-meta">
+                        <span>{fac.members?.length || 0} members</span>
+                        {isMember && <span className="joined-indicator">✓ MEMBER</span>}
+                      </div>
+                    </TiltCard>
+                  );
+                })
+              ) : (
+                <div className="factions-empty-state">
+                  <Users size={32} />
+                  <p>No factions registered. Head to the Factions page to initiate one!</p>
+                </div>
+              )}
+            </div>
+          </motion.section>
+
+          {/* ── 7. APEX HALL OF FAME ── */}
+          <motion.section className="home-section" initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger}>
+            <motion.div className="home-section-header" variants={fadeUp}>
+              <span className="home-section-eyebrow">ELITE TIER</span>
+              <h2 className="home-section-title">Hall of Fame</h2>
+              <p className="home-section-desc">The apex developers on the network leaderboard.</p>
+            </motion.div>
+
+            <div className="home-fame-grid">
+              {rankersLoading ? (
+                [1, 2, 3].map(i => (
+                  <div key={i} className="home-fame-card skeleton">
+                    <div className="fame-skeleton-avatar" />
+                    <div className="fame-skeleton-text" />
+                    <div className="fame-skeleton-text short" />
+                  </div>
+                ))
+              ) : rankersError || !topRankers.length ? (
+                <div className="home-fame-empty">
+                  <Trophy size={48} />
+                  <p>Leaderboard node offline.</p>
+                </div>
+              ) : (
+                (() => {
+                  const ordered = [topRankers[1], topRankers[0], topRankers[2]].filter(Boolean);
+                  return ordered.map((ranker, di) => {
+                    const actualIdx = topRankers.indexOf(ranker);
+                    const medalColors = ['#c0c0c0', '#ffd700', '#cd7f32'];
+                    const medalEmoji = ['🥈', '🥇', '🥉'];
+                    const isFirst = actualIdx === 0;
+                    return (
+                      <TiltCard
+                        key={ranker.username}
+                        className={`home-fame-card rank-${actualIdx + 1} ${isFirst ? 'is-first' : ''}`}
+                        variants={fadeUp}
+                        custom={di * 0.08}
+                        onClick={() => navigate(`/u/${ranker.username}`)}
+                        style={{ '--medal-color': medalColors[di] }}
+                        intensity={4}
+                      >
+                        {isFirst && <div className="fame-crown-glow" />}
+                        <div className="home-fame-rank">{medalEmoji[di]}</div>
+                        <div className="home-fame-avatar">
+                          {ranker.username[0].toUpperCase()}
+                          <div className="home-fame-avatar-ring" />
+                        </div>
+                        <div className="home-fame-info">
+                          <h3>{ranker.username}</h3>
+                          <div className="home-fame-meta">
+                            <span><Zap size={12} />{ranker.xp?.toLocaleString()} XP</span>
+                            <span><Shield size={12} />LVL {ranker.level}</span>
+                          </div>
+                        </div>
+                        <div className="home-fame-shimmer" />
+                      </TiltCard>
+                    );
+                  });
+                })()
+              )}
+            </div>
+            <div className="home-fame-cta">
+              <Link to="/leaderboard" className="home-fame-btn">
+                <Trophy size={16} />
+                <span>View Full Leaderboards</span>
+                <ChevronRight size={16} />
+              </Link>
+            </div>
+          </motion.section>
+
+          {/* ── 8. SUPPORT CHANNELS ── */}
+          <motion.section className="home-section" initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger}>
+            <div className="home-support-inner">
+              <div className="home-support-info">
+                <span className="home-section-eyebrow">TRANSMISSIONS</span>
+                <h2 className="home-section-title">Direct Line</h2>
+                <p className="home-section-desc">Establish secure socket link to system operators.</p>
+                <div className="home-support-meta">
+                  <div className="home-support-meta-item"><span className="meta-dot active" />Response latency: &lt;24h</div>
+                  <div className="home-support-meta-item"><span className="meta-dot active" />Signal strength: Optimal</div>
+                </div>
+              </div>
+
+              <form className="home-support-form" onSubmit={handleSupportSubmit}>
+                {supportForm.sent ? (
+                  <motion.div className="home-support-sent" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+                    <div className="home-sent-icon">✓</div>
+                    <h3>Transmission Dispatched</h3>
+                    <p>System operators will respond shortly.</p>
+                  </motion.div>
+                ) : (
+                  <>
+                    <input className="home-support-input" type="text" placeholder="Subject of inquiry"
+                      value={supportForm.subject} onChange={e => setSupportForm(p => ({ ...p, subject: e.target.value }))} />
+                    <textarea className="home-support-textarea" placeholder="Describe inquiry parameters..."
+                      value={supportForm.message} onChange={e => setSupportForm(p => ({ ...p, message: e.target.value }))} required />
+                    <button className="home-support-btn" type="submit" disabled={supportForm.isSending}>
+                      {supportForm.isSending ? (
+                        <><span className="home-btn-spinner" />Dispatched...</>
+                      ) : (
+                        <><ArrowUpRight size={16} />Dispatch Signal</>
+                      )}
+                    </button>
+                  </>
+                )}
+              </form>
+            </div>
+          </motion.section>
+
         </div>
-      </div>
       ) : (
-        /* ──═══════════════ GUEST INDEX ═══════════════── */
+        /* ── GUEST PROTOCOL INDEX ── */
         <motion.section className="home-guest-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <div className="home-guest-inner">
             <motion.div className="home-greeting-badge" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
