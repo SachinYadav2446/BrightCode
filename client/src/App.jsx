@@ -123,6 +123,26 @@ const applyGlobalTheme = (theme) => {
     root.style.setProperty('--text-mid', '#eff1f6');
     root.style.setProperty('--text-lo', '#bfbfbf');
     root.style.setProperty('--font-sans', "'Inter', sans-serif");
+  } else if (activeTheme === 'eclipse') {
+    // ── Midnight Eclipse theme ──────────────────────────────
+    root.style.setProperty('--primary', '#6366f1');
+    root.style.setProperty('--primary-rgb', '99, 102, 241');
+    root.style.setProperty('--primary-dark', '#4f46e5');
+    root.style.setProperty('--primary-dark-rgb', '79, 70, 229');
+    root.style.setProperty('--primary-light', '#818cf8');
+    root.style.setProperty('--primary-light-rgb', '129, 140, 248');
+    root.style.setProperty('--primary-glow', 'rgba(99, 102, 241, 0.4)');
+    root.style.setProperty('--complementary', '#ec4899');
+    root.style.setProperty('--text-complementary', '#ffffff');
+    root.style.setProperty('--panel-text', '#818cf8');
+    root.style.setProperty('--bg-dark', '#030712');
+    root.style.setProperty('--bg-surface', '#0b0f19');
+    root.style.setProperty('--text-main', '#f3f4f6');
+    root.style.setProperty('--text-muted', '#9ca3af');
+    root.style.setProperty('--text-hi', '#ffffff');
+    root.style.setProperty('--text-mid', '#e5e7eb');
+    root.style.setProperty('--text-lo', '#4b5563');
+    root.style.setProperty('--font-sans', "'Inter', sans-serif");
   } else {
     // ── Scarlet Flare theme (default) ──────────────────────────
     root.style.setProperty('--primary', '#ef4444');
@@ -180,15 +200,7 @@ const applyScarletFlare = () => {
   root.style.setProperty('--text-hi', '#fffdd0');
   root.style.setProperty('--text-mid', '#f5f5dc');
   root.style.setProperty('--text-lo', '#d2b48c');
-  
-  const savedFont = localStorage.getItem('app_font') || 'poppins';
-  const fonts = {
-    'poppins': "'Poppins', sans-serif",
-    'inter': "'Inter', sans-serif",
-    'outfit': "'Outfit', sans-serif",
-    'montserrat': "'Montserrat', sans-serif"
-  };
-  root.style.setProperty('--font-sans', fonts[savedFont] || fonts['poppins']);
+  root.style.setProperty('--font-sans', "'Poppins', sans-serif");
 };
 
 // Watches route changes and applies correct theme
@@ -207,7 +219,7 @@ const ThemeManager = () => {
       const savedFont = localStorage.getItem('app_font') || 'poppins';
       applyGlobalTheme(savedTheme);
       // Only apply font override if not a special theme (those set their own font)
-      if (savedTheme !== 'amber' && savedTheme !== 'neo-noir' && savedTheme !== 'leetcode') {
+      if (savedTheme !== 'amber' && savedTheme !== 'neo-noir' && savedTheme !== 'leetcode' && savedTheme !== 'eclipse') {
         applyGlobalFont(savedFont);
       }
     }
@@ -228,7 +240,7 @@ function App() {
       const savedTheme = localStorage.getItem('app_theme') || 'crimson';
       const savedFont = localStorage.getItem('app_font') || 'poppins';
       applyGlobalTheme(savedTheme);
-      if (savedTheme !== 'amber' && savedTheme !== 'neo-noir' && savedTheme !== 'leetcode') {
+      if (savedTheme !== 'amber' && savedTheme !== 'neo-noir' && savedTheme !== 'leetcode' && savedTheme !== 'eclipse') {
         applyGlobalFont(savedFont);
       }
     }

@@ -1134,6 +1134,31 @@
   background: #303030;
 }
 
+/* Eclipse / Midnight Dark Theme preview */
+.theme-preview.eclipse-theme {
+  background: #030712;
+}
+
+.theme-preview.eclipse-theme .preview-header {
+  background: rgba(99, 102, 241, 0.1);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.theme-preview.eclipse-theme .preview-sidebar {
+  background: rgba(99, 102, 241, 0.05);
+  border-right: 1px solid rgba(99, 102, 241, 0.08);
+}
+
+.theme-preview.eclipse-theme .preview-line {
+  background: #6366f1;
+  box-shadow: 0 0 6px #6366f1;
+}
+
+.theme-preview.eclipse-theme .preview-line.short {
+  background: #ec4899;
+  box-shadow: 0 0 6px #ec4899;
+}
+
 .preview-header {
   height: 20px;
 }
