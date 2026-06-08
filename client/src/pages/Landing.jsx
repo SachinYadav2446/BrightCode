@@ -34,7 +34,7 @@ export default function Landing() {
       {/* ══ NAV ══ */}
       <nav className="nav">
         <div className="nav-inner">
-          {/* Logo + Status */}
+          {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <a className="nav-logo" href="#" onClick={e => e.preventDefault()}>
               <div className="nav-logo-mark">
@@ -42,10 +42,6 @@ export default function Landing() {
               </div>
               <span className="nav-logo-name">BRIGHT<span>CODE</span></span>
             </a>
-            <span className="nav-status-badge">
-              <span className="status-dot" />
-              Live
-            </span>
           </div>
 
           {/* Center Links */}
@@ -69,11 +65,6 @@ export default function Landing() {
         <div className="hero-inner">
           {/* Left Column */}
           <div className="hero-left">
-            <div className="hero-badge">
-              <span className="badge-dot" />
-              <span className="badge-text">Interactive & Collaborative Coding Platform</span>
-            </div>
-
             <h1 className="hero-h1">
               A new way to <br />
               <span>master algorithms</span>.
