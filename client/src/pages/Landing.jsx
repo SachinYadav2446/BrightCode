@@ -34,21 +34,32 @@ export default function Landing() {
       {/* ══ NAV ══ */}
       <nav className="nav">
         <div className="nav-inner">
-          <a className="nav-logo" href="#" onClick={e => e.preventDefault()}>
-            <div className="nav-logo-mark">
-              <Code2 size={18} className="logo-icon" />
-            </div>
-            <span className="nav-logo-name">Bright<span>Code</span></span>
-          </a>
+          {/* Logo + Status */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <a className="nav-logo" href="#" onClick={e => e.preventDefault()}>
+              <div className="nav-logo-mark">
+                <Code2 size={17} className="logo-icon" />
+              </div>
+              <span className="nav-logo-name">Bright<span>Code</span></span>
+            </a>
+            <span className="nav-status-badge">
+              <span className="status-dot" />
+              Live
+            </span>
+          </div>
+
+          {/* Center Links */}
           <div className="nav-links">
             <a href="#features" className="nav-link">Features</a>
             <a href="#modules" className="nav-link">Modules</a>
             <a href="#workflow" className="nav-link">How it Works</a>
             <a href="#arena" className="nav-link">Leaderboard</a>
           </div>
+
+          {/* Actions */}
           <div className="nav-actions">
             <button className="nav-btn-ghost" onClick={() => handleAuth('login')}>Sign In</button>
-            <button className="nav-btn-primary" onClick={() => handleAuth('register')}>Get Started</button>
+            <button className="nav-btn-primary" onClick={() => handleAuth('register')}>Get Started →</button>
           </div>
         </div>
       </nav>
