@@ -40,7 +40,7 @@ export default function Landing() {
               <div className="nav-logo-mark">
                 <Code2 size={17} className="logo-icon" />
               </div>
-              <span className="nav-logo-name">Bright<span>Code</span></span>
+              <span className="nav-logo-name">BRIGHT<span>CODE</span></span>
             </a>
             <span className="nav-status-badge">
               <span className="status-dot" />
@@ -486,7 +486,7 @@ export default function Landing() {
                 <div className="nav-logo-mark">
                   <Code2 size={16} className="logo-icon" />
                 </div>
-                <span className="nav-logo-name">Bright<span>Code</span></span>
+                <span className="nav-logo-name">BRIGHT<span>CODE</span></span>
               </div>
               <p className="footer-desc-text">
                 A premium, modern workspace for practicing programming, running algorithms, and collaborating live.

@@ -4,7 +4,7 @@
    Type Scale: Unified hierarchy
    ══════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900&family=Fira+Code:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900&family=Fira+Code:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700;800&display=swap');
 
 .landing-root {
   /* Core variables */
@@ -121,15 +121,38 @@ code, pre {
 }
 
 .nav-logo-name {
-  font-size: 1.15rem;
+  /* Match Home page CodeBrightLogo: uppercase JetBrains Mono */
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 1.1rem;
   font-weight: 800;
-  color: var(--text-main);
-  letter-spacing: -0.6px;
-  font-family: var(--font-sans);
+  color: #ffffff;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  position: relative;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+/* Animated underline on logo — matching Home page scan style */
+.nav-logo-name::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--brand-red), transparent);
+  transition: width 0.6s ease;
+}
+
+.nav-logo:hover .nav-logo-name::after {
+  width: 100%;
 }
 
 .nav-logo-name span {
   color: var(--brand-red);
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
 }
 
 /* ── NAV STATUS BADGE ── */
@@ -662,11 +685,14 @@ code, pre {
 }
 
 .section-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
   margin-bottom: 60px;
 }
 
-/* Unified type token: OVERLINE (label above headings) */
+/* Unified type token: OVERLINE — line + label + line */
 .section-tag {
   font-size: 0.7rem;
   font-weight: 700;
@@ -676,7 +702,7 @@ code, pre {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .section-tag::before,
