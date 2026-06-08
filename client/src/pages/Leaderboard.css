@@ -486,7 +486,15 @@
     font-size: 0.8rem; font-weight: 800; flex-shrink: 0;
 }
 .lb-user-info { display: flex; align-items: center; gap: 8px; }
-.lb-username { font-size: 0.88rem; font-weight: 700; color: var(--text-main); }
+.lb-username {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-main);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 150px;
+}
 
 .lb-you-badge {
     padding: 2px 7px; border-radius: 99px;
@@ -564,11 +572,13 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-    .lb-header { padding: 10px 16px; }
+    .lb-header { padding: 10px 20px; }
     .lb-header-center { display: none; }
-    .lb-main { padding: 24px 16px 80px; }
+    .lb-main { padding: 24px 20px 80px; }
     .lb-podium-wrap { gap: 8px; }
     .lb-podium-item { width: 140px; }
+    .lb-podium-name { max-width: 110px; }
+    .lb-username { max-width: 100px; }
     .lb-avatar-large { width: 60px; height: 60px; font-size: 1.3rem; }
     .lb-avatar-xl    { width: 80px; height: 80px; font-size: 1.8rem; }
     .lb-col-bar, .lb-col-level { display: none; }
