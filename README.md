@@ -87,6 +87,29 @@ At a macro level, BrightCode operates on a standard 3-tier web architecture, opt
 
 ---
 
+## ⚙️ Low-Level Design (LLD)
+
+### WebSocket Room Architecture
+To enable scalable collaboration, Socket.io manages isolated channels called **Rooms**.
+1. Client generates a UUID to instantiate a room: `ws.emit('join-room', roomId, userId)`.
+2. Server registers the Socket FD to the specific `roomId` array.
+3. Upon typing, Monaco Editor's `onChange` event triggers a `code-update` payload carrying the delta.
+4. Server broadcasts the payload to all sockets in the room *except* the sender: `socket.to(roomId).emit('code-update', payload)`.
+
+### Compiler Execution Pipeline
+Code execution is decoupled from the main thread to prevent blocking.
+1. Code payload + selected language is shipped via `POST /api/execute`.
+2. Backend strips malicious `exec()` or `eval()` inputs via regex heuristics.
+3. Payload is handed to a background worker or external Judge0/Piston API.
+4. Worker returns raw JSON `stdout/stderr` back to the client.
+
+### State & Temporal Snapshots (Warp Drive)
+1. Frontend retains an array queue of `history = []`.
+2. Every X keystrokes (or upon pressing "Snapshot"), the current Monaco string state is pushed to `history`.
+3. Reverting triggers `editor.setValue(history[index])` and emits a room-wide override.
+
+---
+
 ## 🎨 Creative UI/UX Redesign System
 
 BrightCode employs an advanced **Cyber-Premium HUD User Interface**:
