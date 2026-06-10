@@ -42,6 +42,33 @@ Social guilds and high-performance competitive rankings.
 
 ---
 
+## 🗺️ Consumer Flow (User Journey)
+
+1. **Onboarding & Authentication**
+   - User arrives at the BrightCode **Landing Page**, experiencing the premium Cyber-HUD aesthetics.
+   - User registers or logs in via the JWT-secured Authentication flow.
+   - Initial profile setup, selecting an avatar, and assigning a base rank.
+
+2. **The Hub (Dashboard Navigation)**
+   - Upon login, the user enters **The Hub**. Here, they see their personalized Welcome Banner, daily contribution heatmap, and current XP.
+   - The user views the **Hall of Fame** podium to check the top performers on the network.
+
+3. **Solo Progression (Logic Lab & Arcade)**
+   - To build skills, the user enters the **Logic Lab**, navigating through 100 progressively difficult syntax and algorithm modules.
+   - For a faster-paced challenge, the user enters the **Code Arena**, selecting a domain (e.g., CSS, Algorithms) and solving challenges against a timer.
+
+4. **Multiplayer Collaboration (Workspace)**
+   - The user creates a new room in the **Collaborative Workspace**.
+   - They share the unique `Room ID` with peers or invite friends from the **Allies Drawer**.
+   - Peers join the room. All users type in the Monaco Editor concurrently, with WebSockets syncing cursors and code changes instantly.
+   - The room admin controls execution, runs the code against the custom compiler sandbox, and uses **Warp Drive** to snapshot stable versions.
+
+5. **Social & Guild Expansion (Factions)**
+   - As the user gains XP, they can join or create **Factions**.
+   - They collaborate with faction members, share notes in the **CodeVault**, and climb the global leaderboards.
+
+---
+
 ## 🎨 Creative UI/UX Redesign System
 
 BrightCode employs an advanced **Cyber-Premium HUD User Interface**:
