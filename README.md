@@ -69,6 +69,24 @@ Social guilds and high-performance competitive rankings.
 
 ---
 
+## 🏗️ High-Level Design (HLD)
+
+At a macro level, BrightCode operates on a standard 3-tier web architecture, optimized for real-time bidirectional communication.
+
+1. **Presentation Layer (Client)**
+   - **React (Vite):** Handles DOM manipulation, routing, and complex state via Context API.
+   - **Socket.io Client:** Maintains a persistent WebSocket connection to the Node server for live cursor syncing, code execution, and chat.
+
+2. **Application Layer (Server/Execution Engine)**
+   - **Express.js API:** Serves standard REST endpoints for authentication, profile fetching, and faction management.
+   - **Socket.io Server:** Acts as the real-time message broker, distributing events (code updates, chat) to specific `Room IDs`.
+   - **Compiler Sandbox:** A secure remote execution environment (or isolated Docker process) that securely compiles incoming code strings and returns stdout/stderr.
+
+3. **Data Access Layer (Database)**
+   - **PostgreSQL:** Primary relational store. Stores persistent state such as User profiles, Faction schemas, XP ledgers, and saved CodeVault notes.
+
+---
+
 ## 🎨 Creative UI/UX Redesign System
 
 BrightCode employs an advanced **Cyber-Premium HUD User Interface**:
