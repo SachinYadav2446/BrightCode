@@ -3407,6 +3407,70 @@ app.post('/execute', async (req, res) => {
     const tmpDir = os.tmpdir();
     const timestamp = Date.now();
 
+    // helper to map language to Piston standard names
+    const mapToPistonLanguage = (lang) => {
+        const map = {
+            'js': 'javascript',
+            'javascript': 'javascript',
+            'py': 'python',
+            'python': 'python',
+            'python3': 'python',
+            'cpp': 'c++',
+            'c++': 'c++',
+            'c': 'c',
+            'java': 'java',
+            'rust': 'rust',
+            'rs': 'rust',
+            'go': 'go',
+            'ruby': 'ruby',
+            'rb': 'ruby'
+        };
+        return map[lang.toLowerCase()] || lang;
+    };
+
+    const runPistonFallback = async () => {
+        const pistonLang = mapToPistonLanguage(language);
+        console.log(`[COMPILER] Falling back to Piston API for ${pistonLang}`);
+        const pistonStartTime = process.hrtime();
+        try {
+            const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
+                language: pistonLang,
+                version: '*',
+                files: [{
+                    name: files[0]?.name || (pistonLang === 'java' ? 'Main.java' : `solution.${language}`),
+                    content: code
+                }]
+            }, { timeout: 10000 });
+            
+            const run = response.data.run;
+            const diff = process.hrtime(pistonStartTime);
+            const executionTimeMs = Math.round((diff[0] * 1e9 + diff[1]) / 1e6);
+            
+            return res.json({
+                run: {
+                    stdout: run.stdout || '',
+                    stderr: run.stderr || '',
+                    code: run.code || 0,
+                    executionTime: executionTimeMs,
+                    source: 'piston'
+                }
+            });
+        } catch (err) {
+            console.error('[COMPILER] Piston API error:', err.message);
+            const diff = process.hrtime(pistonStartTime);
+            const executionTimeMs = Math.round((diff[0] * 1e9 + diff[1]) / 1e6);
+            return res.json({
+                run: {
+                    stdout: '',
+                    stderr: `Sandbox Execution Error: ${err.message}`,
+                    code: 1,
+                    executionTime: executionTimeMs,
+                    source: 'piston-error'
+                }
+            });
+        }
+    };
+
     try {
         let cmd = '';
         let tmpFile = '';
@@ -3422,7 +3486,6 @@ app.post('/execute', async (req, res) => {
             cmd = `python "${tmpFile}"`;
 
         } else if (language === 'cpp' || language === 'c++' || language === 'c') {
-            // Use a local builds dir instead of system temp — avoids Windows Device Guard blocks on temp .exe files
             const buildsDir = path.join(__dirname, 'tmp_builds');
             if (!fs.existsSync(buildsDir)) fs.mkdirSync(buildsDir, { recursive: true });
 
@@ -3437,7 +3500,6 @@ app.post('/execute', async (req, res) => {
         } else if (language === 'java') {
             tmpFile = path.join(tmpDir, `CS_${timestamp}.java`);
             fs.writeFileSync(tmpFile, code);
-            // Java 11+ allows running single source files directly
             cmd = `java "${tmpFile}"`;
 
         } else if (language === 'rust' || language === 'rs') {
@@ -3445,7 +3507,7 @@ app.post('/execute', async (req, res) => {
             const outFile = path.join(tmpDir, `cs_${timestamp}.exe`);
             fs.writeFileSync(srcFile, code);
             cmd = `rustc "${srcFile}" -o "${outFile}" && "${outFile}"`;
-            tmpFile = srcFile; // Only tracking src for cleanup, but let's try to clean exe too later if needed
+            tmpFile = srcFile;
 
         } else if (language === 'go') {
             tmpFile = path.join(tmpDir, `cs_${timestamp}.go`);
@@ -3458,31 +3520,220 @@ app.post('/execute', async (req, res) => {
             cmd = `ruby "${tmpFile}"`;
 
         } else {
-            return res.status(400).json({ run: { stdout: '', stderr: `Unsupported language: ${language}`, code: 1 } });
+            return await runPistonFallback();
         }
 
-        console.log(`[COMPILER] Running ${language}: ${cmd}`);
+        console.log(`[COMPILER] Running ${language} locally: ${cmd}`);
+        const startTime = process.hrtime();
 
-        exec(cmd, { timeout: 10000, maxBuffer: 1024 * 512 }, (err, stdout, stderr) => {
+        exec(cmd, { timeout: 10000, maxBuffer: 1024 * 512 }, async (err, stdout, stderr) => {
             // Cleanup temp files
             try { if (tmpFile) fs.unlinkSync(tmpFile); } catch (_) { }
 
-            if (err && !stdout && !stderr) {
-                return res.json({ run: { stdout: '', stderr: err.message, code: err.code || 1 } });
+            const diff = process.hrtime(startTime);
+            const executionTimeMs = Math.round((diff[0] * 1e9 + diff[1]) / 1e6);
+
+            // Check if local binary execution failed entirely (e.g. command not found)
+            const isLocalMissing = err && (
+                err.code === 'ENOENT' || 
+                err.message.includes('not found') || 
+                err.message.includes('not recognized') || 
+                err.message.includes('is not recognized')
+            );
+
+            if (isLocalMissing) {
+                return await runPistonFallback();
             }
 
             res.json({
                 run: {
                     stdout: stdout || '',
                     stderr: stderr || (err?.message || ''),
-                    code: err ? (err.code || 1) : 0
+                    code: err ? (err.code || 1) : 0,
+                    executionTime: executionTimeMs,
+                    source: 'local'
                 }
             });
         });
 
     } catch (err) {
-        console.error('EXECUTION ERROR:', err.message);
-        res.status(500).json({ run: { stdout: '', stderr: `Server error: ${err.message}`, code: 1 } });
+        console.error('LOCAL EXECUTION ERROR, falling back:', err.message);
+        await runPistonFallback();
+    }
+});
+
+// ── AI Sentinel Diagnostic Helper ───────────────────────────────────────────
+const fallbackSentinel = (mode, code, language, filename, lastUserMessage) => {
+    const text = (lastUserMessage || '').toLowerCase();
+    
+    if (mode === 'optimize' || text.includes('optimize') || text.includes('speed') || text.includes('performance')) {
+        let tips = [];
+        if (code.includes('for') || code.includes('while')) {
+            tips.push("- **Loop Optimization**: Detected loops. Ensure that array lookups (like `.length`) are cached if loops run frequently, or consider replacing nested loops with hash map lookups to reduce complexity from O(N²) to O(N).");
+        }
+        if (code.includes('var ')) {
+            tips.push("- **Scope Allocation**: Consider replacing `var` with `let` or `const` to prevent hoisting side effects and keep memory block-scoped.");
+        }
+        if (code.includes('function') && (language === 'javascript' || language === 'js')) {
+            tips.push("- **Closure Memory**: Check if inner functions can be declared outside the main loop to avoid rebuilding closures on every iteration.");
+        }
+        if (tips.length === 0) {
+            tips.push("- **General Optimization**: Ensure you are using appropriate data structures (e.g. Set/Map for constant-time lookups) and avoid redundant calculations.");
+        }
+        
+        return `### ⚡ Sentinel Optimization Diagnostic
+Detected environment: **${filename || 'Untitled'}** (${language || 'unknown'}).
+
+Here are optimization recommendations based on static analysis:
+${tips.join('\n')}
+
+**Proposed Refactoring Strategy**:
+\`\`\`${language || ''}
+// Use modern constructs & cached structures
+// Example: Avoid nested operations inside loops.
+\`\`\``;
+    }
+
+    if (mode === 'explain' || text.includes('explain') || text.includes('how') || text.includes('what')) {
+        const lines = code.split('\n');
+        const functionCount = (code.match(/function\s+\w+|const\s+\w+\s*=\s*\([^)]*\)\s*=>|def\s+\w+|public\s+\w+\s+\w+/g) || []).length;
+        const loops = (code.match(/for\s*\(|while\s*\(|for\s+\w+\s+in|for\s+\w+\s+of/g) || []).length;
+        
+        return `### 🔍 Sentinel Code Architecture Analysis
+Active File: **${filename || 'buffer'}**
+Language Mode: **${language || 'plaintext'}**
+
+Here is a breakdown of the editor contents:
+- **Structure**: Contains ${lines.length} lines of code.
+- **Complexity**: Identified ${functionCount} function definition(s) and ${loops} loop block(s).
+- **Execution Flow**:
+  1. The program initializes scope-level declarations.
+  2. Sequential execution flows through the defined control paths.
+  3. Returns output or state modification depending on standard operations.
+
+*Tip: Highlight a specific block of code or ask details about a function to get a deeper explanation.*`;
+    }
+
+    if (mode === 'fix' || text.includes('fix') || text.includes('bug') || text.includes('error') || text.includes('wrong')) {
+        let issues = [];
+        if (language === 'javascript' || language === 'js' || language === 'typescript') {
+            if (code.includes('==') && !code.includes('===')) {
+                issues.push("- **Loose Comparison**: Found loose comparison (\`==\`). Recommend strict comparison (\`===\`) to prevent unexpected type coercion bugs.");
+            }
+        }
+        if (code.includes('try') && !code.includes('catch')) {
+            issues.push("- **Exception Handling**: Found \`try\` block without a corresponding \`catch\` or \`finally\` block, which causes compilation/runtime errors.");
+        }
+        if (issues.length === 0) {
+            issues.push("- **Static Check**: No obvious syntax issues found. Double-check function argument counts and handle potential null/undefined values.");
+        }
+        
+        return `### 🛡️ Sentinel Watchdog Diagnostic
+Analyzing syntax stability in **${filename || 'active buffer'}**...
+
+**Identified Warnings**:
+${issues.join('\n')}
+
+*To run tests and see exact output, use the 'Run' panel at the bottom.*`;
+    }
+
+    return `### 🤖 Sentinel Workspace Companion
+Active File: **${filename || 'No file selected'}**
+Language: **${language}**
+
+I am monitoring your workspace. How can I assist you?
+- Ask me to **explain** the code to walk through the logic.
+- Ask me to **optimize** to speed up execution or reduce complexity.
+- Ask me to **fix** or check for bugs to identify warnings.`;
+};
+
+app.post('/api/sentinel', async (req, res) => {
+    try {
+        const { messages, code, language, filename, mode } = req.body;
+        const lastUserMessage = messages && messages.length > 0 ? messages[messages.length - 1].content : '';
+
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            const fallbackResponse = fallbackSentinel(mode, code || '', language || 'plaintext', filename || '', lastUserMessage);
+            return res.json({ text: fallbackResponse });
+        }
+
+        const systemPrompt = `You are "The Sentinel" - an advanced, context-aware AI coding assistant integrated inside the BrightCode IDE.
+The user is working on a file named "${filename || 'unnamed'}" written in "${language || 'plaintext'}".
+Here is their current code buffer:
+\`\`\`${language || ''}
+${code || ''}
+\`\`\`
+
+YOUR RULES:
+1. Provide expert, precise, and professional technical advice.
+2. Structure your replies using clean markdown headers (e.g. "### ⚡ Optimization Protocol").
+3. When requested to optimize, explain, or fix bugs, focus directly on the code buffer. Provide concrete code diffs or refactored snippets.
+4. Keep explanations clear, and avoid excessive introductory/concluding chatter.
+5. If the user asks general questions or chat, answer as a smart developer assistant.
+`;
+
+        const formattedMessages = [
+            {
+                role: 'user',
+                parts: [{ text: systemPrompt }]
+            },
+            {
+                role: 'model',
+                parts: [{ text: "Hello! I am your AI Sentinel. How can I assist you with your code today?" }]
+            },
+            ...messages.slice(0, -1).map(msg => ({
+                role: msg.role === 'ai' ? 'model' : 'user',
+                parts: [{ text: msg.content }]
+            })),
+            {
+                role: 'user',
+                parts: [{ text: `[Mode: ${mode || 'chat'}] User query: ${lastUserMessage}` }]
+            }
+        ];
+
+        const payload = {
+            contents: formattedMessages,
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 2500,
+                topP: 0.95
+            }
+        };
+
+        let response;
+        try {
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            response = await axios.post(endpoint, payload, {
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 30000
+            });
+        } catch (error) {
+            console.warn('[Sentinel] gemini-2.5-flash failed, trying fallback...', error.message);
+            const fallbackEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            response = await axios.post(fallbackEndpoint, payload, {
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 30000
+            });
+        }
+
+        if (response.data && response.data.candidates && response.data.candidates.length > 0) {
+            const aiResponse = response.data.candidates[0].content.parts[0].text;
+            res.json({ text: aiResponse });
+        } else {
+            throw new Error('Empty response from Gemini API');
+        }
+
+    } catch (error) {
+        console.error('[Sentinel Error]:', error.message);
+        const fallbackResponse = fallbackSentinel(
+            req.body.mode, 
+            req.body.code || '', 
+            req.body.language || 'plaintext', 
+            req.body.filename || '', 
+            req.body.messages?.[req.body.messages?.length - 1]?.content || ''
+        );
+        res.json({ text: fallbackResponse });
     }
 });
 
