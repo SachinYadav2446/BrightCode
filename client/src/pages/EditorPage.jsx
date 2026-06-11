@@ -16,14 +16,11 @@ import JSZip from 'jszip';
 import {
 
     Users, FileCode, Play, LogOut, FilePlus, Terminal as TerminalIcon,
-
     Monitor, Link as LinkIcon, Trash2, Edit2, Sparkles, Brain, Bot, Send,
-
     PenTool, Eraser, Layout as WhiteboardIcon, Zap, Shield, Languages,
-
     Mic, MicOff, Video, VideoOff, PhoneOff, Phone, Plus,
     ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Share2, Download,
-    Folder, FolderOpen, FolderPlus, File as FileIcon, X
+    Folder, FolderOpen, FolderPlus, File as FileIcon, X, MessageSquare, BookOpen, ShieldAlert, User
 } from 'lucide-react';
 
 import axios from 'axios';
@@ -120,10 +117,12 @@ const EditorPage = () => {
     const goToNextView = () => {
         if (sidebarView === 'files') setSidebarView('collaborators');
         else if (sidebarView === 'collaborators') setSidebarView('chat');
+        else if (sidebarView === 'chat') setSidebarView('sentinel');
     };
 
     const goToPreviousView = () => {
-        if (sidebarView === 'chat') setSidebarView('collaborators');
+        if (sidebarView === 'sentinel') setSidebarView('chat');
+        else if (sidebarView === 'chat') setSidebarView('collaborators');
         else if (sidebarView === 'collaborators') setSidebarView('files');
     };
 
@@ -194,19 +193,17 @@ const EditorPage = () => {
 
 
 
-    // â”€â”€ AI Sentinel States â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-    const [isSidekickOpen, setIsSidekickOpen] = useState(false);
-
+    // ── AI Sentinel States ────────────────────────────────────────────────────────
     const [aiMessages, setAiMessages] = useState([
-
         { role: 'ai', content: "Hello! I am your AI Sentinel. How can I assist you with your code today?" }
-
     ]);
-
     const [isAiThinking, setIsAiThinking] = useState(false);
-
     const [aiInput, setAiInput] = useState('');
+    const [sentinelMode, setSentinelMode] = useState('chat'); // 'chat', 'explain', 'optimize', 'fix'
+    const [includeCodeContext, setIncludeCodeContext] = useState(true);
+    const [executionTime, setExecutionTime] = useState(null);
+    const [executionSource, setExecutionSource] = useState(null);
+    const sentinelEndRef = useRef(null);
 
 
 
@@ -784,79 +781,53 @@ const EditorPage = () => {
 
 
     const runCode = async () => {
-
         if (!activeFile || isRunning) return;
 
         setIsRunning(true);
-
         setOutput('Running...');
+        setExecutionTime(null);
+        setExecutionSource(null);
 
         try {
-
             const currentFile = files[activeFile];
-
             const pistonLangMap = {
-
                 javascript: 'js',
-
                 python: 'python3',
-
                 cpp: 'cpp',
-
                 java: 'java'
-
             };
-
             const lang = pistonLangMap[currentFile.language] || currentFile.language;
 
-
-
             const response = await axios.post(`${API_URL}/execute`, {
-
                 language: lang,
-
                 files: [{ name: currentFile.language === 'java' ? 'Main.java' : activeFile, content: currentFile.content }]
-
             });
 
             const runInfo = response.data.run;
-
             setOutput(runInfo.stdout || runInfo.stderr || 'Success (No output)');
+            setExecutionTime(runInfo.executionTime || null);
+            setExecutionSource(runInfo.source || null);
 
             if (!runInfo.stderr && (runInfo.stdout || runInfo.code === 0)) {
-
                 try {
-
                     const token = localStorage.getItem('token');
-
                     const xpAmount = 10;
-
                     const xpRes = await axios.post(`${API_URL}/add-xp`, { amount: xpAmount },
-
                         { headers: { Authorization: `Bearer ${token}` } }
-
                     );
 
                     if (xpRes.data.success) {
-
                         const { xp, ...stats } = xpRes.data;
-
                         updateXP(xp, stats);
-
                     }
-
                 } catch { console.error('XP Sync Error'); }
-
             }
 
         } catch (error) {
-
             setOutput('Execution error: ' + (error.response?.data?.details || error.message));
-
         }
 
         setIsRunning(false);
-
     };
 
     // â”€â”€ Export File Function â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1038,6 +1009,13 @@ const EditorPage = () => {
         }
     }, [chatMessages]);
 
+    // Auto-scroll Sentinel chat to bottom
+    useEffect(() => {
+        if (sentinelEndRef.current) {
+            sentinelEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [aiMessages, isAiThinking]);
+
 
 
     // â”€â”€ File System Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1053,6 +1031,95 @@ const EditorPage = () => {
     const createNewFolder = (folderPath) => {
         const path = typeof folderPath === 'string' ? folderPath : '';
         openModal({ type: 'create-folder', targetFile: path, defaultValue: '' });
+    };
+
+    const renderSentinelMarkdown = (text) => {
+        if (!text) return null;
+        const parts = text.split(/(```[\s\S]*?```)/g);
+        
+        return parts.map((part, index) => {
+            if (part.startsWith('```') && part.endsWith('```')) {
+                const match = part.match(/```(\w*)\n([\s\S]*?)```/);
+                const lang = match ? match[1] : '';
+                const code = match ? match[2] : part.slice(3, -3);
+                return (
+                    <div key={index} className="sentinel-markdown-codeblock">
+                        {lang && <div className="codeblock-header">{lang.toUpperCase()}</div>}
+                        <pre><code>{code.trim()}</code></pre>
+                    </div>
+                );
+            }
+            
+            const lines = part.split('\n');
+            return (
+                <div key={index} className="sentinel-markdown-paragraph">
+                    {lines.map((line, lIdx) => {
+                        const segments = line.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
+                        return (
+                            <div key={lIdx} className="sentinel-markdown-line">
+                                {segments.map((seg, sIdx) => {
+                                    if (seg.startsWith('`') && seg.endsWith('`')) {
+                                        return <code key={sIdx} className="sentinel-inline-code">{seg.slice(1, -1)}</code>;
+                                    }
+                                    if (seg.startsWith('**') && seg.endsWith('**')) {
+                                        return <strong key={sIdx} className="sentinel-strong">{seg.slice(2, -2)}</strong>;
+                                    }
+                                    return seg;
+                                })}
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        });
+    };
+
+    const sendMessageToAi = async (customPrompt = null, customMode = null) => {
+        const promptText = customPrompt !== null ? customPrompt : aiInput;
+        const currentMode = customMode !== null ? customMode : sentinelMode;
+
+        if (!promptText.trim()) return;
+
+        const userMsg = { role: 'user', content: promptText };
+        setAiMessages(prev => [...prev, userMsg]);
+        
+        if (customPrompt === null) {
+            setAiInput('');
+        }
+        setIsAiThinking(true);
+
+        try {
+            const currentFile = activeFile ? files[activeFile] : null;
+            const codeToSend = includeCodeContext && currentFile ? currentFile.content : '';
+            const languageToSend = currentFile ? currentFile.language : '';
+            const filenameToSend = activeFile || '';
+
+            const response = await axios.post(`${API_URL}/api/sentinel`, {
+                messages: [...aiMessages.map(m => ({ role: m.role, content: m.content })), userMsg],
+                code: codeToSend,
+                language: languageToSend,
+                filename: filenameToSend,
+                mode: currentMode
+            });
+
+            if (response.data && response.data.text) {
+                setAiMessages(prev => [...prev, { role: 'ai', content: response.data.text }]);
+            } else {
+                throw new Error('Invalid Sentinel response');
+            }
+        } catch (error) {
+            console.error('Sentinel Error:', error);
+            toast.error("Sentinel Offline.");
+            setAiMessages(prev => [
+                ...prev, 
+                { 
+                    role: 'ai', 
+                    content: "### ⚠️ System Diagnostic Interrupted\nFailed to establish sync matrix with Sentinel AI. Please verify network configuration." 
+                }
+            ]);
+        } finally {
+            setIsAiThinking(false);
+        }
     };
 
     const getFileLanguage = (name) => {
@@ -1175,20 +1242,13 @@ const EditorPage = () => {
 
     // â”€â”€ AI Sentinel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    const sendMessageToAi = async () => { // BUG FIX: was handleAiSubmit, now properly named
-
+    const sendMessageToAi_OLD = async () => {
         if (!aiInput.trim()) return;
-
         const userMsg = { role: 'user', content: aiInput };
-
         const inputCopy = aiInput;
-
         setAiMessages(prev => [...prev, userMsg]);
-
         setAiInput('');
-
         setIsAiThinking(true);
-
         try {
 
             const input = inputCopy.toLowerCase();
@@ -2320,10 +2380,11 @@ const EditorPage = () => {
                                     {sidebarView === 'files' && 'EXPLORER'}
                                     {sidebarView === 'collaborators' && 'COLLABORATORS'}
                                     {sidebarView === 'chat' && 'TEAM CHAT'}
+                                    {sidebarView === 'sentinel' && 'AI SENTINEL'}
                                 </span>
 
                                 {/* Right arrow - only show if not on last view */}
-                                {sidebarView !== 'chat' && (
+                                {sidebarView !== 'sentinel' && (
                                     <button className="sidebar-nav-btn" onClick={goToNextView} title="Next">
                                         <ChevronRight size={16} />
                                     </button>
@@ -2458,6 +2519,136 @@ const EditorPage = () => {
                                         />
                                         <button className="chat-send-btn" onClick={sendChatMessage}>
                                             <Send size={16} />
+                                        </button>
+                                </div>
+                            )}
+
+                            {/* Sentinel AI Panel */}
+                            {sidebarView === 'sentinel' && (
+                                <div className="sidebar-section sentinel-section">
+                                    {/* Sentinel Modes selector */}
+                                    <div className="sentinel-modes-bar">
+                                        <button 
+                                            className={`sentinel-mode-btn ${sentinelMode === 'chat' ? 'active' : ''}`}
+                                            onClick={() => setSentinelMode('chat')}
+                                            title="General Chat"
+                                        >
+                                            <MessageSquare size={14} />
+                                            <span>Chat</span>
+                                        </button>
+                                        <button 
+                                            className={`sentinel-mode-btn ${sentinelMode === 'explain' ? 'active' : ''}`}
+                                            onClick={() => {
+                                                setSentinelMode('explain');
+                                                sendMessageToAi("Explain the active code structure", "explain");
+                                            }}
+                                            title="Explain Active Code"
+                                        >
+                                            <BookOpen size={14} />
+                                            <span>Explain</span>
+                                        </button>
+                                        <button 
+                                            className={`sentinel-mode-btn ${sentinelMode === 'optimize' ? 'active' : ''}`}
+                                            onClick={() => {
+                                                setSentinelMode('optimize');
+                                                sendMessageToAi("Optimize the active code performance", "optimize");
+                                            }}
+                                            title="Optimize Performance"
+                                        >
+                                            <Zap size={14} />
+                                            <span>Optimize</span>
+                                        </button>
+                                        <button 
+                                            className={`sentinel-mode-btn ${sentinelMode === 'fix' ? 'active' : ''}`}
+                                            onClick={() => {
+                                                setSentinelMode('fix');
+                                                sendMessageToAi("Scan and fix bugs in active code", "fix");
+                                            }}
+                                            title="Check for Warnings"
+                                        >
+                                            <ShieldAlert size={14} />
+                                            <span>Diagnostics</span>
+                                        </button>
+                                    </div>
+
+                                    {/* Active context status */}
+                                    <div className="sentinel-context-box">
+                                        <label className="sentinel-context-label">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={includeCodeContext}
+                                                onChange={(e) => setIncludeCodeContext(e.target.checked)}
+                                            />
+                                            <span className="checkbox-custom"></span>
+                                            <span className="label-text">Attach editor buffer</span>
+                                        </label>
+                                        {activeFile ? (
+                                            <span className="sentinel-context-file">
+                                                active: <code className="glow-cyan">{activeFile.split('/').pop()}</code>
+                                            </span>
+                                        ) : (
+                                            <span className="sentinel-context-file text-muted">no active file</span>
+                                        )}
+                                    </div>
+
+                                    {/* Messages list */}
+                                    <div className="sentinel-chat-messages">
+                                        {aiMessages.map((msg, index) => (
+                                            <div key={index} className={`sentinel-msg-bubble ${msg.role}`}>
+                                                <div className="sentinel-msg-header">
+                                                    {msg.role === 'ai' ? (
+                                                        <>
+                                                            <Bot size={12} className="glow-icon" />
+                                                            <span>SENTINEL</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <User size={12} />
+                                                            <span>DEVELOPER</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                                <div className="sentinel-msg-text">
+                                                    {renderSentinelMarkdown(msg.content)}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {isAiThinking && (
+                                            <div className="sentinel-msg-bubble ai thinking">
+                                                <div className="sentinel-msg-header">
+                                                    <Bot size={12} className="glow-icon animating" />
+                                                    <span>SENTINEL IS ANALYZING...</span>
+                                                </div>
+                                                <div className="sentinel-thinking-indicator">
+                                                    <div className="thinking-bar"></div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div ref={sentinelEndRef} />
+                                    </div>
+
+                                    {/* Chat input form */}
+                                    <div className="sentinel-input-container">
+                                        <input
+                                            type="text"
+                                            className="sentinel-input"
+                                            placeholder={
+                                                sentinelMode === 'chat' ? "Ask Sentinel something..." :
+                                                sentinelMode === 'explain' ? "Ask questions about this code..." :
+                                                sentinelMode === 'optimize' ? "Ask about performance limits..." :
+                                                "Ask for specific syntax repairs..."
+                                            }
+                                            value={aiInput}
+                                            onChange={(e) => setAiInput(e.target.value)}
+                                            onKeyPress={(e) => e.key === 'Enter' && sendMessageToAi()}
+                                            disabled={isAiThinking}
+                                        />
+                                        <button 
+                                            className={`sentinel-send-btn ${isAiThinking ? 'disabled' : ''}`}
+                                            onClick={() => sendMessageToAi()}
+                                            disabled={isAiThinking}
+                                        >
+                                            <Send size={14} />
                                         </button>
                                     </div>
                                 </div>
@@ -2720,7 +2911,18 @@ const EditorPage = () => {
                                     <span>SENTINEL SHELL & DIAGNOSTICS</span>
                                 </div>
                                 <div className="terminal-status">
-                                    {isRunning ? 'EXECUTING_CODE...' : 'SYSTEM_READY'}
+                                    {isRunning ? (
+                                        <span className="glow-yellow">EXECUTING_CODE...</span>
+                                    ) : (
+                                        <>
+                                            {executionTime !== null && (
+                                                <span className="exec-time-badge font-mono" style={{ marginRight: '10px', fontSize: '11px', opacity: 0.85, color: '#a8a29e' }}>
+                                                    [{executionTime}ms{executionSource === 'piston' ? ' • sandbox' : ''}]
+                                                </span>
+                                            )}
+                                            <span className="glow-green">SYSTEM_READY</span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
 
