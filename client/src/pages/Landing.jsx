@@ -6,6 +6,7 @@ import {
   GitBranch, Sparkles, Flame, Check, HelpCircle
 } from "lucide-react";
 import API_URL from "../config";
+import CodeBrightLogo from "../components/CodeBrightLogo";
 import "./Landing.css";
 
 export default function Landing() {
@@ -36,11 +37,8 @@ export default function Landing() {
         <div className="nav-inner">
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <a className="nav-logo" href="#" onClick={e => e.preventDefault()}>
-              <div className="nav-logo-mark">
-                <Code2 size={17} className="logo-icon" />
-              </div>
-              <span className="nav-logo-name">BRIGHT<span>CODE</span></span>
+            <a className="nav-logo" href="#" onClick={e => e.preventDefault()} style={{ textDecoration: 'none' }}>
+              <CodeBrightLogo size="small" />
             </a>
           </div>
 
