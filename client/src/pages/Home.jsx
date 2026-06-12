@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import {
-  ChevronRight, ChevronLeft, Crown, Trophy, Flame, Cpu, Globe, Terminal, Layers, Calendar, Code2, BookOpen, Lock, Gamepad2, Shield, Play, Award
+  ChevronRight, ChevronLeft, Crown, Trophy, Flame, Cpu, Globe, Terminal, Layers, Calendar, Code2, BookOpen, Lock, Play, Award
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
@@ -103,6 +103,12 @@ const Home = () => {
     ? Math.min(((xp - (xp >= 5000 ? 5000 : xp >= 2000 ? 2000 : xp >= 500 ? 500 : 0)) /
       (levelInfo.next - (xp >= 5000 ? 5000 : xp >= 2000 ? 2000 : xp >= 500 ? 500 : 0))) * 100, 100)
     : 100;
+
+  const totalLevelsSolved = (Number(user?.css_level || 0) + Number(user?.logic_level || 0) +
+    Number(user?.react_level || 0) + Number(user?.java_level || 0) +
+    Number(user?.cpp_level || 0) + Number(user?.python_level || 0) +
+    Number(user?.go_level || 0));
+
 
   const skillDistribution = [
     { 
@@ -326,22 +332,60 @@ const Home = () => {
           {/* ══ HEADER / SECTION 1: USER DETAILS (BLACK BG, EDGE-TO-EDGE) ══ */}
           <header className="profile-header-black">
             <div className="profile-header-inner">
+
+              {/* Top greeting row */}
               <h1 className="welcome-banner-text">Welcome back, <span className="welcome-username-highlight">{user.username}</span>!</h1>
-              
+
               <div className="profile-details-row">
-                {/* Left Column: Avatar & Details */}
+                {/* Left Block: DiceBear avatar + core identity */}
                 <div className="profile-identity-col">
-                  <div className="profile-avatar-large">
-                    {user.username[0].toUpperCase()}
+
+                  {/* Avatar — uses the DiceBear seed from user.avatarId */}
+                  <div className="profile-avatar-dicebear">
+                    <img
+                      src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${user.avatarId || user.username || 'Sniper'}&backgroundColor=transparent`}
+                      alt={`${user.username} avatar`}
+                      className="dicebear-img"
+                    />
+                    <span className="avatar-online-dot" />
                   </div>
+
+                  {/* Identity info block */}
                   <div className="profile-identity-info">
+
+                    {/* Username + rank badge */}
                     <div className="profile-badge-row">
                       <span className="profile-username-text">{user.username}</span>
                       <span className="profile-badge-pill" style={{ color: levelInfo.color, borderColor: levelInfo.color }}>
                         <Crown size={12} />
                         <span>{levelInfo.label}</span>
                       </span>
+                      {user.email && (
+                        <span className="profile-email-chip">
+                          <Globe size={11} />
+                          {user.email}
+                        </span>
+                      )}
                     </div>
+
+                    {/* Bio */}
+                    {user.bio && (
+                      <p className="profile-bio-text">{user.bio}</p>
+                    )}
+
+                    {/* Stack tags */}
+                    {user.stack && user.stack.length > 0 && (
+                      <div className="profile-stack-row">
+                        {user.stack.map(tag => (
+                          <span key={tag} className="profile-stack-tag">
+                            <Code2 size={10} />
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Primary metrics */}
                     <div className="profile-metrics-row">
                       <div className="metric-box-item">
                         <span className="metric-box-label">Total Experience</span>
@@ -358,20 +402,40 @@ const Home = () => {
                         <span className="metric-box-label">Earned Today</span>
                         <span className="metric-box-value text-red">+{todaysXp} XP</span>
                       </div>
+                      <div className="metric-box-item">
+                        <span className="metric-box-label">Levels Solved</span>
+                        <span className="metric-box-value">{totalLevelsSolved}</span>
+                      </div>
+                    </div>
+
+                    {/* Secondary stat chips */}
+                    <div className="profile-stat-chips-row">
+                      <span className="profile-stat-chip">
+                        <Trophy size={11} />
+                        {levelInfo.next ? `${(levelInfo.next - xp).toLocaleString()} XP to next tier` : 'Max Rank Achieved'}
+                      </span>
+                      <span className="profile-stat-chip">
+                        <Layers size={11} />
+                        7 tracks active
+                      </span>
+                      <span className="profile-stat-chip">
+                        <Calendar size={11} />
+                        {activeDays} sessions logged
+                      </span>
                     </div>
                   </div>
                 </div>
-                
-                {/* Right Column: Radial Progress Summary */}
+
+                {/* Right: Radial XP ring */}
                 <div className="profile-progress-col">
                   <div className="circle-progress-container">
                     <svg className="radial-progress" viewBox="0 0 100 100">
                       <circle className="radial-track" cx="50" cy="50" r="42" />
-                      <motion.circle 
-                        className="radial-fill" 
-                        cx="50" 
-                        cy="50" 
-                        r="42" 
+                      <motion.circle
+                        className="radial-fill"
+                        cx="50"
+                        cy="50"
+                        r="42"
                         strokeDasharray="263.8"
                         initial={{ strokeDashoffset: 263.8 }}
                         animate={{ strokeDashoffset: 263.8 - (263.8 * xpPercent) / 100 }}
@@ -384,6 +448,9 @@ const Home = () => {
                       <span className="radial-lbl">Level Completion</span>
                     </div>
                   </div>
+                  <div className="radial-tier-label" style={{ color: levelInfo.color }}>
+                    {levelInfo.label}
+                  </div>
                 </div>
               </div>
             </div>
@@ -391,62 +458,6 @@ const Home = () => {
 
           {/* ══ CONTENT AREA (WITH GRID SYSTEM BG) ══ */}
           <div className="dashboard-content-area">
-
-            {/* ══ NEW SECTION: DEVELOPER HUB LAUNCHPAD ══ */}
-            <section className="home-launchpad-section">
-              <div className="section-header-row">
-                <div className="title-left-group">
-                  <Gamepad2 size={20} className="launchpad-accent-icon" />
-                  <h2 className="vertical-section-title">Developer Hub Launchpad</h2>
-                </div>
-                <p className="vertical-section-subtitle">Quick launch pathways to primary BrightCode platform subsystems.</p>
-              </div>
-              <div className="launchpad-grid">
-                <div className="launchpad-card" onClick={() => navigate('/battle-arena')}>
-                  <div className="launch-card-icon-box">
-                    <Gamepad2 size={24} className="launch-icon text-red" />
-                  </div>
-                  <div className="launch-card-meta">
-                    <span className="launch-card-title">Battle Arena</span>
-                    <span className="launch-card-desc">1v1 PvP coding showdowns. Challenge developers in real-time.</span>
-                  </div>
-                  <ChevronRight size={16} className="launch-arrow" />
-                </div>
-
-                <div className="launchpad-card" onClick={() => navigate('/factions')}>
-                  <div className="launch-card-icon-box">
-                    <Shield size={24} className="launch-icon text-blue" />
-                  </div>
-                  <div className="launch-card-meta">
-                    <span className="launch-card-title">Guild Factions</span>
-                    <span className="launch-card-desc">Join developer clans, complete group raids, and climb faction boards.</span>
-                  </div>
-                  <ChevronRight size={16} className="launch-arrow" />
-                </div>
-
-                <div className="launchpad-card" onClick={() => navigate('/codevault')}>
-                  <div className="launch-card-icon-box">
-                    <BookOpen size={24} className="launch-icon text-yellow" />
-                  </div>
-                  <div className="launch-card-meta">
-                    <span className="launch-card-title">Code Vault</span>
-                    <span className="launch-card-desc">Your personal repository. Explore and review your past solved solutions.</span>
-                  </div>
-                  <ChevronRight size={16} className="launch-arrow" />
-                </div>
-
-                <div className="launchpad-card" onClick={() => navigate('/user-guide')}>
-                  <div className="launch-card-icon-box">
-                    <Layers size={24} className="launch-icon text-green" />
-                  </div>
-                  <div className="launch-card-meta">
-                    <span className="launch-card-title">Platform Guide</span>
-                    <span className="launch-card-desc">Read core technical documentation, compile sandbox manuals, and help.</span>
-                  </div>
-                  <ChevronRight size={16} className="launch-arrow" />
-                </div>
-              </div>
-            </section>
             
             {/* ══ SECTION 2: SUBMISSION CALENDAR (TACTICAL DIGITAL ACTIVITY LOG) ══ */}
             <section className="home-activity-log-section">
@@ -505,9 +516,11 @@ const Home = () => {
                 </div>
               </div>
             </section>
+          </div>
 
-            {/* ══ SECTION 3: SOLVED MODULES PROGRESSION (SLIDER CAROUSEL) ══ */}
-            <section className="dashboard-vertical-section progression-carousel-section">
+          {/* ══ SECTION 3: SOLVED MODULES PROGRESSION (FULL WIDTH BAND) ══ */}
+          <section className="progression-section-fullwidth">
+            <div className="progression-fullwidth-inner">
               <div className="section-header-row">
                 <div className="title-left-group">
                   <Layers size={20} className="carousel-accent-icon" />
@@ -546,7 +559,14 @@ const Home = () => {
                     const skillLabel = pct >= 100 ? 'Master' : pct >= 75 ? 'Expert' : pct >= 50 ? 'Advanced' : pct >= 25 ? 'Intermediate' : pct > 0 ? 'Beginner' : 'Initiate';
                     
                     return (
-                      <div key={skill.id} className="module-progression-large-card" style={{ '--accent-theme': skill.color }}>
+                      <div 
+                        key={skill.id} 
+                        className="module-progression-large-card" 
+                        style={{ 
+                          '--accent-theme': skill.color,
+                          '--accent-theme-glow': skill.color + '40'
+                        }}
+                      >
                         {/* Top Meta info */}
                         <div className="large-card-header">
                           <div className="large-card-icon-box" style={{ color: skill.color, backgroundColor: `${skill.color}15` }}>
@@ -609,7 +629,11 @@ const Home = () => {
                   </button>
                 )}
               </div>
-            </section>
+            </div>
+          </section>
+
+          {/* ══ CONTENT AREA (LOWER SECTION) ══ */}
+          <div className="dashboard-content-area">
 
             {/* ══ SECTION 4: ACHIEVEMENTS & BADGES ══ */}
             <section className="dashboard-vertical-section achievements-section">
