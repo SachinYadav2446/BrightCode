@@ -285,7 +285,7 @@ const Home = () => {
             </section>
 
             {/* ══ SECTION 3: SOLVED MODULES PROGRESSION ══ */}
-            <section className="dashboard-vertical-section modules-section-dark">
+            <section className="dashboard-vertical-section">
               <div className="section-header-row">
                 <h2 className="vertical-section-title">Solved Modules Progression</h2>
                 <p className="vertical-section-subtitle">Track your proficiency levels and solved challenges across development cores.</p>
