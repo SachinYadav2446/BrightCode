@@ -244,14 +244,7 @@ const Home = () => {
     "Build clean interfaces, write readable solutions."
   ];
 
-  const totalLevelsSolved = 
-    Number(user?.css_level || 0) + 
-    Number(user?.logic_level || 0) + 
-    Number(user?.react_level || 0) + 
-    Number(user?.java_level || 0) + 
-    Number(user?.cpp_level || 0) + 
-    Number(user?.python_level || 0) + 
-    Number(user?.go_level || 0);
+
 
   const badges = [
     {
