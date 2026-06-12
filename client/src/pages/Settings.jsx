@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, User, Settings as SettingsIcon, Save, Plus, X, LogOut, Shield, Info, Globe, Terminal, Mail, Calendar, ShieldCheck, ChevronRight, Layers, Zap, Users, Activity, Lock } from 'lucide-react';
+import { ArrowLeft, User, Settings as SettingsIcon, Save, Plus, X, LogOut, Shield, Info, Globe, Terminal, Mail, Calendar, ShieldCheck, ChevronRight, Layers, Zap, Users, Activity, Lock, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import axios from 'axios';
+import API_URL from '../config';
 import Chatbot from '../components/Chatbot';
 import './Settings.css';
 
@@ -13,6 +15,7 @@ const Settings = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'details');
   const [showConfigModal, setShowConfigModal] = useState(false);
+  const [supportForm, setSupportForm] = useState({ subject: '', message: '', isSending: false, sent: false });
 
   // Calculate Metrics (similar to Home.jsx)
   const activity = user?.activity || {};
@@ -445,6 +448,27 @@ const Settings = () => {
     }
   };
 
+  const handleSupportSubmit = async (e) => {
+    e.preventDefault();
+    if (!supportForm.message.trim()) return;
+    setSupportForm(p => ({ ...p, isSending: true }));
+    try {
+      await axios.post(`${API_URL}/support`, {
+        email: user.email,
+        username: user.username,
+        subject: supportForm.subject || 'Support Inquiry',
+        message: supportForm.message
+      });
+      setSupportForm({ subject: '', message: '', isSending: false, sent: true });
+      toast.success('Feedback received by the core team.');
+      setTimeout(() => setSupportForm(p => ({ ...p, sent: false })), 5000);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to send message.');
+      setSupportForm(p => ({ ...p, isSending: false }));
+    }
+  };
+
   return (
     <div className="settings-page">
       <div className="settings-wrapper">
@@ -464,6 +488,13 @@ const Settings = () => {
             >
               <SettingsIcon size={20} />
               <span>System</span>
+            </button>
+            <button
+              className={`nav-item ${activeTab === 'support' ? 'active' : ''}`}
+              onClick={() => setActiveTab('support')}
+            >
+              <MessageSquare size={20} />
+              <span>Support</span>
             </button>
           </nav>
 
@@ -674,7 +705,7 @@ const Settings = () => {
                   </div>
                 </div>
               </motion.div>
-            ) : (
+            ) : activeTab === 'settings' ? (
               <motion.div
                 key="settings"
                 initial={{ opacity: 0, y: 20 }}
@@ -871,7 +902,71 @@ const Settings = () => {
                   </button>
                 </div>
               </motion.div>
-            )}
+            ) : activeTab === 'support' ? (
+              <motion.div
+                key="support"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="dashboard-content"
+              >
+                <div className="system-section">
+                  <div className="section-header">
+                    <h2>Support &amp; Feedback</h2>
+                    <p style={{ color: '#71717a', fontSize: '0.85rem', marginTop: '4px' }}>Send a request or feature feedback directly to the operator team.</p>
+                  </div>
+
+                  <div className="dashboard-card identity-card" style={{ marginTop: '24px' }}>
+                    <div className="card-header">
+                      <div className="header-icon"><MessageSquare size={18} /></div>
+                      <h3>Transmission</h3>
+                    </div>
+                    <div className="card-body">
+                      {supportForm.sent ? (
+                        <div className="support-widget-success">
+                          <span className="success-icon">✓</span>
+                          <h4>Transmission Dispatched</h4>
+                          <p>Our operator team has received your support request.</p>
+                        </div>
+                      ) : (
+                        <form className="support-widget-form" onSubmit={handleSupportSubmit}>
+                          <div className="premium-input-group">
+                            <label>Subject</label>
+                            <input
+                              className="premium-input"
+                              type="text"
+                              placeholder="Brief subject line..."
+                              value={supportForm.subject}
+                              onChange={e => setSupportForm(p => ({ ...p, subject: e.target.value }))}
+                            />
+                          </div>
+                          <div className="premium-input-group" style={{ marginTop: '16px' }}>
+                            <label>Message</label>
+                            <textarea
+                              className="premium-input"
+                              style={{ minHeight: '140px', resize: 'vertical' }}
+                              placeholder="Detail your request, bug report, or feature feedback..."
+                              value={supportForm.message}
+                              onChange={e => setSupportForm(p => ({ ...p, message: e.target.value }))}
+                              required
+                            />
+                          </div>
+                          <button
+                            className="action-btn primary"
+                            type="submit"
+                            disabled={supportForm.isSending}
+                            style={{ marginTop: '20px', width: '100%', justifyContent: 'center' }}
+                          >
+                            <MessageSquare size={16} />
+                            <span>{supportForm.isSending ? 'Sending...' : 'Send Message'}</span>
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ) : null}
           </AnimatePresence>
         </main>
       </div>

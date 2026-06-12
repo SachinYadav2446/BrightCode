@@ -2520,6 +2520,7 @@ const EditorPage = () => {
                                         <button className="chat-send-btn" onClick={sendChatMessage}>
                                             <Send size={16} />
                                         </button>
+                                    </div>
                                 </div>
                             )}
 

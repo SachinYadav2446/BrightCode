@@ -29,6 +29,7 @@
 
 
 html {
+  zoom: 0.8;
   scroll-behavior: smooth;
   scrollbar-gutter: stable;
 }

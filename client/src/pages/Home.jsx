@@ -640,44 +640,6 @@ const Home = () => {
             </div>
           </section>
 
-          {/* ══ CONTENT AREA (LOWER SECTION) ══ */}
-          <div className="dashboard-content-area">
-
-            {/* ══ SECTION 4: ACHIEVEMENTS & BADGES ══ */}
-            <section className="dashboard-vertical-section achievements-section">
-              <div className="section-header-row">
-                <div className="title-left-group">
-                  <Award size={20} className="achievements-accent-icon" />
-                  <h2 className="vertical-section-title">Achievements & Badges</h2>
-                </div>
-                <p className="vertical-section-subtitle">Locked and unlocked developer credentials based on your platform activity and progress.</p>
-              </div>
-
-              <div className="achievements-grid">
-                {badges.map(badge => {
-                  const Icon = badge.icon;
-                  return (
-                    <div key={badge.id} className={`badge-card ${badge.unlocked ? 'unlocked' : 'locked'}`} style={badge.unlocked ? { '--badge-color': badge.color } : {}}>
-                      <div className="badge-icon-wrapper">
-                        {badge.unlocked ? (
-                          <div className="badge-glow-effect" style={{ backgroundColor: badge.color }} />
-                        ) : (
-                          <div className="badge-lock-overlay"><Lock size={12} /></div>
-                        )}
-                        <Icon className="badge-main-icon" size={24} style={badge.unlocked ? { color: badge.color } : { color: '#52525b' }} />
-                      </div>
-                      <div className="badge-details">
-                        <span className="badge-name">{badge.name}</span>
-                        <span className="badge-desc">{badge.desc}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-
-          </div>
-
           {/* ══ SECTION 4: HALL OF FAME (FULL WIDTH) ══ */}
           <section className="fame-section-fullwidth">
             <div className="fame-fullwidth-inner">
@@ -774,6 +736,176 @@ const Home = () => {
                 </div>
 
               </div>
+            </div>
+          </section>
+
+          {/* ══ ACHIEVEMENTS & BADGES (BELOW HALL OF FAME) ══ */}
+          <div className="dashboard-content-area">
+            <section className="dashboard-vertical-section achievements-section">
+              <div className="section-header-row">
+                <div className="title-left-group">
+                  <Award size={20} className="achievements-accent-icon" />
+                  <h2 className="vertical-section-title">Achievements & Badges</h2>
+                </div>
+                <p className="vertical-section-subtitle">Locked and unlocked developer credentials based on your platform activity and progress.</p>
+              </div>
+
+              <div className="achievements-grid">
+                {badges.map(badge => {
+                  const Icon = badge.icon;
+                  return (
+                    <div key={badge.id} className={`badge-card ${badge.unlocked ? 'unlocked' : 'locked'}`} style={badge.unlocked ? { '--badge-color': badge.color } : {}}>
+                      <div className="badge-icon-wrapper">
+                        {badge.unlocked ? (
+                          <div className="badge-glow-effect" style={{ backgroundColor: badge.color }} />
+                        ) : (
+                          <div className="badge-lock-overlay"><Lock size={12} /></div>
+                        )}
+                        <Icon className="badge-main-icon" size={24} style={badge.unlocked ? { color: badge.color } : { color: '#52525b' }} />
+                      </div>
+                      <div className="badge-details">
+                        <span className="badge-name">{badge.name}</span>
+                        <span className="badge-desc">{badge.desc}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+
+          {/* ══ ABOUT BRIGHTCODE SECTION ══ */}
+          <section className="about-section-fullwidth">
+            <div className="about-section-inner">
+
+              {/* Section Header */}
+              <div className="about-section-header">
+                <div className="about-header-label">
+                  <span className="about-label-dot" />
+                  <span>PLATFORM OVERVIEW</span>
+                </div>
+                <h2 className="about-main-title">Built for Developers.<br /><span className="about-title-accent">Engineered for Growth.</span></h2>
+                <p className="about-subtitle">BrightCode is a developer-first interactive learning platform designed to take you from fundamentals to mastery through structured, gamified coding challenges across multiple technology tracks.</p>
+              </div>
+
+              {/* Main Content Grid */}
+              <div className="about-content-grid">
+
+                {/* Mission Card */}
+                <div className="about-card about-card-mission">
+                  <div className="about-card-icon-row">
+                    <div className="about-card-icon" style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444' }}>
+                      <Flame size={22} />
+                    </div>
+                    <span className="about-card-tag">Our Mission</span>
+                  </div>
+                  <h3 className="about-card-title">Democratising Technical Excellence</h3>
+                  <p className="about-card-body">
+                    We believe every developer deserves a structured path to mastery. BrightCode bridges the gap between learning and doing — replacing passive tutorials with hands-on, level-based challenges that push your boundaries and reward real progress.
+                  </p>
+                  <ul className="about-bullet-list">
+                    <li><span className="about-bullet-dot" style={{ background: '#ef4444' }} />Gamified XP system that makes progress tangible</li>
+                    <li><span className="about-bullet-dot" style={{ background: '#ef4444' }} />Daily coding streaks to build consistency habits</li>
+                    <li><span className="about-bullet-dot" style={{ background: '#ef4444' }} />Tier-based ranking to benchmark your skill level</li>
+                  </ul>
+                </div>
+
+                {/* How it Works Card */}
+                <div className="about-card about-card-howto">
+                  <div className="about-card-icon-row">
+                    <div className="about-card-icon" style={{ background: 'rgba(59,130,246,0.12)', color: '#3b82f6' }}>
+                      <Layers size={22} />
+                    </div>
+                    <span className="about-card-tag">How It Works</span>
+                  </div>
+                  <h3 className="about-card-title">Structured. Adaptive. Competitive.</h3>
+                  <div className="about-steps-list">
+                    <div className="about-step-item">
+                      <div className="about-step-num" style={{ borderColor: '#3b82f6', color: '#3b82f6' }}>01</div>
+                      <div className="about-step-content">
+                        <span className="about-step-title">Choose Your Track</span>
+                        <span className="about-step-desc">Pick from CSS, JavaScript Logic, React, Java, C++, Python, or Go — each with a curated progression path.</span>
+                      </div>
+                    </div>
+                    <div className="about-step-item">
+                      <div className="about-step-num" style={{ borderColor: '#10b981', color: '#10b981' }}>02</div>
+                      <div className="about-step-content">
+                        <span className="about-step-title">Solve Challenges & Earn XP</span>
+                        <span className="about-step-desc">Each level you complete earns XP. The harder the problem, the bigger the reward. Climb the tiers from Initiate to Grandmaster.</span>
+                      </div>
+                    </div>
+                    <div className="about-step-item">
+                      <div className="about-step-num" style={{ borderColor: '#f59e0b', color: '#f59e0b' }}>03</div>
+                      <div className="about-step-content">
+                        <span className="about-step-title">Rank Up & Get Recognised</span>
+                        <span className="about-step-desc">Your XP, streak, and badges define your profile. Compete globally on the Hall of Fame leaderboard and showcase your milestones.</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Platform Stats Card */}
+                <div className="about-card about-card-stats">
+                  <div className="about-card-icon-row">
+                    <div className="about-card-icon" style={{ background: 'rgba(168,85,247,0.12)', color: '#a855f7' }}>
+                      <Trophy size={22} />
+                    </div>
+                    <span className="about-card-tag">By The Numbers</span>
+                  </div>
+                  <h3 className="about-card-title">What You're Competing In</h3>
+                  <div className="about-stats-grid">
+                    <div className="about-stat-box">
+                      <span className="about-stat-num" style={{ color: '#ef4444' }}>7</span>
+                      <span className="about-stat-label">Technology Tracks</span>
+                    </div>
+                    <div className="about-stat-box">
+                      <span className="about-stat-num" style={{ color: '#3b82f6' }}>1,900+</span>
+                      <span className="about-stat-label">Unique Challenges</span>
+                    </div>
+                    <div className="about-stat-box">
+                      <span className="about-stat-num" style={{ color: '#10b981' }}>5</span>
+                      <span className="about-stat-label">Rank Tiers</span>
+                    </div>
+                    <div className="about-stat-box">
+                      <span className="about-stat-num" style={{ color: '#f59e0b' }}>8</span>
+                      <span className="about-stat-label">Achievement Badges</span>
+                    </div>
+                  </div>
+                  <div className="about-tech-tracks-row">
+                    {[
+                      { label: 'CSS', color: '#3b82f6' },
+                      { label: 'JS Logic', color: '#ef4444' },
+                      { label: 'React', color: '#06b6d4' },
+                      { label: 'Java', color: '#10b981' },
+                      { label: 'C++', color: '#ec4899' },
+                      { label: 'Python', color: '#eab308' },
+                      { label: 'Go', color: '#0ea5e9' },
+                    ].map(t => (
+                      <span key={t.label} className="about-track-pill" style={{ borderColor: t.color + '50', color: t.color, background: t.color + '12' }}>{t.label}</span>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Bottom CTA Banner */}
+              <div className="about-cta-banner">
+                <div className="about-cta-text">
+                  <span className="about-cta-eyebrow">Ready to level up?</span>
+                  <span className="about-cta-headline">Start solving. Start growing. <span style={{ color: '#ef4444' }}>Today.</span></span>
+                </div>
+                <div className="about-cta-actions">
+                  <button className="about-cta-primary" onClick={() => navigate('/library')}>
+                    <Play size={14} fill="currentColor" />
+                    Browse Tracks
+                  </button>
+                  <button className="about-cta-secondary" onClick={() => navigate('/leaderboard')}>
+                    <Trophy size={14} />
+                    View Leaderboard
+                  </button>
+                </div>
+              </div>
+
             </div>
           </section>
 
