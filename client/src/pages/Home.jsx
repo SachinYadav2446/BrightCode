@@ -322,9 +322,42 @@ const Home = () => {
               </div>
             </section>
 
-            {/* ══ SECTION 4: HALL OF FAME PODIUM ══ */}
-            <section className="dashboard-vertical-section fame-section-dark">
-              <div className="section-header-row fame-header-interactive" onClick={() => navigate('/leaderboard')}>
+            {/* ══ SECTION 5: SUPPORT & FEEDBACK ══ */}
+            <section className="dashboard-vertical-section support-section-dark">
+              <div className="section-header-row">
+                <h2 className="vertical-section-title">Support & Feedback</h2>
+                <p className="vertical-section-subtitle">Detail your request or feature feedback directly to the operator team.</p>
+              </div>
+              
+              <div className="support-card-content">
+                <form className="support-widget-form" onSubmit={handleSupportSubmit}>
+                  {supportForm.sent ? (
+                    <div className="support-widget-success">
+                      <span className="success-icon">✓</span>
+                      <h4>Transmission Dispatched</h4>
+                      <p>Our operator team has received your support request.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <input className="support-widget-input" type="text" placeholder="Subject"
+                        value={supportForm.subject} onChange={e => setSupportForm(p => ({ ...p, subject: e.target.value }))} />
+                      <textarea className="support-widget-textarea" placeholder="Detail your request or feature feedback..."
+                        value={supportForm.message} onChange={e => setSupportForm(p => ({ ...p, message: e.target.value }))} required />
+                      <button className="support-widget-btn" type="submit" disabled={supportForm.isSending}>
+                        {supportForm.isSending ? 'Sending...' : 'Send Message'}
+                      </button>
+                    </>
+                  )}
+                </form>
+              </div>
+            </section>
+
+          </div>
+
+          {/* ══ SECTION 4: HALL OF FAME PODIUM (FULL WIDTH) ══ */}
+          <section className="fame-section-fullwidth" onClick={() => navigate('/leaderboard')}>
+            <div className="fame-fullwidth-inner">
+              <div className="fame-header-interactive" onClick={() => navigate('/leaderboard')}>
                 <h2 className="vertical-section-title fame-title-glow">
                   Hall of Fame <ChevronRight size={16} className="title-chevron-icon" />
                 </h2>
@@ -333,7 +366,7 @@ const Home = () => {
                   <span>View Leaderboard</span>
                 </Link>
               </div>
-              
+
               <div className="fame-ranks-podium-container">
                 {rankersLoading ? (
                   <p className="widget-loading">Loading top performers...</p>
@@ -395,39 +428,9 @@ const Home = () => {
                   </div>
                 )}
               </div>
-            </section>
+            </div>
+          </section>
 
-            {/* ══ SECTION 5: SUPPORT & FEEDBACK ══ */}
-            <section className="dashboard-vertical-section support-section-dark">
-              <div className="section-header-row">
-                <h2 className="vertical-section-title">Support & Feedback</h2>
-                <p className="vertical-section-subtitle">Detail your request or feature feedback directly to the operator team.</p>
-              </div>
-              
-              <div className="support-card-content">
-                <form className="support-widget-form" onSubmit={handleSupportSubmit}>
-                  {supportForm.sent ? (
-                    <div className="support-widget-success">
-                      <span className="success-icon">✓</span>
-                      <h4>Transmission Dispatched</h4>
-                      <p>Our operator team has received your support request.</p>
-                    </div>
-                  ) : (
-                    <>
-                      <input className="support-widget-input" type="text" placeholder="Subject"
-                        value={supportForm.subject} onChange={e => setSupportForm(p => ({ ...p, subject: e.target.value }))} />
-                      <textarea className="support-widget-textarea" placeholder="Detail your request or feature feedback..."
-                        value={supportForm.message} onChange={e => setSupportForm(p => ({ ...p, message: e.target.value }))} required />
-                      <button className="support-widget-btn" type="submit" disabled={supportForm.isSending}>
-                        {supportForm.isSending ? 'Sending...' : 'Send Message'}
-                      </button>
-                    </>
-                  )}
-                </form>
-              </div>
-            </section>
-
-          </div>
         </div>
       ) : (
         <div className="home-guest-view">

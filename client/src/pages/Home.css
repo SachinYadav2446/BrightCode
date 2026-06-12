@@ -27,8 +27,8 @@
   inset: 0;
   background-image: 
     linear-gradient(rgba(239, 68, 68, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(239, 68, 68, 0.04) 1px, transparent 1px);
-  background-size: 80px 80px;
+    linear-gradient(90deg, rgba(239, 68, 68, 0.018) 1px, transparent 1px);
+  background-size: 120px 120px;
 }
 
 .home-dashboard-vertical {
@@ -44,9 +44,9 @@
 .profile-header-black {
   background-color: #000000;
   background-image: 
-    linear-gradient(rgba(239, 68, 68, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(239, 68, 68, 0.04) 1px, transparent 1px);
-  background-size: 80px 80px;
+    linear-gradient(rgba(239, 68, 68, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(239, 68, 68, 0.025) 1px, transparent 1px);
+  background-size: 120px 120px;
   border-bottom: 1px solid rgba(239, 68, 68, 0.15);
   padding: 48px 48px 60px 48px; /* Spacious padding for visible grid system */
   width: 100%;
@@ -454,16 +454,17 @@
 }
 
 .module-progression-card {
-  background-color: rgba(15, 15, 18, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  padding: 12px;
+  background-color: rgba(10, 10, 13, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
 .module-progression-card:hover {
@@ -539,7 +540,47 @@
   font-weight: 500;
 }
 
-/* ── SECTION 4: HALL OF FAME PODIUM ── */
+/* ── SECTION 4: HALL OF FAME (FULL WIDTH) ── */
+.fame-section-fullwidth {
+  width: 100%;
+  background: linear-gradient(135deg, #09090b 0%, #151518 100%);
+  border-top: 1px solid rgba(239, 68, 68, 0.18);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.18);
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.6), 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 0 60px rgba(239, 68, 68, 0.03);
+  padding: 40px 0;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.fame-section-fullwidth::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(239, 68, 68, 0.5), transparent);
+}
+
+.fame-section-fullwidth::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(239, 68, 68, 0.5), transparent);
+}
+
+.fame-section-fullwidth:hover {
+  border-color: rgba(239, 68, 68, 0.35);
+  box-shadow: 0 -16px 50px rgba(239, 68, 68, 0.07), 0 16px 50px rgba(239, 68, 68, 0.07), inset 0 0 60px rgba(239, 68, 68, 0.05);
+}
+
+.fame-fullwidth-inner {
+  max-width: 100%;
+  width: 100%;
+  padding: 0 48px;
+}
+
+/* Old fame-section-dark kept for reference but no longer used as primary */
 .fame-section-dark {
   background: linear-gradient(135deg, #09090b 0%, #151518 100%) !important;
   border: 1px solid rgba(239, 68, 68, 0.22) !important;
