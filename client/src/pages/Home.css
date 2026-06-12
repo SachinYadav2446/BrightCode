@@ -26,9 +26,9 @@
   position: absolute;
   inset: 0;
   background-image: 
-    linear-gradient(rgba(239, 68, 68, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(239, 68, 68, 0.07) 1px, transparent 1px);
-  background-size: 40px 40px;
+    linear-gradient(rgba(239, 68, 68, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(239, 68, 68, 0.04) 1px, transparent 1px);
+  background-size: 80px 80px;
 }
 
 .home-dashboard-vertical {
@@ -44,9 +44,9 @@
 .profile-header-black {
   background-color: #000000;
   background-image: 
-    linear-gradient(rgba(239, 68, 68, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(239, 68, 68, 0.08) 1px, transparent 1px);
-  background-size: 40px 40px;
+    linear-gradient(rgba(239, 68, 68, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(239, 68, 68, 0.04) 1px, transparent 1px);
+  background-size: 80px 80px;
   border-bottom: 1px solid rgba(239, 68, 68, 0.15);
   padding: 48px 48px 60px 48px; /* Spacious padding for visible grid system */
   width: 100%;
@@ -454,7 +454,9 @@
 }
 
 .module-progression-card {
-  background-color: rgba(255, 255, 255, 0.015);
+  background-color: rgba(15, 15, 18, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   padding: 12px;
