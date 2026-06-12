@@ -52,31 +52,19 @@
   overflow: hidden;
 }
 
-/* Grid shows only in empty corner/edge zones via radial-gradient mask */
+/* Grid covers the full background — content containers will block the lines behind themselves using solid black */
 .profile-header-black::before {
   content: '';
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(239, 68, 68, 0.14) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(239, 68, 68, 0.14) 1px, transparent 1px);
-  background-size: 60px 60px;
-  /* Mask: visible at corners/edges, fades to invisible towards center */
-  -webkit-mask-image:
-    radial-gradient(ellipse 55% 60% at 0% 0%, black 0%, transparent 100%),
-    radial-gradient(ellipse 55% 60% at 100% 0%, black 0%, transparent 100%),
-    radial-gradient(ellipse 40% 55% at 100% 100%, black 0%, transparent 100%),
-    radial-gradient(ellipse 30% 45% at 0% 100%, black 0%, transparent 100%);
-  -webkit-mask-composite: source-over;
-  mask-image:
-    radial-gradient(ellipse 55% 60% at 0% 0%, black 0%, transparent 100%),
-    radial-gradient(ellipse 55% 60% at 100% 0%, black 0%, transparent 100%),
-    radial-gradient(ellipse 40% 55% at 100% 100%, black 0%, transparent 100%),
-    radial-gradient(ellipse 30% 45% at 0% 100%, black 0%, transparent 100%);
-  mask-composite: add;
+    linear-gradient(rgba(239, 68, 68, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(239, 68, 68, 0.18) 1px, transparent 1px);
+  background-size: 44px 44px;
   pointer-events: none;
   z-index: 0;
 }
+
 
 
 .profile-header-inner {
@@ -98,6 +86,13 @@
   letter-spacing: -0.5px;
   margin-bottom: 28px;
   line-height: 1.1;
+  background-color: #000000;
+  padding: 8px 16px;
+  margin-left: -16px;
+  margin-top: -8px;
+  display: inline-block;
+  position: relative;
+  z-index: 1;
 }
 
 .welcome-username-highlight {
@@ -121,6 +116,12 @@
   align-items: flex-start;
   gap: 28px;
   flex: 1;
+  background-color: #000000;
+  padding: 16px 24px;
+  margin-left: -24px;
+  margin-top: -16px;
+  position: relative;
+  z-index: 1;
 }
 
 /* ── DiceBear Avatar ── */
@@ -311,6 +312,12 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  background-color: #000000;
+  padding: 16px 24px;
+  margin-right: -24px;
+  margin-top: -16px;
+  position: relative;
+  z-index: 1;
 }
 
 /* ── Radial Tier Label ── */
@@ -1725,13 +1732,24 @@
   .welcome-banner-text {
     font-size: 1.8rem;
     margin-bottom: 24px;
+    margin-left: 0;
+    padding: 8px 0;
+    display: block;
   }
   .profile-details-row {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 24px;
+    width: 100%;
+  }
+  .profile-identity-col {
+    margin-left: 0;
+    padding: 16px 0;
+    width: 100%;
   }
   .profile-progress-col {
+    margin-right: 0;
+    padding: 16px 0;
     align-self: center;
   }
   .dashboard-content-area {
