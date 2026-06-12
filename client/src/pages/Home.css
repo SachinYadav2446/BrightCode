@@ -43,16 +43,41 @@
 /* ── SECTION 1: PROFILE HEADER (PITCH BLACK & Fluid) ── */
 .profile-header-black {
   background-color: #000000;
-  background-image: 
-    linear-gradient(rgba(239, 68, 68, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(239, 68, 68, 0.025) 1px, transparent 1px);
-  background-size: 120px 120px;
   border-bottom: 1px solid rgba(239, 68, 68, 0.15);
   padding: 52px 48px 72px 48px;
   width: 100%;
   display: flex;
   flex-direction: column;
+  position: relative;
+  overflow: hidden;
 }
+
+/* Grid shows only in empty corner/edge zones via radial-gradient mask */
+.profile-header-black::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(239, 68, 68, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(239, 68, 68, 0.14) 1px, transparent 1px);
+  background-size: 60px 60px;
+  /* Mask: visible at corners/edges, fades to invisible towards center */
+  -webkit-mask-image:
+    radial-gradient(ellipse 55% 60% at 0% 0%, black 0%, transparent 100%),
+    radial-gradient(ellipse 55% 60% at 100% 0%, black 0%, transparent 100%),
+    radial-gradient(ellipse 40% 55% at 100% 100%, black 0%, transparent 100%),
+    radial-gradient(ellipse 30% 45% at 0% 100%, black 0%, transparent 100%);
+  -webkit-mask-composite: source-over;
+  mask-image:
+    radial-gradient(ellipse 55% 60% at 0% 0%, black 0%, transparent 100%),
+    radial-gradient(ellipse 55% 60% at 100% 0%, black 0%, transparent 100%),
+    radial-gradient(ellipse 40% 55% at 100% 100%, black 0%, transparent 100%),
+    radial-gradient(ellipse 30% 45% at 0% 100%, black 0%, transparent 100%);
+  mask-composite: add;
+  pointer-events: none;
+  z-index: 0;
+}
+
 
 .profile-header-inner {
   max-width: 1400px;
@@ -60,7 +85,11 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
 }
+
+
 
 .welcome-banner-text {
   font-size: 1.9rem;
