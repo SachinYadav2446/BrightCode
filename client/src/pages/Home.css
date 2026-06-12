@@ -589,10 +589,10 @@
   min-height: 280px;
 }
 
-/* LEFT: Podium column — constrained width */
+/* LEFT: Podium column — 70% width */
 .fame-podium-col {
-  flex: 0 0 44%;
-  max-width: 44%;
+  flex: 0 0 70%;
+  max-width: 70%;
   display: flex;
   align-items: flex-end;
   justify-content: center;
