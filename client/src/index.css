@@ -29,7 +29,7 @@
 
 
 html {
-  zoom: 0.8;
+  font-size: 80%;
   scroll-behavior: smooth;
   scrollbar-gutter: stable;
 }
