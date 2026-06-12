@@ -52,28 +52,28 @@
   overflow: hidden;
 }
 
-/* Grid backdrop with smooth center mask to keep content area pitch-black */
+/* Grid backdrop with spacious boxes and subtle edge-only fade to show less grid */
 .profile-header-black::before {
   content: '';
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(239, 68, 68, 0.22) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(239, 68, 68, 0.22) 1px, transparent 1px);
-  background-size: 44px 44px;
-  /* Hides the grid completely (opacity 0) behind the content cluster (left/center) and blends out smoothly to show grid in empty space */
+    linear-gradient(rgba(239, 68, 68, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(239, 68, 68, 0.18) 1px, transparent 1px);
+  background-size: 90px 90px;
+  /* Wider transparent region (up to 72%) to show less grid and keep a massive solid black core, fading in only at the extreme edges */
   -webkit-mask-image: radial-gradient(
-    ellipse 60% 85% at 30% 50%,
+    ellipse 65% 85% at 30% 50%,
     rgba(0,0,0,0) 0%,
-    rgba(0,0,0,0) 50%,
-    rgba(0,0,0,0.8) 80%,
+    rgba(0,0,0,0) 72%,
+    rgba(0,0,0,0.55) 90%,
     black 100%
   );
   mask-image: radial-gradient(
-    ellipse 60% 85% at 30% 50%,
+    ellipse 65% 85% at 30% 50%,
     rgba(0,0,0,0) 0%,
-    rgba(0,0,0,0) 50%,
-    rgba(0,0,0,0.8) 80%,
+    rgba(0,0,0,0) 72%,
+    rgba(0,0,0,0.55) 90%,
     black 100%
   );
   pointer-events: none;
