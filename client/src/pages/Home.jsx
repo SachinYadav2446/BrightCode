@@ -511,6 +511,21 @@ const Home = () => {
             </section>
           </div>
 
+          {/* Motivational Ticker */}
+          {user && (
+            <div className="ticker-banner">
+              <div className="ticker-viewport">
+                <div className="ticker-track">
+                  {motivationalQuotes.concat(motivationalQuotes).map((q, i) => (
+                    <span key={i} className="ticker-item">
+                      <span className="ticker-dot">✦</span>{q}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ══ SECTION 3: SOLVED MODULES PROGRESSION (FULL WIDTH BAND) ══ */}
           <section className="progression-section-fullwidth">
             <div className="progression-fullwidth-inner">
@@ -769,21 +784,6 @@ const Home = () => {
             <h2>Access Unauthorized</h2>
             <p>Please log in to link into BrightCode core engines.</p>
             <Link to="/auth" className="guest-cta-btn">Proceed to Login</Link>
-          </div>
-        </div>
-      )}
-
-      {/* Motivational Ticker */}
-      {user && (
-        <div className="ticker-banner">
-          <div className="ticker-viewport">
-            <div className="ticker-track">
-              {motivationalQuotes.concat(motivationalQuotes).map((q, i) => (
-                <span key={i} className="ticker-item">
-                  <span className="ticker-dot">✦</span>{q}
-                </span>
-              ))}
-            </div>
           </div>
         </div>
       )}
