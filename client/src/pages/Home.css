@@ -447,97 +447,494 @@
 }
 
 /* ── SECTION 3: SOLVED MODULES ── */
-.modules-progression-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr); /* 4-column layout for vertical stack */
-  gap: 16px;
+/* ── NEW SECTION: DEVELOPER HUB LAUNCHPAD ── */
+.home-launchpad-section {
+  background: rgba(10, 10, 13, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-left: 4px solid #ef4444;
+  border-radius: 6px;
+  padding: 24px;
+  margin-bottom: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
-.module-progression-card {
-  background-color: rgba(10, 10, 13, 0.55);
+.launchpad-accent-icon {
+  color: #ef4444;
+  filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.4));
+}
+
+.launchpad-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.launchpad-card {
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.launchpad-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent, rgba(239, 68, 68, 0.03), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.launchpad-card:hover::before {
+  transform: translateX(100%);
+}
+
+.launchpad-card:hover {
+  background: rgba(239, 68, 68, 0.025);
+  border-color: rgba(239, 68, 68, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.05);
+}
+
+.launch-card-icon-box {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.launchpad-card:hover .launch-card-icon-box {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+}
+
+.launch-icon.text-red { color: #ef4444; }
+.launch-icon.text-blue { color: #3b82f6; }
+.launch-icon.text-yellow { color: #eab308; }
+.launch-icon.text-green { color: #10b981; }
+
+.launch-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.launch-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f4f4f5;
+  letter-spacing: -0.2px;
+}
+
+.launch-card-desc {
+  font-size: 0.78rem;
+  color: #a1a1aa;
+  line-height: 1.35;
+}
+
+.launch-arrow {
+  color: #52525b;
+  transition: all 0.3s ease;
+}
+
+.launchpad-card:hover .launch-arrow {
+  color: #ef4444;
+  transform: translateX(4px);
+}
+
+/* ── SECTION 3: SOLVED MODULES PROGRESSION (CAROUSEL SLIDER) ── */
+.progression-carousel-section {
+  background: rgba(10, 10, 13, 0.45);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 10px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  padding: 28px 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
-.module-progression-card:hover {
-  border-color: rgba(239, 68, 68, 0.35);
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.12);
-  transform: translateY(-2px);
-  background-color: rgba(239, 68, 68, 0.015);
+.carousel-accent-icon {
+  color: #ef4444;
 }
 
-.module-card-header {
+.carousel-wrapper-container {
+  position: relative;
+  width: 100%;
+  margin-top: 20px;
   display: flex;
   align-items: center;
-  gap: 10px;
 }
 
-.module-icon-box {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+.modules-carousel-viewport {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  padding: 8px 4px 16px 4px;
+  width: 100%;
+  scroll-snap-type: x mandatory;
+}
+
+.modules-carousel-viewport::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+/* Large Carousel Card styling */
+.module-progression-large-card {
+  flex: 0 0 350px;
+  scroll-snap-align: start;
+  background: rgba(18, 18, 24, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-top: 3px solid var(--accent-theme, #ef4444);
+  border-radius: 12px;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.module-progression-large-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 255, 255, 0.02);
+  background: rgba(22, 22, 30, 0.85);
+}
+
+.large-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.large-card-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.02);
 }
 
-.module-name-meta {
+.large-card-meta {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1;
 }
 
-.module-title-text {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #f4f4f5;
+.large-card-category {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.68rem;
+  color: #71717a;
+  letter-spacing: 1px;
 }
 
-.module-level-badge {
-  font-size: 0.62rem;
-  font-weight: 700;
+.large-card-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.2px;
+}
+
+.large-card-level-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 750;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
-  width: fit-content;
   border: 1px solid;
-  padding: 1px 6px;
+  padding: 3px 8px;
   border-radius: 4px;
-  letter-spacing: 0.3px;
-  line-height: 1;
 }
 
-.module-progress-bar-container {
+.large-card-desc-text {
+  font-size: 0.8rem;
+  color: #a1a1aa;
+  line-height: 1.45;
+  min-height: 52px; /* Fixed height for text consistency */
+}
+
+/* Milestone tracking info */
+.large-card-milestone-info {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.module-progress-bar-track {
-  height: 4px;
-  background-color: rgba(255, 255, 255, 0.03);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.module-progress-bar-fill {
-  height: 100%;
-  border-radius: 10px;
-}
-
-.module-progress-ratio {
+.milestone-stat-row {
   display: flex;
   justify-content: space-between;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
+}
+
+.m-stat-label {
+  color: #71717a;
+}
+
+.m-stat-value.text-glow-accent {
+  font-weight: 700;
+}
+
+.m-stat-value.text-muted-val {
   color: #a1a1aa;
-  font-weight: 500;
+  font-weight: 600;
+}
+
+/* Tag group skills */
+.large-card-tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.large-card-tag-pill {
+  font-size: 0.68rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: #a1a1aa;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Progress slider */
+.large-card-progress-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.large-card-progress-ratio {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #a1a1aa;
+  font-weight: 600;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.large-card-progress-track {
+  height: 6px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.large-card-progress-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 1s ease-out;
+}
+
+/* Action CTA button */
+.large-card-cta-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 4px;
+}
+
+.large-card-cta-btn:hover {
+  background: var(--accent-theme);
+  border-color: var(--accent-theme);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 10px var(--accent-theme);
+  transform: translateY(-1px);
+}
+
+/* Nav arrows style */
+.carousel-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(10, 10, 13, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.carousel-nav-btn:hover {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+}
+
+.carousel-nav-btn.btn-left {
+  left: -20px;
+}
+
+.carousel-nav-btn.btn-right {
+  right: -20px;
+}
+
+/* ── NEW SECTION 4: ACHIEVEMENTS & BADGES ── */
+.achievements-section {
+  background: rgba(10, 10, 13, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 28px 24px;
+  margin-bottom: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.achievements-accent-icon {
+  color: #ef4444;
+  filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.4));
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.badge-card {
+  background: rgba(18, 18, 24, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.badge-card.unlocked:hover {
+  transform: scale(1.03);
+  border-color: rgba(var(--badge-color), 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(255, 255, 255, 0.02);
+}
+
+.badge-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.badge-card.unlocked .badge-icon-wrapper {
+  border-color: var(--badge-color);
+  box-shadow: 0 0 12px rgba(var(--badge-color), 0.15);
+}
+
+.badge-glow-effect {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  opacity: 0.15;
+  filter: blur(8px);
+  z-index: 0;
+}
+
+.badge-main-icon {
+  position: relative;
+  z-index: 1;
+}
+
+.badge-lock-overlay {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  color: #a1a1aa;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.badge-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.badge-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #f4f4f5;
+  letter-spacing: -0.2px;
+}
+
+.badge-card.locked .badge-name {
+  color: #71717a;
+}
+
+.badge-desc {
+  font-size: 0.72rem;
+  color: #71717a;
+  line-height: 1.35;
+}
+
+.badge-card.unlocked .badge-desc {
+  color: #a1a1aa;
 }
 
 /* ── SECTION 4: HALL OF FAME (FULL WIDTH) ── */
@@ -1219,6 +1616,12 @@
 }
 
 /* ── RESPONSIVE ── */
+@media (max-width: 1200px) {
+  .achievements-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 1024px) {
   .profile-header-black {
     padding: 40px 24px 60px 24px;
@@ -1238,8 +1641,17 @@
   .dashboard-content-area {
     padding: 32px 24px;
   }
-  .modules-progression-grid {
+  .launchpad-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .achievements-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .carousel-nav-btn.btn-left {
+    left: -10px;
+  }
+  .carousel-nav-btn.btn-right {
+    right: -10px;
   }
 }
 
@@ -1255,7 +1667,7 @@
   .profile-metrics-row {
     gap: 24px;
   }
-  .modules-progression-grid {
+  .launchpad-grid {
     grid-template-columns: 1fr;
   }
   .fame-podium {
@@ -1282,5 +1694,15 @@
   }
   .step-num {
     font-size: 2rem;
+  }
+  .achievements-grid {
+    grid-template-columns: 1fr;
+  }
+  .module-progression-large-card {
+    flex: 0 0 290px;
+    padding: 16px;
+  }
+  .large-card-desc-text {
+    min-height: auto;
   }
 }

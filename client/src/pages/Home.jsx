@@ -1,10 +1,10 @@
 import API_URL from '../config';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import {
-  ChevronRight, Crown, Trophy, Flame, Cpu, Globe, Terminal, Layers, Calendar
+  ChevronRight, ChevronLeft, Crown, Trophy, Flame, Cpu, Globe, Terminal, Layers, Calendar, Code2, BookOpen, Lock, Gamepad2, Shield, Play, Award
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
@@ -37,7 +37,38 @@ const Home = () => {
   const [topRankers, setTopRankers] = useState([]);
   const [rankersLoading, setRankersLoading] = useState(true);
   const [rankersError, setRankersError] = useState(false);
-  const [supportForm, setSupportForm] = useState({ subject: '', message: '', isSending: false, sent: false });
+
+  const carouselRef = useRef(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+
+  const handleCarouselScroll = () => {
+    if (carouselRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+      setShowLeftArrow(scrollLeft > 10);
+      setShowRightArrow(scrollLeft + clientWidth < scrollWidth - 10);
+    }
+  };
+
+  const scrollCarousel = (direction) => {
+    if (carouselRef.current) {
+      const scrollAmount = 380; // card width + gap approx
+      carouselRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Ensure right arrow state updates on load and window resizing
+  useEffect(() => {
+    const timer = setTimeout(handleCarouselScroll, 200);
+    window.addEventListener('resize', handleCarouselScroll);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleCarouselScroll);
+    };
+  }, []);
 
   /* ── Fetch dashboard telemetry ── */
   useEffect(() => {
@@ -74,10 +105,90 @@ const Home = () => {
     : 100;
 
   const skillDistribution = [
-    { id: 'css', label: 'CSS Wizardry', val: Number(user?.css_level || 0), max: 50, color: '#3b82f6', icon: Layers },
-    { id: 'logic', label: 'Logic Engine', val: Number(user?.logic_level || 0), max: 150, color: '#ef4444', icon: Cpu },
-    { id: 'react', label: 'React Forge', val: Number(user?.react_level || 0), max: 500, color: '#06b6d4', icon: Globe },
-    { id: 'java', label: 'Java Protocol', val: Number(user?.java_level || 0), max: 400, color: '#10b981', icon: Terminal },
+    { 
+      id: 'css-odyssey', 
+      label: 'CSS Wizardry', 
+      val: Number(user?.css_level || 0), 
+      max: 50, 
+      color: '#3b82f6', 
+      icon: Layers, 
+      category: 'Frontend', 
+      desc: 'Master layouts, flexbox, variables, grid architectures, animations, and high-fidelity simulators.',
+      skills: ['Flexbox', 'CSS Grid', 'Keyframes', 'Variables'],
+      milestones: [{ name: 'Basics', end: 10 }, { name: 'Flexbox', end: 25 }, { name: 'Grid', end: 40 }, { name: 'Advanced', end: 50 }]
+    },
+    { 
+      id: 'logic-lab', 
+      label: 'Logic Engine', 
+      val: Number(user?.logic_level || 0), 
+      max: 150, 
+      color: '#ef4444', 
+      icon: Cpu, 
+      category: 'JS Logic', 
+      desc: 'Conquer complex JavaScript puzzles ranging from control flow to nested arrays, closures, and DOM selectors.',
+      skills: ['Arrays', 'Closures', 'Recursion', 'DOM API'],
+      milestones: [{ name: 'Foundations', end: 10 }, { name: 'Logic Basics', end: 20 }, { name: 'Control Flow', end: 35 }, { name: 'Loops', end: 55 }, { name: 'Data', end: 80 }, { name: 'Functional', end: 110 }, { name: 'DOM Mastery', end: 150 }]
+    },
+    { 
+      id: 'react-quest', 
+      label: 'React Forge', 
+      val: Number(user?.react_level || 0), 
+      max: 500, 
+      color: '#06b6d4', 
+      icon: Globe, 
+      category: 'Architecture', 
+      desc: 'Test your React structure, lifecycle design, virtual DOM updates, hook mechanics, and state workflows.',
+      skills: ['JSX', 'Hooks', 'State Mgmt', 'React Router'],
+      milestones: [{ name: 'Basics', end: 100 }, { name: 'Hooks', end: 250 }, { name: 'Performance', end: 400 }, { name: 'Ecosystem', end: 500 }]
+    },
+    { 
+      id: 'java-master', 
+      label: 'Java Protocol', 
+      val: Number(user?.java_level || 0), 
+      max: 400, 
+      color: '#10b981', 
+      icon: Terminal, 
+      category: 'OOP Core', 
+      desc: 'Master object-oriented patterns, abstraction, memory, collections, multithreading, and stream optimization.',
+      skills: ['OOP', 'Streams', 'Generics', 'Threads'],
+      milestones: [{ name: 'Variables', end: 80 }, { name: 'OOP Basics', end: 180 }, { name: 'Collections', end: 280 }, { name: 'Advanced Java', end: 400 }]
+    },
+    { 
+      id: 'cpp-master', 
+      label: 'C++ Protocol', 
+      val: Number(user?.cpp_level || 0), 
+      max: 400, 
+      color: '#ec4899', 
+      icon: Code2, 
+      category: 'System Programming', 
+      desc: 'Control system-level resources, pointers, dynamic memory management, standard template library (STL), and compilation.',
+      skills: ['Pointers', 'STL', 'Templates', 'Memory Mgmt'],
+      milestones: [{ name: 'Syntax Basics', end: 80 }, { name: 'OOP', end: 180 }, { name: 'STL Containers', end: 280 }, { name: 'System Optimization', end: 400 }]
+    },
+    { 
+      id: 'python-master', 
+      label: 'Python Protocol', 
+      val: Number(user?.python_level || 0), 
+      max: 400, 
+      color: '#eab308', 
+      icon: Code2, 
+      category: 'Scripting & AI', 
+      desc: 'Master decorators, file I/O, custom generators, regex, algorithms, and modular scientific scripting in Python.',
+      skills: ['Decorators', 'Generators', 'Data Science', 'OOP'],
+      milestones: [{ name: 'Syntax', end: 80 }, { name: 'Data structures', end: 180 }, { name: 'OOP & Modules', end: 280 }, { name: 'Pythonic Code', end: 400 }]
+    },
+    { 
+      id: 'go-master', 
+      label: 'Go Protocol', 
+      val: Number(user?.go_level || 0), 
+      max: 400, 
+      color: '#0ea5e9', 
+      icon: Code2, 
+      category: 'Concurrency', 
+      desc: 'Leverage goroutines, channels, structures, pointers, web routing, and modern distributed service paradigms.',
+      skills: ['Goroutines', 'Channels', 'Interfaces', 'Pointers'],
+      milestones: [{ name: 'Go Syntax', end: 80 }, { name: 'Interfaces', end: 180 }, { name: 'Goroutines', end: 280 }, { name: 'Concurrency Patterns', end: 400 }]
+    }
   ];
 
   /* ── Heatmap Generator ── */
@@ -127,26 +238,81 @@ const Home = () => {
     "Build clean interfaces, write readable solutions."
   ];
 
-  const handleSupportSubmit = async (e) => {
-    e.preventDefault();
-    if (!supportForm.message.trim()) return;
-    setSupportForm(p => ({ ...p, isSending: true }));
-    try {
-      await axios.post(`${API_URL}/support`, {
-        email: user.email,
-        username: user.username,
-        subject: supportForm.subject || 'Support Inquiry',
-        message: supportForm.message
-      });
-      setSupportForm({ subject: '', message: '', isSending: false, sent: true });
-      toast.success('Feedback received by the core team.');
-      setTimeout(() => setSupportForm(p => ({ ...p, sent: false })), 4000);
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to send message.');
-      setSupportForm(p => ({ ...p, isSending: false }));
+  const totalLevelsSolved = 
+    Number(user?.css_level || 0) + 
+    Number(user?.logic_level || 0) + 
+    Number(user?.react_level || 0) + 
+    Number(user?.java_level || 0) + 
+    Number(user?.cpp_level || 0) + 
+    Number(user?.python_level || 0) + 
+    Number(user?.go_level || 0);
+
+  const badges = [
+    {
+      id: 'streak_novice',
+      name: 'Flame Initiate',
+      desc: 'Achieve a 3-day coding streak.',
+      icon: Flame,
+      color: '#f59e0b',
+      unlocked: activeDays >= 3
+    },
+    {
+      id: 'streak_expert',
+      name: 'Flame Overlord',
+      desc: 'Achieve a 10-day coding streak.',
+      icon: Flame,
+      color: '#ef4444',
+      unlocked: activeDays >= 10
+    },
+    {
+      id: 'xp_silver',
+      name: 'XP Hoarder',
+      desc: 'Earn a total of 2,000 experience points.',
+      icon: Trophy,
+      color: '#3b82f6',
+      unlocked: xp >= 2000
+    },
+    {
+      id: 'xp_gold',
+      name: 'Glory Seeker',
+      desc: 'Earn a total of 10,000 experience points.',
+      icon: Crown,
+      color: '#fbbf24',
+      unlocked: xp >= 10000
+    },
+    {
+      id: 'solve_bronze',
+      name: 'Code Soldier',
+      desc: 'Solve 20 levels across any track.',
+      icon: Code2,
+      color: '#10b981',
+      unlocked: totalLevelsSolved >= 20
+    },
+    {
+      id: 'solve_gold',
+      name: 'Legendary Solver',
+      desc: 'Solve 100 levels across any track.',
+      icon: Award,
+      color: '#a855f7',
+      unlocked: totalLevelsSolved >= 100
+    },
+    {
+      id: 'css_master',
+      name: 'Style Sculptor',
+      desc: 'Reach Level 25 in CSS Wizardry.',
+      icon: Layers,
+      color: '#06b6d4',
+      unlocked: Number(user?.css_level || 0) >= 25
+    },
+    {
+      id: 'logic_master',
+      name: 'Algorithm Sage',
+      desc: 'Reach Level 55 in Logic Engine.',
+      icon: Cpu,
+      color: '#ef4444',
+      unlocked: Number(user?.logic_level || 0) >= 55
     }
-  };
+  ];
 
   return (
     <div className="home-wrapper">
@@ -225,6 +391,62 @@ const Home = () => {
 
           {/* ══ CONTENT AREA (WITH GRID SYSTEM BG) ══ */}
           <div className="dashboard-content-area">
+
+            {/* ══ NEW SECTION: DEVELOPER HUB LAUNCHPAD ══ */}
+            <section className="home-launchpad-section">
+              <div className="section-header-row">
+                <div className="title-left-group">
+                  <Gamepad2 size={20} className="launchpad-accent-icon" />
+                  <h2 className="vertical-section-title">Developer Hub Launchpad</h2>
+                </div>
+                <p className="vertical-section-subtitle">Quick launch pathways to primary BrightCode platform subsystems.</p>
+              </div>
+              <div className="launchpad-grid">
+                <div className="launchpad-card" onClick={() => navigate('/battle-arena')}>
+                  <div className="launch-card-icon-box">
+                    <Gamepad2 size={24} className="launch-icon text-red" />
+                  </div>
+                  <div className="launch-card-meta">
+                    <span className="launch-card-title">Battle Arena</span>
+                    <span className="launch-card-desc">1v1 PvP coding showdowns. Challenge developers in real-time.</span>
+                  </div>
+                  <ChevronRight size={16} className="launch-arrow" />
+                </div>
+
+                <div className="launchpad-card" onClick={() => navigate('/factions')}>
+                  <div className="launch-card-icon-box">
+                    <Shield size={24} className="launch-icon text-blue" />
+                  </div>
+                  <div className="launch-card-meta">
+                    <span className="launch-card-title">Guild Factions</span>
+                    <span className="launch-card-desc">Join developer clans, complete group raids, and climb faction boards.</span>
+                  </div>
+                  <ChevronRight size={16} className="launch-arrow" />
+                </div>
+
+                <div className="launchpad-card" onClick={() => navigate('/codevault')}>
+                  <div className="launch-card-icon-box">
+                    <BookOpen size={24} className="launch-icon text-yellow" />
+                  </div>
+                  <div className="launch-card-meta">
+                    <span className="launch-card-title">Code Vault</span>
+                    <span className="launch-card-desc">Your personal repository. Explore and review your past solved solutions.</span>
+                  </div>
+                  <ChevronRight size={16} className="launch-arrow" />
+                </div>
+
+                <div className="launchpad-card" onClick={() => navigate('/user-guide')}>
+                  <div className="launch-card-icon-box">
+                    <Layers size={24} className="launch-icon text-green" />
+                  </div>
+                  <div className="launch-card-meta">
+                    <span className="launch-card-title">Platform Guide</span>
+                    <span className="launch-card-desc">Read core technical documentation, compile sandbox manuals, and help.</span>
+                  </div>
+                  <ChevronRight size={16} className="launch-arrow" />
+                </div>
+              </div>
+            </section>
             
             {/* ══ SECTION 2: SUBMISSION CALENDAR (TACTICAL DIGITAL ACTIVITY LOG) ══ */}
             <section className="home-activity-log-section">
@@ -251,7 +473,7 @@ const Home = () => {
                     </div>
                   </div>
                 </div>
-                <p className="vertical-section-subtitle">Contribution grid logging developer commit outputs and accumulated daily XP.</p>
+                <p className="vertical-section-subtitle">Contribution grid logging developer commit outputs and daily XP accumulated.</p>
               </div>
               
               <div className="heatmap-card">
@@ -284,71 +506,141 @@ const Home = () => {
               </div>
             </section>
 
-            {/* ══ SECTION 3: SOLVED MODULES PROGRESSION ══ */}
-            <section className="dashboard-vertical-section">
+            {/* ══ SECTION 3: SOLVED MODULES PROGRESSION (SLIDER CAROUSEL) ══ */}
+            <section className="dashboard-vertical-section progression-carousel-section">
               <div className="section-header-row">
-                <h2 className="vertical-section-title">Solved Modules Progression</h2>
+                <div className="title-left-group">
+                  <Layers size={20} className="carousel-accent-icon" />
+                  <h2 className="vertical-section-title">Solved Modules Progression</h2>
+                </div>
                 <p className="vertical-section-subtitle">Track your proficiency levels and solved challenges across development cores.</p>
               </div>
-              
-              <div className="modules-progression-grid">
-                {skillDistribution.map(skill => {
-                  const pct = Math.min((skill.val / skill.max) * 100, 100);
-                  const skillLabel = pct >= 100 ? 'Master' : pct >= 75 ? 'Expert' : pct >= 50 ? 'Advanced' : pct >= 25 ? 'Intermediate' : pct > 0 ? 'Beginner' : 'Initiate';
-                  return (
-                    <div key={skill.id} className="module-progression-card">
-                      <div className="module-card-header">
-                        <div className="module-icon-box" style={{ color: skill.color, backgroundColor: `${skill.color}10` }}>
-                          <skill.icon size={20} />
+
+              <div className="carousel-wrapper-container">
+                {/* Left Navigation Arrow */}
+                {showLeftArrow && (
+                  <button className="carousel-nav-btn btn-left" onClick={() => scrollCarousel('left')} aria-label="Slide Left">
+                    <ChevronLeft size={20} />
+                  </button>
+                )}
+
+                {/* Carousel Card viewport */}
+                <div className="modules-carousel-viewport" ref={carouselRef} onScroll={handleCarouselScroll}>
+                  {skillDistribution.map(skill => {
+                    const pct = Math.min((skill.val / skill.max) * 100, 100);
+                    
+                    // Dynamic phase calculation
+                    let currentPhase = 'Basics';
+                    let nextPhase = 'Mastery';
+                    let currentEnd = skill.max;
+                    for (let i = 0; i < skill.milestones.length; i++) {
+                      const m = skill.milestones[i];
+                      if (skill.val <= m.end) {
+                        currentPhase = m.name;
+                        currentEnd = m.end;
+                        nextPhase = skill.milestones[i + 1] ? skill.milestones[i + 1].name : 'Mastery';
+                        break;
+                      }
+                    }
+
+                    const skillLabel = pct >= 100 ? 'Master' : pct >= 75 ? 'Expert' : pct >= 50 ? 'Advanced' : pct >= 25 ? 'Intermediate' : pct > 0 ? 'Beginner' : 'Initiate';
+                    
+                    return (
+                      <div key={skill.id} className="module-progression-large-card" style={{ '--accent-theme': skill.color }}>
+                        {/* Top Meta info */}
+                        <div className="large-card-header">
+                          <div className="large-card-icon-box" style={{ color: skill.color, backgroundColor: `${skill.color}15` }}>
+                            <skill.icon size={26} />
+                          </div>
+                          <div className="large-card-meta">
+                            <span className="large-card-category">{skill.category.toUpperCase()}</span>
+                            <span className="large-card-title">{skill.label}</span>
+                          </div>
+                          <span className="large-card-level-badge" style={{ color: skill.color, borderColor: `${skill.color}50` }}>{skillLabel}</span>
                         </div>
-                        <div className="module-name-meta">
-                          <span className="module-title-text">{skill.label}</span>
-                          <span className="module-level-badge" style={{ color: skill.color, borderColor: `${skill.color}40` }}>{skillLabel}</span>
+
+                        {/* Description */}
+                        <p className="large-card-desc-text">{skill.desc}</p>
+
+                        {/* Milestones statistics */}
+                        <div className="large-card-milestone-info">
+                          <div className="milestone-stat-row">
+                            <span className="m-stat-label">Current Stage:</span>
+                            <span className="m-stat-value text-glow-accent" style={{ color: skill.color }}>{currentPhase}</span>
+                          </div>
+                          <div className="milestone-stat-row">
+                            <span className="m-stat-label">Next Target:</span>
+                            <span className="m-stat-value text-muted-val">{nextPhase}</span>
+                          </div>
                         </div>
+
+                        {/* Skills Cover tag pills */}
+                        <div className="large-card-tag-group">
+                          {skill.skills.map(sk => (
+                            <span key={sk} className="large-card-tag-pill">{sk}</span>
+                          ))}
+                        </div>
+
+                        {/* Progress slider bar */}
+                        <div className="large-card-progress-box">
+                          <div className="large-card-progress-ratio">
+                            <span>{Math.round(pct)}% Complete</span>
+                            <span>{skill.val} / {skill.max} Solved</span>
+                          </div>
+                          <div className="large-card-progress-track">
+                            <div className="large-card-progress-fill" style={{ width: `${pct}%`, backgroundColor: skill.color }} />
+                          </div>
+                        </div>
+
+                        {/* Action CTA Button */}
+                        <button className="large-card-cta-btn" onClick={() => navigate(`/library?track=${skill.id}`)}>
+                          <span>Launch Track</span>
+                          <Play size={12} fill="currentColor" />
+                        </button>
                       </div>
-                      
-                      <div className="module-progress-bar-container">
-                        <div className="module-progress-bar-track">
-                          <div className="module-progress-bar-fill" style={{ width: `${pct}%`, backgroundColor: skill.color }} />
-                        </div>
-                        <div className="module-progress-ratio">
-                          <span>{Math.round(pct)}% Completed</span>
-                          <span>{skill.val} / {skill.max} Solved</span>
-                        </div>
+                    );
+                  })}
+                </div>
+
+                {/* Right Navigation Arrow */}
+                {showRightArrow && (
+                  <button className="carousel-nav-btn btn-right" onClick={() => scrollCarousel('right')} aria-label="Slide Right">
+                    <ChevronRight size={20} />
+                  </button>
+                )}
+              </div>
+            </section>
+
+            {/* ══ SECTION 4: ACHIEVEMENTS & BADGES ══ */}
+            <section className="dashboard-vertical-section achievements-section">
+              <div className="section-header-row">
+                <div className="title-left-group">
+                  <Award size={20} className="achievements-accent-icon" />
+                  <h2 className="vertical-section-title">Achievements & Badges</h2>
+                </div>
+                <p className="vertical-section-subtitle">Locked and unlocked developer credentials based on your platform activity and progress.</p>
+              </div>
+
+              <div className="achievements-grid">
+                {badges.map(badge => {
+                  const Icon = badge.icon;
+                  return (
+                    <div key={badge.id} className={`badge-card ${badge.unlocked ? 'unlocked' : 'locked'}`} style={badge.unlocked ? { '--badge-color': badge.color } : {}}>
+                      <div className="badge-icon-wrapper">
+                        {badge.unlocked ? (
+                          <div className="badge-glow-effect" style={{ backgroundColor: badge.color }} />
+                        ) : (
+                          <div className="badge-lock-overlay"><Lock size={12} /></div>
+                        )}
+                        <Icon className="badge-main-icon" size={24} style={badge.unlocked ? { color: badge.color } : { color: '#52525b' }} />
+                      </div>
+                      <div className="badge-details">
+                        <span className="badge-name">{badge.name}</span>
+                        <span className="badge-desc">{badge.desc}</span>
                       </div>
                     </div>
                   );
                 })}
-              </div>
-            </section>
-
-            {/* ══ SECTION 5: SUPPORT & FEEDBACK ══ */}
-            <section className="dashboard-vertical-section support-section-dark">
-              <div className="section-header-row">
-                <h2 className="vertical-section-title">Support & Feedback</h2>
-                <p className="vertical-section-subtitle">Detail your request or feature feedback directly to the operator team.</p>
-              </div>
-              
-              <div className="support-card-content">
-                <form className="support-widget-form" onSubmit={handleSupportSubmit}>
-                  {supportForm.sent ? (
-                    <div className="support-widget-success">
-                      <span className="success-icon">✓</span>
-                      <h4>Transmission Dispatched</h4>
-                      <p>Our operator team has received your support request.</p>
-                    </div>
-                  ) : (
-                    <>
-                      <input className="support-widget-input" type="text" placeholder="Subject"
-                        value={supportForm.subject} onChange={e => setSupportForm(p => ({ ...p, subject: e.target.value }))} />
-                      <textarea className="support-widget-textarea" placeholder="Detail your request or feature feedback..."
-                        value={supportForm.message} onChange={e => setSupportForm(p => ({ ...p, message: e.target.value }))} required />
-                      <button className="support-widget-btn" type="submit" disabled={supportForm.isSending}>
-                        {supportForm.isSending ? 'Sending...' : 'Send Message'}
-                      </button>
-                    </>
-                  )}
-                </form>
               </div>
             </section>
 

@@ -1,7 +1,7 @@
-﻿﻿import API_URL from '../config';
+import API_URL from '../config';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { 
     Gamepad2, ArrowLeft, Code2, Trophy, Zap, ArrowRight, Lock, 
     ChevronLeft, ChevronRight, RefreshCw, Activity, BookOpen,
@@ -542,6 +542,7 @@ const Arcade = () => {
     const { user, updateXP, navbarHidden, setNavbarHidden } = useAuth();
     
     const navigate = useNavigate();
+    const location = useLocation();
     const goBackPreserveScroll = () => {
         if (window.history.length > 1) navigate(-1);
         else navigate('/hub');
@@ -582,6 +583,16 @@ const Arcade = () => {
         'logic-lab': LOGIC_LEVELS,
         'react-quest': REACT_LEVELS
     };
+
+    // Deep-linking support to select game track on load
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const track = params.get('track');
+        if (track && gameMap[track]) {
+            setActiveGame(track);
+            setViewingSections(true);
+        }
+    }, [location.search]);
 
     const sections = [
         {
