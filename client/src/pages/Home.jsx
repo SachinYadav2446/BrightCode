@@ -44,7 +44,7 @@ const Home = () => {
     const loadDashboard = async () => {
       try {
         const { data: leaderboardData } = await axios.get(`${API_URL}/leaderboard`, { timeout: 5000 });
-        setTopRankers((leaderboardData || []).slice(0, 5));
+        setTopRankers((leaderboardData || []).slice(0, 10));
       } catch (err) {
         console.error("Leaderboard fetch failed:", err);
         setRankersError(true);
@@ -354,9 +354,11 @@ const Home = () => {
 
           </div>
 
-          {/* ══ SECTION 4: HALL OF FAME PODIUM (FULL WIDTH) ══ */}
-          <section className="fame-section-fullwidth" onClick={() => navigate('/leaderboard')}>
+          {/* ══ SECTION 4: HALL OF FAME (FULL WIDTH) ══ */}
+          <section className="fame-section-fullwidth">
             <div className="fame-fullwidth-inner">
+
+              {/* Header Row */}
               <div className="fame-header-interactive" onClick={() => navigate('/leaderboard')}>
                 <h2 className="vertical-section-title fame-title-glow">
                   Hall of Fame <ChevronRight size={16} className="title-chevron-icon" />
@@ -367,66 +369,86 @@ const Home = () => {
                 </Link>
               </div>
 
-              <div className="fame-ranks-podium-container">
-                {rankersLoading ? (
-                  <p className="widget-loading">Loading top performers...</p>
-                ) : rankersError || !topRankers.length ? (
-                  <p className="widget-error">Rankings node offline.</p>
-                ) : (
-                  <div className="fame-podium">
-                    {/* 2nd Place (Left) */}
-                    {topRankers[1] && (
-                      <div className="podium-column column-2" onClick={(e) => { e.stopPropagation(); navigate(`/u/${topRankers[1].username}`); }}>
-                        <span className="podium-rank-emoji">🥈</span>
-                        <div className="podium-avatar-circle avatar-silver">
-                          {topRankers[1].username[0].toUpperCase()}
-                        </div>
-                        <div className="podium-user-info">
-                          <span className="podium-username">{topRankers[1].username}</span>
-                          <span className="podium-xp">{topRankers[1].xp?.toLocaleString()} XP</span>
-                        </div>
-                        <div className="podium-box step-2-box">
-                          <span className="step-num">2</span>
-                        </div>
-                      </div>
-                    )}
+              {/* Two-column layout: Podium left | Rankings list right */}
+              <div className="fame-layout-split">
 
-                    {/* 1st Place (Middle - tallest) */}
-                    {topRankers[0] && (
-                      <div className="podium-column column-1" onClick={(e) => { e.stopPropagation(); navigate(`/u/${topRankers[0].username}`); }}>
-                        <span className="podium-crown-icon"><Crown size={20} fill="#fbbf24" color="#fbbf24" /></span>
-                        <span className="podium-rank-emoji">🥇</span>
-                        <div className="podium-avatar-circle avatar-gold">
-                          {topRankers[0].username[0].toUpperCase()}
+                {/* LEFT: Top 3 Podium */}
+                <div className="fame-podium-col">
+                  {rankersLoading ? (
+                    <p className="widget-loading">Loading...</p>
+                  ) : rankersError || !topRankers.length ? (
+                    <p className="widget-error">Rankings node offline.</p>
+                  ) : (
+                    <div className="fame-podium">
+                      {/* 2nd Place */}
+                      {topRankers[1] && (
+                        <div className="podium-column column-2" onClick={(e) => { e.stopPropagation(); navigate(`/u/${topRankers[1].username}`); }}>
+                          <span className="podium-rank-emoji">🥈</span>
+                          <div className="podium-avatar-circle avatar-silver">{topRankers[1].username[0].toUpperCase()}</div>
+                          <div className="podium-user-info">
+                            <span className="podium-username">{topRankers[1].username}</span>
+                            <span className="podium-xp">{topRankers[1].xp?.toLocaleString()} XP</span>
+                          </div>
+                          <div className="podium-box step-2-box"><span className="step-num">2</span></div>
                         </div>
-                        <div className="podium-user-info">
-                          <span className="podium-username">{topRankers[0].username}</span>
-                          <span className="podium-xp">{topRankers[0].xp?.toLocaleString()} XP</span>
+                      )}
+                      {/* 1st Place */}
+                      {topRankers[0] && (
+                        <div className="podium-column column-1" onClick={(e) => { e.stopPropagation(); navigate(`/u/${topRankers[0].username}`); }}>
+                          <span className="podium-crown-icon"><Crown size={20} fill="#fbbf24" color="#fbbf24" /></span>
+                          <span className="podium-rank-emoji">🥇</span>
+                          <div className="podium-avatar-circle avatar-gold">{topRankers[0].username[0].toUpperCase()}</div>
+                          <div className="podium-user-info">
+                            <span className="podium-username">{topRankers[0].username}</span>
+                            <span className="podium-xp">{topRankers[0].xp?.toLocaleString()} XP</span>
+                          </div>
+                          <div className="podium-box step-1-box"><span className="step-num">1</span></div>
                         </div>
-                        <div className="podium-box step-1-box">
-                          <span className="step-num">1</span>
+                      )}
+                      {/* 3rd Place */}
+                      {topRankers[2] && (
+                        <div className="podium-column column-3" onClick={(e) => { e.stopPropagation(); navigate(`/u/${topRankers[2].username}`); }}>
+                          <span className="podium-rank-emoji">🥉</span>
+                          <div className="podium-avatar-circle avatar-bronze">{topRankers[2].username[0].toUpperCase()}</div>
+                          <div className="podium-user-info">
+                            <span className="podium-username">{topRankers[2].username}</span>
+                            <span className="podium-xp">{topRankers[2].xp?.toLocaleString()} XP</span>
+                          </div>
+                          <div className="podium-box step-3-box"><span className="step-num">3</span></div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
+                  )}
+                </div>
 
-                    {/* 3rd Place (Right) */}
-                    {topRankers[2] && (
-                      <div className="podium-column column-3" onClick={(e) => { e.stopPropagation(); navigate(`/u/${topRankers[2].username}`); }}>
-                        <span className="podium-rank-emoji">🥉</span>
-                        <div className="podium-avatar-circle avatar-bronze">
-                          {topRankers[2].username[0].toUpperCase()}
+                {/* Vertical divider */}
+                <div className="fame-split-divider" />
+
+                {/* RIGHT: Ranks 4-10 stacked list */}
+                <div className="fame-rankings-col">
+                  <div className="fame-rankings-label">RANKS 4 – 10</div>
+                  {rankersLoading ? (
+                    <p className="widget-loading">Loading...</p>
+                  ) : rankersError ? (
+                    <p className="widget-error">Rankings node offline.</p>
+                  ) : (
+                    <div className="fame-list-stack">
+                      {topRankers.slice(3, 10).map((ranker, idx) => (
+                        <div
+                          key={ranker.username}
+                          className="fame-list-row"
+                          onClick={(e) => { e.stopPropagation(); navigate(`/u/${ranker.username}`); }}
+                        >
+                          <span className="fame-list-rank">#{idx + 4}</span>
+                          <div className="fame-list-avatar">{ranker.username[0].toUpperCase()}</div>
+                          <span className="fame-list-username">{ranker.username}</span>
+                          <span className="fame-list-xp">{ranker.xp?.toLocaleString()} XP</span>
                         </div>
-                        <div className="podium-user-info">
-                          <span className="podium-username">{topRankers[2].username}</span>
-                          <span className="podium-xp">{topRankers[2].xp?.toLocaleString()} XP</span>
-                        </div>
-                        <div className="podium-box step-3-box">
-                          <span className="step-num">3</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
+
               </div>
             </div>
           </section>

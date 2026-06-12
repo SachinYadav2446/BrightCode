@@ -580,6 +580,138 @@
   padding: 0 48px;
 }
 
+/* ── SPLIT LAYOUT ── */
+.fame-layout-split {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  min-height: 280px;
+}
+
+/* LEFT: Podium column — constrained width */
+.fame-podium-col {
+  flex: 0 0 44%;
+  max-width: 44%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-right: 32px;
+}
+
+/* Vertical glowing divider */
+.fame-split-divider {
+  flex: 0 0 1px;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent 0%, rgba(239, 68, 68, 0.5) 30%, rgba(239, 68, 68, 0.5) 70%, transparent 100%);
+  margin: 8px 0;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.25);
+}
+
+/* RIGHT: Rankings list column */
+.fame-rankings-col {
+  flex: 1;
+  padding-left: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.fame-rankings-label {
+  font-family: 'Share Tech Mono', 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(239, 68, 68, 0.6);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(239, 68, 68, 0.1);
+}
+
+.fame-list-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fame-list-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 9px 14px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.fame-list-row:hover {
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.2);
+  transform: translateX(4px);
+}
+
+.fame-list-rank {
+  font-family: 'Share Tech Mono', 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #52525b;
+  min-width: 28px;
+  text-align: right;
+}
+
+.fame-list-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #a1a1aa;
+  flex-shrink: 0;
+  font-family: 'Share Tech Mono', monospace;
+  transition: all 0.2s ease;
+}
+
+.fame-list-row:hover .fame-list-avatar {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.fame-list-username {
+  flex: 1;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #d4d4d8;
+  letter-spacing: -0.2px;
+  transition: color 0.2s ease;
+}
+
+.fame-list-row:hover .fame-list-username {
+  color: #f4f4f5;
+}
+
+.fame-list-xp {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #52525b;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.3px;
+  transition: color 0.2s ease;
+}
+
+.fame-list-row:hover .fame-list-xp {
+  color: rgba(239, 68, 68, 0.7);
+}
+
 /* Old fame-section-dark kept for reference but no longer used as primary */
 .fame-section-dark {
   background: linear-gradient(135deg, #09090b 0%, #151518 100%) !important;
