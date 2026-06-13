@@ -113,7 +113,7 @@ const Settings = () => {
     setSelectedTheme(savedTheme);
     setSelectedFont(savedFont);
     applyTheme(savedTheme);
-    if (savedTheme !== 'amber' && savedTheme !== 'neo-noir' && savedTheme !== 'leetcode' && savedTheme !== 'eclipse') {
+    if (savedTheme !== 'amber' && savedTheme !== 'neo-noir') {
       applyFont(savedFont);
     }
   }, []);
@@ -166,46 +166,6 @@ const Settings = () => {
       root.style.setProperty('--text-mid', '#00d9ff');
       root.style.setProperty('--text-lo', '#ff0080');
       root.style.setProperty('--font-sans', "'Orbitron', 'Share Tech Mono', sans-serif");
-    } else if (theme === 'leetcode') {
-      // ── LeetCode theme ──────────────────────────────
-      root.style.setProperty('--primary', '#ffa116');
-      root.style.setProperty('--primary-rgb', '255, 161, 22');
-      root.style.setProperty('--primary-dark', '#b36b00');
-      root.style.setProperty('--primary-dark-rgb', '179, 107, 0');
-      root.style.setProperty('--primary-light', '#ffc059');
-      root.style.setProperty('--primary-light-rgb', '255, 192, 89');
-      root.style.setProperty('--primary-glow', 'rgba(255, 161, 22, 0.4)');
-      root.style.setProperty('--complementary', '#2cbb5d');
-      root.style.setProperty('--text-complementary', '#ffffff');
-      root.style.setProperty('--panel-text', '#ffa116');
-      root.style.setProperty('--bg-dark', '#1a1a1a');
-      root.style.setProperty('--bg-surface', '#282828');
-      root.style.setProperty('--text-main', '#eff1f6');
-      root.style.setProperty('--text-muted', '#8c8c8c');
-      root.style.setProperty('--text-hi', '#ffffff');
-      root.style.setProperty('--text-mid', '#eff1f6');
-      root.style.setProperty('--text-lo', '#bfbfbf');
-      root.style.setProperty('--font-sans', "'Inter', sans-serif");
-    } else if (theme === 'eclipse') {
-      // ── Midnight Eclipse theme ──────────────────────────────
-      root.style.setProperty('--primary', '#6366f1');
-      root.style.setProperty('--primary-rgb', '99, 102, 241');
-      root.style.setProperty('--primary-dark', '#4f46e5');
-      root.style.setProperty('--primary-dark-rgb', '79, 70, 229');
-      root.style.setProperty('--primary-light', '#818cf8');
-      root.style.setProperty('--primary-light-rgb', '129, 140, 248');
-      root.style.setProperty('--primary-glow', 'rgba(99, 102, 241, 0.4)');
-      root.style.setProperty('--complementary', '#ec4899');
-      root.style.setProperty('--text-complementary', '#ffffff');
-      root.style.setProperty('--panel-text', '#818cf8');
-      root.style.setProperty('--bg-dark', '#030712');
-      root.style.setProperty('--bg-surface', '#0b0f19');
-      root.style.setProperty('--text-main', '#f3f4f6');
-      root.style.setProperty('--text-muted', '#9ca3af');
-      root.style.setProperty('--text-hi', '#ffffff');
-      root.style.setProperty('--text-mid', '#e5e7eb');
-      root.style.setProperty('--text-lo', '#4b5563');
-      root.style.setProperty('--font-sans', "'Inter', sans-serif");
     } else {
       // ── Scarlet Flare theme (default) ──────────────────────────
       root.style.setProperty('--primary', '#ef4444');
@@ -791,51 +751,6 @@ const Settings = () => {
                       </div>
                     </div>
 
-                    <div
-                      className={`theme-option ${selectedTheme === 'leetcode' ? 'active' : ''}`}
-                      onClick={() => handleThemeChange('leetcode')}
-                    >
-                      <div className="theme-preview leetcode-theme">
-                        <div className="preview-header"></div>
-                        <div className="preview-content">
-                          <div className="preview-sidebar"></div>
-                          <div className="preview-main">
-                            <div className="preview-line"></div>
-                            <div className="preview-line short"></div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="theme-info">
-                        <h3>LeetCode Dark</h3>
-                        <p>Clean, basic developer mode</p>
-                      </div>
-                      <div className="theme-check">
-                        <ShieldCheck size={16} />
-                      </div>
-                    </div>
-
-                    <div
-                      className={`theme-option ${selectedTheme === 'eclipse' ? 'active' : ''}`}
-                      onClick={() => handleThemeChange('eclipse')}
-                    >
-                      <div className="theme-preview eclipse-theme">
-                        <div className="preview-header"></div>
-                        <div className="preview-content">
-                          <div className="preview-sidebar"></div>
-                          <div className="preview-main">
-                            <div className="preview-line"></div>
-                            <div className="preview-line short"></div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="theme-info">
-                        <h3>Midnight Eclipse</h3>
-                        <p>Deep space indigo aura</p>
-                      </div>
-                      <div className="theme-check">
-                        <ShieldCheck size={16} />
-                      </div>
-                    </div>
                   </div>
                 </div>
 
