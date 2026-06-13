@@ -41,7 +41,7 @@ const NavbarWrapper = () => {
   const location = useLocation();
   const { navbarHidden } = useAuth();
   
-  const hideOnPaths = ['/auth', '/editor', '/code-wars', '/battle-arena', '/u'];
+  const hideOnPaths = ['/auth', '/editor', '/code-wars', '/battle-arena', '/u', '/user-guide'];
   const isLanding = location.pathname === '/';
   const shouldHide = navbarHidden || isLanding || hideOnPaths.some(p => location.pathname.startsWith(p));
   
@@ -104,45 +104,45 @@ const applyGlobalTheme = (theme) => {
     root.style.setProperty('--text-lo', '#ff0080');
     root.style.setProperty('--font-sans', "'Orbitron', 'Share Tech Mono', sans-serif");
   } else if (activeTheme === 'leetcode') {
-    // ── LeetCode theme ──────────────────────────────
-    root.style.setProperty('--primary', '#ffa116');
-    root.style.setProperty('--primary-rgb', '255, 161, 22');
-    root.style.setProperty('--primary-dark', '#b36b00');
-    root.style.setProperty('--primary-dark-rgb', '179, 107, 0');
-    root.style.setProperty('--primary-light', '#ffc059');
-    root.style.setProperty('--primary-light-rgb', '255, 192, 89');
-    root.style.setProperty('--primary-glow', 'rgba(255, 161, 22, 0.4)');
-    root.style.setProperty('--complementary', '#2cbb5d');
-    root.style.setProperty('--text-complementary', '#ffffff');
-    root.style.setProperty('--panel-text', '#ffa116');
-    root.style.setProperty('--bg-dark', '#1a1a1a');
-    root.style.setProperty('--bg-surface', '#282828');
-    root.style.setProperty('--text-main', '#eff1f6');
-    root.style.setProperty('--text-muted', '#8c8c8c');
-    root.style.setProperty('--text-hi', '#ffffff');
-    root.style.setProperty('--text-mid', '#eff1f6');
-    root.style.setProperty('--text-lo', '#bfbfbf');
-    root.style.setProperty('--font-sans', "'Inter', sans-serif");
+    // ── LeetCode theme — removed, fall through to default ──
+    root.style.setProperty('--primary', '#ef4444');
+    root.style.setProperty('--primary-rgb', '239, 68, 68');
+    root.style.setProperty('--primary-dark', '#dc2626');
+    root.style.setProperty('--primary-dark-rgb', '220, 38, 38');
+    root.style.setProperty('--primary-light', '#f87171');
+    root.style.setProperty('--primary-light-rgb', '248, 113, 113');
+    root.style.setProperty('--primary-glow', 'rgba(239, 68, 68, 0.5)');
+    root.style.setProperty('--complementary', '#fdf5e6');
+    root.style.setProperty('--text-complementary', '#1a1a1a');
+    root.style.setProperty('--panel-text', '#1a1a1a');
+    root.style.setProperty('--bg-dark', '#0f0f0f');
+    root.style.setProperty('--bg-surface', '#1a1a1a');
+    root.style.setProperty('--text-main', '#ffffff');
+    root.style.setProperty('--text-muted', '#a0a0a0');
+    root.style.setProperty('--text-hi', '#fffdd0');
+    root.style.setProperty('--text-mid', '#f5f5dc');
+    root.style.setProperty('--text-lo', '#d2b48c');
+    localStorage.setItem('app_theme', 'crimson');
   } else if (activeTheme === 'eclipse') {
-    // ── Midnight Eclipse theme ──────────────────────────────
-    root.style.setProperty('--primary', '#6366f1');
-    root.style.setProperty('--primary-rgb', '99, 102, 241');
-    root.style.setProperty('--primary-dark', '#4f46e5');
-    root.style.setProperty('--primary-dark-rgb', '79, 70, 229');
-    root.style.setProperty('--primary-light', '#818cf8');
-    root.style.setProperty('--primary-light-rgb', '129, 140, 248');
-    root.style.setProperty('--primary-glow', 'rgba(99, 102, 241, 0.4)');
-    root.style.setProperty('--complementary', '#ec4899');
-    root.style.setProperty('--text-complementary', '#ffffff');
-    root.style.setProperty('--panel-text', '#818cf8');
-    root.style.setProperty('--bg-dark', '#030712');
-    root.style.setProperty('--bg-surface', '#0b0f19');
-    root.style.setProperty('--text-main', '#f3f4f6');
-    root.style.setProperty('--text-muted', '#9ca3af');
-    root.style.setProperty('--text-hi', '#ffffff');
-    root.style.setProperty('--text-mid', '#e5e7eb');
-    root.style.setProperty('--text-lo', '#4b5563');
-    root.style.setProperty('--font-sans', "'Inter', sans-serif");
+    // ── Midnight Eclipse theme — removed, fall through to default ──
+    root.style.setProperty('--primary', '#ef4444');
+    root.style.setProperty('--primary-rgb', '239, 68, 68');
+    root.style.setProperty('--primary-dark', '#dc2626');
+    root.style.setProperty('--primary-dark-rgb', '220, 38, 38');
+    root.style.setProperty('--primary-light', '#f87171');
+    root.style.setProperty('--primary-light-rgb', '248, 113, 113');
+    root.style.setProperty('--primary-glow', 'rgba(239, 68, 68, 0.5)');
+    root.style.setProperty('--complementary', '#fdf5e6');
+    root.style.setProperty('--text-complementary', '#1a1a1a');
+    root.style.setProperty('--panel-text', '#1a1a1a');
+    root.style.setProperty('--bg-dark', '#0f0f0f');
+    root.style.setProperty('--bg-surface', '#1a1a1a');
+    root.style.setProperty('--text-main', '#ffffff');
+    root.style.setProperty('--text-muted', '#a0a0a0');
+    root.style.setProperty('--text-hi', '#fffdd0');
+    root.style.setProperty('--text-mid', '#f5f5dc');
+    root.style.setProperty('--text-lo', '#d2b48c');
+    localStorage.setItem('app_theme', 'crimson');
   } else {
     // ── Scarlet Flare theme (default) ──────────────────────────
     root.style.setProperty('--primary', '#ef4444');
@@ -219,7 +219,7 @@ const ThemeManager = () => {
       const savedFont = localStorage.getItem('app_font') || 'poppins';
       applyGlobalTheme(savedTheme);
       // Only apply font override if not a special theme (those set their own font)
-      if (savedTheme !== 'amber' && savedTheme !== 'neo-noir' && savedTheme !== 'leetcode' && savedTheme !== 'eclipse') {
+      if (savedTheme !== 'amber' && savedTheme !== 'neo-noir') {
         applyGlobalFont(savedFont);
       }
     }
@@ -240,7 +240,7 @@ function App() {
       const savedTheme = localStorage.getItem('app_theme') || 'crimson';
       const savedFont = localStorage.getItem('app_font') || 'poppins';
       applyGlobalTheme(savedTheme);
-      if (savedTheme !== 'amber' && savedTheme !== 'neo-noir' && savedTheme !== 'leetcode' && savedTheme !== 'eclipse') {
+      if (savedTheme !== 'amber' && savedTheme !== 'neo-noir') {
         applyGlobalFont(savedFont);
       }
     }
