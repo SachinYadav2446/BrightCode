@@ -183,6 +183,8 @@ const EditorPage = () => {
     const [workspaceOwner, setWorkspaceOwner] = useState('');
     const [workspaceName, setWorkspaceName] = useState('');
     const [showEndSessionModal, setShowEndSessionModal] = useState(false);
+    const [showSessionEndedModal, setShowSessionEndedModal] = useState(false);
+    const [sessionEndedMessage, setSessionEndedMessage] = useState('');
 
     const isAdmin = adminId === myId;
     const canWrite = isAdmin || myPermission === 'writer';
@@ -583,10 +585,21 @@ const EditorPage = () => {
 
                 });
 
-                socket.on('session-ended', ({ message }) => {
-
-                    if (!isStopped) { navigate('/workspace'); }
-
+                socket.on('session-ended', ({ message, roomId: endedRoomId }) => {
+                    // Persist this room as terminated so Workspace page blocks re-entry
+                    if (endedRoomId) {
+                        const key = 'terminatedSessions';
+                        const existing = JSON.parse(localStorage.getItem(key) || '[]');
+                        if (!existing.includes(endedRoomId)) {
+                            existing.push(endedRoomId);
+                            localStorage.setItem(key, JSON.stringify(existing));
+                        }
+                    }
+                    // Show a dismissible modal instead of silent redirect
+                    if (!isStopped) {
+                        setSessionEndedMessage(message || 'The workspace has been terminated by the admin.');
+                        setShowSessionEndedModal(true);
+                    }
                 });
 
                 // â”€â”€ Chat Messages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -2078,6 +2091,13 @@ const EditorPage = () => {
                                     className="end-modal-btn confirm-btn"
                                     onClick={() => {
                                         socketRef.current?.emit('end-session', { roomId });
+                                        // Mark as terminated in localStorage immediately for the admin
+                                        const key = 'terminatedSessions';
+                                        const existing = JSON.parse(localStorage.getItem(key) || '[]');
+                                        if (!existing.includes(roomId)) {
+                                            existing.push(roomId);
+                                            localStorage.setItem(key, JSON.stringify(existing));
+                                        }
                                         setShowEndSessionModal(false);
                                         navigate('/workspace');
                                     }}
@@ -2103,6 +2123,45 @@ const EditorPage = () => {
                     {isPresencePanelCollapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
                 </div>
             </button>
+
+            {/* ── SESSION ENDED NOTIFICATION MODAL ──────────────────────────────────────── */}
+            <AnimatePresence>
+                {showSessionEndedModal && (
+                    <div className="custom-modal-overlay">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="end-session-modal"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="end-modal-icon">
+                                <div className="warning-icon-circle" style={{ background: '#ef4444' }}>
+                                    <ShieldAlert size={40} />
+                                </div>
+                            </div>
+
+                            <h2 className="end-modal-title">Session Terminated</h2>
+                            <p className="end-modal-description">
+                                {sessionEndedMessage}
+                            </p>
+
+                            <div className="end-modal-actions">
+                                <button
+                                    className="end-modal-btn confirm-btn"
+                                    onClick={() => {
+                                        setShowSessionEndedModal(false);
+                                        navigate('/workspace');
+                                    }}
+                                    style={{ width: '100%' }}
+                                >
+                                    Return to Workspace
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
             <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
