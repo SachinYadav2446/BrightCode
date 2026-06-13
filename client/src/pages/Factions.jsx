@@ -1,91 +1,103 @@
 import API_URL from '../config';
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Users, Zap, Plus, Crown, Shield, Code, Swords, Trophy, Target, Award, Calendar, Sparkles, Search, Filter, TrendingUp, Globe, Lock, Trash2, UserMinus, MoreVertical, MessageSquare } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
+import {
+    Users, Zap, Plus, Crown, Shield, Swords, Trophy,
+    Search, Globe, Lock, Trash2, UserMinus, TrendingUp,
+    MessageSquare, ArrowRight, Activity, Code2, GitBranch,
+    Flame, Gem, Skull, Rocket, Eye, Atom, Cpu, Wand2,
+    Crosshair, Mountain, FlaskConical, Radio, Satellite,
+    Star, BarChart2, Target, Award
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import Navbar from '../components/Navbar';
 import Chatbot from '../components/Chatbot';
 import ChatPanel from '../components/ChatPanel';
 import { initSocket } from '../socket';
 import './Factions.css';
 
-const EMBLEMS = ['⚔️', '🛡️', '🔥', '⚡', '🌙', '💎', '🦅', '🐉', '🌊', '☄️', '🧪', '🎯'];
-
-const FEATURE_CARDS = [
-    { id: 'rankings', title: 'Global Rankings', icon: <Trophy size={32} />, desc: 'Dominate the global leaderboard and establish your syndicate\'s legacy.', color: 'var(--primary-dark)' },
-    { id: 'xp', title: 'Collaborative XP', icon: <Zap size={32} />, desc: 'Sync your code with operatives to unlock massive faction-wide multipliers.', color: '#d4a847' },
-    { id: 'wars', title: 'Guild Wars', icon: <Swords size={32} />, desc: 'Deploy your squad on Sundays for high-stakes territory battles.', color: 'var(--bg-surface)' },
-    { id: 'vault', title: 'Private Vaults', icon: <Lock size={32} />, desc: 'Secure exclusive snippets and tactical assets in encrypted repositories.', color: '#8a7f72' },
-    { id: 'hub', title: 'Global Command', icon: <Code size={32} />, desc: 'Communicate and collaborate with the world\'s most elite engineering teams.', color: '#2563eb' },
+/* ── Emblems ── */
+const EMBLEMS = [
+    { id: 'swords',    icon: Swords,       color: '#ef4444' },
+    { id: 'shield',    icon: Shield,       color: '#3b82f6' },
+    { id: 'flame',     icon: Flame,        color: '#f97316' },
+    { id: 'zap',       icon: Zap,          color: '#eab308' },
+    { id: 'gem',       icon: Gem,          color: '#8b5cf6' },
+    { id: 'crown',     icon: Crown,        color: '#f59e0b' },
+    { id: 'rocket',    icon: Rocket,       color: '#06b6d4' },
+    { id: 'skull',     icon: Skull,        color: '#94a3b8' },
+    { id: 'eye',       icon: Eye,          color: '#a78bfa' },
+    { id: 'atom',      icon: Atom,         color: '#22d3ee' },
+    { id: 'cpu',       icon: Cpu,          color: '#34d399' },
+    { id: 'wand',      icon: Wand2,        color: '#f472b6' },
+    { id: 'crosshair', icon: Crosshair,    color: '#ef4444' },
+    { id: 'mountain',  icon: Mountain,     color: '#94a3b8' },
+    { id: 'satellite', icon: Satellite,    color: '#38bdf8' },
+    { id: 'flask',     icon: FlaskConical, color: '#4ade80' },
+    { id: 'radio',     icon: Radio,        color: '#fb923c' },
+    { id: 'trophy',    icon: Trophy,       color: '#fbbf24' },
 ];
 
+const EmblemIcon = ({ id, size = 20 }) => {
+    const e = EMBLEMS.find(x => x.id === id) || EMBLEMS[0];
+    const Icon = e.icon;
+    return <Icon size={size} color={e.color} />;
+};
+
+/* ── Perks data ── */
+const PERKS = [
+    { icon: Trophy,    color: '#ef4444', title: 'Global Rankings',    desc: 'Your faction\'s combined XP earns you a slot on the global leaderboard. Every line of code counts.' },
+    { icon: Swords,    color: '#8b5cf6', title: 'Guild Wars',         desc: 'Weekly faction vs faction battles. Deploy your best coders, solve challenges, claim territory.' },
+    { icon: GitBranch, color: '#3b82f6', title: 'Private Workspace',  desc: 'Shared collaborative editors, private vaults, and encrypted snippet repos for your faction only.' },
+    { icon: TrendingUp,color: '#22c55e', title: 'XP Multipliers',    desc: 'Group activity unlocks faction-wide XP bonuses. The more your team codes, the faster everyone levels.' },
+    { icon: Code2,     color: '#f59e0b', title: 'Exclusive Challenges',desc: 'Access faction-only battle arena modes and curated problem sets unavailable to solo coders.' },
+    { icon: Award,     color: '#06b6d4', title: 'Profile Badges',     desc: 'Earn unique badges, titles, and cosmetic rewards that display across your BrightCode profile.' },
+];
+
+/* ── Ticker items ── */
+const TICKER = ['Global Rankings', 'Guild Wars', 'Shared XP', 'Private Vaults', 'Battle Arena', 'Collab Challenges', 'Custom Emblems', 'Profile Badges', 'Faction Chat', 'Weekly Missions'];
+
+/* ── Animation variants ── */
+const fadeUp   = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } } };
+const fadeLeft = { hidden: { opacity: 0, x: -24 }, show: { opacity: 1, x: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } } };
+const stagger  = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
+
+/* ════════════════════════════════════════════
+   MAIN COMPONENT
+   ════════════════════════════════════════════ */
 const Factions = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const goBackPreserveScroll = () => {
-        if (window.history.length > 1) navigate(-1);
-        else navigate('/');
-    };
-    const [factions, setFactions] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [myFactionId, setMyFactionId] = useState(null);
-    const [myFactionName, setMyFactionName] = useState(null);
+
+    const [factions, setFactions]               = useState([]);
+    const [loading, setLoading]                 = useState(true);
+    const [myFactionId, setMyFactionId]         = useState(null);
+    const [myFactionName, setMyFactionName]     = useState(null);
     const [myFactionEmblem, setMyFactionEmblem] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm]           = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [newFaction, setNewFaction] = useState({ name: '', description: '', emblem: '⚔️', isPublic: true });
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [showHQ, setShowHQ] = useState(false);
-    const [activeMemberMenu, setActiveMemberMenu] = useState(null);
-    const [focusedCard, setFocusedCard] = useState(null);
-    const [hqTab, setHqTab] = useState('roster'); // 'roster', 'chat', 'intel'
-    const [socket, setSocket] = useState(null);
-    const [chatMessages, setChatMessages] = useState([]);
-    const [kickConfirmModal, setKickConfirmModal] = useState({ show: false, member: null });
-    const [pendingRequests, setPendingRequests] = useState(new Set()); // Track pending join requests
+    const [newFaction, setNewFaction]           = useState({ name: '', description: '', emblem: 'swords', isPublic: true });
+    const [isSubmitting, setIsSubmitting]       = useState(false);
+    const [showHQ, setShowHQ]                   = useState(false);
+    const [hqTab, setHqTab]                     = useState('roster');
+    const [socket, setSocket]                   = useState(null);
+    const [chatMessages, setChatMessages]       = useState([]);
+    const [kickModal, setKickModal]             = useState({ show: false, member: null });
+    const [pendingRequests, setPendingRequests] = useState(new Set());
 
     useEffect(() => {
         let s = null;
         if (myFactionId && !socket) {
-            s = initSocket();
-            setSocket(s);
-
-            const roomId = `faction_${myFactionId}`;
-
-            // Wait for connection before joining — fixes the race condition
-            s.on('connect', () => {
-                console.log('[Chat] Connected, joining room:', roomId);
-                s.emit('join-chat-room', { roomId });
-            });
-
-            s.on('chat-history', ({ messages: history }) => {
-                console.log('[Chat] History received:', history.length, 'messages');
-                setChatMessages(history);
-            });
-
-            s.on('new-chat-message', (message) => {
-                console.log('[Chat] New message received:', message);
-                setChatMessages(prev => [...prev, message]);
-            });
-
-            // If already connected (reconnect), join immediately
-            if (s.connected) {
-                s.emit('join-chat-room', { roomId });
-            }
+            s = initSocket(); setSocket(s);
+            const rid = `faction_${myFactionId}`;
+            s.on('connect', () => s.emit('join-chat-room', { roomId: rid }));
+            s.on('chat-history', ({ messages }) => setChatMessages(messages));
+            s.on('new-chat-message', msg => setChatMessages(p => [...p, msg]));
+            if (s.connected) s.emit('join-chat-room', { roomId: rid });
         }
-        return () => {
-            if (s) {
-                s.off('connect');
-                s.off('chat-history');
-                s.off('new-chat-message');
-                s.disconnect();
-                setSocket(null);
-                setChatMessages([]);
-            }
-        };
+        return () => { if (s) { s.off('connect'); s.off('chat-history'); s.off('new-chat-message'); s.disconnect(); setSocket(null); setChatMessages([]); } };
     }, [myFactionId]);
 
     useEffect(() => { fetchFactions(); }, []);
@@ -98,209 +110,104 @@ const Factions = () => {
             setFactions(list);
             if (user) {
                 const mine = list.find(f => f.members?.some(m => m.username === user.username));
-                setMyFactionId(mine?.id || null);
-                setMyFactionName(mine?.name || null);
-                setMyFactionEmblem(mine?.emblem || null);
+                setMyFactionId(mine?.id || null); setMyFactionName(mine?.name || null); setMyFactionEmblem(mine?.emblem || null);
             }
-        } catch {
-            // Silently handle error
-        } finally {
-            setLoading(false);
-        }
+        } catch { } finally { setLoading(false); }
     };
 
     const createFaction = async () => {
-        if (!newFaction.name.trim()) return;
-        if (!user) return;
+        if (!newFaction.name.trim() || !user) return;
         setIsSubmitting(true);
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`${API_URL}/factions/create`, newFaction, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await axios.post(`${API_URL}/factions/create`, newFaction, { headers: { Authorization: `Bearer ${token}` } });
             setShowCreateModal(false);
-            setNewFaction({ name: '', description: '', emblem: '⚔️', isPublic: true });
+            setNewFaction({ name: '', description: '', emblem: 'swords', isPublic: true });
             fetchFactions();
+            toast.success('Faction established.');
         } catch (err) {
-            // Silently handle error
-        } finally {
-            setIsSubmitting(false);
-        }
+            toast.error(err?.response?.data?.error || 'Failed to create faction.', { duration: 5000 });
+        } finally { setIsSubmitting(false); }
     };
 
-    const joinFaction = async (factionId) => {
+    const joinFaction = async (id) => {
         if (!user) { navigate('/auth'); return; }
         if (myFactionId) return;
-        
-        // Mark this faction as having a pending request
-        setPendingRequests(prev => new Set([...prev, factionId]));
-        
+        setPendingRequests(p => new Set([...p, id]));
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post(`${API_URL}/factions/join/${factionId}`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (!res.data.pending) {
-                setMyFactionId(factionId);
-            }
+            const res = await axios.post(`${API_URL}/factions/join/${id}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+            if (!res.data.pending) setMyFactionId(id);
             fetchFactions();
-        } catch (err) {
-            // Remove from pending if failed
-            setPendingRequests(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(factionId);
-                return newSet;
-            });
-        }
+        } catch { setPendingRequests(p => { const s = new Set(p); s.delete(id); return s; }); }
     };
 
-    const leaveFaction = async () => {
-        if (!myFactionId) return;
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_URL}/factions/leave/${myFactionId}`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setMyFactionId(null);
-            fetchFactions();
-        } catch {
-            // Silently handle error
-        }
-    };
-
-    const approveMember = async (userId) => {
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_URL}/factions/${myFactionId}/approve`, { userId }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            fetchFactions();
-        } catch (err) {
-            // Silently handle error
-        }
-    };
-
-    const declineMember = async (userId) => {
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_URL}/factions/${myFactionId}/decline`, { userId }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            fetchFactions();
-        } catch (err) {
-            // Silently handle error
-        }
-    };
-
-    const kickMember = async (userId) => {
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_URL}/factions/${myFactionId}/kick`, { userId }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setKickConfirmModal({ show: false, member: null });
-            fetchFactions();
-        } catch (err) {
-            // Silently handle error
-        }
-    };
-
-    const togglePrivacy = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const res = await axios.post(`${API_URL}/factions/${myFactionId}/toggle-privacy`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            fetchFactions();
-        } catch (err) {
-            // Silently handle error
-        }
-    };
-
-    const disbandFaction = async () => {
-        if (!window.confirm('PERMANENTLY DISBAND this syndicate? All members will be removed and progress lost.')) return;
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_URL}/factions/disband/${myFactionId}`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setMyFactionId(null);
-            fetchFactions();
-        } catch (err) {
-            // Silently handle error
-        }
-    };
+    const leaveFaction   = async () => { try { const t = localStorage.getItem('token'); await axios.post(`${API_URL}/factions/leave/${myFactionId}`, {}, { headers: { Authorization: `Bearer ${t}` } }); setMyFactionId(null); fetchFactions(); } catch { } };
+    const approveMember  = async (uid) => { try { const t = localStorage.getItem('token'); await axios.post(`${API_URL}/factions/${myFactionId}/approve`, { userId: uid }, { headers: { Authorization: `Bearer ${t}` } }); fetchFactions(); } catch { } };
+    const declineMember  = async (uid) => { try { const t = localStorage.getItem('token'); await axios.post(`${API_URL}/factions/${myFactionId}/decline`, { userId: uid }, { headers: { Authorization: `Bearer ${t}` } }); fetchFactions(); } catch { } };
+    const kickMember     = async (uid) => { try { const t = localStorage.getItem('token'); await axios.post(`${API_URL}/factions/${myFactionId}/kick`, { userId: uid }, { headers: { Authorization: `Bearer ${t}` } }); setKickModal({ show: false, member: null }); fetchFactions(); } catch { } };
+    const togglePrivacy  = async () => { try { const t = localStorage.getItem('token'); await axios.post(`${API_URL}/factions/${myFactionId}/toggle-privacy`, {}, { headers: { Authorization: `Bearer ${t}` } }); fetchFactions(); } catch { } };
+    const disbandFaction = async () => { if (!window.confirm('Permanently disband?')) return; try { const t = localStorage.getItem('token'); await axios.post(`${API_URL}/factions/disband/${myFactionId}`, {}, { headers: { Authorization: `Bearer ${t}` } }); setMyFactionId(null); fetchFactions(); } catch { } };
 
     const totalEngineers = factions.reduce((s, f) => s + (f.members?.length || 0), 0);
-    const totalXP = factions.reduce((s, f) => s + (f.totalXp || 0), 0);
+    const totalXP        = factions.reduce((s, f) => s + (f.totalXp || 0), 0);
+    const myFaction      = factions.find(f => f.id === myFactionId);
+    const myLevel        = (() => { const x = myFaction?.totalXp || 0; return x >= 8000 ? 5 : x >= 5500 ? 4 : x >= 3000 ? 3 : x >= 1000 ? 2 : 1; })();
+    const myEmb          = EMBLEMS.find(e => e.id === myFactionEmblem) || EMBLEMS[0];
+    const filtered       = factions.filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (
-        <div className="factions-page">
-            <div className="bg-container">
-                <div className="noise-texture"></div>
-                <div className="grid-background"></div>
-                <div className="faction-ambient-light"></div>
-            </div>
+        <div className="fp">
+            <div className="fp-bg" aria-hidden />
 
+            {/* ══ CREATE MODAL ══ */}
             <AnimatePresence>
                 {showCreateModal && (
-                    <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        onClick={(e) => { if (e.target === e.currentTarget) setShowCreateModal(false); }}>
-                        <motion.div className="faction-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
-                            <div className="faction-modal-header">
-                                <h3>Found a New Guild</h3>
+                    <motion.div className="fp-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        onClick={e => { if (e.target === e.currentTarget) setShowCreateModal(false); }}>
+                        <motion.div className="fp-modal"
+                            initial={{ opacity: 0, y: 28, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 28, scale: 0.97 }}
+                            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}>
+                            <div className="fp-modal-head">
+                                <h3>Create Faction</h3>
+                                <button className="fp-icon-btn" onClick={() => setShowCreateModal(false)}><Plus size={16} style={{ transform: 'rotate(45deg)' }} /></button>
                             </div>
-
-                            <div className="emblem-picker">
-                                <label>Choose Emblem</label>
-                                <div className="emblems-grid">
-                                    {EMBLEMS.map(e => (
-                                        <button key={e} className={`emblem-btn${newFaction.emblem === e ? ' selected' : ''}`}
-                                            onClick={() => setNewFaction(prev => ({ ...prev, emblem: e }))}>
-                                            {e}
+                            <div className="fp-modal-body">
+                                <label className="fp-label">Emblem</label>
+                                <div className="fp-emblem-grid">
+                                    {EMBLEMS.map(e => {
+                                        const Icon = e.icon; const sel = newFaction.emblem === e.id;
+                                        return (
+                                            <button key={e.id} className={`fp-emblem-btn ${sel ? 'sel' : ''}`}
+                                                style={sel ? { borderColor: e.color + '70', background: e.color + '14' } : {}}
+                                                onClick={() => setNewFaction(p => ({ ...p, emblem: e.id }))} title={e.id}>
+                                                <Icon size={18} color={sel ? e.color : 'rgba(255,255,255,0.38)'} />
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <label className="fp-label">Name <span className="fp-req">*</span></label>
+                                <input className="fp-input" type="text" placeholder="e.g. Neon Vanguard"
+                                    value={newFaction.name} onChange={e => setNewFaction(p => ({ ...p, name: e.target.value }))} maxLength={32} autoFocus />
+                                <label className="fp-label">Manifesto <span className="fp-opt">(optional)</span></label>
+                                <textarea className="fp-textarea" placeholder="What does your faction stand for?"
+                                    value={newFaction.description} onChange={e => setNewFaction(p => ({ ...p, description: e.target.value }))} maxLength={120} rows={2} />
+                                <label className="fp-label">Visibility</label>
+                                <div className="fp-toggle-row">
+                                    {[{ v: true, icon: <Globe size={13} />, l: 'Public' }, { v: false, icon: <Lock size={13} />, l: 'Private' }].map(o => (
+                                        <button key={String(o.v)} type="button" className={`fp-toggle-btn ${newFaction.isPublic === o.v ? 'active' : ''}`}
+                                            onClick={() => setNewFaction(p => ({ ...p, isPublic: o.v }))}>
+                                            {o.icon} {o.l}
                                         </button>
                                     ))}
                                 </div>
                             </div>
-
-                            <div className="faction-form-group">
-                                <label>Faction Name <span style={{ color: 'var(--primary)' }}>*</span></label>
-                                <input type="text" className="faction-input" placeholder="e.g. Neon Vanguard, Quantum Syndicate..."
-                                    value={newFaction.name} onChange={e => setNewFaction(prev => ({ ...prev, name: e.target.value }))}
-                                    maxLength={32} />
-                            </div>
-
-                            <div className="faction-form-group">
-                                <label>Manifesto <span style={{ color: '#666', fontWeight: 400 }}>(optional)</span></label>
-                                <textarea className="faction-textarea" placeholder="What does your faction stand for?"
-                                    value={newFaction.description} onChange={e => setNewFaction(prev => ({ ...prev, description: e.target.value }))}
-                                    maxLength={120} rows={2} />
-                            </div>
-
-                            <div className="faction-form-group">
-                                <label>Syndicate Type</label>
-                                <div className="privacy-toggle-group">
-                                    <button
-                                        type="button"
-                                        className={`privacy-opt ${newFaction.isPublic ? 'active' : ''}`}
-                                        onClick={() => setNewFaction(prev => ({ ...prev, isPublic: true }))}
-                                    >
-                                        <Globe size={14} /> Public
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={`privacy-opt ${!newFaction.isPublic ? 'active' : ''}`}
-                                        onClick={() => setNewFaction(prev => ({ ...prev, isPublic: false }))}
-                                    >
-                                        <Lock size={14} /> Private
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="faction-modal-footer">
-                                <button className="secondary-btn" onClick={() => setShowCreateModal(false)}>Cancel</button>
-                                <button className="primary-btn glow-btn" onClick={createFaction} disabled={isSubmitting || !newFaction.name.trim()}>
-                                    {isSubmitting ? 'Establishing...' : `${newFaction.emblem} Establish Faction`}
+                            <div className="fp-modal-foot">
+                                <button className="fp-btn-ghost" onClick={() => setShowCreateModal(false)}>Cancel</button>
+                                <button className="fp-btn-primary" onClick={createFaction} disabled={isSubmitting || !newFaction.name.trim()}>
+                                    {isSubmitting ? 'Creating…' : 'Create Faction'}
                                 </button>
                             </div>
                         </motion.div>
@@ -308,670 +215,491 @@ const Factions = () => {
                 )}
             </AnimatePresence>
 
-            <section className="faction-cream-hero">
-                <div className="faction-cards-stage">
-                    <div className="cards-glow"></div>
-                    {FEATURE_CARDS.map((card, idx) => (
-                        <motion.div
-                            key={card.id}
-                            className={`play-card c${idx + 1} ${focusedCard === card.id ? 'focused' : ''}`}
-                            onClick={() => setFocusedCard(focusedCard === card.id ? null : card.id)}
-                            layout
-                            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                        >
-                            <div className="card-inner">
-                                <div className="card-top-icon" style={{ color: card.color }}>
-                                    {card.icon}
-                                </div>
-                                <div className="card-main-content">
-                                    <h4 className="card-feature-title">{card.title}</h4>
-                                    <p className="card-feature-desc">{card.desc}</p>
-                                </div>
-                                <div className="card-footer-accent" style={{ background: card.color }}></div>
+            {/* ══ KICK MODAL ══ */}
+            <AnimatePresence>
+                {kickModal.show && (
+                    <motion.div className="fp-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        onClick={() => setKickModal({ show: false, member: null })}>
+                        <motion.div className="fp-modal fp-modal--sm" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                            transition={{ duration: 0.22 }} onClick={e => e.stopPropagation()}>
+                            <div className="fp-modal-head">
+                                <h3>Remove Member</h3>
+                                <button className="fp-icon-btn" onClick={() => setKickModal({ show: false, member: null })}><Plus size={16} style={{ transform: 'rotate(45deg)' }} /></button>
                             </div>
-                            <div className="card-sheen"></div>
+                            <div className="fp-modal-body">
+                                <p className="fp-modal-desc">Remove <strong>{kickModal.member?.username}</strong> from the faction? They will lose access to all faction resources. This cannot be undone.</p>
+                            </div>
+                            <div className="fp-modal-foot">
+                                <button className="fp-btn-ghost" onClick={() => setKickModal({ show: false, member: null })}>Cancel</button>
+                                <button className="fp-btn-danger" onClick={() => kickMember(kickModal.member?.id)}>Remove</button>
+                            </div>
                         </motion.div>
-                    ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-                    <AnimatePresence>
-                        {focusedCard && (
-                            <motion.div
-                                className="card-focus-overlay"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                onClick={() => setFocusedCard(null)}
-                            />
-                        )}
-                    </AnimatePresence>
-                </div>
+            {/* ══════════════════════════════════════════
+                HERO — split layout
+            ══════════════════════════════════════════ */}
+            <section className="fp-hero">
+                {/* Left copy */}
+                <motion.div className="fp-hero-left" variants={stagger} initial="hidden" animate="show">
+                    <motion.div variants={fadeLeft} className="fp-hero-eyebrow">
+                        <span className="fp-eyebrow-dot" />
+                        Developer Guilds
+                    </motion.div>
 
-                <div className="faction-hero-cta">
-                    <div className="faction-hero-tag">Developer Guilds</div>
-                    <h1 className="faction-hero-title">
-                        Choose Your <span className="faction-hero-red">Faction.</span><br />
-                        Prove Your Worth.
-                    </h1>
-                    <p className="faction-hero-desc">
-                        Unite with elite engineers. Collaborate, climb the rankings, and build your legacy.
-                    </p>
-                    <div className="faction-hero-actions">
+                    <motion.h1 variants={fadeLeft} className="fp-hero-h1">
+                        Find your<br />
+                        <span className="fp-h1-accent">faction.</span>
+                    </motion.h1>
+
+                    <motion.p variants={fadeLeft} className="fp-hero-desc">
+                        Engineering is a team sport. Join a faction, climb the global leaderboard,
+                        compete in guild wars, and ship code alongside developers who match your ambition.
+                    </motion.p>
+
+                    <motion.div variants={fadeLeft} className="fp-hero-ctas">
                         {user && !myFactionId ? (
                             <>
-                                <button className="faction-cta-primary" onClick={() => setShowCreateModal(true)}>
-                                    <Plus size={18} /> Found a Guild
+                                <button className="fp-btn-primary fp-btn-lg" onClick={() => setShowCreateModal(true)}>
+                                    <Plus size={16} /> Create Faction
                                 </button>
-                                <button className="faction-cta-secondary" onClick={() => document.querySelector('.factions-grid-section')?.scrollIntoView({ behavior: 'smooth' })}>
-                                    Browse Guilds
+                                <button className="fp-btn-ghost fp-btn-lg"
+                                    onClick={() => document.querySelector('.fp-directory')?.scrollIntoView({ behavior: 'smooth' })}>
+                                    Browse Factions <ArrowRight size={15} />
                                 </button>
                             </>
                         ) : myFactionId ? (
-                            <div className="joined-faction-status">
-                                <div className="status-label">CURRENTLY ACTIVE IN</div>
-                                <div className="joined-faction-badge">
-                                    <span className="joined-emblem">{myFactionEmblem}</span>
-                                    <div className="joined-badge-main">
-                                        <span className="joined-name">{myFactionName}</span>
-                                        <div className="badge-mini-stats">
-                                            <div className="b-stat"><strong>{factions.length}</strong><span>Guilds</span></div>
-                                            <div className="b-divider"></div>
-                                            <div className="b-stat"><strong>{totalEngineers}</strong><span>Members</span></div>
-                                            <div className="b-divider"></div>
-                                            <div className="b-stat"><strong>{totalXP.toLocaleString()}</strong><span>Total XP</span></div>
-                                        </div>
+                            <div className="fp-my-faction-card">
+                                <div className="fp-mfc-left">
+                                    <div className="fp-mfc-emblem" style={{ background: myEmb.color + '16', border: `1px solid ${myEmb.color}35` }}>
+                                        <EmblemIcon id={myFactionEmblem} size={22} />
                                     </div>
-                                    <button className="leave-small-link" onClick={leaveFaction}>LEAVE GUILD</button>
+                                    <div>
+                                        <p className="fp-mfc-sub">Your active faction</p>
+                                        <p className="fp-mfc-name">{myFactionName}</p>
+                                    </div>
                                 </div>
-
-                                <button
-                                    className={`hq-toggle-btn ${showHQ ? 'active' : ''}`}
-                                    onClick={() => {
-                                        setShowHQ(!showHQ);
-                                        if (!showHQ) {
-                                            setTimeout(() => {
-                                                document.querySelector('.my-guild-hq-section')?.scrollIntoView({ behavior: 'smooth' });
-                                            }, 100);
-                                        }
-                                    }}
-                                >
-                                    <Shield size={16} />
-                                    {showHQ ? 'Close Command Center' : 'Enter Command Center'}
-                                </button>
+                                <div className="fp-mfc-right">
+                                    <button className="fp-btn-ghost fp-btn-sm"
+                                        onClick={() => { setShowHQ(v => !v); setTimeout(() => document.querySelector('.fp-hq')?.scrollIntoView({ behavior: 'smooth' }), 80); }}>
+                                        <Shield size={13} /> {showHQ ? 'Close HQ' : 'Open HQ'}
+                                    </button>
+                                    <button className="fp-btn-ghost fp-btn-sm fp-btn-leave" onClick={leaveFaction}>Leave</button>
+                                </div>
                             </div>
                         ) : (
                             <>
-                                <button className="faction-cta-primary" onClick={() => { navigate('/auth'); }}>
-                                    Sign In to Join
-                                </button>
-                                <button className="faction-cta-secondary" onClick={() => document.querySelector('.factions-grid-section')?.scrollIntoView({ behavior: 'smooth' })}>
-                                    Browse Guilds
+                                <button className="fp-btn-primary fp-btn-lg" onClick={() => navigate('/auth')}>Sign in to join</button>
+                                <button className="fp-btn-ghost fp-btn-lg"
+                                    onClick={() => document.querySelector('.fp-directory')?.scrollIntoView({ behavior: 'smooth' })}>
+                                    Browse Factions <ArrowRight size={15} />
                                 </button>
                             </>
                         )}
+                    </motion.div>
+
+                    <motion.div variants={fadeLeft} className="fp-hero-stats">
+                        {[
+                            { val: factions.length,            label: 'Factions' },
+                            { val: totalEngineers,             label: 'Engineers' },
+                            { val: totalXP.toLocaleString(),   label: 'Combined XP', raw: true },
+                        ].map((s, i) => (
+                            <React.Fragment key={i}>
+                                {i > 0 && <div className="fp-stat-div" />}
+                                <div className="fp-stat">
+                                    <strong>{s.raw ? s.val : s.val.toLocaleString()}</strong>
+                                    <span>{s.label}</span>
+                                </div>
+                            </React.Fragment>
+                        ))}
+                    </motion.div>
+                </motion.div>
+
+                {/* Right — live faction preview card stack */}
+                <motion.div className="fp-hero-right"
+                    initial={{ opacity: 0, x: 32 }} animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}>
+
+                    <div className="fp-preview-stack">
+                        {/* Decorative behind-cards */}
+                        <div className="fp-preview-card fp-preview-card--bg3" />
+                        <div className="fp-preview-card fp-preview-card--bg2" />
+
+                        {/* Main preview card */}
+                        <div className="fp-preview-card fp-preview-card--main">
+                            <div className="fp-pcard-head">
+                                <div className="fp-pcard-emblem" style={{ background: '#ef444416', border: '1px solid #ef444430' }}>
+                                    <Swords size={18} color="#ef4444" />
+                                </div>
+                                <div>
+                                    <div className="fp-pcard-name">Crimson Protocol</div>
+                                    <div className="fp-pcard-rank">#1 Global</div>
+                                </div>
+                                <div className="fp-pcard-lvl">Lv 5</div>
+                            </div>
+
+                            <div className="fp-pcard-members">
+                                {['A','K','S','M','J'].map((l, i) => (
+                                    <div key={i} className="fp-pcard-av" style={{ background: ['#ef4444','#3b82f6','#22c55e','#f59e0b','#8b5cf6'][i] + '22', border: `1px solid ${['#ef4444','#3b82f6','#22c55e','#f59e0b','#8b5cf6'][i]}35`, color: ['#ef4444','#3b82f6','#22c55e','#f59e0b','#8b5cf6'][i] }}>{l}</div>
+                                ))}
+                                <div className="fp-pcard-av fp-pcard-av--more">+12</div>
+                            </div>
+
+                            <div className="fp-pcard-stats">
+                                <div className="fp-pcard-stat">
+                                    <Zap size={12} color="#eab308" />
+                                    <span>48,200 XP</span>
+                                </div>
+                                <div className="fp-pcard-stat">
+                                    <Trophy size={12} color="#f59e0b" />
+                                    <span>12 Wins</span>
+                                </div>
+                            </div>
+
+                            <div className="fp-pcard-bar-wrap">
+                                <div className="fp-pcard-bar-label">
+                                    <span>Season progress</span><span>82%</span>
+                                </div>
+                                <div className="fp-pcard-bar">
+                                    <motion.div className="fp-pcard-bar-fill"
+                                        initial={{ width: 0 }} animate={{ width: '82%' }}
+                                        transition={{ duration: 1.2, delay: 0.8, ease: [0.22, 1, 0.36, 1] }} />
+                                </div>
+                            </div>
+
+                            <div className="fp-pcard-activity">
+                                <div className="fp-pcard-activity-label">
+                                    <Activity size={11} color="#22c55e" />
+                                    <span>Live</span>
+                                    <span className="fp-pcard-dot" />
+                                    <span>3 members coding now</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Floating badge */}
+                        <motion.div className="fp-preview-badge"
+                            animate={{ y: [0, -6, 0] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}>
+                            <Crown size={14} color="#f59e0b" />
+                            <span>Season 1 Leader</span>
+                        </motion.div>
+                    </div>
+                </motion.div>
+            </section>
+
+            {/* ══ TICKER ══ */}
+            <div className="fp-ticker">
+                <div className="fp-ticker-track">
+                    {[...TICKER, ...TICKER].map((item, i) => (
+                        <span key={i} className="fp-ticker-item">
+                            <span className="fp-ticker-dot" />
+                            {item}
+                        </span>
+                    ))}
+                </div>
+            </div>
+
+            {/* ══ PERKS SECTION — asymmetric ══ */}
+            <section className="fp-perks">
+                <div className="fp-perks-inner">
+                    <div className="fp-perks-header">
+                        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                            <p className="fp-section-eyebrow">Why Join a Faction</p>
+                            <h2 className="fp-section-h2">Everything your team needs<br />to compete at the top.</h2>
+                        </motion.div>
                     </div>
 
-                    {!myFactionId && (
-                        <div className="faction-hero-mini-stats">
-                            <div><strong>{factions.length}</strong><span>Guilds</span></div>
-                            <div className="mini-divider"></div>
-                            <div><strong>{totalEngineers}</strong><span>Members</span></div>
-                            <div className="mini-divider"></div>
-                            <div><strong>{totalXP.toLocaleString()}</strong><span>Total XP</span></div>
+                    <div className="fp-perks-grid">
+                        {PERKS.slice(0, 3).map((p, i) => {
+                            const Icon = p.icon;
+                            return (
+                                <motion.div key={i} className="fp-perk-card"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true, margin: '-40px' }}
+                                    transition={{ duration: 0.45, delay: i * 0.07 }}>
+                                    <div className="fp-perk-icon" style={{ background: p.color + '16', border: `1px solid ${p.color}28` }}>
+                                        <Icon size={20} color={p.color} />
+                                    </div>
+                                    <h3 className="fp-perk-title">{p.title}</h3>
+                                    <p className="fp-perk-desc">{p.desc}</p>
+                                    <div className="fp-perk-accent" style={{ background: `linear-gradient(90deg, ${p.color}30, transparent)` }} />
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                    <div className="fp-perks-row2">
+                        {PERKS.slice(3).map((p, i) => {
+                            const Icon = p.icon;
+                            return (
+                                <motion.div key={i} className="fp-perk-card"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true, margin: '-40px' }}
+                                    transition={{ duration: 0.45, delay: i * 0.07 }}>
+                                    <div className="fp-perk-icon" style={{ background: p.color + '16', border: `1px solid ${p.color}28` }}>
+                                        <Icon size={20} color={p.color} />
+                                    </div>
+                                    <h3 className="fp-perk-title">{p.title}</h3>
+                                    <p className="fp-perk-desc">{p.desc}</p>
+                                    <div className="fp-perk-accent" style={{ background: `linear-gradient(90deg, ${p.color}30, transparent)` }} />
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </section>
+
+            {/* ══ HQ SECTION ══ */}
+            <AnimatePresence>
+                {myFactionId && showHQ && (
+                    <motion.section className="fp-hq"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
+                        <div className="fp-hq-inner">
+                            <div className="fp-hq-head">
+                                <div className="fp-hq-title-group">
+                                    <div className="fp-hq-emblem" style={{ background: myEmb.color + '14', border: `1px solid ${myEmb.color}28` }}>
+                                        <EmblemIcon id={myFactionEmblem} size={22} />
+                                    </div>
+                                    <div>
+                                        <p className="fp-hq-supra">Command Center</p>
+                                        <h2 className="fp-hq-name">{myFactionName}</h2>
+                                    </div>
+                                </div>
+                                <div className="fp-hq-meta">
+                                    {[
+                                        { val: myFaction?.members?.length || 0, label: 'Members' },
+                                        { val: `#${factions.findIndex(f => f.id === myFactionId) + 1}`, label: 'Rank' },
+                                        { val: `Lv ${myLevel}`, label: 'Level' },
+                                        { val: (myFaction?.totalXp || 0).toLocaleString(), label: 'Total XP' },
+                                    ].map((m, i) => (
+                                        <div className="fp-hq-meta-item" key={i}>
+                                            <strong>{m.val}</strong><span>{m.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="fp-hq-tabs-bar">
+                                <div className="fp-hq-tabs">
+                                    {[
+                                        { id: 'roster', icon: <Users size={14} />, label: 'Roster' },
+                                        { id: 'chat',   icon: <MessageSquare size={14} />, label: 'Chat' },
+                                        ...(user?.username === myFaction?.ownerName
+                                            ? [{ id: 'settings', icon: <Shield size={14} />, label: 'Settings', badge: (myFaction?.pendingMembers || []).length }]
+                                            : [])
+                                    ].map(t => (
+                                        <button key={t.id} className={`fp-tab ${hqTab === t.id ? 'active' : ''}`} onClick={() => setHqTab(t.id)}>
+                                            {t.icon} {t.label}
+                                            {t.badge > 0 && <span className="fp-tab-badge">{t.badge}</span>}
+                                        </button>
+                                    ))}
+                                </div>
+                                <button className="fp-btn-ghost fp-btn-sm" onClick={() => navigate('/battle-arena')}>
+                                    <Swords size={13} /> Battle Arena
+                                </button>
+                            </div>
+
+                            <AnimatePresence mode="wait">
+                                {hqTab === 'roster' && (
+                                    <motion.div key="roster" className="fp-tab-body" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                                        <div className="fp-roster">
+                                            <div className="fp-roster-head"><span>Member</span><span>Role</span><span>XP</span><span>Status</span><span /></div>
+                                            {(myFaction?.members || []).map((m, i) => (
+                                                <motion.div key={m.id || m.username} className="fp-roster-row"
+                                                    initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
+                                                    <div className="fp-member-cell">
+                                                        <div className="fp-av">{m.username?.charAt(0).toUpperCase()}
+                                                            {m.username === user?.username && <div className="fp-you">YOU</div>}
+                                                        </div>
+                                                        <span className="fp-member-name">{m.username}</span>
+                                                    </div>
+                                                    <span className="fp-role-cell">
+                                                        {m.username === myFaction?.ownerName ? <><Crown size={11} color="#f59e0b" /> Lead</> : 'Member'}
+                                                    </span>
+                                                    <span className="fp-cell-dim">{(m.xp || 0).toLocaleString()}</span>
+                                                    <span className="fp-cell-active"><Activity size={10} /> Active</span>
+                                                    <div>{user?.username === myFaction?.ownerName && m.username !== user?.username && (
+                                                        <button className="fp-remove-btn" onClick={() => setKickModal({ show: true, member: m })}><UserMinus size={13} /></button>
+                                                    )}</div>
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                )}
+                                {hqTab === 'chat' && (
+                                    <motion.div key="chat" className="fp-tab-body fp-chat-body" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                                        <ChatPanel socket={socket} roomId={`faction_${myFactionId}`} user={user} title={myFactionName} messages={chatMessages} />
+                                    </motion.div>
+                                )}
+                                {hqTab === 'settings' && (
+                                    <motion.div key="settings" className="fp-tab-body" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                                        <div className="fp-settings-row">
+                                            <div className="fp-settings-card">
+                                                <div className="fp-settings-info">
+                                                    {myFaction?.isPublic === false ? <Lock size={15} /> : <Globe size={15} />}
+                                                    <div>
+                                                        <strong>{myFaction?.isPublic === false ? 'Private' : 'Public'}</strong>
+                                                        <p>{myFaction?.isPublic === false ? 'Requires approval to join.' : 'Open to all engineers.'}</p>
+                                                    </div>
+                                                </div>
+                                                <button className="fp-btn-ghost fp-btn-sm" onClick={togglePrivacy}>
+                                                    {myFaction?.isPublic === false ? 'Make Public' : 'Make Private'}
+                                                </button>
+                                            </div>
+                                            <div className="fp-settings-card fp-settings-card--danger">
+                                                <div className="fp-settings-info fp-settings-info--danger">
+                                                    <Trash2 size={15} />
+                                                    <div><strong>Disband Faction</strong><p>Permanently remove all members and data.</p></div>
+                                                </div>
+                                                <button className="fp-btn-danger" onClick={disbandFaction}>Disband</button>
+                                            </div>
+                                        </div>
+                                        {(myFaction?.pendingMembers || []).length > 0 && (
+                                            <div className="fp-pending-section">
+                                                <p className="fp-section-label">Pending Requests — {myFaction.pendingMembers.length}</p>
+                                                {myFaction.pendingMembers.map(req => (
+                                                    <div key={req.id} className="fp-pending-row">
+                                                        <div className="fp-av">{req.username?.charAt(0).toUpperCase()}</div>
+                                                        <div className="fp-pending-info">
+                                                            <strong>{req.username}</strong><span>{req.xp} XP</span>
+                                                        </div>
+                                                        <button className="fp-approve-btn" onClick={() => approveMember(req.id)}>Accept</button>
+                                                        <button className="fp-btn-ghost fp-btn-sm" onClick={() => declineMember(req.id)}>Decline</button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
+                    </motion.section>
+                )}
+            </AnimatePresence>
+
+            {/* ══════════════════════════════════════════
+                FACTION DIRECTORY
+            ══════════════════════════════════════════ */}
+            <section className="fp-directory">
+                <div className="fp-directory-inner">
+                    <div className="fp-dir-topbar">
+                        <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                            <h2 className="fp-dir-h2">Faction Directory</h2>
+                            <p className="fp-dir-sub">{filtered.length} faction{filtered.length !== 1 ? 's' : ''} registered this season</p>
+                        </motion.div>
+                        <motion.div className="fp-dir-controls" initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                            <div className="fp-search-wrap">
+                                <Search size={14} className="fp-search-icon" />
+                                <input className="fp-search" type="text" placeholder="Search factions…"
+                                    value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                            </div>
+                            {user && !myFactionId && (
+                                <button className="fp-btn-primary" onClick={() => setShowCreateModal(true)}>
+                                    <Plus size={14} /> New Faction
+                                </button>
+                            )}
+                        </motion.div>
+                    </div>
+
+                    {loading ? (
+                        <div className="fp-loading"><div className="fp-spinner" /><span>Loading…</span></div>
+                    ) : filtered.length === 0 ? (
+                        <div className="fp-empty">
+                            <p>{searchTerm ? 'No factions match your search.' : 'No factions exist yet. Be the first.'}</p>
+                            {!searchTerm && user && !myFactionId && <button className="fp-btn-primary" onClick={() => setShowCreateModal(true)}><Plus size={14} /> Create First Faction</button>}
+                        </div>
+                    ) : (
+                        <>
+                            <div className="fp-table-head">
+                                <span>#</span><span>Faction</span><span>XP</span><span>Level</span>
+                                <span>Grandmaster</span><span>Members</span><span>Type</span><span />
+                            </div>
+                            <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-40px' }}>
+                                {filtered.map((faction, idx) => {
+                                    const isMine   = myFactionId === faction.id;
+                                    const isMember = faction.members?.some(m => m.username === user?.username);
+                                    const canJoin  = user && !isMember && !myFactionId;
+                                    const cap      = faction.totalXp >= 8000 ? 50 : faction.totalXp >= 5500 ? 40 : faction.totalXp >= 3000 ? 30 : faction.totalXp >= 1000 ? 22 : 15;
+                                    const full     = (faction.members?.length || 0) >= cap;
+                                    const isPend   = pendingRequests.has(faction.id);
+                                    const lvl      = (() => { const x = faction.totalXp || 0; return x >= 8000 ? 5 : x >= 5500 ? 4 : x >= 3000 ? 3 : x >= 1000 ? 2 : 1; })();
+                                    const emb      = EMBLEMS.find(e => e.id === faction.emblem) || EMBLEMS[0];
+
+                                    return (
+                                        <motion.div key={faction.id} className={`fp-row ${isMine ? 'fp-row--mine' : ''}`} variants={fadeUp}>
+                                            <span className="fp-col-num">
+                                                {idx === 0 ? <Crown size={15} color="#f59e0b" /> : <span className="fp-num">{idx + 1}</span>}
+                                            </span>
+                                            <div className="fp-col-faction">
+                                                <div className="fp-row-emblem" style={{ background: emb.color + '12', border: `1px solid ${emb.color}28` }}>
+                                                    <EmblemIcon id={faction.emblem} size={17} />
+                                                </div>
+                                                <div>
+                                                    <div className="fp-row-name">
+                                                        {faction.name}
+                                                        {isMine && <span className="fp-mine-tag">Yours</span>}
+                                                    </div>
+                                                    {faction.description && <div className="fp-row-desc">{faction.description}</div>}
+                                                </div>
+                                            </div>
+                                            <span className="fp-col-xp">{(faction.totalXp || 0).toLocaleString()}</span>
+                                            <span className="fp-col-lvl"><span className="fp-lvl">Lv {lvl}</span></span>
+                                            <div className="fp-col-creator"><Crown size={11} color="#f59e0b" /><span>{faction.ownerName}</span></div>
+                                            <div className="fp-col-members">
+                                                <span>{faction.members?.length || 0}<span className="fp-cap">/{cap}</span></span>
+                                                <div className="fp-bar">
+                                                    <motion.div className="fp-bar-fill"
+                                                        initial={{ width: 0 }}
+                                                        whileInView={{ width: `${Math.min(100, ((faction.members?.length || 0) / cap) * 100)}%` }}
+                                                        viewport={{ once: true }}
+                                                        transition={{ duration: 0.9, delay: idx * 0.04 }} />
+                                                </div>
+                                            </div>
+                                            <span className="fp-col-type">
+                                                <span className={`fp-type ${faction.isPublic === false ? 'private' : 'public'}`}>
+                                                    {faction.isPublic === false ? <Lock size={9} /> : <Globe size={9} />}
+                                                    {faction.isPublic === false ? 'Private' : 'Public'}
+                                                </span>
+                                            </span>
+                                            <div className="fp-col-action">
+                                                {(isMine || isMember) ? <span className="fp-active-tag"><Activity size={10} /> Active</span>
+                                                    : full ? <span className="fp-full-tag">Full</span>
+                                                    : canJoin ? (
+                                                        <button className="fp-join-btn" onClick={() => joinFaction(faction.id)} disabled={isPend}>
+                                                            {isPend ? 'Pending' : faction.isPublic === false ? 'Request' : 'Join'}
+                                                            {!isPend && <ArrowRight size={12} />}
+                                                        </button>
+                                                    ) : null}
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })}
+                            </motion.div>
+                        </>
+                    )}
+
+                    {/* Bottom CTA when user has no faction */}
+                    {!myFactionId && user && !loading && factions.length > 0 && (
+                        <motion.div className="fp-dir-cta"
+                            initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
+                            <div className="fp-dir-cta-text">
+                                <h3>None of these feel right?</h3>
+                                <p>Found your own faction and set the rules.</p>
+                            </div>
+                            <button className="fp-btn-primary" onClick={() => setShowCreateModal(true)}>
+                                <Plus size={14} /> Create a Faction
+                            </button>
+                        </motion.div>
                     )}
                 </div>
             </section>
 
-            {!myFactionId && (
-                <section className="faction-benefits-scroll">
-                    <div className="benefits-marquee">
-                        <div className="benefits-track">
-                            <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Trophy size={28} color="var(--primary-dark)" /></div>
-                                <div className="benefit-text-content">
-                                    <h3>Rankings</h3>
-                                    <p>Lead your guild to the #1 spot on the global leaderboard.</p>
-                                </div>
-                            </div>
-                            <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Zap size={28} color="#d4a847" /></div>
-                                <div className="benefit-text-content">
-                                    <h3>Shared XP</h3>
-                                    <p>Combine code with others to unlock faction-wide perks.</p>
-                                </div>
-                            </div>
-                            <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Target size={28} color="var(--primary-dark)" /></div>
-                                <div className="benefit-text-content">
-                                    <h3>Collab</h3>
-                                    <p>Work on exclusive projects in a focused guild environment.</p>
-                                </div>
-                            </div>
-                            <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Award size={28} color="#d4a847" /></div>
-                                <div className="benefit-text-content">
-                                    <h3>Reputation</h3>
-                                    <p>Build a unique brand with custom emblems and manifestos.</p>
-                                </div>
-                            </div>
-                            <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Shield size={28} color="var(--primary-dark)" /></div>
-                                <div className="benefit-text-content">
-                                    <h3>Private Repos</h3>
-                                    <p>Access exclusive codebases reserved for your guild members.</p>
-                                </div>
-                            </div>
-                            <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Calendar size={28} color="#d4a847" /></div>
-                                <div className="benefit-text-content">
-                                    <h3>Events</h3>
-                                    <p>Compete in high-stakes guild-vs-guild coding challenges.</p>
-                                </div>
-                            </div>
-                            <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Users size={28} color="var(--primary-dark)" /></div>
-                                <div className="benefit-text-content">
-                                    <h3>Mentors</h3>
-                                    <p>Get direct feedback from senior guild leads and masters.</p>
-                                </div>
-                            </div>
-                            <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Sparkles size={28} color="#d4a847" /></div>
-                                <div className="benefit-text-content">
-                                    <h3>Badges</h3>
-                                    <p>Unlock unique visual flair for your developer profile.</p>
-                                </div>
-                            </div>
-                            <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Trophy size={28} color="var(--primary-dark)" /></div>
-                                <div className="benefit-text-content">
-                                    <h3>Rankings</h3>
-                                    <p>Lead your guild to the #1 spot on the global leaderboard.</p>
-                                </div>
-                            </div>
-                            <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Zap size={28} color="#d4a847" /></div>
-                                <div className="benefit-text-content">
-                                    <h3>Shared XP</h3>
-                                    <p>Combine code with others to unlock faction-wide perks.</p>
-                                </div>
-                            </div>
-                            <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Target size={28} color="var(--primary-dark)" /></div>
-                                <div className="benefit-text-content">
-                                    <h3>Collab</h3>
-                                    <p>Work on exclusive projects in a focused guild environment.</p>
-                                </div>
-                            </div>
-                            <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Award size={28} color="#d4a847" /></div>
-                                <div className="benefit-text-content">
-                                    <h3>Reputation</h3>
-                                    <p>Build a unique brand with custom emblems and manifestos.</p>
-                                </div>
-                            </div>
-                            <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Shield size={28} color="var(--primary-dark)" /></div>
-                                <div className="benefit-text-content">
-                                    <h3>Private Repos</h3>
-                                    <p>Access exclusive codebases reserved for your guild members.</p>
-                                </div>
-                            </div>
-                            <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Calendar size={28} color="#d4a847" /></div>
-                                <div className="benefit-text-content">
-                                    <h3>Events</h3>
-                                    <p>Compete in high-stakes guild-vs-guild coding challenges.</p>
-                                </div>
-                            </div>
-                            <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Users size={28} color="var(--primary-dark)" /></div>
-                                <div className="benefit-text-content">
-                                    <h3>Mentors</h3>
-                                    <p>Get direct feedback from senior guild leads and masters.</p>
-                                </div>
-                            </div>
-                            <div className="benefit-card">
-                                <div className="benefit-icon-wrapper"><Sparkles size={28} color="#d4a847" /></div>
-                                <div className="benefit-text-content">
-                                    <h3>Badges</h3>
-                                    <p>Unlock unique visual flair for your developer profile.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            )}
-
-            {myFactionId && showHQ && (
-                <section className="my-guild-hq-section">
-                    <div className="hq-container">
-                        <div className="hq-header">
-                            <div className="hq-title-group">
-                                <Shield className="hq-icon" size={24} />
-                                <div className="hq-text">
-                                    <div className="hq-level-pill">LVL {
-                                        (factions.find(f => f.id === myFactionId)?.totalXp || 0) >= 8000 ? 5 :
-                                            (factions.find(f => f.id === myFactionId)?.totalXp || 0) >= 5500 ? 4 :
-                                                (factions.find(f => f.id === myFactionId)?.totalXp || 0) >= 3000 ? 3 :
-                                                    (factions.find(f => f.id === myFactionId)?.totalXp || 0) >= 1000 ? 2 : 1
-                                    } SYNDICATE</div>
-                                    <h2><span className="black-accent">Syndicate</span> Headquarters</h2>
-                                    <p>The inner circle of <strong>{myFactionName}</strong></p>
-                                </div>
-                            </div>
-                            <div className="hq-stats">
-                                <div className="hq-stat-box">
-                                    <span className="hq-val">{factions.find(f => f.id === myFactionId)?.members?.length || 0}</span>
-                                    <span className="hq-lab">Operatives</span>
-                                </div>
-                                <div className="hq-stat-box">
-                                    <span className="hq-val">#{factions.findIndex(f => f.id === myFactionId) + 1}</span>
-                                    <span className="hq-lab">Global Rank</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* HQ Internal Navigation */}
-                        <div className="hq-nav-bar">
-                            <div className="hq-nav-left">
-                                <button className={`hq-nav-item ${hqTab === 'roster' ? 'active' : ''}`} onClick={() => setHqTab('roster')}>
-                                    <Users size={16} /> Roster
-                                </button>
-                                <button className={`hq-nav-item ${hqTab === 'chat' ? 'active' : ''}`} onClick={() => setHqTab('chat')}>
-                                    <MessageSquare size={16} /> Comm Center
-                                </button>
-                                {user?.username === factions.find(f => f.id === myFactionId)?.ownerName && (
-                                    <button className={`hq-nav-item ${hqTab === 'intel' ? 'active' : ''}`} onClick={() => setHqTab('intel')}>
-                                        <Shield size={16} /> Intel {(factions.find(f => f.id === myFactionId)?.pendingMembers || []).length > 0 && <span className="intel-count">{(factions.find(f => f.id === myFactionId)?.pendingMembers || []).length}</span>}
-                                    </button>
-                                )}
-                            </div>
-                            <button 
-                                className="hq-arena-btn"
-                                onClick={() => navigate('/battle-arena')}
-                            >
-                                <Swords size={16} />
-                                <span>Battle Arena</span>
-                            </button>
-                        </div>
-
-                        <AnimatePresence mode="wait">
-                            {hqTab === 'roster' && (
-                                <motion.div 
-                                    key="roster"
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="hq-tab-content"
-                                >
-                                    <div className="hq-members-grid">
-                                        <div className="hq-member-list-header">
-                                            <span>Operative</span>
-                                            <span>Weekly Gain</span>
-                                            <span>Total XP</span>
-                                            <span>Mastery</span>
-                                        </div>
-                                        <div className="hq-member-rows">
-                                            {(factions.find(f => f.id === myFactionId)?.members || []).map((member, i) => {
-                                                const weeklyXp = 0;
-                                                const totalContributed = 0;
-                                                const memberLvl = 1;
-
-                                                return (
-                                                    <div key={member.id || member.username} className="hq-member-row">
-                                                        <div className="hq-member-info">
-                                                            <div className="hq-avatar">
-                                                                {member.username?.charAt(0).toUpperCase()}
-                                                                {member.username === user?.username && <div className="me-indicator">YOU</div>}
-                                                            </div>
-                                                            <div className="hq-name-group">
-                                                                <span className="hq-username">{member.username}</span>
-                                                                <span className="hq-rank-tag">
-                                                                    {member.username === factions.find(f => f.id === myFactionId)?.ownerName ? 'Syndicate Lead' : 'Elite Operative'}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="hq-stat-col hq-weekly-xp">
-                                                            <span className="hq-stat-val">+{weeklyXp}</span>
-                                                            <span className="hq-stat-sub">this week</span>
-                                                        </div>
-                                                        <div className="hq-stat-col hq-total-xp">
-                                                            <span className="hq-stat-val">{totalContributed.toLocaleString()}</span>
-                                                            <span className="hq-stat-sub">lifetime</span>
-                                                        </div>
-                                                        <div className="hq-stat-col hq-mastery">
-                                                            <div className="mastery-track">
-                                                                <div className="mastery-fill" style={{ width: `20%` }}></div>
-                                                            </div>
-                                                            <span className="mastery-lvl">LVL {memberLvl}</span>
-                                                        </div>
-                                                        <div className="hq-action-col">
-                                                            {user?.username === factions.find(f => f.id === myFactionId)?.ownerName && member.username !== user?.username && (
-                                                                <button 
-                                                                    className="hq-kick-direct-btn"
-                                                                    onClick={() => setKickConfirmModal({ show: true, member })}
-                                                                    title="Remove from Syndicate"
-                                                                >
-                                                                    <UserMinus size={16} />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            )}
-
-                            {hqTab === 'chat' && (
-                                <motion.div 
-                                    key="chat"
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="hq-tab-content chat-center-view"
-                                >
-                                    <ChatPanel 
-                                        socket={socket} 
-                                        roomId={`faction_${myFactionId}`} 
-                                        user={user} 
-                                        title={`${myFactionName} Comm Channel`}
-                                        messages={chatMessages}
-                                    />
-                                </motion.div>
-                            )}
-
-                            {hqTab === 'intel' && (
-                                <motion.div 
-                                    key="intel"
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="hq-tab-content"
-                                >
-                                    {/* Privacy Toggle Section */}
-                                    <div className="hq-privacy-section">
-                                        <h3 className="hq-sub-title">Syndicate Privacy Settings</h3>
-                                        <div className="privacy-control-card">
-                                            <div className="privacy-info">
-                                                <div className="privacy-icon-wrapper">
-                                                    {factions.find(f => f.id === myFactionId)?.isPublic === false ? (
-                                                        <Lock size={24} color="var(--primary)" />
-                                                    ) : (
-                                                        <Globe size={24} color="#22c55e" />
-                                                    )}
-                                                </div>
-                                                <div className="privacy-text">
-                                                    <h4>Current Status: {factions.find(f => f.id === myFactionId)?.isPublic === false ? 'Private' : 'Public'}</h4>
-                                                    <p>
-                                                        {factions.find(f => f.id === myFactionId)?.isPublic === false 
-                                                            ? 'Only approved members can join. New recruits must request access.'
-                                                            : 'Anyone can join your syndicate instantly without approval.'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <button 
-                                                className="privacy-toggle-action-btn"
-                                                onClick={togglePrivacy}
-                                            >
-                                                {factions.find(f => f.id === myFactionId)?.isPublic === false ? (
-                                                    <>
-                                                        <Globe size={16} />
-                                                        Make Public
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Lock size={16} />
-                                                        Make Private
-                                                    </>
-                                                )}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Pending Members Section */}
-                                    {(factions.find(f => f.id === myFactionId)?.pendingMembers || []).length > 0 ? (
-                                        <div className="hq-pending-section">
-                                            <h3 className="hq-sub-title">Intelligence Report: Pending Assets</h3>
-                                            <div className="hq-pending-list">
-                                                {(factions.find(f => f.id === myFactionId)?.pendingMembers || []).map(req => (
-                                                    <div key={req.id} className="hq-pending-row">
-                                                        <div className="hq-req-info">
-                                                            <div className="hq-req-avatar">{req.username?.charAt(0).toUpperCase()}</div>
-                                                            <div className="hq-req-meta">
-                                                                <span className="hq-req-name">{req.username}</span>
-                                                                <span className="hq-req-xp">{req.xp} Rep XP</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="hq-req-actions">
-                                                            <button className="approve-btn" onClick={() => approveMember(req.id)}>Accept Asset</button>
-                                                            <button className="decline-btn" onClick={() => declineMember(req.id)}>Deny Entry</button>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="hq-empty-intel">
-                                            <Shield size={48} className="empty-intel-icon" />
-                                            <h3>No Active Threats or Requests</h3>
-                                            <p>Your syndicate borders are secure. No pending recruitment requests at this time.</p>
-                                        </div>
-                                    )}
-
-                                    {/* Danger Zone */}
-                                    <div className="hq-danger-zone">
-                                        <h3 className="hq-sub-title danger-title">Danger Zone</h3>
-                                        <div className="danger-card">
-                                            <div className="danger-info">
-                                                <Trash2 size={20} color="var(--primary)" />
-                                                <div>
-                                                    <h4>Disband Syndicate</h4>
-                                                    <p>Permanently delete this faction. All members will be removed and progress lost.</p>
-                                                </div>
-                                            </div>
-                                            <button className="danger-action-btn" onClick={disbandFaction}>
-                                                Disband
-                                            </button>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-                </section>
-            )}
-
-            <section className="factions-grid-section">
-                <main className="factions-container">
-                    <div className="section-header-row">
-                        <div className="section-title-group">
-                            <div className="mini-black-dash"></div>
-                            <h2>Browse Syndicate Guilds</h2>
-                            <p>{searchTerm ? `Showing results for "${searchTerm}"` : "The Ledger of Established Engineering Syndicates"}</p>
-                        </div>
-                        <div className="section-controls">
-                            <div className="search-box-wrapper">
-                                <Search size={18} className="search-icon" />
-                                <input
-                                    type="text"
-                                    placeholder="Search by name or emblem..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="faction-search-input"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {loading ? (
-                        <div className="factions-loading">
-                            <div className="factions-loading-ring"></div>
-                            <p>Loading syndicate data...</p>
-                        </div>
-                    ) : factions.filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
-                        <motion.div className="factions-empty" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
-                            <div className="empty-emblem">{searchTerm ? '🔍' : '⚔️'}</div>
-                            <h3>{searchTerm ? 'No matches found' : 'No active syndicates found in the global registry'}</h3>
-                        </motion.div>
-                    ) : (
-                        <div className="factions-table-wrapper">
-                            <table className="factions-syndicate-table">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Syndicate Guild</th>
-                                        <th>Total XP</th>
-                                        <th>Level</th>
-                                        <th>Grandmaster</th>
-                                        <th>Members</th>
-                                        <th>Syndicate Type</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {factions
-                                        .filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                                        .map((faction, idx) => {
-                                            const isMine = myFactionId === faction.id;
-                                            const isMember = faction.members?.some(m => m.username === user?.username);
-                                            const canJoin = user && !isMember && !myFactionId;
-                                            const totalFactionXP = 0; // Reset for upcoming Guild Wars
-                                            let factionLevel = 1;
-                                            if (totalFactionXP >= 8000) factionLevel = 5;
-                                            else if (totalFactionXP >= 5500) factionLevel = 4;
-                                            else if (totalFactionXP >= 3000) factionLevel = 3;
-                                            else if (totalFactionXP >= 1000) factionLevel = 2;
-                                            else factionLevel = 1;
-
-                                            return (
-                                                <motion.tr
-                                                    key={faction.id}
-                                                    initial={{ opacity: 0, x: -20 }}
-                                                    animate={{ opacity: 1, x: 0 }}
-                                                    transition={{ delay: idx * 0.05 }}
-                                                    className={isMine ? 'my-faction-row' : ''}
-                                                >
-                                                    <td className="col-rank">{idx + 1}</td>
-                                                    <td className="col-guild">
-                                                        <div className="guild-identity">
-                                                            <span className="guild-emblem-mini">{faction.emblem || '⚔️'}</span>
-                                                            <div className="guild-name-group">
-                                                                <span className="guild-name-text">{faction.name}</span>
-                                                                {isMine && <span className="your-guild-tag">Your Guild</span>}
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="col-xp">
-                                                        <div className="xp-chip">
-                                                            <Zap size={12} fill="#d4a847" color="#d4a847" />
-                                                            {totalFactionXP.toLocaleString()}
-                                                        </div>
-                                                    </td>
-                                                    <td className="col-level">
-                                                        <span className="level-badge">LVL {factionLevel}</span>
-                                                    </td>
-                                                    <td className="col-creator">
-                                                        <div className="creator-info">
-                                                            <Crown size={12} color="#fbbf24" />
-                                                            <span>{faction.ownerName}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="col-members">
-                                                        <div className="member-count-pill">
-                                                            <Users size={12} />
-                                                            {faction.members?.length || 0} / {
-                                                                (faction.totalXp || 0) >= 8000 ? 50 :
-                                                                    (faction.totalXp || 0) >= 5500 ? 40 :
-                                                                        (faction.totalXp || 0) >= 3000 ? 30 :
-                                                                            (faction.totalXp || 0) >= 1000 ? 22 : 15
-                                                            }
-                                                        </div>
-                                                    </td>
-                                                    <td className="col-action">
-                                                        <div className="type-action-group">
-                                                            <div className={`type-badge ${faction.isPublic === false ? 'private' : 'public'}`}>
-                                                                {faction.isPublic === false ? <Lock size={10} /> : <Globe size={10} />}
-                                                                {faction.isPublic === false ? 'PRIVATE' : 'PUBLIC'}
-                                                            </div>
-
-                                                            {isMine || isMember ? (
-                                                                <span className="member-status-label active">ACTIVE</span>
-                                                            ) : (faction.members?.length || 0) >= ((faction.totalXp || 0) >= 8000 ? 50 : (faction.totalXp || 0) >= 5500 ? 40 : (faction.totalXp || 0) >= 3000 ? 30 : (faction.totalXp || 0) >= 1000 ? 22 : 15) ? (
-                                                                <span className="status-locked full">FULL</span>
-                                                            ) : (
-                                                                canJoin && (
-                                                                    <button className="table-join-btn" onClick={() => joinFaction(faction.id)}>
-                                                                        {faction.isPublic === false ? 'Request' : 'Join'}
-                                                                    </button>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                </motion.tr>
-                                            );
-                                        })}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </main>
-            </section>
-
-            {/* Kick Member Confirmation Modal */}
-            <AnimatePresence>
-                {kickConfirmModal.show && (
-                    <motion.div 
-                        className="kick-modal-overlay" 
-                        initial={{ opacity: 0 }} 
-                        animate={{ opacity: 1 }} 
-                        exit={{ opacity: 0 }}
-                        onClick={() => setKickConfirmModal({ show: false, member: null })}
-                    >
-                        <motion.div 
-                            className="kick-modal-box"
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className="kick-modal-header">
-                                <div className="kick-modal-icon">
-                                    <UserMinus size={24} />
-                                </div>
-                                <h3>Remove Operative</h3>
-                            </div>
-                            
-                            <div className="kick-modal-body">
-                                <p>
-                                    Remove <span className="kick-username">{kickConfirmModal.member?.username}</span> from the syndicate?
-                                </p>
-                                <div className="kick-warning">
-                                    <Shield size={16} />
-                                    <span>This action cannot be undone. The member will lose access to all faction resources.</span>
-                                </div>
-                            </div>
-
-                            <div className="kick-modal-footer">
-                                <button 
-                                    className="kick-cancel-btn" 
-                                    onClick={() => setKickConfirmModal({ show: false, member: null })}
-                                >
-                                    Cancel
-                                </button>
-                                <button 
-                                    className="kick-confirm-btn"
-                                    onClick={() => kickMember(kickConfirmModal.member?.id)}
-                                >
-                                    <UserMinus size={16} />
-                                    Remove Member
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
             <Chatbot />
         </div>
     );

@@ -558,7 +558,7 @@ const Arcade = () => {
     const [showTheory, setShowTheory] = useState(false);
     const [viewingSections, setViewingSections] = useState(false);
     const [phasePage, setPhasePage] = useState(0);
-    const phasesPerPage = 3;
+    const phasesPerPage = 9;
     const [isWarping, setIsWarping] = useState(false);
     const [cssStatus, setCssStatus] = useState('neutral'); // 'neutral', 'correct', 'wrong'
     const [logicStatus, setLogicStatus] = useState('neutral'); // 'neutral', 'correct', 'wrong'
@@ -1077,13 +1077,13 @@ const Arcade = () => {
                 >
                     <div className="phase-view-header">
                         <button className="phase-back-btn" onClick={() => { setActiveGame(null); setViewingSections(false); }}>
+                            <ArrowLeft size={14} />
                             Back
                         </button>
                         
                         <div className="phase-view-title-group">
                             <h1 className="phase-view-title">
-                                {sections.flatMap(s => s.games).find(g => g.id === activeGame)?.title || 'Module'}
-                                <span className="phase-title-accent"> â€” Phases</span>
+                                {sections.flatMap(s => s.games).find(g => g.id === activeGame)?.title || 'Module'} - Phases
                             </h1>
                             <p className="phase-view-subtitle">Select a phase to begin. Complete all levels in a phase to unlock the next one.</p>
                         </div>
@@ -1100,8 +1100,8 @@ const Arcade = () => {
                                                 setViewingSections(false);
                                             }}
                                         >
-                                            <Zap size={16} fill="var(--primary)" color="var(--primary)" />
-                                            <span>Resume from where you left off (Level {highestLevel + 1})</span>
+                                            <Zap size={14} />
+                                            <span>Resume Level {highestLevel + 1}</span>
                                         </motion.button>
                                 )}
                             </div>
@@ -1610,3 +1610,4 @@ const Arcade = () => {
 };
 
 export default Arcade;
+

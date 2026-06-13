@@ -31,6 +31,24 @@ const AnimatedCounter = ({ end, suffix = '', duration = 1500 }) => {
   return <span>{val.toLocaleString()}{suffix}</span>;
 };
 
+/* ── Typewriter hook ── */
+const useTypewriter = (text, speed = 45) => {
+  const [displayed, setDisplayed] = useState('');
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    setDisplayed('');
+    setDone(false);
+    let i = 0;
+    const id = setInterval(() => {
+      i++;
+      setDisplayed(text.slice(0, i));
+      if (i >= text.length) { clearInterval(id); setDone(true); }
+    }, speed);
+    return () => clearInterval(id);
+  }, [text, speed]);
+  return { displayed, done };
+};
+
 const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -75,7 +93,9 @@ const Home = () => {
     const loadDashboard = async () => {
       try {
         const { data: leaderboardData } = await axios.get(`${API_URL}/leaderboard`, { timeout: 5000 });
-        setTopRankers((leaderboardData || []).slice(0, 10));
+        // server now returns { data: [...], total, page, limit } — fall back to plain array for compat
+        const rows = Array.isArray(leaderboardData) ? leaderboardData : (leaderboardData?.data || []);
+        setTopRankers(rows.slice(0, 10));
       } catch (err) {
         console.error("Leaderboard fetch failed:", err);
         setRankersError(true);
@@ -86,7 +106,19 @@ const Home = () => {
     loadDashboard();
   }, []);
 
-  /* ── Derived User Metrics ── */
+  /* ── Typewriter greeting ── */
+  const greetingFull = `Welcome back, ${user?.username ?? ''}!`;
+  const { displayed: greetingText, done: greetingDone } = useTypewriter(user ? greetingFull : '', 48);
+
+  /* ── Split greeting for coloring the username part ── */
+  const prefix = 'Welcome back, ';
+  const suffix = '!';
+  const usernameInGreeting = user?.username ?? '';
+  const greetingPrefix  = greetingText.slice(0, Math.min(greetingText.length, prefix.length));
+  const greetingUser    = greetingText.length > prefix.length
+    ? greetingText.slice(prefix.length, Math.min(greetingText.length, prefix.length + usernameInGreeting.length))
+    : '';
+  const greetingSuffix  = greetingText.length > prefix.length + usernameInGreeting.length ? suffix : '';
   const xp = Number(user?.xp || 0);
   const activity = user?.activity || {};
   const todayDateKey = new Date().toISOString().split('T')[0];
@@ -322,18 +354,23 @@ const Home = () => {
       {user ? (
         <div className="home-dashboard-vertical">
           
-          {/* ══ HEADER / SECTION 1: USER DETAILS (BLACK BG, EDGE-TO-EDGE) ══ */}
+          {/* ══ HEADER ══ */}
           <header className="profile-header-black">
             <div className="profile-header-inner">
 
-              {/* Top greeting row */}
-              <h1 className="welcome-banner-text">Welcome back, <span className="welcome-username-highlight">{user.username}</span>!</h1>
+              {/* Typewriter greeting */}
+              <h1 className="welcome-banner-text">
+                {greetingPrefix}
+                {greetingUser && <span className="welcome-username-highlight">{greetingUser}</span>}
+                {greetingSuffix}
+                {!greetingDone && <span className="tw-cursor" />}
+              </h1>
 
-              <div className="profile-details-row">
-                {/* Left Block: DiceBear avatar + core identity */}
-                <div className="profile-identity-col">
+              {/* 3-column card row */}
+              <div className="profile-card-row">
 
-                  {/* Avatar — uses the DiceBear seed from user.avatarId */}
+                {/* COL 1 — Avatar */}
+                <div className="profile-col-avatar">
                   <div className="profile-avatar-dicebear">
                     <img
                       src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${user.avatarId || user.username || 'Sniper'}&backgroundColor=transparent`}
@@ -342,93 +379,67 @@ const Home = () => {
                     />
                     <span className="avatar-online-dot" />
                   </div>
+                </div>
 
-                  {/* Identity info block */}
-                  <div className="profile-identity-info">
-
-                    {/* Username + rank badge */}
-                    <div className="profile-badge-row">
-                      <span className="profile-username-text">{user.username}</span>
-                      <span className="profile-badge-pill" style={{ color: levelInfo.color, borderColor: levelInfo.color }}>
-                        <Crown size={12} />
-                        <span>{levelInfo.label}</span>
+                {/* COL 2 — Identity + stats */}
+                <div className="profile-col-info">
+                  {/* Name + email */}
+                  <div className="profile-name-row">
+                    <span className="profile-username-text">{user.username}</span>
+                    {user.email && (
+                      <span className="profile-email-chip">
+                        <Globe size={11} />
+                        {user.email}
                       </span>
-                      {user.email && (
-                        <span className="profile-email-chip">
-                          <Globe size={11} />
-                          {user.email}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Bio */}
-                    {user.bio && (
-                      <p className="profile-bio-text">{user.bio}</p>
                     )}
+                  </div>
 
-                    {/* Stack tags */}
-                    {user.stack && user.stack.length > 0 && (
-                      <div className="profile-stack-row">
-                        {user.stack.map(tag => (
-                          <span key={tag} className="profile-stack-tag">
-                            <Code2 size={10} />
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                  {/* Bio */}
+                  {user.bio && <p className="profile-bio-text">{user.bio}</p>}
 
-                    {/* Primary metrics */}
-                    <div className="profile-metrics-row">
-                      <div className="metric-box-item">
-                        <span className="metric-box-label">Total Experience</span>
-                        <span className="metric-box-value"><AnimatedCounter end={xp} /> XP</span>
-                      </div>
-                      <div className="metric-box-item">
-                        <span className="metric-box-label">Daily Streak</span>
-                        <span className="metric-box-value streak-glow">
-                          <Flame size={16} fill="currentColor" />
-                          <span>{activeDays} Days</span>
+                  {/* Stack tags */}
+                  {user.stack && user.stack.length > 0 && (
+                    <div className="profile-stack-row">
+                      {user.stack.map(tag => (
+                        <span key={tag} className="profile-stack-tag">
+                          <Code2 size={10} />{tag}
                         </span>
-                      </div>
-                      <div className="metric-box-item">
-                        <span className="metric-box-label">Earned Today</span>
-                        <span className="metric-box-value text-red">+{todaysXp} XP</span>
-                      </div>
-                      <div className="metric-box-item">
-                        <span className="metric-box-label">Levels Solved</span>
-                        <span className="metric-box-value">{totalLevelsSolved}</span>
-                      </div>
+                      ))}
                     </div>
+                  )}
 
-                    {/* Secondary stat chips */}
-                    <div className="profile-stat-chips-row">
-                      <span className="profile-stat-chip">
-                        <Trophy size={11} />
-                        {levelInfo.next ? `${(levelInfo.next - xp).toLocaleString()} XP to next tier` : 'Max Rank Achieved'}
+                  {/* Stats grid */}
+                  <div className="profile-stats-grid">
+                    <div className="stat-card">
+                      <span className="stat-card-label">Total XP</span>
+                      <span className="stat-card-value"><AnimatedCounter end={xp} /> XP</span>
+                    </div>
+                    <div className="stat-card">
+                      <span className="stat-card-label">Daily Streak</span>
+                      <span className="stat-card-value streak-glow">
+                        <Flame size={14} fill="currentColor" />
+                        <span>{activeDays} Days</span>
                       </span>
-                      <span className="profile-stat-chip">
-                        <Layers size={11} />
-                        7 tracks active
-                      </span>
-                      <span className="profile-stat-chip">
-                        <Calendar size={11} />
-                        {activeDays} sessions logged
-                      </span>
+                    </div>
+                    <div className="stat-card">
+                      <span className="stat-card-label">Earned Today</span>
+                      <span className="stat-card-value text-red">+{todaysXp} XP</span>
+                    </div>
+                    <div className="stat-card">
+                      <span className="stat-card-label">Levels Solved</span>
+                      <span className="stat-card-value">{totalLevelsSolved}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Right: Radial XP ring */}
-                <div className="profile-progress-col">
+                {/* COL 3 — Radial XP ring */}
+                <div className="profile-col-ring">
                   <div className="circle-progress-container">
                     <svg className="radial-progress" viewBox="0 0 100 100">
                       <circle className="radial-track" cx="50" cy="50" r="42" />
                       <motion.circle
                         className="radial-fill"
-                        cx="50"
-                        cy="50"
-                        r="42"
+                        cx="50" cy="50" r="42"
                         strokeDasharray="263.8"
                         initial={{ strokeDashoffset: 263.8 }}
                         animate={{ strokeDashoffset: 263.8 - (263.8 * xpPercent) / 100 }}
@@ -444,7 +455,14 @@ const Home = () => {
                   <div className="radial-tier-label" style={{ color: levelInfo.color }}>
                     {levelInfo.label}
                   </div>
+                  <div className="radial-xp-summary">
+                    <span className="radial-xp-val">{xp.toLocaleString()} XP</span>
+                    {levelInfo.next && (
+                      <span className="radial-xp-next">/ {levelInfo.next.toLocaleString()} XP</span>
+                    )}
+                  </div>
                 </div>
+
               </div>
             </div>
           </header>
@@ -835,7 +853,7 @@ const Home = () => {
                       </div>
                     </div>
                     <div className="about-step-item">
-                      <div className="about-step-num" style={{ borderColor: '#f59e0b', color: '#f59e0b' }}>03</div>
+                      <div className="about-step-num" style={{ borderColor: '#ef4444', color: '#ef4444' }}>03</div>
                       <div className="about-step-content">
                         <span className="about-step-title">Rank Up & Get Recognised</span>
                         <span className="about-step-desc">Your XP, streak, and badges define your profile. Compete globally on the Hall of Fame leaderboard and showcase your milestones.</span>
@@ -867,7 +885,7 @@ const Home = () => {
                       <span className="about-stat-label">Rank Tiers</span>
                     </div>
                     <div className="about-stat-box">
-                      <span className="about-stat-num" style={{ color: '#f59e0b' }}>8</span>
+                      <span className="about-stat-num" style={{ color: '#f87171' }}>8</span>
                       <span className="about-stat-label">Achievement Badges</span>
                     </div>
                   </div>
@@ -878,7 +896,7 @@ const Home = () => {
                       { label: 'React', color: '#06b6d4' },
                       { label: 'Java', color: '#10b981' },
                       { label: 'C++', color: '#ec4899' },
-                      { label: 'Python', color: '#eab308' },
+                      { label: 'Python', color: '#dc2626' },
                       { label: 'Go', color: '#0ea5e9' },
                     ].map(t => (
                       <span key={t.label} className="about-track-pill" style={{ borderColor: t.color + '50', color: t.color, background: t.color + '12' }}>{t.label}</span>
