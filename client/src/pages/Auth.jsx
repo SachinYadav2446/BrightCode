@@ -141,17 +141,58 @@ const Auth = () => {
   return (
     <div className="auth-page">
       <div className="back-to-home-global" onClick={() => navigate('/')}>
-        <ChevronLeft size={20} />
+        <ChevronLeft size={16} />
         <span>Back to Home</span>
       </div>
 
-      <motion.div 
-        layout 
+      <motion.div
+        layout
         className="auth-container"
-        transition={{ 
-          layout: { duration: 0.4, ease: [0.4, 0, 0.2, 1] } 
-        }}
+        transition={{ layout: { duration: 0.4, ease: [0.4, 0, 0.2, 1] } }}
       >
+        {/* ── Left branding panel ── */}
+        <div className="auth-left">
+          <div className="auth-brand">
+            <div className="auth-brand-name">Bright<span>Code</span></div>
+            <div className="auth-brand-tag">Developer Platform</div>
+          </div>
+
+          <div className="auth-left-headline">
+            <h1>
+              Code. Compete.<br />
+              <span>Dominate.</span>
+            </h1>
+            <p>
+              Join thousands of developers sharpening their skills,
+              competing in real-time battles, and building in collaborative workspaces.
+            </p>
+          </div>
+
+          <div className="auth-stats">
+            {[
+              { icon: <Users size={16} />, value: "Active community", label: "Developers worldwide" },
+              { icon: <Trophy size={16} />, value: "Daily challenges", label: "Logic Lab & Code Wars" },
+              { icon: <Zap size={16} />,   value: "Real-time editor",  label: "Sub-10ms sync latency" },
+              { icon: <Shield size={16} />, value: "Ranked system",    label: "XP, levels & factions" },
+            ].map((s, i) => (
+              <motion.div
+                key={i}
+                className="auth-stat"
+                initial={{ opacity: 0, x: -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 + i * 0.07, duration: 0.4 }}
+              >
+                <div className="auth-stat-icon">{s.icon}</div>
+                <div className="auth-stat-text">
+                  <span className="auth-stat-value">{s.value}</span>
+                  <span className="auth-stat-label">{s.label}</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Right form panel ── */}
         <div className="auth-form-side">
           <motion.div layout className="form-content">
             <div className="form-header">
@@ -358,7 +399,7 @@ const Auth = () => {
               </div>
             ) : null}
           </motion.div>
-        </div>
+        </div>   {/* auth-form-side */}
       </motion.div>
     </div>
   );
