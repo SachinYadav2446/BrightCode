@@ -221,10 +221,16 @@
       "joinedAt": "2026-05-19T11:17:23.664Z",
       "bio": "Good",
       "stack": [
-        "wed"
+        "React"
       ],
       "created_at": "2026-05-19T11:17:23.664Z",
-      "session_id": "225af9f6-6860-4e47-b513-ed96e5787c91"
+      "session_id": "e65ae5cd-16d5-4ea6-af83-ade41ce2e555",
+      "avatarId": "Ghost",
+      "bannerId": "crimson",
+      "github": "https://github.com/SachinYadav2446",
+      "leetcode": "",
+      "project1": "",
+      "project2": ""
     }
   ]
 }

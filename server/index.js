@@ -1188,26 +1188,38 @@ app.get('/profile/:username', async (req, res) => {
 
 app.get('/leaderboard', async (req, res) => {
     try {
+        const page  = Math.max(1, parseInt(req.query.page)  || 1);
+        const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
+        const offset = (page - 1) * limit;
+
         if (useMemoryDB) {
-            const sortedUsers = [...memoryStore.users]
+            const sorted = [...memoryStore.users]
                 .sort((a, b) => (b.xp || 0) - (a.xp || 0))
-                .slice(0, 25)
                 .map(u => ({ username: u.username, xp: u.xp || 0, level: computeLevel(u.xp || 0) }));
-            return res.json(sortedUsers);
+            return res.json({
+                data: sorted.slice(offset, offset + limit),
+                total: sorted.length,
+                page,
+                limit
+            });
         }
 
+        const countResult = await pool.query('SELECT COUNT(*) FROM users');
+        const total = parseInt(countResult.rows[0].count);
+
         const result = await pool.query(
-            'SELECT username, xp, css_level, logic_level, react_level FROM users ORDER BY xp DESC LIMIT 25'
+            'SELECT username, xp, css_level, logic_level, react_level FROM users ORDER BY xp DESC LIMIT $1 OFFSET $2',
+            [limit, offset]
         );
         const rows = result.rows.map(u => ({
             username: u.username,
             xp: u.xp || 0,
-            level: computeLevel(u.xp || 0), // always recompute from XP
+            level: computeLevel(u.xp || 0),
             css_level: u.css_level || 0,
             logic_level: u.logic_level || 0,
             react_level: u.react_level || 0
         }));
-        res.json(rows);
+        res.json({ data: rows, total, page, limit });
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch leaderboard' });
     }
@@ -2119,9 +2131,33 @@ app.get('/activity', authenticateToken, async (req, res) => {
 });
 
 app.get('/active-rooms', (req, res) => {
-    const roomsList = Array.from(rooms.keys());
-    console.log('[ACTIVE ROOMS] Current active rooms:', roomsList);
-    res.json(roomsList);
+    // Only return rooms that have at least one connected user
+    const liveRooms = Array.from(rooms.entries())
+        .filter(([, room]) => room.users && room.users.length > 0)
+        .map(([id]) => id);
+    console.log('[ACTIVE ROOMS] Live rooms (with users):', liveRooms);
+    res.json(liveRooms);
+});
+
+// Bulk status check — POST with { roomIds: [...] }, returns map of id → { live, userCount, owner }
+app.post('/rooms-status', (req, res) => {
+    const { roomIds } = req.body;
+    if (!Array.isArray(roomIds)) return res.status(400).json({ error: 'roomIds must be an array' });
+
+    const result = {};
+    for (const id of roomIds) {
+        const room = rooms.get(id);
+        if (!room) {
+            result[id] = { live: false, userCount: 0, owner: null };
+        } else {
+            result[id] = {
+                live: room.users && room.users.length > 0,
+                userCount: room.users ? room.users.length : 0,
+                owner: room.owner || null,
+            };
+        }
+    }
+    res.json(result);
 });
 
 // Debug endpoint to check room details
@@ -2231,6 +2267,7 @@ io.on('connection', (socket) => {
 
     socket.on('join-room', ({ roomId, username }) => {
         socket.join(roomId);
+        socket.data.username = username; // store for end-session auth fallback
         if (!rooms.has(roomId)) {
             rooms.set(roomId, {
                 adminId: socket.id,
@@ -2618,21 +2655,26 @@ io.on('connection', (socket) => {
 
     socket.on('end-session', ({ roomId }) => {
         const room = rooms.get(roomId);
-        if (room && socket.id === room.adminId) {
-            // Notify all users that the session is ending permanently
+        // Allow end-session if socket is the current adminId OR if the username matches the room owner
+        const isAdmin = room && (socket.id === room.adminId || socket.data?.username === room.owner);
+        if (room && isAdmin) {
+            // 1. Notify everyone inside the editor room
             io.in(roomId).emit('session-ended', { 
-                message: '⚠️ Workspace Terminated\n\nThe workspace owner has permanently ended this session.\nAll unsaved work will be lost.' 
+                roomId,
+                message: 'The workspace owner has permanently ended this session.' 
             });
+
+            // 2. Broadcast globally so Workspace page listeners (not inside the room) also update
+            io.emit('session-terminated-global', { roomId });
             
             // Delete the room from active rooms
             rooms.delete(roomId);
             
-            // Optionally delete workspace metadata
+            // Delete workspace metadata
             workspaceMetadata.delete(roomId);
             
             console.log(`[SESSION ENDED] Room ${roomId} permanently terminated by admin`);
-        } else if (room && socket.id !== room.adminId) {
-            // Non-admin tried to end session
+        } else if (room && !isAdmin) {
             socket.emit('error', { message: 'Only the workspace owner can end the session.' });
         }
     });
