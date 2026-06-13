@@ -3,212 +3,210 @@
   flex-direction: column;
   height: 100%;
   width: 100%;
-  background: var(--cv-bg);
+  background: #070707;
   position: relative;
-  font-family: var(--font-main);
+  font-family: 'Poppins', sans-serif;
 }
 
-/* --- New Compact Header Layout --- */
+/* ============================
+   COMPACT HEADER
+   ============================ */
+
 .editor-header-compact {
   width: 100%;
-  padding: 16px 32px;
-  background: linear-gradient(to bottom, rgba(7, 7, 7, 0.98), rgba(7, 7, 7, 0.8));
+  padding: 0 28px;
+  padding-top: 6px;
+  background: rgba(8,8,8,0.97);
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--cv-border);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.055);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
   position: relative;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
+/* subtle top accent line */
+.editor-header-compact::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb),0.25), transparent);
+}
+
+/* ── Top row: back + title + actions ── */
 .editor-header-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 14px;
+  height: 56px;
 }
 
 .btn-icon-back {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  color: var(--cv-text-muted);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.4);
   cursor: pointer;
-  padding: 8px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: var(--transition);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
 .btn-icon-back:hover {
-  background: rgba(var(--primary-rgb), 0.1);
-  color: var(--cv-accent);
-  border-color: var(--cv-accent);
-  transform: translateX(-3px);
-  box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.2);
+  background: rgba(var(--primary-rgb),0.1);
+  border-color: rgba(var(--primary-rgb),0.3);
+  color: var(--primary);
+  transform: translateX(-2px);
 }
 
+/* Note title — inline editable */
 .compact-title {
   flex: 1;
-  font-size: 22px !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.5px;
-  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
   color: #fff !important;
+  font-family: 'Poppins', sans-serif !important;
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+  padding: 0 !important;
+  min-width: 0;
+  caret-color: var(--primary);
 }
 
+.compact-title::placeholder { color: rgba(255,255,255,0.2) !important; }
+
+/* inline actions: save badge + buttons + delete */
 .editor-actions-inline {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .action-divider {
   width: 1px;
-  height: 24px;
-  background: rgba(255, 255, 255, 0.08);
-  margin: 0 6px;
+  height: 20px;
+  background: rgba(255,255,255,0.07);
+  margin: 0 4px;
 }
 
-/* Tag styles removed */
-
-.editor-title-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  padding: 6px 0;
-  transition: all 0.3s ease;
-  min-width: 0;
-}
-
-.editor-title-input:focus {
-  outline: none;
-  color: var(--cv-accent);
-}
-
+/* save status pill */
 .save-status {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.09em;
   display: flex;
   align-items: center;
+  gap: 5px;
   padding: 4px 10px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255,255,255,0.03);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255,255,255,0.05);
 }
 
-.status-saving {
-  color: #fbbf24;
-}
+.status-saving { color: #fbbf24; }
+.status-saved  { color: #22c55e; }
+.status-error  { color: var(--primary); }
 
-.status-saved {
-  color: #10b981;
-}
-
-.status-error {
-  color: var(--primary);
-}
-
-/* Tag chips removed */
-
+/* action buttons (PDF, MD, delete) */
 .btn-action-icon {
-  padding: 8px 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 6px 13px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
   border-radius: 8px;
-  color: var(--cv-text-secondary);
-  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  font-family: 'Poppins', sans-serif;
+  font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.07em;
   cursor: pointer;
-  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   white-space: nowrap;
+  transition: all 0.18s ease;
 }
 
 .btn-action-icon:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--cv-text-primary);
-  border-color: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.12);
+  color: #fff;
+  transform: translateY(-1px);
 }
 
 .btn-delete-note {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
   border-radius: 8px;
-  color: var(--cv-text-muted);
-  width: 34px;
-  height: 34px;
+  color: rgba(255,255,255,0.35);
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
 }
 
 .btn-delete-note:hover {
-  background: rgba(var(--primary-rgb), 0.1);
+  background: rgba(var(--primary-rgb),0.1);
+  border-color: rgba(var(--primary-rgb),0.25);
   color: var(--primary);
-  border-color: rgba(var(--primary-rgb), 0.2);
-  transform: translateY(-2px);
 }
+
+/* ============================
+   TOOLBAR ROW (from RichEditor)
+   ============================ */
+/* The toolbar is rendered inside .editor-content via RichEditor —
+   we override its container colors here */
 
 .editor-content {
   flex: 1;
   overflow: hidden;
   position: relative;
-  background: var(--cv-bg);
-  padding: 0 10px;
+  background: transparent;
 }
+
+/* ============================
+   EMPTY STATE
+   ============================ */
 
 .note-editor-empty {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--cv-text-muted);
-  font-weight: 600;
+  color: rgba(255,255,255,0.15);
+  font-weight: 700;
+  font-size: 0.75rem;
   letter-spacing: 2px;
   text-transform: uppercase;
 }
 
-.spin {
-  animation: spin 2s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
+/* ============================
+   SPIN ANIMATION
+   ============================ */
 
 .spin {
-  animation: spin 2s linear infinite;
+  animation: spinKf 1.4s linear infinite;
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
+@keyframes spinKf {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }

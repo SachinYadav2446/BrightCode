@@ -537,19 +537,70 @@ const CodeVault = () => {
                 animate={{ opacity: 1 }}
                 className="vault-welcome"
               >
-                {/* Notes List */}
                 <div className="notes-list-main">
-                  {/* Notes List Empty State */}
                   {loading ? (
                     <div className="loading-state-vault">
                       <div className="spinner-vault"></div>
-                      <p>Loading notes...</p>
+                      <p>Loading vault...</p>
                     </div>
                   ) : (
                     <div className="empty-state-vault">
-                      <File size={64} className="empty-icon-vault" />
-                      <h3>No File Selected</h3>
-                      <p>Select a file from the sidebar to start editing</p>
+                      {/* Ambient blobs */}
+                      <div className="ev-blob ev-blob-1"></div>
+                      <div className="ev-blob ev-blob-2"></div>
+
+                      {/* Central icon */}
+                      <div className="ev-icon-ring">
+                        <div className="ev-icon-inner">
+                          <File size={36} />
+                        </div>
+                      </div>
+
+                      <h3>No file open</h3>
+                      <p>Select a file from the sidebar or create a new note to start writing.</p>
+
+                      {/* Quick action hints */}
+                      <div className="ev-hints">
+                        <span className="ev-hint">
+                          <kbd>Ctrl</kbd><kbd>K</kbd>
+                          <span>Command palette</span>
+                        </span>
+                        <span className="ev-hint-sep">·</span>
+                        <span className="ev-hint">
+                          <kbd>+</kbd>
+                          <span>New note</span>
+                        </span>
+                      </div>
+
+                      {/* Stats row if data exists */}
+                      {notes.length > 0 && (
+                        <div className="ev-stats">
+                          <div className="ev-stat">
+                            <span className="ev-stat-num">{notes.length}</span>
+                            <span className="ev-stat-lbl">Notes</span>
+                          </div>
+                          <div className="ev-stat-sep"></div>
+                          <div className="ev-stat">
+                            <span className="ev-stat-num">{folders.length}</span>
+                            <span className="ev-stat-lbl">Repositories</span>
+                          </div>
+                          <div className="ev-stat-sep"></div>
+                          <div className="ev-stat">
+                            <span className="ev-stat-num">{allTags.length}</span>
+                            <span className="ev-stat-lbl">Tags</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Create prompt when empty */}
+                      {folders.length === 0 && (
+                        <button
+                          className="ev-create-btn"
+                          onClick={() => setShowCreateFolderModal(true)}
+                        >
+                          <Plus size={16} /> Create your first repository
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
