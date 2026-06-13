@@ -388,7 +388,8 @@ export default function Landing() {
 
       {/* ══ COMPETITIVE LEADERBOARD SECTION ══ */}
       <section className="section bg-alt" id="arena">
-        <div className="section-inner arena-grid">
+        <div className="section-inner">
+          <div className="arena-grid">
           <div className="arena-left">
             <span className="section-tag">Competitive</span>
             <h2 className="section-heading">Rise on the Leaderboard</h2>
@@ -449,7 +450,8 @@ export default function Landing() {
               </div>
             </div>
           </div>
-        </div>
+          </div>        {/* end arena-grid */}
+        </div>          {/* end section-inner */}
       </section>
 
       {/* ══ CTA ══ */}
