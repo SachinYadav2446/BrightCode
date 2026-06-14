@@ -1,0 +1,910 @@
+{
+  "topic": "array",
+  "name": "Union of Arrays with Duplicates",
+  "platform": "GFG",
+  "difficulty": "Easy",
+  "statement": "You are given two arrays a[] and b[], return the Union of both arrays. The union contains all distinct elements present in either array.",
+  "examples": [
+    {
+      "input": {
+        "a": [
+          1,
+          2,
+          3,
+          2,
+          1
+        ],
+        "b": [
+          3,
+          2,
+          2,
+          3,
+          3,
+          2
+        ]
+      },
+      "output": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "input": {
+        "a": [
+          1,
+          2,
+          3
+        ],
+        "b": [
+          4,
+          5,
+          6
+        ]
+      },
+      "output": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    }
+  ],
+  "constraints": {
+    "size": "1 <= a.size(), b.size() <= 1000000",
+    "value": "0 <= a[i], b[i] <= 100000"
+  },
+  "testCases": [
+    {
+      "id": 1,
+      "input": {
+        "a": [
+          1
+        ],
+        "b": [
+          1
+        ]
+      },
+      "expected": [
+        1
+      ]
+    },
+    {
+      "id": 2,
+      "input": {
+        "a": [
+          1
+        ],
+        "b": [
+          2
+        ]
+      },
+      "expected": [
+        1,
+        2
+      ]
+    },
+    {
+      "id": 3,
+      "input": {
+        "a": [
+          1,
+          2,
+          3
+        ],
+        "b": [
+          4,
+          5,
+          6
+        ]
+      },
+      "expected": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "id": 4,
+      "input": {
+        "a": [
+          1,
+          2,
+          3,
+          2,
+          1
+        ],
+        "b": [
+          3,
+          2,
+          2,
+          3,
+          3,
+          2
+        ]
+      },
+      "expected": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": 5,
+      "input": {
+        "a": [
+          1,
+          2,
+          1,
+          1,
+          2
+        ],
+        "b": [
+          2,
+          2,
+          1,
+          2,
+          1
+        ]
+      },
+      "expected": [
+        1,
+        2
+      ]
+    },
+    {
+      "id": 6,
+      "input": {
+        "a": [
+          0,
+          0,
+          0
+        ],
+        "b": [
+          0
+        ]
+      },
+      "expected": [
+        0
+      ]
+    },
+    {
+      "id": 7,
+      "input": {
+        "a": [
+          100000
+        ],
+        "b": [
+          99999
+        ]
+      },
+      "expected": [
+        99999,
+        100000
+      ]
+    },
+    {
+      "id": 8,
+      "input": {
+        "a": [
+          1,
+          2,
+          3
+        ],
+        "b": [
+          3,
+          4,
+          5
+        ]
+      },
+      "expected": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "id": 9,
+      "input": {
+        "a": [
+          5,
+          5,
+          5
+        ],
+        "b": [
+          5,
+          5
+        ]
+      },
+      "expected": [
+        5
+      ]
+    },
+    {
+      "id": 10,
+      "input": {
+        "a": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "b": [
+          2,
+          4,
+          6,
+          8
+        ]
+      },
+      "expected": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "id": 11,
+      "input": {
+        "a": [],
+        "b": []
+      },
+      "expected": []
+    },
+    {
+      "id": 12,
+      "input": {
+        "a": [
+          1
+        ],
+        "b": []
+      },
+      "expected": [
+        1
+      ]
+    },
+    {
+      "id": 13,
+      "input": {
+        "a": [],
+        "b": [
+          2
+        ]
+      },
+      "expected": [
+        2
+      ]
+    },
+    {
+      "id": 14,
+      "input": {
+        "a": [
+          1,
+          1,
+          1
+        ],
+        "b": [
+          2,
+          2,
+          2
+        ]
+      },
+      "expected": [
+        1,
+        2
+      ]
+    },
+    {
+      "id": 15,
+      "input": {
+        "a": [
+          1,
+          2,
+          3
+        ],
+        "b": [
+          1,
+          2,
+          3
+        ]
+      },
+      "expected": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": 16,
+      "input": {
+        "a": [
+          10,
+          20
+        ],
+        "b": [
+          20,
+          30
+        ]
+      },
+      "expected": [
+        10,
+        20,
+        30
+      ]
+    },
+    {
+      "id": 17,
+      "input": {
+        "a": [
+          7,
+          8,
+          9
+        ],
+        "b": [
+          9,
+          10,
+          11
+        ]
+      },
+      "expected": [
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "id": 18,
+      "input": {
+        "a": [
+          1,
+          4,
+          7
+        ],
+        "b": [
+          2,
+          5,
+          8
+        ]
+      },
+      "expected": [
+        1,
+        2,
+        4,
+        5,
+        7,
+        8
+      ]
+    },
+    {
+      "id": 19,
+      "input": {
+        "a": [
+          3,
+          3,
+          3
+        ],
+        "b": [
+          3
+        ]
+      },
+      "expected": [
+        3
+      ]
+    },
+    {
+      "id": 20,
+      "input": {
+        "a": [
+          1,
+          100000
+        ],
+        "b": [
+          50000
+        ]
+      },
+      "expected": [
+        1,
+        50000,
+        100000
+      ]
+    },
+    {
+      "id": 21,
+      "input": {
+        "a": [
+          9,
+          8,
+          7
+        ],
+        "b": [
+          6,
+          5,
+          4
+        ]
+      },
+      "expected": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "id": 22,
+      "input": {
+        "a": [
+          1,
+          2,
+          2
+        ],
+        "b": [
+          2,
+          3,
+          3
+        ]
+      },
+      "expected": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": 23,
+      "input": {
+        "a": [
+          11,
+          22
+        ],
+        "b": [
+          22,
+          33
+        ]
+      },
+      "expected": [
+        11,
+        22,
+        33
+      ]
+    },
+    {
+      "id": 24,
+      "input": {
+        "a": [
+          4,
+          4,
+          4
+        ],
+        "b": [
+          5,
+          5,
+          5
+        ]
+      },
+      "expected": [
+        4,
+        5
+      ]
+    },
+    {
+      "id": 25,
+      "input": {
+        "a": [
+          2,
+          4,
+          6
+        ],
+        "b": [
+          6,
+          8,
+          10
+        ]
+      },
+      "expected": [
+        2,
+        4,
+        6,
+        8,
+        10
+      ]
+    },
+    {
+      "id": 26,
+      "input": {
+        "a": [
+          99
+        ],
+        "b": [
+          99
+        ]
+      },
+      "expected": [
+        99
+      ]
+    },
+    {
+      "id": 27,
+      "input": {
+        "a": [
+          50,
+          60
+        ],
+        "b": [
+          70,
+          80
+        ]
+      },
+      "expected": [
+        50,
+        60,
+        70,
+        80
+      ]
+    },
+    {
+      "id": 28,
+      "input": {
+        "a": [
+          1,
+          5,
+          9
+        ],
+        "b": [
+          2,
+          6,
+          10
+        ]
+      },
+      "expected": [
+        1,
+        2,
+        5,
+        6,
+        9,
+        10
+      ]
+    },
+    {
+      "id": 29,
+      "input": {
+        "a": [
+          100
+        ],
+        "b": [
+          1
+        ]
+      },
+      "expected": [
+        1,
+        100
+      ]
+    },
+    {
+      "id": 30,
+      "input": {
+        "a": [
+          8,
+          8
+        ],
+        "b": [
+          8,
+          8
+        ]
+      },
+      "expected": [
+        8
+      ]
+    },
+    {
+      "id": 31,
+      "input": {
+        "a": [
+          13,
+          17
+        ],
+        "b": [
+          19,
+          23
+        ]
+      },
+      "expected": [
+        13,
+        17,
+        19,
+        23
+      ]
+    },
+    {
+      "id": 32,
+      "input": {
+        "a": [
+          0
+        ],
+        "b": [
+          100000
+        ]
+      },
+      "expected": [
+        0,
+        100000
+      ]
+    },
+    {
+      "id": 33,
+      "input": {
+        "a": [
+          2,
+          2,
+          2,
+          3
+        ],
+        "b": [
+          3,
+          4
+        ]
+      },
+      "expected": [
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": 34,
+      "input": {
+        "a": [
+          7
+        ],
+        "b": [
+          8
+        ]
+      },
+      "expected": [
+        7,
+        8
+      ]
+    },
+    {
+      "id": 35,
+      "input": {
+        "a": [
+          1,
+          10,
+          100
+        ],
+        "b": [
+          1000
+        ]
+      },
+      "expected": [
+        1,
+        10,
+        100,
+        1000
+      ]
+    },
+    {
+      "id": 36,
+      "input": {
+        "a": [
+          42
+        ],
+        "b": [
+          24
+        ]
+      },
+      "expected": [
+        24,
+        42
+      ]
+    },
+    {
+      "id": 37,
+      "input": {
+        "a": [
+          5,
+          10
+        ],
+        "b": [
+          10,
+          15
+        ]
+      },
+      "expected": [
+        5,
+        10,
+        15
+      ]
+    },
+    {
+      "id": 38,
+      "input": {
+        "a": [
+          6,
+          12
+        ],
+        "b": [
+          18,
+          24
+        ]
+      },
+      "expected": [
+        6,
+        12,
+        18,
+        24
+      ]
+    },
+    {
+      "id": 39,
+      "input": {
+        "a": [
+          3,
+          6,
+          9
+        ],
+        "b": [
+          9,
+          12
+        ]
+      },
+      "expected": [
+        3,
+        6,
+        9,
+        12
+      ]
+    },
+    {
+      "id": 40,
+      "input": {
+        "a": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "b": [
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      "expected": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": 41,
+      "generator": "random_arrays_with_duplicates",
+      "a_size": 410000,
+      "b_size": 328000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "return distinct union of both arrays"
+    },
+    {
+      "id": 42,
+      "generator": "random_arrays_with_duplicates",
+      "a_size": 420000,
+      "b_size": 336000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "return distinct union of both arrays"
+    },
+    {
+      "id": 43,
+      "generator": "random_arrays_with_duplicates",
+      "a_size": 430000,
+      "b_size": 344000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "return distinct union of both arrays"
+    },
+    {
+      "id": 44,
+      "generator": "random_arrays_with_duplicates",
+      "a_size": 440000,
+      "b_size": 352000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "return distinct union of both arrays"
+    },
+    {
+      "id": 45,
+      "generator": "random_arrays_with_duplicates",
+      "a_size": 450000,
+      "b_size": 360000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "return distinct union of both arrays"
+    },
+    {
+      "id": 46,
+      "generator": "random_arrays_with_duplicates",
+      "a_size": 460000,
+      "b_size": 368000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "return distinct union of both arrays"
+    },
+    {
+      "id": 47,
+      "generator": "random_arrays_with_duplicates",
+      "a_size": 470000,
+      "b_size": 376000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "return distinct union of both arrays"
+    },
+    {
+      "id": 48,
+      "generator": "random_arrays_with_duplicates",
+      "a_size": 480000,
+      "b_size": 384000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "return distinct union of both arrays"
+    },
+    {
+      "id": 49,
+      "generator": "random_arrays_with_duplicates",
+      "a_size": 490000,
+      "b_size": 392000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "return distinct union of both arrays"
+    },
+    {
+      "id": 50,
+      "generator": "random_arrays_with_duplicates",
+      "a_size": 500000,
+      "b_size": 400000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "return distinct union of both arrays"
+    }
+  ]
+}

@@ -1,0 +1,560 @@
+{
+  "topic": "array",
+  "name": "Array with All Palindromes",
+  "platform": "GFG",
+  "difficulty": "Basic",
+  "statement": "Given an array of positive integers. Return true if all array elements are palindrome numbers, otherwise return false.",
+  "examples": [
+    {
+      "input": [
+        111,
+        222,
+        333,
+        444,
+        555
+      ],
+      "output": true
+    },
+    {
+      "input": [
+        121,
+        131,
+        20
+      ],
+      "output": false
+    }
+  ],
+  "constraints": {
+    "size": "1 <= arr.size() <= 20",
+    "value": "1 <= arr[i] <= 100000"
+  },
+  "testCases": [
+    {
+      "id": 1,
+      "input": {
+        "arr": [
+          111,
+          222,
+          333,
+          444,
+          555
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 2,
+      "input": {
+        "arr": [
+          121,
+          131,
+          20
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 3,
+      "input": {
+        "arr": [
+          1
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 4,
+      "input": {
+        "arr": [
+          11
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 5,
+      "input": {
+        "arr": [
+          12
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 6,
+      "input": {
+        "arr": [
+          121
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 7,
+      "input": {
+        "arr": [
+          12321
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 8,
+      "input": {
+        "arr": [
+          12345
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 9,
+      "input": {
+        "arr": [
+          101,
+          202,
+          303
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 10,
+      "input": {
+        "arr": [
+          101,
+          202,
+          304
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 11,
+      "input": {
+        "arr": [
+          7,
+          8,
+          9
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 12,
+      "input": {
+        "arr": [
+          10
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 13,
+      "input": {
+        "arr": [
+          22,
+          33,
+          44,
+          55
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 14,
+      "input": {
+        "arr": [
+          22,
+          33,
+          44,
+          56
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 15,
+      "input": {
+        "arr": [
+          99999
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 16,
+      "input": {
+        "arr": [
+          10001
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 17,
+      "input": {
+        "arr": [
+          10002
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 18,
+      "input": {
+        "arr": [
+          111,
+          121,
+          131,
+          141
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 19,
+      "input": {
+        "arr": [
+          111,
+          121,
+          132
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 20,
+      "input": {
+        "arr": [
+          5,
+          55,
+          555,
+          5555
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 21,
+      "input": {
+        "arr": [
+          123,
+          321
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 22,
+      "input": {
+        "arr": [
+          88,
+          99
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 23,
+      "input": {
+        "arr": [
+          88,
+          98
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 24,
+      "input": {
+        "arr": [
+          454,
+          565,
+          676
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 25,
+      "input": {
+        "arr": [
+          454,
+          566,
+          676
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 26,
+      "input": {
+        "arr": [
+          1,
+          22,
+          333,
+          4444
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 27,
+      "input": {
+        "arr": [
+          1,
+          22,
+          333,
+          4445
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 28,
+      "input": {
+        "arr": [
+          777,
+          888,
+          999
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 29,
+      "input": {
+        "arr": [
+          777,
+          888,
+          998
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 30,
+      "input": {
+        "arr": [
+          1001,
+          2002,
+          3003
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 31,
+      "input": {
+        "arr": [
+          1001,
+          2002,
+          3004
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 32,
+      "input": {
+        "arr": [
+          909,
+          808,
+          707
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 33,
+      "input": {
+        "arr": [
+          909,
+          808,
+          706
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 34,
+      "input": {
+        "arr": [
+          12321,
+          45654
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 35,
+      "input": {
+        "arr": [
+          12321,
+          45655
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 36,
+      "input": {
+        "arr": [
+          11,
+          22,
+          33,
+          44,
+          55,
+          66
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 37,
+      "input": {
+        "arr": [
+          11,
+          22,
+          33,
+          44,
+          55,
+          67
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 38,
+      "input": {
+        "arr": [
+          444,
+          555,
+          666
+        ]
+      },
+      "expected": true
+    },
+    {
+      "id": 39,
+      "input": {
+        "arr": [
+          444,
+          555,
+          667
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 40,
+      "input": {
+        "arr": [
+          42
+        ]
+      },
+      "expected": false
+    },
+    {
+      "id": 41,
+      "generator": "random_positive_integers",
+      "size": 20,
+      "valueRange": [
+        1,
+        100000
+      ],
+      "validation": "return true iff every number is palindrome"
+    },
+    {
+      "id": 42,
+      "generator": "random_positive_integers",
+      "size": 20,
+      "valueRange": [
+        1,
+        100000
+      ],
+      "validation": "return true iff every number is palindrome"
+    },
+    {
+      "id": 43,
+      "generator": "random_positive_integers",
+      "size": 20,
+      "valueRange": [
+        1,
+        100000
+      ],
+      "validation": "return true iff every number is palindrome"
+    },
+    {
+      "id": 44,
+      "generator": "random_positive_integers",
+      "size": 20,
+      "valueRange": [
+        1,
+        100000
+      ],
+      "validation": "return true iff every number is palindrome"
+    },
+    {
+      "id": 45,
+      "generator": "random_positive_integers",
+      "size": 20,
+      "valueRange": [
+        1,
+        100000
+      ],
+      "validation": "return true iff every number is palindrome"
+    },
+    {
+      "id": 46,
+      "generator": "random_positive_integers",
+      "size": 20,
+      "valueRange": [
+        1,
+        100000
+      ],
+      "validation": "return true iff every number is palindrome"
+    },
+    {
+      "id": 47,
+      "generator": "random_positive_integers",
+      "size": 20,
+      "valueRange": [
+        1,
+        100000
+      ],
+      "validation": "return true iff every number is palindrome"
+    },
+    {
+      "id": 48,
+      "generator": "random_positive_integers",
+      "size": 20,
+      "valueRange": [
+        1,
+        100000
+      ],
+      "validation": "return true iff every number is palindrome"
+    },
+    {
+      "id": 49,
+      "generator": "random_positive_integers",
+      "size": 20,
+      "valueRange": [
+        1,
+        100000
+      ],
+      "validation": "return true iff every number is palindrome"
+    },
+    {
+      "id": 50,
+      "generator": "random_positive_integers",
+      "size": 20,
+      "valueRange": [
+        1,
+        100000
+      ],
+      "validation": "return true iff every number is palindrome"
+    }
+  ]
+}

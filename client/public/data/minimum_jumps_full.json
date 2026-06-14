@@ -1,0 +1,671 @@
+{
+  "topic": "array",
+  "name": "Minimum Jumps",
+  "platform": "GFG",
+  "difficulty": "Medium",
+  "statement": "Given an array where each element represents the maximum jump length from that position, find the minimum number of jumps required to reach the last index. Return -1 if unreachable.",
+  "examples": [
+    {
+      "input": [
+        1,
+        3,
+        5,
+        8,
+        9,
+        2,
+        6,
+        7,
+        6,
+        8,
+        9
+      ],
+      "output": 3
+    },
+    {
+      "input": [
+        1,
+        4,
+        3,
+        2,
+        6,
+        7
+      ],
+      "output": 2
+    },
+    {
+      "input": [
+        0,
+        10,
+        20
+      ],
+      "output": -1
+    }
+  ],
+  "constraints": {
+    "arr_size": "2 <= arr.size() <= 100000",
+    "arr_value": "0 <= arr[i] <= 100000"
+  },
+  "testCases": [
+    {
+      "id": 1,
+      "input": {
+        "arr": [
+          1,
+          3,
+          5,
+          8,
+          9,
+          2,
+          6,
+          7,
+          6,
+          8,
+          9
+        ]
+      },
+      "expected": 3
+    },
+    {
+      "id": 2,
+      "input": {
+        "arr": [
+          1,
+          4,
+          3,
+          2,
+          6,
+          7
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 3,
+      "input": {
+        "arr": [
+          0,
+          10,
+          20
+        ]
+      },
+      "expected": -1
+    },
+    {
+      "id": 4,
+      "input": {
+        "arr": [
+          1,
+          1
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 5,
+      "input": {
+        "arr": [
+          2,
+          1
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 6,
+      "input": {
+        "arr": [
+          1,
+          0
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 7,
+      "input": {
+        "arr": [
+          2,
+          0,
+          0
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 8,
+      "input": {
+        "arr": [
+          1,
+          0,
+          0
+        ]
+      },
+      "expected": -1
+    },
+    {
+      "id": 9,
+      "input": {
+        "arr": [
+          3,
+          2,
+          1,
+          0,
+          4
+        ]
+      },
+      "expected": -1
+    },
+    {
+      "id": 10,
+      "input": {
+        "arr": [
+          2,
+          3,
+          1,
+          1,
+          4
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 11,
+      "input": {
+        "arr": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "expected": 4
+    },
+    {
+      "id": 12,
+      "input": {
+        "arr": [
+          5,
+          4,
+          3,
+          2,
+          1,
+          0
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 13,
+      "input": {
+        "arr": [
+          1,
+          2,
+          0,
+          1
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 14,
+      "input": {
+        "arr": [
+          2,
+          0,
+          2,
+          0,
+          1
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 15,
+      "input": {
+        "arr": [
+          4,
+          1,
+          1,
+          3,
+          1,
+          1,
+          1
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 16,
+      "input": {
+        "arr": [
+          1,
+          2,
+          3
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 17,
+      "input": {
+        "arr": [
+          3,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 18,
+      "input": {
+        "arr": [
+          10,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 19,
+      "input": {
+        "arr": [
+          1,
+          3,
+          0,
+          0,
+          4
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 20,
+      "input": {
+        "arr": [
+          2,
+          5,
+          0,
+          0
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 21,
+      "input": {
+        "arr": [
+          1,
+          1,
+          0,
+          1
+        ]
+      },
+      "expected": -1
+    },
+    {
+      "id": 22,
+      "input": {
+        "arr": [
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 23,
+      "input": {
+        "arr": [
+          6,
+          2,
+          4,
+          0,
+          5,
+          1,
+          1,
+          4,
+          2,
+          9
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 24,
+      "input": {
+        "arr": [
+          1,
+          2,
+          1,
+          1,
+          1
+        ]
+      },
+      "expected": 3
+    },
+    {
+      "id": 25,
+      "input": {
+        "arr": [
+          4,
+          2,
+          0,
+          0,
+          2,
+          0
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 26,
+      "input": {
+        "arr": [
+          2,
+          1,
+          2,
+          3,
+          1
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 27,
+      "input": {
+        "arr": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "expected": 3
+    },
+    {
+      "id": 28,
+      "input": {
+        "arr": [
+          5,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 29,
+      "input": {
+        "arr": [
+          1,
+          3,
+          6,
+          1,
+          0,
+          9
+        ]
+      },
+      "expected": 3
+    },
+    {
+      "id": 30,
+      "input": {
+        "arr": [
+          2,
+          3,
+          0,
+          1,
+          4
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 31,
+      "input": {
+        "arr": [
+          3,
+          4,
+          2,
+          1,
+          2,
+          1
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 32,
+      "input": {
+        "arr": [
+          1,
+          0,
+          1
+        ]
+      },
+      "expected": -1
+    },
+    {
+      "id": 33,
+      "input": {
+        "arr": [
+          7,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 34,
+      "input": {
+        "arr": [
+          2,
+          0,
+          1
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 35,
+      "input": {
+        "arr": [
+          3,
+          0,
+          0,
+          0
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 36,
+      "input": {
+        "arr": [
+          1,
+          2,
+          0,
+          3,
+          0,
+          0,
+          1
+        ]
+      },
+      "expected": 3
+    },
+    {
+      "id": 37,
+      "input": {
+        "arr": [
+          2,
+          1,
+          0,
+          3
+        ]
+      },
+      "expected": -1
+    },
+    {
+      "id": 38,
+      "input": {
+        "arr": [
+          8,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 39,
+      "input": {
+        "arr": [
+          1,
+          4,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 40,
+      "input": {
+        "arr": [
+          2,
+          2,
+          0,
+          1
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 41,
+      "generator": "random_jump_array",
+      "size": 100000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "minimum jumps to reach end or -1"
+    },
+    {
+      "id": 42,
+      "generator": "random_jump_array",
+      "size": 100000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "minimum jumps to reach end or -1"
+    },
+    {
+      "id": 43,
+      "generator": "random_jump_array",
+      "size": 100000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "minimum jumps to reach end or -1"
+    },
+    {
+      "id": 44,
+      "generator": "random_jump_array",
+      "size": 100000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "minimum jumps to reach end or -1"
+    },
+    {
+      "id": 45,
+      "generator": "random_jump_array",
+      "size": 100000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "minimum jumps to reach end or -1"
+    },
+    {
+      "id": 46,
+      "generator": "random_jump_array",
+      "size": 100000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "minimum jumps to reach end or -1"
+    },
+    {
+      "id": 47,
+      "generator": "random_jump_array",
+      "size": 100000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "minimum jumps to reach end or -1"
+    },
+    {
+      "id": 48,
+      "generator": "random_jump_array",
+      "size": 100000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "minimum jumps to reach end or -1"
+    },
+    {
+      "id": 49,
+      "generator": "random_jump_array",
+      "size": 100000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "minimum jumps to reach end or -1"
+    },
+    {
+      "id": 50,
+      "generator": "random_jump_array",
+      "size": 100000,
+      "valueRange": [
+        0,
+        100000
+      ],
+      "validation": "minimum jumps to reach end or -1"
+    }
+  ]
+}

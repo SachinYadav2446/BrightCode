@@ -21,6 +21,9 @@ const IntraFactionArena = require('./intraFactionArena');
 const rateLimiter = require('./utils/rateLimiter');
 const chatbotAPI = require('./chatbotAPI');
 const questionsAPI = require('./questionsAPI');
+const proctorAPI = require('./proctorAPI');
+const { injectIntoQuestionsDB } = require('./localQuestionsLoader');
+const ProctorSocket = require('./proctorSocket');
 const logger = require('./logger');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || '*';
@@ -86,6 +89,9 @@ app.use('/api/chat', chatbotAPI);
 
 // ── Mount Questions API ─────────────────────────────────────
 app.use('/api/questions', questionsAPI);
+
+// ── Mount Proctor API ───────────────────────────────────────
+app.use('/api/proctor', proctorAPI);
 
 // Memory Fallback (for when PostgreSQL is offline)
 let memoryStore = { users: [] };
@@ -174,6 +180,16 @@ loadFactions();
 // ── Initialize Code Wars Arena ──────────────────────────────────────────────
 const codeWarsArena = new CodeWarsArena(io, factions);
 const intraFactionArena = new IntraFactionArena(io, factions, memoryStore, useMemoryDB);
+const proctorSocket = new ProctorSocket(io);
+
+// ── Inject local GFG questions into the question pool ──────────────────────
+// Must be done after questionsAPI mounts (which loads questionsDB from file).
+// We pull questionsDB directly from seedQuestions and prepend our 24 questions.
+{
+    const { questionsDB } = require('./seedQuestions');
+    const injected = injectIntoQuestionsDB(questionsDB);
+    logger.info(`[STARTUP] ✅ ${injected} local GFG questions injected into question pool`);
+}
 
 // Prefetch popular LeetCode problems on server start
 // const { prefetchLeetCodeProblems } = require('./codeWarQuestions');
