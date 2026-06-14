@@ -4,12 +4,17 @@ import API_URL from './config';
 let socketInstance = null;
 
 export const initSocket = () => {
+    // Reuse existing connected socket
     if (socketInstance?.connected) {
         return socketInstance;
     }
+
+    // If instance exists but disconnected, reconnect it instead of creating a new one
     if (socketInstance) {
-        socketInstance.disconnect();
-        socketInstance = null;
+        if (!socketInstance.connected) {
+            socketInstance.connect();
+        }
+        return socketInstance;
     }
 
     const backendUrl = API_URL;
@@ -20,7 +25,6 @@ export const initSocket = () => {
         timeout: 10000,
         transports: ['websocket', 'polling'],
         autoConnect: true,
-        forceNew: true,
         withCredentials: true,
     });
 
@@ -31,8 +35,6 @@ export const initSocket = () => {
 
     socketInstance.on('connect_error', (error) => {
         console.error('❌ Socket connection error:', error.message);
-        console.error('❌ Socket error details:', error);
-        // Check if it's an HTTPS/WSS issue
         if (location.protocol === 'https:' && backendUrl.startsWith('http:')) {
             console.error('❌ HTTPS page connecting to HTTP WebSocket - this will fail!');
         }
@@ -40,7 +42,7 @@ export const initSocket = () => {
 
     socketInstance.on('disconnect', (reason) => {
         console.warn('⚠️ Socket disconnected:', reason);
-        // If the server disconnects us, reset so next call reconnects
+        // Only null out if server explicitly disconnected us
         if (reason === 'io server disconnect') {
             socketInstance = null;
         }
@@ -50,3 +52,10 @@ export const initSocket = () => {
 };
 
 export const getSocket = () => socketInstance;
+
+export const disconnectSocket = () => {
+    if (socketInstance) {
+        socketInstance.disconnect();
+        socketInstance = null;
+    }
+};

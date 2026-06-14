@@ -2241,6 +2241,11 @@ app.get('/workspace/:id', (req, res) => {
 // Rooms Management
 const rooms = new Map();
 
+// Grace period for transient disconnects (network blips, page refreshes)
+// Maps username → { timer, roomId, userData }
+const pendingDisconnects = new Map();
+const DISCONNECT_GRACE_MS = 5000; // 5 seconds to reconnect without being removed
+
 io.on('connection', (socket) => {
     // ── Presence tracking ──────────────────────────────────────────────
     socket.on('presence:join', (userId) => {
@@ -2338,14 +2343,24 @@ io.on('connection', (socket) => {
         }
 
         // --- Prevent Ghost Duplicate Users on Refresh ---
-        // If this user is already in the room with an old stale socket, remove the old one.
+        // Cancel any pending disconnect grace period for this user (they reconnected!)
+        const wasReconnecting = pendingDisconnects.has(username);
+        if (wasReconnecting) {
+            clearTimeout(pendingDisconnects.get(username).timer);
+            pendingDisconnects.delete(username);
+            console.log(`[RECONNECT] ${username} reconnected within grace period — canceling removal`);
+        }
+
+        // If this user is already in the room with an old stale socket, swap it silently.
         const staleIndex = room.users.findIndex(u => u.username === username && u.id !== socket.id);
         if (staleIndex !== -1) {
             const staleId = room.users[staleIndex].id;
             room.users.splice(staleIndex, 1);
             delete room.permissions[staleId];
-            // Tell everyone the old ghost connection left
-            socket.to(roomId).emit('user-left', { id: staleId, username });
+            // Only broadcast user-left if this is NOT a grace-period reconnect
+            if (!wasReconnecting) {
+                socket.to(roomId).emit('user-left', { id: staleId, username });
+            }
         }
 
         // ── 3-Tier Role System: admin | writer | viewer ──────────────
@@ -2361,8 +2376,13 @@ io.on('connection', (socket) => {
         const workspaceMeta = workspaceMetadata.get(roomId);
         const workspaceName = workspaceMeta?.name || room.owner;
 
+        // Send files from the authoritative FileSystem instance
+        const filesToSend = room.fs ? room.fs.getFiles() : room.files;
+        const fileNames = Object.keys(filesToSend || {});
+        console.log(`[JOIN-ROOM] Sending initial-data to ${username} in room ${roomId}: ${fileNames.length} files:`, fileNames);
+
         socket.emit('initial-data', {
-            files: room.files,
+            files: filesToSend,
             users: room.users,
             adminId: room.adminId,
             yourId: socket.id,
@@ -2371,9 +2391,29 @@ io.on('connection', (socket) => {
             workspaceName: workspaceName
         });
 
-        socket.to(roomId).emit('user-joined', { socketId: socket.id, username, role, permission });
+        // Only broadcast user-joined if this is NOT a grace-period reconnect
+        if (!wasReconnecting) {
+            socket.to(roomId).emit('user-joined', { socketId: socket.id, username, role, permission });
+        }
 
         // --- ADMIN ACTIONS: Role Management ---
+
+        // Handle explicit room-state requests (safety net for missed initial-data)
+        socket.on('request-room-state', ({ roomId: reqRoomId }) => {
+            const reqRoom = rooms.get(reqRoomId);
+            if (!reqRoom) return;
+            const reqFiles = reqRoom.fs ? reqRoom.fs.getFiles() : reqRoom.files;
+            console.log(`[REQUEST-STATE] Sending room state to ${socket.id} for room ${reqRoomId}: ${Object.keys(reqFiles || {}).length} files`);
+            socket.emit('initial-data', {
+                files: reqFiles,
+                users: reqRoom.users,
+                adminId: reqRoom.adminId,
+                yourId: socket.id,
+                snapshots: reqRoom.snapshots,
+                workspaceOwner: reqRoom.owner,
+                workspaceName: workspaceMetadata.get(reqRoomId)?.name || reqRoom.owner
+            });
+        });
         socket.on('set-role', ({ targetId, newRole }) => {
             if (socket.id !== room.adminId) return; // Only admin can change roles
             if (targetId === room.adminId) return;   // Can't change own admin role
@@ -2461,7 +2501,7 @@ io.on('connection', (socket) => {
                 id: uuidV4(),
                 name: name || `Snapshot ${room.snapshots.length + 1}`,
                 timestamp: new Date().toISOString(),
-                files: JSON.parse(JSON.stringify(room.files)),
+                files: JSON.parse(JSON.stringify(room.fs ? room.fs.getFiles() : room.files)),
                 creator: username
             };
             room.snapshots.push(newSnapshot);
@@ -2472,7 +2512,12 @@ io.on('connection', (socket) => {
             if (!room) return;
             const snapshot = room.snapshots.find(s => s.id === snapshotId);
             if (snapshot) {
-                room.files = JSON.parse(JSON.stringify(snapshot.files));
+                const warpedFiles = JSON.parse(JSON.stringify(snapshot.files));
+                // Update both room.files and room.fs.files to keep them in sync
+                room.files = warpedFiles;
+                if (room.fs) {
+                    room.fs.files = warpedFiles;
+                }
                 io.in(roomId).emit('files-warped', {
                     files: room.files,
                     warpedBy: username,
@@ -2715,21 +2760,37 @@ io.on('connection', (socket) => {
 
     socket.on('disconnecting', () => {
         socket.rooms.forEach(roomId => {
-            // Skip the default socket.id room
             if (roomId === socket.id) return;
             
             const room = rooms.get(roomId);
             if (room) {
-                // Remove user from room but keep room alive
                 const userIndex = room.users.findIndex(u => u.id === socket.id);
                 if (userIndex !== -1) {
-                    const user = room.users[userIndex];
-                    room.users.splice(userIndex, 1);
-                    socket.to(roomId).emit('user-left', { id: socket.id, username: user.username });
-                    console.log(`[USER DISCONNECTED] ${user.username} disconnected from room ${roomId} (room still active, ${room.users.length} users remaining)`);
+                    const userData = room.users[userIndex];
+                    const username = userData.username;
+
+                    // Cancel any existing grace-period timer for this user
+                    if (pendingDisconnects.has(username)) {
+                        clearTimeout(pendingDisconnects.get(username).timer);
+                    }
+
+                    // Schedule removal after grace period
+                    const timer = setTimeout(() => {
+                        pendingDisconnects.delete(username);
+                        const currentRoom = rooms.get(roomId);
+                        if (currentRoom) {
+                            const idx = currentRoom.users.findIndex(u => u.username === username);
+                            if (idx !== -1) {
+                                currentRoom.users.splice(idx, 1);
+                                io.to(roomId).emit('user-left', { id: socket.id, username });
+                                console.log(`[USER DISCONNECTED] ${username} removed from room ${roomId} after grace period (${currentRoom.users.length} users remaining)`);
+                            }
+                        }
+                    }, DISCONNECT_GRACE_MS);
+
+                    pendingDisconnects.set(username, { timer, roomId, userData });
+                    console.log(`[USER DISCONNECTING] ${username} disconnected from room ${roomId} — grace period ${DISCONNECT_GRACE_MS / 1000}s started`);
                 }
-                // IMPORTANT: Do NOT delete the room
-                // Room persists for resume functionality
             }
         });
     });

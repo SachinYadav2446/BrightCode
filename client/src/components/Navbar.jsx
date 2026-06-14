@@ -25,7 +25,7 @@ const Navbar = () => {
     const path = location.pathname;
     if (path.startsWith('/hub')) return 'home';
     if (path.startsWith('/library')) return 'library';
-    if (path.startsWith('/workspace')) return 'workspace';
+    if (path.startsWith('/workspace') || path.startsWith('/proctor')) return 'workspace';
     if (path.startsWith('/codevault')) return 'codevault';
     if (path.startsWith('/factions')) return 'factions';
     if (path.startsWith('/user-guide')) return 'guide';

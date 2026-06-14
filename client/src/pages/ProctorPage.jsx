@@ -367,6 +367,22 @@ const ProctorPage = () => {
 
   return (
     <div className="pp-page">
+      {/* Mode Switcher */}
+      <div className="workspace-mode-selector">
+        <button 
+          className="mode-btn"
+          onClick={() => navigate('/workspace')}
+        >
+          <Code2 size={14} />
+          <span>Workspace</span>
+        </button>
+        <button 
+          className="mode-btn active"
+        >
+          <Shield size={14} />
+          <span>Proctor</span>
+        </button>
+      </div>
 
       {/* ── HERO ── */}
       <section className="pp-hero">

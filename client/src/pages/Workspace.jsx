@@ -552,17 +552,7 @@ const Workspace = () => {
               </div>
             </div>
             
-            {/* Floating Elements for Visual Appeal */}
-            <div className="floating-elements">
-              <div className="floating-card floating-card-1">
-                <div className="floating-icon"><Terminal size={16} /></div>
-                <div>Terminal Ready</div>
-              </div>
-              <div className="floating-card floating-card-2">
-                <div className="floating-icon"><Wifi size={16} /></div>
-                <div>Real-time Sync</div>
-              </div>
-            </div>
+
           </div>
         </div>
       </section>

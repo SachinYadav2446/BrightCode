@@ -369,18 +369,34 @@ const EditorPage = () => {
                 socket.on('connect', () => {
                     connectErrorCount = 0;
                     toast.dismiss('socket-error');
-                    console.log('Socket connected/reconnected. Re-joining room...');
+                    console.log('[EDITOR] Socket connected, joining room:', roomId, 'user:', user?.username);
                     socket.emit('join-room', { roomId, username: user?.username });
                 });
                 if (socket.connected) {
+                    console.log('[EDITOR] Socket already connected, joining room:', roomId, 'user:', user?.username);
                     socket.emit('join-room', { roomId, username: user?.username });
+                } else {
+                    console.log('[EDITOR] Socket not yet connected, waiting for connect event...');
                 }
 
 
 
-                socket.on('initial-data', ({ files, users, adminId, yourId, snapshots, workspaceOwner, workspaceName }) => {
+                socket.on('initial-data', ({ files: serverFiles, users, adminId, yourId, snapshots, workspaceOwner, workspaceName }) => {
                     if (isStopped) return;
-                    setFiles(files);
+                    const fileNames = Object.keys(serverFiles || {});
+                    console.log('[EDITOR] Received initial-data:', { fileCount: fileNames.length, files: fileNames, userCount: users?.length });
+                    // Clear the safety-net timeout since we got initial-data
+                    if (window.__initialDataTimeout) { clearTimeout(window.__initialDataTimeout); window.__initialDataTimeout = null; }
+                    // Merge server files with local state:
+                    // - Server is authoritative for files it knows about
+                    // - Local-only files (just created, not yet on server) are preserved
+                    setFiles(prev => {
+                        const merged = { ...prev };
+                        Object.entries(serverFiles || {}).forEach(([name, data]) => {
+                            merged[name] = data;
+                        });
+                        return merged;
+                    });
                     setClients(users);
                     setAdminId(adminId);
                     setMyId(yourId);
@@ -389,6 +405,15 @@ const EditorPage = () => {
                     if (workspaceName) setWorkspaceName(workspaceName);
                     // Don't auto-open any file â€” let user pick from tree
                 });
+
+                // Safety net: if initial-data doesn't arrive within 3s, request files explicitly
+                if (window.__initialDataTimeout) clearTimeout(window.__initialDataTimeout);
+                window.__initialDataTimeout = setTimeout(() => {
+                    if (!isStopped && socketRef.current) {
+                        console.warn('[EDITOR] initial-data not received in 3s, requesting files...');
+                        socketRef.current.emit('request-room-state', { roomId });
+                    }
+                }, 3000);
 
 
 
@@ -465,7 +490,13 @@ const EditorPage = () => {
                 socket.on('code-update', ({ fileName, content, socketId }) => {
                     // Don't update if the change is from the current user (avoids blinking)
                     if (!isStopped && socketId !== socket.id) {
-                        setFiles(prev => ({ ...prev, [fileName]: { ...prev[fileName], content } }));
+                        setFiles(prev => ({
+                            ...prev,
+                            [fileName]: {
+                                ...(prev[fileName] || { language: 'plaintext' }),
+                                content
+                            }
+                        }));
                     }
                 });
 
@@ -579,12 +610,6 @@ const EditorPage = () => {
                     }
                 });
 
-                socket.on('user-left', ({ id, username }) => {
-
-                    if (!isStopped) { toast.success(`${username} left`); setClients(prev => prev.filter(c => c.id !== id)); }
-
-                });
-
                 socket.on('session-ended', ({ message, roomId: endedRoomId }) => {
                     // Persist this room as terminated so Workspace page blocks re-entry
                     if (endedRoomId) {
@@ -632,7 +657,7 @@ const EditorPage = () => {
 
                 // New peer joined the call â€” initiate connection to them
                 socket.on('video-call-user-joined', async ({ socketId, username }) => {
-                    toast(`${username} joined the call`, { icon: 'ðŸ“¹' });
+                    // No toast here — user-joined already notifies; this is just for WebRTC setup
                     if (localStreamRef.current) {
                         await initiateCallToPeer(socketId, username);
                     }
@@ -640,7 +665,7 @@ const EditorPage = () => {
 
                 // Peer left the call
                 socket.on('video-call-user-left', ({ socketId, username }) => {
-                    toast(`${username} left the call`, { icon: 'ðŸ“µ' });
+                    // No toast here — user-left already notifies; just close peer connection
                     closePeerConnection(socketId);
                 });
 
@@ -699,7 +724,14 @@ const EditorPage = () => {
 
             isStopped = true;
 
-            if (socketRef.current) { socketRef.current.disconnect(); socketRef.current = null; }
+            if (socketRef.current) {
+                // Notify server we're leaving before cleanup
+                socketRef.current.emit('leave-workspace', { roomId, username: user?.username });
+                // Remove ALL listeners registered in this effect to prevent duplicates
+                socketRef.current.removeAllListeners();
+                socketRef.current.disconnect();
+                socketRef.current = null;
+            }
 
             endCall();
 
@@ -1505,7 +1537,7 @@ const EditorPage = () => {
         await pc.setLocalDescription(answer);
         socketRef.current?.emit('webrtc-answer', { roomId, answer, targetId: from });
 
-        toast(`${callerInfo?.username || 'Someone'} joined the call`, { icon: 'ðŸ“¹' });
+        // No toast here — user-joined already notifies about the join
     };
 
     // Leave the call (only called when leaving workspace)
