@@ -1,4 +1,4 @@
-﻿import API_URL from '../config';
+import API_URL from '../config';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowRight, Plus, Users, X, Copy, Check, Clock, Crown, User,
@@ -458,8 +458,25 @@ const Workspace = () => {
 
   return (
     <div className="workspace-page">
+      {/* Mode Switcher */}
+      <div className="workspace-mode-selector">
+        <button 
+          className="mode-btn active"
+        >
+          <Code2 size={14} />
+          <span>Workspace</span>
+        </button>
+        <button 
+          className="mode-btn"
+          onClick={() => navigate('/proctor')}
+        >
+          <Shield size={14} />
+          <span>Proctor</span>
+        </button>
+      </div>
 
-      {/* ── HERO ── */}
+      <>
+          {/* ── HERO ── */}
       <section className="workspace-hero">
         <div className="hero-inner">
           <div className="hero-left">
@@ -494,9 +511,6 @@ const Workspace = () => {
               </button>
               <button className="cta-button secondary" onClick={() => { setShowJoinModal(true); setJoinId(''); }}>
                 <Users size={18} /> Join Workspace
-              </button>
-              <button className="cta-button proctor" onClick={() => navigate('/proctor')}>
-                <Shield size={18} /> Proctor Session
               </button>
             </div>
           </div>
@@ -770,6 +784,7 @@ const Workspace = () => {
           )}
         </div>
       </section>
+        </>
 
       {/* ── CREATE MODAL ── */}
       {showCreateModal && (

@@ -14,6 +14,7 @@ import Workspace from './pages/Workspace';
 import CodeVault from './pages/CodeVault';
 import CodeWarsArena from './pages/CodeWarsArena';
 import ProctorArena from './pages/ProctorArena';
+import ProctorPage from './pages/ProctorPage';
 import BattleArena from './pages/BattleArena';
 import UserModule from './pages/UserModule';
 import UserProfile from './pages/UserProfile';
@@ -383,7 +384,7 @@ function App() {
               path="/proctor" 
               element={
                 <ProtectedRoute>
-                  <ProctorArena />
+                  <ProctorPage />
                 </ProtectedRoute>
               } 
             />

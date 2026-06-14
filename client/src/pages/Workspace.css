@@ -1891,3 +1891,76 @@
   .history-header { flex-direction: column; align-items: flex-start; }
   .new-ws-btn { width: 100%; justify-content: center; }
 }
+
+/* ============================================================
+   WORKSPACE/PROCTOR MODE SWITCHER & OVERRIDES
+   ============================================================ */
+
+.workspace-mode-selector {
+  position: absolute;
+  top: 74px; /* offset below floating navbar */
+  right: 40px;
+  display: flex;
+  background: rgba(15, 15, 15, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 4px;
+  border-radius: 30px;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.workspace-mode-selector .mode-btn {
+  background: transparent;
+  color: #8a8a8a;
+  border: none;
+  outline: none;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workspace-mode-selector .mode-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.workspace-mode-selector .mode-btn.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+}
+
+/* Override ProctorHub styling when embedded inside Workspace */
+.workspace-page .ph2-root {
+  padding-top: 0 !important;
+  min-height: calc(100vh - 50px) !important;
+  background: transparent !important;
+}
+
+.workspace-page .ph2-sidebar {
+  top: 50px !important;
+  height: calc(100vh - 50px) !important;
+  background: #070707 !important;
+}
+
+.workspace-page .ph2-main {
+  height: calc(100vh - 50px) !important;
+  background: transparent !important;
+}
+
+@media (max-width: 768px) {
+  .workspace-mode-selector {
+    position: relative;
+    top: 10px;
+    right: auto;
+    margin: 0 auto 20px auto;
+    width: fit-content;
+  }
+}
