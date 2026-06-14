@@ -28,11 +28,18 @@ class ProctorSocket {
              */
             socket.on('join-proctor-session', async (data) => {
                 try {
-                    const { sessionId, userId, username, role } = data;
+                    const { sessionId, userId, username, role, dbStatus } = data;
                     
                     if (!sessionId || !userId) {
                         socket.emit('error', { message: 'Missing sessionId or userId' });
                         return;
+                    }
+
+                    const uid = String(userId);
+
+                    // Leave previous proctor room if switching sessions
+                    if (socket.proctorSessionId && socket.proctorSessionId !== sessionId) {
+                        this.handleLeaveSession(socket);
                     }
 
                     // Join socket room
@@ -53,6 +60,8 @@ class ProctorSocket {
                             violations: [],
                             submissions: [],
                             activeQuestion: null,
+                            activeStreams: new Map(), // userId -> Set<'camera'|'screen'>
+                            sessionStatus: 'lobby',
                             monitoring: {
                                 screenRecordings: new Map(),
                                 faceDetections: new Map(),
@@ -63,34 +72,74 @@ class ProctorSocket {
                     }
 
                     const session = this.activeSessions.get(sessionId);
-                    
-                    // Add participant
-                    session.participants.set(userId, {
-                        userId,
-                        username: username || 'Unknown',
-                        role: role || 'candidate',
-                        socketId: socket.id,
-                        joinedAt: Date.now(),
-                        isActive: true,
-                        violations: 0,
-                        lastActivity: Date.now()
-                    });
 
-                    logger.info(`[PROCTOR SOCKET] User ${userId} (${username}) joined session ${sessionId} as ${role}`);
-                    
+                    if (dbStatus === 'active') session.sessionStatus = 'active';
+                    if (dbStatus === 'completed' || dbStatus === 'terminated') {
+                        session.sessionStatus = dbStatus;
+                    }
+
+                    // Rejoin: update socket id for existing participant
+                    const existing = session.participants.get(uid);
+                    if (existing) {
+                        existing.socketId = socket.id;
+                        existing.isActive = true;
+                        existing.username = username || existing.username;
+                        existing.role = role || existing.role;
+                        existing.lastActivity = Date.now();
+                        delete existing.disconnectedAt;
+                    } else {
+                        session.participants.set(uid, {
+                            userId: uid,
+                            username: username || 'Unknown',
+                            role: role || 'candidate',
+                            socketId: socket.id,
+                            joinedAt: Date.now(),
+                            isActive: true,
+                            violations: 0,
+                            lastActivity: Date.now()
+                        });
+                    }
+
+                    logger.info(`[PROCTOR SOCKET] User ${uid} (${username}) joined session ${sessionId} as ${role}`);
+
+                    const participantList = Array.from(session.participants.values())
+                        .filter(p => p.userId !== uid && p.isActive !== false)
+                        .map(p => ({
+                            id: p.userId,
+                            userId: p.userId,
+                            username: p.username,
+                            role: p.role,
+                        }));
+
                     // Notify other participants
                     socket.to(`proctor_${sessionId}`).emit('participant-joined', {
-                        participant: { id: userId, userId, username: username || 'Unknown', role: role || 'candidate' },
+                        participant: { id: uid, userId: uid, username: username || 'Unknown', role: role || 'candidate' },
                         sessionId
                     });
+
+                    // Active streams for late joiners
+                    const activeStreams = [];
+                    for (const [streamUserId, types] of session.activeStreams.entries()) {
+                        if (streamUserId === uid) continue;
+                        const p = session.participants.get(streamUserId);
+                        for (const streamType of types) {
+                            activeStreams.push({
+                                userId: streamUserId,
+                                username: p?.username || 'Unknown',
+                                streamType,
+                            });
+                        }
+                    }
 
                     // Send current session state to the new participant
                     socket.emit('session-state', {
                         sessionId,
                         participantCount: session.participants.size,
+                        participants: participantList,
                         violations: session.violations.length,
-                        // Send active question if one is already pushed
                         activeQuestion: session.activeQuestion || null,
+                        activeStreams,
+                        sessionStatus: session.sessionStatus || 'lobby',
                     });
 
                 } catch (error) {
@@ -117,9 +166,12 @@ class ProctorSocket {
                     return;
                 }
 
+                const session = this.activeSessions.get(sessionId);
+                if (session) session.sessionStatus = 'active';
+
                 logger.info(`[PROCTOR SOCKET] Session ${sessionId} started`);
                 
-                // Notify all participants
+                // Notify all participants (including sender)
                 this.io.to(`proctor_${sessionId}`).emit('session-started', {
                     sessionId,
                     startTime: Date.now()
@@ -204,6 +256,21 @@ class ProctorSocket {
              */
             socket.on('code-change', (data) => {
                 this.handleCodeChange(socket, data);
+            });
+
+            /**
+             * Candidate live code sync (proctor arena)
+             */
+            socket.on('candidate-code-update', (data) => {
+                const { sessionId, userId, code, language } = data;
+                if (socket.proctorSessionId !== sessionId) return;
+                socket.to(`proctor_${sessionId}`).emit('candidate-code-update', {
+                    sessionId,
+                    userId: String(userId || socket.proctorUserId),
+                    code,
+                    language,
+                    timestamp: Date.now(),
+                });
             });
 
             /**
@@ -309,11 +376,17 @@ class ProctorSocket {
             socket.on('proctor-stream-ready', (data) => {
                 const { sessionId, streamType, username } = data;
                 if (socket.proctorSessionId !== sessionId) return;
-                logger.info(`[PROCTOR SOCKET] User ${socket.proctorUserId} stream-ready: ${streamType}`);
+                const uid = String(socket.proctorUserId);
+                const session = this.activeSessions.get(sessionId);
+                if (session) {
+                    if (!session.activeStreams.has(uid)) session.activeStreams.set(uid, new Set());
+                    session.activeStreams.get(uid).add(streamType);
+                }
+                logger.info(`[PROCTOR SOCKET] User ${uid} stream-ready: ${streamType}`);
                 socket.to(`proctor_${sessionId}`).emit('proctor-stream-ready', {
                     sessionId,
-                    userId: socket.proctorUserId,
-                    username,
+                    userId: uid,
+                    username: username || socket.proctorUsername,
                     streamType,
                     socketId: socket.id,
                 });
@@ -325,10 +398,31 @@ class ProctorSocket {
             socket.on('proctor-stream-ended', (data) => {
                 const { sessionId, streamType } = data;
                 if (socket.proctorSessionId !== sessionId) return;
+                const uid = String(socket.proctorUserId);
+                const session = this.activeSessions.get(sessionId);
+                if (session?.activeStreams.has(uid)) {
+                    session.activeStreams.get(uid).delete(streamType);
+                    if (session.activeStreams.get(uid).size === 0) {
+                        session.activeStreams.delete(uid);
+                    }
+                }
                 socket.to(`proctor_${sessionId}`).emit('proctor-stream-ended', {
                     sessionId,
-                    userId: socket.proctorUserId,
+                    userId: uid,
                     streamType,
+                });
+            });
+
+            /**
+             * Viewer requests a peer to (re)start WebRTC for a stream type
+             */
+            socket.on('proctor-request-stream', (data) => {
+                const { sessionId, targetUserId, streamType } = data;
+                if (socket.proctorSessionId !== sessionId) return;
+                this.forwardToUser(socket, String(targetUserId), 'proctor-request-stream', {
+                    sessionId,
+                    streamType,
+                    fromUserId: String(socket.proctorUserId),
                 });
             });
 
@@ -364,16 +458,30 @@ class ProctorSocket {
         }
 
         const sessionId = socket.proctorSessionId;
-        const userId = socket.proctorUserId;
+        const userId = String(socket.proctorUserId);
         const session = this.activeSessions.get(sessionId);
 
-        if (session && session.participants.has(userId)) {
-            session.participants.delete(userId);
+        if (session) {
+            // Remove streams for this user
+            if (session.activeStreams.has(userId)) {
+                const types = [...(session.activeStreams.get(userId) || [])];
+                session.activeStreams.delete(userId);
+                types.forEach(streamType => {
+                    socket.to(`proctor_${sessionId}`).emit('proctor-stream-ended', {
+                        sessionId,
+                        userId,
+                        streamType,
+                    });
+                });
+            }
+
+            if (session.participants.has(userId)) {
+                session.participants.delete(userId);
+            }
             this.userSessions.delete(userId);
 
             logger.info(`[PROCTOR SOCKET] User ${userId} left session ${sessionId}`);
-            
-            // Notify other participants
+
             socket.to(`proctor_${sessionId}`).emit('participant-left', {
                 participantId: userId,
                 sessionId
@@ -383,6 +491,8 @@ class ProctorSocket {
         socket.leave(`proctor_${sessionId}`);
         socket.proctorSessionId = null;
         socket.proctorUserId = null;
+        socket.proctorUsername = null;
+        socket.proctorRole = null;
     }
 
     handleViolationReport(socket, data) {
@@ -424,7 +534,9 @@ class ProctorSocket {
         socket.to(`proctor_${sessionId}`).emit('violation-detected', {
             sessionId,
             violation: violationRecord,
-            participantId: socket.proctorUserId
+            participantId: socket.proctorUserId,
+            participantUsername: socket.proctorUsername,
+            userId: socket.proctorUserId,
         });
 
         // Check if participant should be terminated
@@ -658,6 +770,7 @@ class ProctorSocket {
         const chatMessage = {
             id: Date.now().toString(),
             userId: socket.proctorUserId,
+            username: socket.proctorUsername || 'Unknown',
             message,
             timestamp: Date.now()
         };
@@ -708,11 +821,12 @@ class ProctorSocket {
         if (!sessionId) return;
         const session = this.activeSessions.get(sessionId);
         if (!session) return;
-        const target = session.participants.get(targetUserId);
+        const targetId = String(targetUserId);
+        const target = session.participants.get(targetId);
         if (target?.socketId) {
             this.io.to(target.socketId).emit(event, {
                 ...data,
-                fromUserId: socket.proctorUserId,
+                fromUserId: String(socket.proctorUserId),
             });
         }
     }
@@ -767,6 +881,11 @@ class ProctorSocket {
         for (const userId of session.participants.keys()) {
             this.userSessions.delete(userId);
         }
+
+        // Clear streams and state
+        session.activeStreams?.clear();
+        session.activeQuestion = null;
+        session.sessionStatus = 'completed';
 
         // Remove session
         this.activeSessions.delete(sessionId);

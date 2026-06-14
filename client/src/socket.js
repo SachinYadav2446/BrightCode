@@ -4,8 +4,12 @@ import API_URL from './config';
 let socketInstance = null;
 
 export const initSocket = () => {
-    if (socketInstance) {
+    if (socketInstance?.connected) {
         return socketInstance;
+    }
+    if (socketInstance) {
+        socketInstance.disconnect();
+        socketInstance = null;
     }
 
     const backendUrl = API_URL;

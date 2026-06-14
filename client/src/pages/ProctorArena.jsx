@@ -6,7 +6,7 @@ import {
     Clock, AlertTriangle, CheckCircle, XCircle, Play,
     Users, ChevronRight, ChevronLeft, Monitor, MonitorOff,
     Eye, Maximize, Code2, Send, Crown, User, BookOpen,
-    ChevronDown, ChevronUp, Search, Filter, X, Zap
+    ChevronDown, ChevronUp, Search, Filter, X, Zap, MessageCircle
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -54,7 +54,7 @@ const QUESTION_FILES = [
 /* ─────────────────────────────────────────────────────────
    VideoTile — self-contained video element
 ───────────────────────────────────────────────────────── */
-const VideoTile = ({ stream, muted = false, label, className, noStreamText = 'No feed' }) => {
+const VideoTile = ({ stream, muted = false, label, className, noStreamText = 'No feed', compact = false }) => {
     const ref = useRef(null);
     useEffect(() => {
         if (!ref.current) return;
@@ -62,16 +62,19 @@ const VideoTile = ({ stream, muted = false, label, className, noStreamText = 'No
         if (stream) ref.current.play().catch(() => {});
     }, [stream]);
 
+    const initial = label?.[0]?.toUpperCase() || '?';
+
     return (
-        <div className={`pa-video-tile ${className || ''}`}>
+        <div className={`pa-vid ${compact ? 'pa-vid--compact' : ''} ${className || ''}`}>
             <video ref={ref} autoPlay playsInline muted={muted} />
             {!stream && (
-                <div className="pa-video-no-stream">
-                    <VideoOff size={22} />
+                <div className="pa-vid-placeholder">
+                    <div className="pa-vid-avatar">{initial}</div>
                     <span>{noStreamText}</span>
                 </div>
             )}
-            {label && <div className="pa-video-label">{label}</div>}
+            {label && <div className="pa-vid-name">{label}</div>}
+            {stream && <div className="pa-vid-live" />}
         </div>
     );
 };
@@ -88,6 +91,13 @@ const ProctorArena = () => {
     const [sessionState,   setSessionState]   = useState('loading');
     const [currentSession, setCurrentSession] = useState(null);
     const socketRef = useRef(null);
+    const sessionIdRef = useRef(sessionId);
+    const socketHandlersRef = useRef([]);
+
+    useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
+
+    const peerKey = (remoteId, streamType) =>
+        `${sessionIdRef.current}_${String(remoteId)}_${streamType}`;
 
     /* ── Role ── */
     const [isAdmin, setIsAdmin] = useState(false);
@@ -114,8 +124,17 @@ const ProctorArena = () => {
     const [peerStreams, setPeerStreams] = useState({});
     // peerConns[userId_streamType] = RTCPeerConnection
     const peerConns = useRef({});
-    // track which (userId, streamType) we've already initiated an offer for
     const pendingOffers = useRef(new Set());
+    const localCamStreamRef    = useRef(null);
+    const localScreenStreamRef = useRef(null);
+    const participantsRef      = useRef([]);
+    const userRef              = useRef(user);
+    const isAdminRef           = useRef(false);
+
+    useEffect(() => { userRef.current = user; }, [user]);
+    useEffect(() => { isAdminRef.current = isAdmin; }, [isAdmin]);
+    useEffect(() => { localCamStreamRef.current = localCamStream; }, [localCamStream]);
+    useEffect(() => { localScreenStreamRef.current = localScreenStream; }, [localScreenStream]);
 
     /* ── Questions ── */
     const [questionBank,    setQuestionBank]    = useState([]);   // admin: all 24 loaded
@@ -141,20 +160,39 @@ const ProctorArena = () => {
     const [watchingUserId,  setWatchingUserId]  = useState(null);
     const [watchTab,        setWatchTab]        = useState('editor'); // 'editor'|'camera'|'screen'
 
+    useEffect(() => { participantsRef.current = participants; }, [participants]);
+
     /* ── Chat ── */
     const [chatMessages, setChatMessages] = useState([]);
     const [chatInput,    setChatInput]    = useState('');
     const [showChat,     setShowChat]     = useState(false);
     const chatEndRef = useRef(null);
 
-    /* ─────────────────────────────────────────────────────
-       INIT
-    ───────────────────────────────────────────────────── */
+    const detachSocketHandlers = () => {
+        const sock = socketRef.current;
+        if (!sock) return;
+        socketHandlersRef.current.forEach(({ event, handler }) => sock.off(event, handler));
+        socketHandlersRef.current = [];
+    };
+
+    const bindSocket = (event, handler) => {
+        socketRef.current?.on(event, handler);
+        socketHandlersRef.current.push({ event, handler });
+    };
+
+    const teardownMediaAndPeers = () => {
+        localCamStreamRef.current?.getTracks().forEach(t => t.stop());
+        localScreenStreamRef.current?.getTracks().forEach(t => t.stop());
+        localCamStreamRef.current = null;
+        localScreenStreamRef.current = null;
+        Object.values(peerConns.current).forEach(pc => pc.close());
+        peerConns.current = {};
+        pendingOffers.current.clear();
+    };
     useEffect(() => {
         if (!user)      { navigate('/auth'); return; }
         if (!sessionId) return;
         initSession();
-        // proctoring listeners are set up after role is known — see useEffect below
         return () => { cleanup(); };
     }, [user, sessionId]);
 
@@ -172,11 +210,32 @@ const ProctorArena = () => {
     }, [chatMessages]);
 
     const initSession = async () => {
+        const sid = sessionId;
+        detachSocketHandlers();
+        teardownMediaAndPeers();
+        setParticipants([]);
+        setParticipantData({});
+        setPeerStreams({});
+        setWatchingUserId(null);
+        setChatMessages([]);
+        setViolations([]);
+        setActiveQuestion(null);
+        setCode('// Start coding here\n');
+        setSetupStep(0);
+        setLocalCamStream(null);
+        setLocalScreenStream(null);
+        setCamEnabled(false);
+        setMicEnabled(false);
+        setScreenSharing(false);
+        setSessionState('loading');
+
         try {
-            const { data } = await axios.get(`${API_URL}/api/proctor/session/${sessionId}`, {
+            const { data } = await axios.get(`${API_URL}/api/proctor/session/${sid}`, {
                 headers: { Authorization: `Bearer ${user.token}` },
             });
             const s = data.session;
+            if (sessionIdRef.current !== sid) return;
+
             setCurrentSession(s);
             setQuestions(s.questions || []);
             setTimeRemaining(s.timeLimit || 3600);
@@ -188,104 +247,173 @@ const ProctorArena = () => {
             socketRef.current = sock;
 
             sock.emit('join-proctor-session', {
-                sessionId,
+                sessionId: sid,
                 userId:   user.id,
                 username: user.username,
                 role:     admin ? 'admin' : 'candidate',
+                dbStatus: s.status,
             });
 
-            /* ── Socket events ── */
-            sock.on('session-updated',  d => setCurrentSession(d.session));
-            sock.on('session-ended',    () => setSessionState('completed'));
+            const guard = (d) => !d?.sessionId || d.sessionId === sid;
 
-            sock.on('session-state', d => {
+            bindSocket('session-updated', d => { if (guard(d)) setCurrentSession(d.session); });
+            bindSocket('session-ended', d => { if (!d?.sessionId || d.sessionId === sid) setSessionState('completed'); });
+
+            bindSocket('session-started', d => {
+                if (!guard(d)) return;
+                setSessionState('active');
+                setTimerActive(true);
+                if (!admin) toast.success('Interviewer started the session');
+            });
+
+            bindSocket('session-state', d => {
+                if (!guard(d)) return;
                 if (d.activeQuestion) setActiveQuestion(d.activeQuestion);
+                if (Array.isArray(d.participants)) {
+                    const list = d.participants.map(p => ({
+                        id: String(p.id || p.userId),
+                        username: p.username || 'Unknown',
+                        role: p.role || 'candidate',
+                    }));
+                    setParticipants(list);
+                    const pdata = {};
+                    list.forEach(p => {
+                        pdata[p.id] = {
+                            username: p.username,
+                            code: '// Waiting…\n',
+                            language: 'javascript',
+                            violations: [],
+                            isActive: true,
+                        };
+                    });
+                    setParticipantData(pdata);
+                }
+                if (d.sessionStatus === 'active') {
+                    setSessionState('active');
+                    setTimerActive(true);
+                }
+                (d.activeStreams || []).forEach(st => {
+                    if (String(st.userId) !== String(user.id)) {
+                        sock.emit('proctor-request-stream', {
+                            sessionId: sid, targetUserId: st.userId, streamType: st.streamType,
+                        });
+                    }
+                });
             });
 
-            sock.on('participant-joined', d => {
+            bindSocket('participant-joined', d => {
+                if (!guard(d)) return;
                 const p = d.participant;
-                setParticipants(prev => prev.find(x => x.id === (p.id || p.userId)) ? prev
-                    : [...prev, { id: p.id || p.userId, username: p.username || 'Unknown', role: p.role || 'candidate' }]);
+                const pid = String(p.id || p.userId);
+                setParticipants(prev => prev.find(x => String(x.id) === pid) ? prev
+                    : [...prev, { id: pid, username: p.username || 'Unknown', role: p.role || 'candidate' }]);
                 setParticipantData(prev => ({
                     ...prev,
-                    [p.id || p.userId]: {
+                    [pid]: {
                         username: p.username || 'Unknown',
                         code: '// Waiting…\n', language: 'javascript',
                         violations: [], isActive: true,
-                    }
+                    },
                 }));
+                if (localCamStreamRef.current) {
+                    sock.emit('proctor-stream-ready', { sessionId: sid, streamType: 'camera', username: user.username });
+                }
+                if (localScreenStreamRef.current) {
+                    sock.emit('proctor-stream-ready', { sessionId: sid, streamType: 'screen', username: user.username });
+                }
             });
 
-            sock.on('participant-left', d => {
-                setParticipants(prev => prev.filter(x => x.id !== d.participantId));
+            bindSocket('participant-left', d => {
+                if (!guard(d)) return;
+                const pid = String(d.participantId);
+                setParticipants(prev => prev.filter(x => String(x.id) !== pid));
                 setParticipantData(prev => {
                     const next = { ...prev };
-                    if (next[d.participantId]) next[d.participantId].isActive = false;
+                    if (next[pid]) next[pid].isActive = false;
+                    return next;
+                });
+                setPeerStreams(prev => {
+                    const next = { ...prev };
+                    delete next[pid];
                     return next;
                 });
             });
 
-            // Live code from candidate → admin
-            sock.on('candidate-code-update', d => {
-                if (!admin) return;
+            bindSocket('candidate-code-update', d => {
+                if (!admin || !guard(d)) return;
+                const uid = String(d.userId);
                 setParticipantData(prev => ({
                     ...prev,
-                    [d.userId]: { ...(prev[d.userId] || {}), code: d.code, language: d.language }
+                    [uid]: { ...(prev[uid] || {}), code: d.code, language: d.language },
                 }));
             });
 
-            // Violation
-            sock.on('violation-detected', d => {
-                if (!admin) return;
-                toast.error(`⚠️ ${d.participantUsername || d.violation?.userId || 'Candidate'}: ${d.violation.description}`);
+            bindSocket('violation-detected', d => {
+                if (!admin || !guard(d)) return;
+                const pid = String(d.participantId || d.userId);
+                toast.error(`⚠️ ${d.participantUsername || 'Candidate'}: ${d.violation.description}`);
                 setParticipantData(prev => ({
                     ...prev,
-                    [d.participantId || d.userId]: {
-                        ...(prev[d.participantId || d.userId] || {}),
-                        violations: [...(prev[d.participantId || d.userId]?.violations || []), d.violation],
-                    }
+                    [pid]: {
+                        ...(prev[pid] || {}),
+                        violations: [...(prev[pid]?.violations || []), d.violation],
+                    },
                 }));
             });
 
-            /* ── Question push / clear ── */
-            sock.on('proctor-question-pushed', d => {
+            bindSocket('proctor-question-pushed', d => {
+                if (!guard(d)) return;
                 setActiveQuestion(d.question);
                 if (!admin) toast.success(`📋 New question: ${d.question?.name}`);
             });
-            sock.on('proctor-question-cleared', () => setActiveQuestion(null));
+            bindSocket('proctor-question-cleared', d => { if (!d?.sessionId || d.sessionId === sid) setActiveQuestion(null); });
 
-            /* ── WebRTC new-style signals ── */
-            sock.on('proctor-webrtc-offer',   d => handleIncomingOffer(d, sock));
-            sock.on('proctor-webrtc-answer',  d => handleIncomingAnswer(d));
-            sock.on('proctor-webrtc-ice',     d => handleIncomingIce(d));
+            bindSocket('proctor-webrtc-offer', d => { if (guard(d)) handleIncomingOffer(d, sock); });
+            bindSocket('proctor-webrtc-answer', d => { if (guard(d)) handleIncomingAnswer(d); });
+            bindSocket('proctor-webrtc-ice', d => { if (guard(d)) handleIncomingIce(d); });
 
-            // A peer just started a stream — we need to send them an offer
-            sock.on('proctor-stream-ready', d => {
-                if (d.userId === user.id) return; // own echo
-                initiateOffer(d.userId, d.streamType, sock);
-            });
-
-            sock.on('proctor-stream-ended', d => {
-                setPeerStreams(prev => {
-                    const next = { ...prev };
-                    if (next[d.userId]) {
-                        next[d.userId] = { ...next[d.userId], [d.streamType]: null };
-                    }
-                    return next;
+            bindSocket('proctor-stream-ready', d => {
+                if (!guard(d) || String(d.userId) === String(user.id)) return;
+                sock.emit('proctor-request-stream', {
+                    sessionId: sid, targetUserId: d.userId, streamType: d.streamType,
                 });
             });
 
-            /* ── Chat ── */
-            sock.on('chat-message', d => {
+            bindSocket('proctor-request-stream', d => {
+                if (!guard(d)) return;
+                const key = `${sessionIdRef.current}_${String(d.fromUserId)}_${d.streamType}`;
+                pendingOffers.current.delete(key);
+                peerConns.current[key]?.close();
+                delete peerConns.current[key];
+                initiateOfferAsSender(d.fromUserId, d.streamType, sock);
+            });
+
+            bindSocket('proctor-stream-ended', d => {
+                if (!guard(d)) return;
+                const uid = String(d.userId);
+                setPeerStreams(prev => {
+                    const next = { ...prev };
+                    if (next[uid]) next[uid] = { ...next[uid], [d.streamType]: null };
+                    return next;
+                });
+                const key = peerKey(uid, d.streamType);
+                peerConns.current[key]?.close();
+                delete peerConns.current[key];
+                pendingOffers.current.delete(key);
+            });
+
+            bindSocket('chat-message', d => {
+                if (!guard(d)) return;
                 setChatMessages(prev => [...prev, d.message]);
             });
 
             const stateMap = { created:'lobby', lobby:'lobby', active:'active', paused:'active', completed:'completed', terminated:'completed' };
             setSessionState(stateMap[s.status] || 'lobby');
-            if (admin) {
-                setSessionState(s.status === 'active' ? 'active' : (s.status === 'completed' || s.status === 'terminated') ? 'completed' : 'lobby');
-                loadQuestionBank();
+            if (s.status === 'active') {
+                setSessionState('active');
+                setTimerActive(true);
             }
+            if (admin) loadQuestionBank();
         } catch (err) {
             toast.error(err?.response?.data?.error || 'Failed to load session');
             navigate('/proctor');
@@ -332,17 +460,25 @@ const ProctorArena = () => {
        PROCTORING SETUP — candidates only
     ───────────────────────────────────────────────────── */
     const setupProctoring = () => {
-        // Admin is the interviewer — no restrictions apply to them
         if (isAdmin) return;
+        const strictMode = currentSession?.mode !== 'INTERVIEW';
 
-        const onVis  = () => { setIsTabFocused(!document.hidden); if (document.hidden) recordViolation('TAB_SWITCH', 'Switched tabs'); };
-        const onFS   = () => { const fs = !!document.fullscreenElement; setIsFullscreen(fs); if (!fs) recordViolation('FULLSCREEN_EXIT', 'Exited fullscreen'); };
+        const onVis  = () => {
+            setIsTabFocused(!document.hidden);
+            if (document.hidden && strictMode) recordViolation('TAB_SWITCH', 'Switched tabs');
+        };
+        const onFS   = () => {
+            const fs = !!document.fullscreenElement;
+            setIsFullscreen(fs);
+            if (!fs && strictMode) recordViolation('FULLSCREEN_EXIT', 'Exited fullscreen');
+        };
         const onKey  = (e) => {
+            if (!strictMode) return;
             const blocked = ((e.ctrlKey||e.metaKey) && ['t','n','w','r'].includes(e.key.toLowerCase()))
                 || ['F12','F5'].includes(e.key) || (e.altKey && e.key==='Tab');
             if (blocked) { e.preventDefault(); recordViolation('SHORTCUT_ATTEMPT', `Blocked: ${e.key}`); }
         };
-        const onCtx = (e) => e.preventDefault();
+        const onCtx = (e) => { if (strictMode) e.preventDefault(); };
         document.addEventListener('visibilitychange', onVis);
         document.addEventListener('fullscreenchange', onFS);
         document.addEventListener('keydown', onKey);
@@ -375,16 +511,19 @@ const ProctorArena = () => {
     ───────────────────────────────────────────────────── */
     const startCamera = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+                audio: { echoCancellation: true, noiseSuppression: true },
+            });
+            localCamStreamRef.current = stream;
             setLocalCamStream(stream);
             setCamEnabled(true);
             setMicEnabled(true);
-            setSetupStep(1);
+            if (!isAdminRef.current) setSetupStep(1);
             toast.success('Camera & mic ready');
-            // tell peers we have a camera stream
-            socketRef.current?.emit('proctor-stream-ready', { sessionId, streamType: 'camera', username: user.username });
+            announceStream('camera');
         } catch {
-            toast.error('Camera/mic access denied');
+            toast.error('Camera/mic access denied — check browser permissions');
         }
     };
 
@@ -405,11 +544,12 @@ const ProctorArena = () => {
     ───────────────────────────────────────────────────── */
     const startScreenShare = async () => {
         try {
-            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+            localScreenStreamRef.current = stream;
             setLocalScreenStream(stream);
             setScreenSharing(true);
             toast.success('Screen sharing started');
-            socketRef.current?.emit('proctor-stream-ready', { sessionId, streamType: 'screen', username: user.username });
+            announceStream('screen');
             stream.getVideoTracks()[0].addEventListener('ended', stopScreenShare);
         } catch {
             toast.error('Screen share cancelled');
@@ -417,49 +557,60 @@ const ProctorArena = () => {
     };
 
     const stopScreenShare = () => {
-        localScreenStream?.getTracks().forEach(t => t.stop());
+        localScreenStreamRef.current?.getTracks().forEach(t => t.stop());
+        localScreenStreamRef.current = null;
         setLocalScreenStream(null);
         setScreenSharing(false);
         socketRef.current?.emit('proctor-stream-ended', { sessionId, streamType: 'screen' });
-        // close screen peer connections
+        const prefix = `${sessionIdRef.current}_`;
         Object.keys(peerConns.current).forEach(k => {
-            if (k.endsWith('_screen')) { peerConns.current[k].close(); delete peerConns.current[k]; }
+            if (k.startsWith(prefix) && k.endsWith('_screen')) {
+                peerConns.current[k].close();
+                delete peerConns.current[k];
+            }
+        });
+    };
+
+    const getLocalStream = (streamType) =>
+        streamType === 'screen' ? localScreenStreamRef.current : localCamStreamRef.current;
+
+    const announceStream = (streamType, sock) => {
+        const s = sock || socketRef.current;
+        s?.emit('proctor-stream-ready', { sessionId, streamType, username: userRef.current?.username });
+        participantsRef.current.forEach(p => {
+            if (String(p.id) !== String(userRef.current?.id)) {
+                s?.emit('proctor-request-stream', { sessionId, targetUserId: p.id, streamType });
+            }
         });
     };
 
     /* ─────────────────────────────────────────────────────
-       WEBRTC — initiate offer to a peer for a stream type
+       WEBRTC — stream owner sends offer with media tracks
     ───────────────────────────────────────────────────── */
-    const initiateOffer = useCallback(async (targetUserId, streamType, sock) => {
-        const key = `${targetUserId}_${streamType}`;
+    const initiateOfferAsSender = useCallback(async (targetUserId, streamType, sock) => {
+        const targetId = String(targetUserId);
+        const key = `${sessionIdRef.current}_${targetId}_${streamType}`;
         if (pendingOffers.current.has(key)) return;
-        pendingOffers.current.add(key);
 
+        const stream = getLocalStream(streamType);
+        if (!stream) return;
+
+        pendingOffers.current.add(key);
         const pc = new RTCPeerConnection(ICE_SERVERS);
         peerConns.current[key] = pc;
 
-        // Add our tracks depending on stream type
-        const stream = streamType === 'screen' ? localScreenStream : localCamStream;
-        if (stream) stream.getTracks().forEach(t => pc.addTrack(t, stream));
-
-        pc.ontrack = e => {
-            const incoming = e.streams[0];
-            setPeerStreams(prev => ({
-                ...prev,
-                [targetUserId]: { ...(prev[targetUserId] || {}), [streamType]: incoming }
-            }));
-        };
+        stream.getTracks().forEach(t => pc.addTrack(t, stream));
 
         pc.onicecandidate = e => {
             if (e.candidate) {
                 (sock || socketRef.current)?.emit('proctor-webrtc-ice', {
-                    sessionId, targetUserId, streamType, candidate: e.candidate
+                    sessionId, targetUserId: targetId, streamType, candidate: e.candidate,
                 });
             }
         };
 
         pc.onconnectionstatechange = () => {
-            if (['disconnected','failed','closed'].includes(pc.connectionState)) {
+            if (['disconnected', 'failed', 'closed'].includes(pc.connectionState)) {
                 pendingOffers.current.delete(key);
             }
         };
@@ -468,31 +619,39 @@ const ProctorArena = () => {
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             (sock || socketRef.current)?.emit('proctor-webrtc-offer', {
-                sessionId, targetUserId, streamType, offer
+                sessionId, targetUserId: targetId, streamType, offer,
             });
         } catch (err) {
-            console.error('[WebRTC] offer failed', err);
+            console.error('[WebRTC] sender offer failed', err);
             pendingOffers.current.delete(key);
+            pc.close();
+            delete peerConns.current[key];
         }
-    }, [sessionId, localCamStream, localScreenStream]);
+    }, [sessionId]);
 
     const handleIncomingOffer = useCallback(async ({ fromUserId, streamType, offer }, sock) => {
-        const key = `${fromUserId}_${streamType}`;
+        const remoteId = String(fromUserId);
+        const key = `${sessionIdRef.current}_${remoteId}_${streamType}`;
+        if (peerConns.current[key]) {
+            peerConns.current[key].close();
+        }
+
         const pc = new RTCPeerConnection(ICE_SERVERS);
         peerConns.current[key] = pc;
 
         pc.ontrack = e => {
             const incoming = e.streams[0];
+            if (!incoming) return;
             setPeerStreams(prev => ({
                 ...prev,
-                [fromUserId]: { ...(prev[fromUserId] || {}), [streamType]: incoming }
+                [remoteId]: { ...(prev[remoteId] || {}), [streamType]: incoming },
             }));
         };
 
         pc.onicecandidate = e => {
             if (e.candidate) {
                 (sock || socketRef.current)?.emit('proctor-webrtc-ice', {
-                    sessionId, targetUserId: fromUserId, streamType, candidate: e.candidate
+                    sessionId, targetUserId: remoteId, streamType, candidate: e.candidate,
                 });
             }
         };
@@ -502,22 +661,36 @@ const ProctorArena = () => {
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
             (sock || socketRef.current)?.emit('proctor-webrtc-answer', {
-                sessionId, targetUserId: fromUserId, streamType, answer
+                sessionId, targetUserId: remoteId, streamType, answer,
             });
         } catch (err) {
             console.error('[WebRTC] answer failed', err);
+            pc.close();
+            delete peerConns.current[key];
         }
     }, [sessionId]);
 
     const handleIncomingAnswer = useCallback(async ({ fromUserId, streamType, answer }) => {
-        const pc = peerConns.current[`${fromUserId}_${streamType}`];
-        if (pc) { try { await pc.setRemoteDescription(answer); } catch {} }
+        const pc = peerConns.current[`${sessionIdRef.current}_${String(fromUserId)}_${streamType}`];
+        if (pc) {
+            try { await pc.setRemoteDescription(answer); } catch (err) {
+                console.error('[WebRTC] setRemoteDescription failed', err);
+            }
+        }
     }, []);
 
     const handleIncomingIce = useCallback(async ({ fromUserId, streamType, candidate }) => {
-        const pc = peerConns.current[`${fromUserId}_${streamType}`];
-        if (pc && candidate) { try { await pc.addIceCandidate(candidate); } catch {} }
+        const pc = peerConns.current[`${sessionIdRef.current}_${String(fromUserId)}_${streamType}`];
+        if (pc && candidate) {
+            try { await pc.addIceCandidate(candidate); } catch {}
+        }
     }, []);
+
+    const requestRemoteStream = useCallback((targetUserId, streamType) => {
+        socketRef.current?.emit('proctor-request-stream', {
+            sessionId, targetUserId: String(targetUserId), streamType,
+        });
+    }, [sessionId]);
 
     /* ─────────────────────────────────────────────────────
        FULLSCREEN
@@ -534,6 +707,11 @@ const ProctorArena = () => {
        SESSION CONTROL
     ───────────────────────────────────────────────────── */
     const startSession = () => {
+        if (currentSession?.mode === 'INTERVIEW') {
+            socketRef.current?.emit('candidate-ready', { sessionId, userId: user.id });
+            toast.success('You are ready — waiting for interviewer to start');
+            return;
+        }
         setTimerActive(true);
         setSessionState('active');
         socketRef.current?.emit('session-started', { sessionId });
@@ -599,11 +777,24 @@ const ProctorArena = () => {
        CLEANUP
     ───────────────────────────────────────────────────── */
     const cleanup = () => {
-        localCamStream?.getTracks().forEach(t => t.stop());
-        localScreenStream?.getTracks().forEach(t => t.stop());
-        Object.values(peerConns.current).forEach(pc => pc.close());
-        socketRef.current?.disconnect();
+        teardownMediaAndPeers();
+        socketRef.current?.emit('leave-proctor-session');
+        detachSocketHandlers();
     };
+
+    /* ── Request streams when admin selects a candidate ── */
+    useEffect(() => {
+        if (!isAdmin || !watchingUserId || sessionState !== 'active') return;
+        requestRemoteStream(watchingUserId, 'camera');
+        if (watchTab === 'screen') requestRemoteStream(watchingUserId, 'screen');
+    }, [isAdmin, watchingUserId, watchTab, sessionState, requestRemoteStream]);
+
+    /* ── Admin: prompt camera on active session ── */
+    useEffect(() => {
+        if (isAdmin && sessionState === 'active' && !localCamStreamRef.current) {
+            startCamera();
+        }
+    }, [isAdmin, sessionState]);
 
     /* ── Timer ── */
     useEffect(() => {
@@ -635,7 +826,15 @@ const ProctorArena = () => {
     const watchedData  = watchingUserId ? participantData[watchingUserId] : null;
 
     // Question to show the candidate (pushed > session-defined > empty)
+    const readyStep = currentSession?.mode === 'INTERVIEW' ? 1 : 2;
     const displayQ = activeQuestion || questions[qIdx] || null;
+
+    const getPeerLabel = (uid) => {
+        const p = participants.find(x => String(x.id) === String(uid));
+        const name = p?.username || participantData[uid]?.username;
+        if (name && name.toLowerCase() !== 'nothing' && name.toLowerCase() !== 'unknown') return name;
+        return p?.role === 'admin' ? 'Interviewer' : 'Participant';
+    };
 
     // Filtered question bank for admin panel
     const filteredBank = questionBank.filter(q => {
@@ -650,15 +849,19 @@ const ProctorArena = () => {
     return (
         <div className="pa-root">
 
-            {/* ══ TOP BAR ══ */}
+            {/* ── TOP BAR ── */}
             <header className="pa-topbar">
                 <div className="pa-topbar-left">
-                    <button className="pa-back-btn" onClick={() => navigate('/proctor')}><ArrowLeft size={18} /></button>
+                    <button className="pa-back-btn" onClick={() => navigate('/proctor')} title="Back to hub">
+                        <ArrowLeft size={18} />
+                    </button>
                     <div className="pa-session-name">
-                        <span className="pa-session-title">{currentSession?.title || 'Proctored Session'}</span>
-                        <span className="pa-mode-chip" style={{ color: mode.color, borderColor: mode.color + '40', background: mode.color + '12' }}>{mode.label}</span>
+                        <span className="pa-session-title">{currentSession?.title || 'Interview Session'}</span>
+                        <span className="pa-mode-chip" style={{ color: mode.color, borderColor: mode.color + '40', background: mode.color + '12' }}>
+                            {mode.label}
+                        </span>
                         <span className={`pa-role-chip ${isAdmin ? 'admin' : 'candidate'}`}>
-                            {isAdmin ? <><Crown size={11} /> Admin</> : <><User size={11} /> Candidate</>}
+                            {isAdmin ? <><Crown size={10} /> Interviewer</> : <><User size={10} /> Candidate</>}
                         </span>
                     </div>
                 </div>
@@ -666,61 +869,64 @@ const ProctorArena = () => {
                 <div className="pa-topbar-center">
                     {timerActive && (
                         <div className={`pa-timer ${isLow ? 'pa-timer--low' : ''}`}>
-                            <Clock size={15} /><span>{fmt(timeRemaining)}</span>
-                            <div className="pa-timer-bar"><div className="pa-timer-fill" style={{ width: `${pct * 100}%`, background: isLow ? '#ef4444' : '#22c55e' }} /></div>
+                            <Clock size={14} />
+                            <span>{fmt(timeRemaining)}</span>
+                            <div className="pa-timer-bar">
+                                <div className="pa-timer-fill" style={{ width: `${pct * 100}%`, background: isLow ? 'var(--red)' : 'var(--green)' }} />
+                            </div>
                         </div>
                     )}
                 </div>
 
                 <div className="pa-topbar-right">
-                    {/* Media controls (candidate only) */}
-                    {!isAdmin && sessionState === 'active' && (
+                    {sessionState === 'active' && (
                         <div className="pa-media-controls">
-                            <button className={`pa-media-btn ${micEnabled ? 'active' : 'muted'}`} onClick={toggleMic} title={micEnabled ? 'Mute mic' : 'Unmute mic'}>
+                            <button className={`pa-media-btn ${micEnabled ? 'active' : 'muted'}`} onClick={toggleMic} title="Microphone">
                                 {micEnabled ? <Mic size={15} /> : <MicOff size={15} />}
                             </button>
-                            <button className={`pa-media-btn ${camEnabled ? 'active' : 'muted'}`} onClick={toggleCam} title={camEnabled ? 'Turn off camera' : 'Turn on camera'}>
+                            <button className={`pa-media-btn ${camEnabled ? 'active' : 'muted'}`} onClick={toggleCam} title="Camera">
                                 {camEnabled ? <Video size={15} /> : <VideoOff size={15} />}
                             </button>
-                            <button className={`pa-media-btn ${screenSharing ? 'sharing' : ''}`}
-                                onClick={screenSharing ? stopScreenShare : startScreenShare}
-                                title={screenSharing ? 'Stop sharing' : 'Share screen'}>
-                                {screenSharing ? <MonitorOff size={15} /> : <Monitor size={15} />}
-                            </button>
+                            {!isAdmin && (
+                                <button className={`pa-media-btn ${screenSharing ? 'sharing' : ''}`}
+                                    onClick={screenSharing ? stopScreenShare : startScreenShare} title="Screen share">
+                                    {screenSharing ? <MonitorOff size={15} /> : <Monitor size={15} />}
+                                </button>
+                            )}
                         </div>
                     )}
 
-                    <div className={`pa-pill ${allViolCount > 0 ? 'pa-pill--warn' : ''}`}>
-                        <AlertTriangle size={13} /><span>{allViolCount} violation{allViolCount !== 1 ? 's' : ''}</span>
-                    </div>
-
-                    {!isAdmin && (
-                        <div className="pa-dots">
-                            <span className={`pa-dot ${isTabFocused ? 'on' : 'off'}`} title="Tab focus" />
-                            <span className={`pa-dot ${camEnabled ? 'on' : 'off'}`} title="Camera" />
-                            <span className={`pa-dot ${isFullscreen ? 'on' : 'warn'}`} title="Fullscreen" />
-                            {screenSharing && <span className="pa-dot sharing" title="Screen sharing" />}
+                    {!isAdmin && sessionState === 'active' && (
+                        <div className="pa-dots" title="Tab · Camera · Fullscreen">
+                            <span className={`pa-dot ${isTabFocused ? 'on' : 'off'}`} />
+                            <span className={`pa-dot ${camEnabled ? 'on' : 'off'}`} />
+                            <span className={`pa-dot ${isFullscreen ? 'on' : 'warn'}`} />
+                            {screenSharing && <span className="pa-dot sharing" />}
                         </div>
                     )}
 
-                    {isAdmin && participants.length > 0 && (
-                        <div className="pa-pill"><Users size={13} /><span>{participants.length} connected</span></div>
+                    {allViolCount > 0 && (
+                        <div className="pa-pill pa-pill--warn">
+                            <AlertTriangle size={12} /> {allViolCount} violation{allViolCount !== 1 ? 's' : ''}
+                        </div>
                     )}
 
-                    {/* Admin question panel toggle */}
                     {isAdmin && sessionState === 'active' && (
-                        <button className={`pa-qpanel-btn ${showQPanel ? 'active' : ''}`} onClick={() => setShowQPanel(p => !p)}>
-                            <BookOpen size={15} /> Questions
+                        <button className={`pa-qpanel-btn ${showQPanel ? 'active' : ''}`}
+                            onClick={() => setShowQPanel(p => !p)}>
+                            <BookOpen size={14} /> Questions
                         </button>
                     )}
 
-                    <button className={`pa-chat-btn ${showChat ? 'active' : ''}`} onClick={() => setShowChat(p => !p)}>
-                        💬 {chatMessages.length > 0 && <span className="pa-chat-badge">{chatMessages.length}</span>}
+                    <button className={`pa-chat-btn ${showChat ? 'active' : ''}`}
+                        onClick={() => setShowChat(p => !p)}>
+                        💬
+                        {chatMessages.length > 0 && <span className="pa-chat-badge">{chatMessages.length}</span>}
                     </button>
 
                     {sessionState === 'active' && (
                         <button className="pa-end-btn" onClick={() => endSession('COMPLETED')}>
-                            {isAdmin ? 'End for All' : 'End Session'}
+                            {isAdmin ? 'End Session' : 'Leave'}
                         </button>
                     )}
                 </div>
@@ -820,7 +1026,7 @@ const ProctorArena = () => {
                         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                         <div className="pa-lobby-card">
                             <div className="pa-admin-lobby-header">
-                                <Crown size={32} className="pa-admin-crown" />
+                                <div className="pa-admin-crown"><Crown size={28} /></div>
                                 <h2>Admin Control Panel</h2>
                                 <p>Candidates join using the session ID below. Start when ready.</p>
                                 <div className="pa-session-id-box">
@@ -857,13 +1063,18 @@ const ProctorArena = () => {
                         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                         <div className="pa-lobby-card">
                             <div className="pa-steps">
-                                {['Camera & Mic', 'Fullscreen', 'Ready'].map((s, i) => (
+                                {(currentSession?.mode === 'INTERVIEW'
+                                    ? ['Camera & Mic', 'Ready']
+                                    : ['Camera & Mic', 'Fullscreen', 'Ready']
+                                ).map((s, i) => (
                                     <React.Fragment key={i}>
                                         <div className={`pa-step ${setupStep === i ? 'active' : setupStep > i ? 'done' : ''}`}>
                                             <div className="pa-step-circle">{setupStep > i ? <CheckCircle size={14} /> : <span>{i + 1}</span>}</div>
                                             <span>{s}</span>
                                         </div>
-                                        {i < 2 && <div className={`pa-step-line ${setupStep > i ? 'done' : ''}`} />}
+                                        {i < (currentSession?.mode === 'INTERVIEW' ? 1 : 2) && (
+                                            <div className={`pa-step-line ${setupStep > i ? 'done' : ''}`} />
+                                        )}
                                     </React.Fragment>
                                 ))}
                             </div>
@@ -876,7 +1087,7 @@ const ProctorArena = () => {
                                         <button className="pa-action-btn" onClick={startCamera}><Camera size={18} /> Allow Camera & Mic</button>
                                     </div>
                                 )}
-                                {setupStep === 1 && (
+                                {setupStep === 1 && currentSession?.mode !== 'INTERVIEW' && (
                                     <div className="pa-setup-step">
                                         <VideoTile stream={localCamStream} className="pa-cam-preview-tile" muted label="You" />
                                         <h2>Enter Fullscreen</h2>
@@ -884,17 +1095,21 @@ const ProctorArena = () => {
                                         <button className="pa-action-btn" onClick={enterFullscreen}><Maximize size={18} /> Enter Fullscreen</button>
                                     </div>
                                 )}
-                                {setupStep === 2 && (
+                                {setupStep === readyStep && (
                                     <div className="pa-setup-step">
                                         <div className="pa-setup-icon ready"><CheckCircle size={32} /></div>
-                                        <h2>Ready to Begin</h2>
-                                        <p>All checks passed. The timer starts when you click Start.</p>
+                                        <h2>{currentSession?.mode === 'INTERVIEW' ? 'Waiting for Interviewer' : 'Ready to Begin'}</h2>
+                                        <p>{currentSession?.mode === 'INTERVIEW'
+                                            ? 'Camera is on. The interviewer will start the session when ready.'
+                                            : 'All checks passed. The timer starts when you click Start.'}</p>
                                         <div className="pa-session-summary">
                                             <div className="pa-sum-row"><Clock size={15} /><span>{Math.floor((currentSession?.timeLimit || 3600) / 60)} min</span></div>
                                             <div className="pa-sum-row"><Shield size={15} /><span>{mode.label}</span></div>
                                         </div>
                                         <VideoTile stream={localCamStream} className="pa-cam-thumb-tile" muted label="Preview" />
-                                        <button className="pa-start-btn" onClick={startSession}><Play size={20} /> Start Session</button>
+                                        <button className="pa-start-btn" onClick={startSession}>
+                                            <Play size={20} /> {currentSession?.mode === 'INTERVIEW' ? 'I\'m Ready' : 'Start Session'}
+                                        </button>
                                     </div>
                                 )}
                             </div>
@@ -902,220 +1117,233 @@ const ProctorArena = () => {
                     </motion.div>
                 )}
 
-                {/* ════ ADMIN ACTIVE ════ */}
+                {/* ── ADMIN ACTIVE ── */}
                 {sessionState === 'active' && isAdmin && (
-                    <motion.div key="admin-active" className="pa-admin-workspace"
+                    <motion.div key="admin-active" className="pa-stage pa-stage--admin"
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
 
-                        {/* Left sidebar — candidates */}
-                        <div className="pa-candidates-sidebar">
-                            <div className="pa-sidebar-header"><Users size={16} /> Candidates <span className="pa-cand-count">{participants.length}</span></div>
-                            {participants.length === 0
-                                ? <p className="pa-sidebar-empty">No candidates</p>
-                                : participants.filter(p => p.role !== 'admin').map(p => {
+                        <aside className="pa-roster">
+                            <div className="pa-roster__head">
+                                <Users size={15} />
+                                <span>Candidates</span>
+                                <span className="pa-roster__count">{participants.filter(p => p.role !== 'admin').length}</span>
+                            </div>
+                            <div className="pa-roster__list">
+                                {participants.filter(p => p.role !== 'admin').length === 0 ? (
+                                    <p className="pa-roster__empty">Waiting for candidates to join…</p>
+                                ) : participants.filter(p => p.role !== 'admin').map(p => {
                                     const pD = participantData[p.id] || {};
                                     return (
                                         <button key={p.id}
-                                            className={`pa-cand-card ${watchingUserId === p.id ? 'active' : ''}`}
+                                            className={`pa-roster__item ${String(watchingUserId) === String(p.id) ? 'is-active' : ''}`}
                                             onClick={() => setWatchingUserId(p.id)}>
-                                            <div className="pa-cand-avatar">{p.username?.[0]?.toUpperCase()}</div>
-                                            <div className="pa-cand-info">
-                                                <span className="pa-cand-name">{p.username}</span>
-                                                {pD.violations?.length > 0 && (
-                                                    <span className="pa-cand-viol"><AlertTriangle size={11} /> {pD.violations.length}</span>
-                                                )}
+                                            <div className="pa-roster__avatar">{p.username?.[0]?.toUpperCase()}</div>
+                                            <div className="pa-roster__info">
+                                                <span className="pa-roster__name">{p.username}</span>
+                                                <span className="pa-roster__status">
+                                                    {peerStreams[p.id]?.camera ? 'On camera' : 'Connected'}
+                                                </span>
                                             </div>
-                                            <div className="pa-cand-dots">
-                                                <span className={`pa-dot ${pD.isActive !== false ? 'on' : 'off'}`} />
-                                                {peerStreams[p.id]?.camera && <Camera size={11} style={{ color: '#22c55e' }} />}
-                                                {peerStreams[p.id]?.screen && <Monitor size={11} style={{ color: '#3b82f6' }} />}
-                                            </div>
+                                            {pD.violations?.length > 0 && (
+                                                <span className="pa-roster__flag"><AlertTriangle size={11} /></span>
+                                            )}
                                         </button>
                                     );
-                                })
-                            }
-
-                            {/* Active question indicator */}
+                                })}
+                            </div>
                             {activeQuestion && (
-                                <div className="pa-sidebar-question">
-                                    <div className="pa-sq-label"><Zap size={12} /> Active Q</div>
-                                    <div className="pa-sq-name">{activeQuestion.name}</div>
-                                    <span className={`pa-diff pa-diff--${activeQuestion.difficulty?.toLowerCase()}`}>{activeQuestion.difficulty}</span>
+                                <div className="pa-roster__q">
+                                    <span className="pa-roster__q-label">Active question</span>
+                                    <span className="pa-roster__q-name">{activeQuestion.name}</span>
                                 </div>
                             )}
-                        </div>
+                        </aside>
 
-                        {/* Main area */}
-                        <div className="pa-admin-main">
+                        <main className="pa-stage__main">
                             {watchingUserId && watchedData ? (
                                 <>
-                                    <div className="pa-admin-watching-bar">
-                                        <div className="pa-watching-label"><Eye size={14} /> Watching: <strong>{watchedData.username || participants.find(p => p.id === watchingUserId)?.username}</strong></div>
-                                        <div className="pa-watch-tabs">
-                                            {['editor','camera','screen'].map(tab => (
+                                    <div className="pa-workbench__toolbar">
+                                        <div className="pa-segment">
+                                            {['editor', 'camera', 'screen'].map(tab => (
                                                 <button key={tab}
-                                                    className={`pa-watch-tab ${watchTab === tab ? 'active' : ''}`}
+                                                    className={`pa-segment__btn ${watchTab === tab ? 'is-active' : ''}`}
                                                     onClick={() => setWatchTab(tab)}>
-                                                    {tab === 'editor' ? <Code2 size={13} /> : tab === 'camera' ? <Camera size={13} /> : <Monitor size={13} />}
-                                                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                                    {tab === 'editor' ? <Code2 size={14} /> : tab === 'camera' ? <Camera size={14} /> : <Monitor size={14} />}
+                                                    <span>{tab === 'editor' ? 'Code' : tab === 'camera' ? 'Camera' : 'Screen'}</span>
                                                 </button>
                                             ))}
                                         </div>
+                                        <span className="pa-workbench__watching">
+                                            <Eye size={14} /> {watchedData.username || getPeerLabel(watchingUserId)}
+                                        </span>
                                         {watchedData.violations?.length > 0 && (
-                                            <div className="pa-watching-viols"><AlertTriangle size={13} /> {watchedData.violations.length} violation{watchedData.violations.length !== 1 ? 's' : ''}</div>
+                                            <span className="pa-badge pa-badge--warn">
+                                                {watchedData.violations.length} violations
+                                            </span>
                                         )}
                                     </div>
-
-                                    <div className="pa-admin-view">
+                                    <div className="pa-workbench__body">
                                         {watchTab === 'editor' && (
                                             <Editor height="100%"
                                                 language={watchedData.language || 'javascript'}
                                                 value={watchedData.code || '// Waiting for candidate to type…'}
                                                 theme="vs-dark"
-                                                options={{ readOnly: true, fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, wordWrap: 'on', padding: { top: 12 } }}
+                                                options={{ readOnly: true, fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, wordWrap: 'on', padding: { top: 16 } }}
                                             />
                                         )}
                                         {watchTab === 'camera' && (
-                                            <div className="pa-admin-video-view">
-                                                <VideoTile stream={peerStreams[watchingUserId]?.camera || null}
-                                                    className="pa-admin-big-video"
-                                                    label={watchedData.username}
-                                                    noStreamText="Camera not available" />
-                                                <div className="pa-admin-viol-list">
-                                                    <div className="pa-monitor-sub">Violations</div>
-                                                    {!watchedData.violations?.length
-                                                        ? <p className="pa-monitor-empty">Clean</p>
-                                                        : watchedData.violations.slice(-6).reverse().map(v => (
-                                                            <div key={v.id} className={`pa-viol-item pa-viol--${v.severity?.toLowerCase()}`}>
-                                                                <span className="pa-viol-type">{v.type.replace(/_/g,' ')}</span>
-                                                                <span className="pa-viol-time">{new Date(v.timestamp).toLocaleTimeString()}</span>
-                                                            </div>
-                                                        ))
-                                                    }
-                                                </div>
-                                            </div>
+                                            <VideoTile stream={peerStreams[watchingUserId]?.camera || null}
+                                                label={getPeerLabel(watchingUserId)}
+                                                noStreamText="Connecting camera…"
+                                                className="pa-vid--stage" />
                                         )}
                                         {watchTab === 'screen' && (
-                                            <div className="pa-admin-video-view">
-                                                <VideoTile stream={peerStreams[watchingUserId]?.screen || null}
-                                                    className="pa-admin-big-video"
-                                                    label={`${watchedData.username} — Screen`}
-                                                    noStreamText="Screen not shared" />
-                                            </div>
+                                            <VideoTile stream={peerStreams[watchingUserId]?.screen || null}
+                                                label={`${getPeerLabel(watchingUserId)} — screen`}
+                                                noStreamText="Screen not shared"
+                                                className="pa-vid--stage" />
                                         )}
                                     </div>
                                 </>
                             ) : (
-                                <div className="pa-admin-placeholder">
-                                    <Eye size={48} /><h3>Select a candidate</h3>
-                                    <p>Click a candidate on the left to view their editor, camera, or screen.</p>
+                                <div className="pa-empty">
+                                    <div className="pa-empty__icon"><Eye size={40} /></div>
+                                    <h3>Select a candidate</h3>
+                                    <p>Choose someone from the roster to monitor their code and camera.</p>
+                                    {participants.filter(p => p.role !== 'admin').length > 0 && (
+                                        <button className="pa-btn pa-btn--primary"
+                                            onClick={() => {
+                                                const first = participants.find(p => p.role !== 'admin');
+                                                if (first) setWatchingUserId(first.id);
+                                            }}>
+                                            <Eye size={15} /> Watch candidate
+                                        </button>
+                                    )}
                                 </div>
                             )}
-                        </div>
+                        </main>
 
-                        {/* Admin's own camera tile (PiP bottom-right) */}
-                        <div className="pa-admin-self-pip">
-                            <VideoTile stream={localCamStream} className="pa-pip-tile" muted label="You (Admin)" />
-                            {!localCamStream && (
-                                <button className="pa-pip-cam-btn" onClick={startCamera}><Camera size={14} /> Join with Camera</button>
+                        <aside className="pa-dock">
+                            <div className="pa-dock__head">Video</div>
+                            <div className="pa-dock__tiles">
+                                <VideoTile stream={peerStreams[watchingUserId]?.camera || null}
+                                    compact label={watchingUserId ? getPeerLabel(watchingUserId) : 'Candidate'}
+                                    noStreamText="No camera" />
+                                <VideoTile stream={localCamStream} compact muted label="You" noStreamText="Camera off" />
+                                {peerStreams[watchingUserId]?.screen && (
+                                    <VideoTile stream={peerStreams[watchingUserId]?.screen}
+                                        compact label="Screen" noStreamText="No screen" />
+                                )}
+                            </div>
+                            {watchedData && (
+                                <div className="pa-dock__viol">
+                                    <span className="pa-dock__viol-title">Integrity</span>
+                                    {!watchedData.violations?.length ? (
+                                        <span className="pa-dock__clean"><CheckCircle size={13} /> Clean</span>
+                                    ) : watchedData.violations.slice(-4).reverse().map(v => (
+                                        <div key={v.id} className="pa-dock__viol-row">
+                                            <span>{v.type.replace(/_/g, ' ')}</span>
+                                            <span>{new Date(v.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                        </div>
+                                    ))}
+                                </div>
                             )}
-                        </div>
+                        </aside>
                     </motion.div>
                 )}
 
-                {/* ════ CANDIDATE ACTIVE ════ */}
+                {/* ── CANDIDATE ACTIVE ── */}
                 {sessionState === 'active' && !isAdmin && (
-                    <motion.div key="candidate-active" className="pa-workspace"
+                    <motion.div key="candidate-active" className="pa-stage pa-stage--candidate"
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
 
-                        {/* Problem pane */}
-                        <div className="pa-problem-pane">
-                            <div className="pa-pane-header">
+                        <aside className="pa-brief">
+                            <div className="pa-brief__head">
+                                {activeQuestion && <span className="pa-tag pa-tag--live"><Zap size={11} /> Live</span>}
+                                {displayQ?.difficulty && (
+                                    <span className={`pa-tag pa-tag--${displayQ.difficulty?.toLowerCase()}`}>{displayQ.difficulty}</span>
+                                )}
                                 {!activeQuestion && questions.length > 0 && (
-                                    <div className="pa-qnav">
-                                        <button className="pa-qnav-btn" onClick={() => qIdx > 0 && setQIdx(i => i-1)} disabled={qIdx === 0}><ChevronLeft size={16} /></button>
-                                        <span>Q {qIdx+1} / {questions.length}</span>
-                                        <button className="pa-qnav-btn" onClick={() => qIdx < questions.length-1 && setQIdx(i => i+1)} disabled={qIdx >= questions.length-1}><ChevronRight size={16} /></button>
+                                    <div className="pa-brief__nav">
+                                        <button onClick={() => qIdx > 0 && setQIdx(i => i - 1)} disabled={qIdx === 0}><ChevronLeft size={16} /></button>
+                                        <span>{qIdx + 1}/{questions.length}</span>
+                                        <button onClick={() => qIdx < questions.length - 1 && setQIdx(i => i + 1)} disabled={qIdx >= questions.length - 1}><ChevronRight size={16} /></button>
                                     </div>
                                 )}
-                                {activeQuestion && <div className="pa-pushed-badge"><Zap size={13} /> Live Question</div>}
-                                {displayQ?.difficulty && <span className={`pa-diff pa-diff--${displayQ.difficulty?.toLowerCase()}`}>{displayQ.difficulty}</span>}
                             </div>
-
-                            <div className="pa-problem-body">
+                            <div className="pa-brief__body">
                                 {displayQ ? (
                                     <>
-                                        <h2 className="pa-q-title">{displayQ.name || displayQ.title}</h2>
-                                        <p className="pa-q-desc">{displayQ.statement || displayQ.description}</p>
+                                        <h2 className="pa-brief__title">{displayQ.name || displayQ.title}</h2>
+                                        <p className="pa-brief__text">{displayQ.statement || displayQ.description}</p>
                                         {displayQ.examples?.length > 0 && (
-                                            <div className="pa-examples">
+                                            <div className="pa-brief__section">
                                                 <h4>Examples</h4>
                                                 {displayQ.examples.slice(0, 3).map((ex, i) => (
-                                                    <div key={i} className="pa-example">
-                                                        <div className="pa-ex-row"><strong>Input:</strong> <code>{JSON.stringify(ex.input)}</code></div>
-                                                        <div className="pa-ex-row"><strong>Output:</strong> <code>{JSON.stringify(ex.output ?? ex.expected)}</code></div>
-                                                        {ex.explanation && <div className="pa-ex-row pa-ex-note">{ex.explanation}</div>}
+                                                    <div key={i} className="pa-codeblock">
+                                                        <div><b>In:</b> <code>{JSON.stringify(ex.input)}</code></div>
+                                                        <div><b>Out:</b> <code>{JSON.stringify(ex.output ?? ex.expected)}</code></div>
                                                     </div>
                                                 ))}
                                             </div>
                                         )}
                                         {displayQ.constraints && (
-                                            <div className="pa-constraints">
+                                            <div className="pa-brief__section">
                                                 <h4>Constraints</h4>
                                                 {typeof displayQ.constraints === 'object' && !Array.isArray(displayQ.constraints)
-                                                    ? Object.values(displayQ.constraints).map((c, i) => <div key={i} className="pa-constraint-row">{c}</div>)
+                                                    ? Object.values(displayQ.constraints).map((c, i) => <p key={i} className="pa-brief__mono">{c}</p>)
                                                     : Array.isArray(displayQ.constraints)
-                                                        ? <ul>{displayQ.constraints.map((c, i) => <li key={i}>{c}</li>)}</ul>
-                                                        : null
-                                                }
+                                                        ? <ul className="pa-brief__list">{displayQ.constraints.map((c, i) => <li key={i}>{c}</li>)}</ul>
+                                                        : null}
                                             </div>
                                         )}
                                     </>
                                 ) : (
-                                    <div className="pa-no-q">
-                                        <Code2 size={40} /><h3>Waiting for question…</h3>
-                                        <p>The interviewer will push a question shortly.</p>
+                                    <div className="pa-empty pa-empty--sm">
+                                        <Code2 size={32} />
+                                        <h3>Waiting for question</h3>
+                                        <p>Your interviewer will assign a problem shortly.</p>
                                     </div>
                                 )}
                             </div>
+                        </aside>
 
-                            {/* Peers video strip at bottom of problem pane */}
-                            {Object.keys(peerStreams).length > 0 && (
-                                <div className="pa-peer-strip">
-                                    {Object.entries(peerStreams).map(([uid, streams]) => (
-                                        <VideoTile key={uid}
-                                            stream={streams.camera}
-                                            className="pa-peer-tile"
-                                            label={participantData[uid]?.username || uid}
-                                            noStreamText="No cam" />
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Editor pane */}
-                        <div className="pa-editor-pane">
-                            <div className="pa-pane-header">
-                                <select className="pa-lang-select" value={language} onChange={e => setLanguage(e.target.value)}>
+                        <main className="pa-stage__main">
+                            <div className="pa-workbench__toolbar">
+                                <select className="pa-select" value={language} onChange={e => setLanguage(e.target.value)}>
                                     {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
                                 </select>
-                                <button className="pa-submit-btn" onClick={submitCode}><Send size={15} /> Submit</button>
+                                <button className="pa-btn pa-btn--primary" onClick={submitCode}>
+                                    <Send size={14} /> Submit
+                                </button>
                             </div>
-                            <div className="pa-editor-wrap">
+                            <div className="pa-workbench__body">
                                 <Editor height="100%" language={language} value={code} onChange={handleCodeChange}
                                     theme="vs-dark"
-                                    options={{ fontSize: 14, fontFamily: "'Fira Code','Consolas',monospace", fontLigatures: true, minimap: { enabled: false }, scrollBeyondLastLine: false, wordWrap: 'on', contextmenu: false, padding: { top: 12 } }}
+                                    options={{ fontSize: 14, fontFamily: "'JetBrains Mono','Fira Code',monospace", fontLigatures: true, minimap: { enabled: false }, scrollBeyondLastLine: false, wordWrap: 'on', contextmenu: false, padding: { top: 16 } }}
                                 />
                             </div>
-                        </div>
+                        </main>
 
-                        {/* Own camera PiP */}
-                        {localCamStream && (
-                            <div className="pa-cam-pip">
-                                <VideoTile stream={localCamStream} className="pa-pip-tile" muted />
-                                <div className="pa-pip-badge"><span className="pa-rec-dot" /> REC</div>
+                        <aside className="pa-dock">
+                            <div className="pa-dock__head">Call</div>
+                            <div className="pa-dock__tiles">
+                                {Object.entries(peerStreams).map(([uid, streams]) => (
+                                    streams.camera && (
+                                        <VideoTile key={uid} compact
+                                            stream={streams.camera}
+                                            label={getPeerLabel(uid)}
+                                            noStreamText="Connecting…" />
+                                    )
+                                ))}
+                                <VideoTile compact stream={localCamStream} muted label="You" noStreamText="Camera off" />
                             </div>
-                        )}
+                            {!localCamStream && (
+                                <button className="pa-dock__enable" onClick={startCamera}>
+                                    <Camera size={14} /> Turn on camera
+                                </button>
+                            )}
+                        </aside>
                     </motion.div>
                 )}
 

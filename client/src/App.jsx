@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
@@ -27,6 +27,11 @@ const ProtectedRoute = ({ children }) => {
   if (loading) return null;
   if (!user) return <Navigate to="/auth" />;
   return children;
+};
+
+const ProctorSessionRoute = () => {
+  const { sessionId } = useParams();
+  return <ProctorArena key={sessionId} />;
 };
 
 const LandingRoute = () => {
@@ -370,7 +375,7 @@ function App() {
               path="/proctor/:sessionId" 
               element={
                 <ProtectedRoute>
-                  <ProctorArena />
+                  <ProctorSessionRoute />
                 </ProtectedRoute>
               } 
             />
