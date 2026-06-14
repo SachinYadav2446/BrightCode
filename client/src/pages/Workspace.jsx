@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowRight, Plus, Users, X, Copy, Check, Clock, Crown, User,
   Code2, Terminal, GitBranch, Wifi, FolderOpen,
-  Calendar, Hash, ExternalLink, AlertTriangle
+  Calendar, Hash, ExternalLink, AlertTriangle, Shield
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
@@ -494,6 +494,9 @@ const Workspace = () => {
               </button>
               <button className="cta-button secondary" onClick={() => { setShowJoinModal(true); setJoinId(''); }}>
                 <Users size={18} /> Join Workspace
+              </button>
+              <button className="cta-button proctor" onClick={() => navigate('/proctor')}>
+                <Shield size={18} /> Proctor Session
               </button>
             </div>
           </div>

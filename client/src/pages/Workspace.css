@@ -197,6 +197,23 @@
   transform: translateY(-2px);
 }
 
+.cta-button.proctor {
+  background: rgba(220, 38, 38, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cta-button.proctor:hover {
+  background: rgba(220, 38, 38, 0.22);
+  border-color: rgba(220, 38, 38, 0.7);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(220, 38, 38, 0.25);
+}
+
 /* ---- RIGHT: Editor Mockup ---- */
 .hero-right {
   animation: fadeInRight 0.7s ease-out 0.15s both;

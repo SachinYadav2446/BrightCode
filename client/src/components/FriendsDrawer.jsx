@@ -416,7 +416,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                         <div className="fd-section">
                                             <div className="fd-section-hdr static">
                                                 <span className="fd-dot online-dot" />
-                                                Online â€” {onlineFriends.length}
+                                                Online ” {onlineFriends.length}
                                             </div>
                                             {onlineFriends.map(f => (
                                                 <FriendRow 
@@ -437,7 +437,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                         <div className="fd-section">
                                             <div className="fd-section-hdr static">
                                                 <span className="fd-dot offline-dot" />
-                                                Offline â€” {offlineFriends.length}
+                                                Offline ” {offlineFriends.length}
                                             </div>
                                             {offlineFriends.map(f => (
                                                 <FriendRow 

@@ -523,7 +523,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                                 {React.createElement(sidebarTabs.find(t => t.id === activeTab)?.icon || Lock, { size: 48, color: 'var(--primary)' })}
                             </div>
                             <h2>Coming Soon</h2>
-                            <p>We're engineering world-class <strong>{sidebarTabs.find(t => t.id === activeTab)?.label}</strong> challenges.<br />Stay tuned â€” this track is being forged.</p>
+                            <p>We're engineering world-class <strong>{sidebarTabs.find(t => t.id === activeTab)?.label}</strong> challenges.<br />Stay tuned ” this track is being forged.</p>
                             <div className="lib-soon-chips">
                                 {['Challenges', 'Projects', 'Quizzes', 'Labs'].map(c => (
                                     <span key={c} className="lib-soon-chip">{c}</span>
@@ -1181,7 +1181,7 @@ const Arcade = () => {
                                             ) : null}
                                         </div>
                                         <h3 className="phase-card-title">{phase.label}</h3>
-                                        <p className="phase-card-range">Levels {phase.start + 1} â€“ {phase.end + 1}</p>
+                                        <p className="phase-card-range">Levels {phase.start + 1} “ {phase.end + 1}</p>
                                         <div className="phase-card-progress">
                                             <div className="phase-progress-bar">
                                                 <motion.div
@@ -1223,7 +1223,7 @@ const Arcade = () => {
                                 <span className="game-module-tag">
                                     {sections.flatMap(s => s.games).find(g => g.id === activeGame)?.title}
                                 </span>
-                                <span className="game-level-sep">â€º</span>
+                                <span className="game-level-sep">›</span>
                                 <span className="game-level-tag">
                                     {currentPhase ? `${currentPhase.label}: ` : ''}
                                     Level {relativeLvlIdx} / {totalInPhase}

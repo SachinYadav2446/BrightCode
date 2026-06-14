@@ -28,6 +28,7 @@ const Navbar = () => {
     if (path.startsWith('/workspace')) return 'workspace';
     if (path.startsWith('/codevault')) return 'codevault';
     if (path.startsWith('/factions')) return 'factions';
+    if (path.startsWith('/proctor')) return 'proctor';
     if (path.startsWith('/user-guide')) return 'guide';
     return '';
   };
@@ -67,6 +68,7 @@ const Navbar = () => {
             <Link to="/workspace" className={`nav-link-hover ${currentPage === 'workspace' ? 'active' : ''}`}>Workspace</Link>
             <Link to="/codevault" className={`nav-link-hover ${currentPage === 'codevault' ? 'active' : ''}`}>Vault</Link>
             <Link to="/factions"  className={`nav-link-hover ${currentPage === 'factions'  ? 'active' : ''}`}>Factions</Link>
+            <Link to="/proctor"   className={`nav-link-hover proctor-nav-link ${currentPage === 'proctor'  ? 'active' : ''}`}>Proctor</Link>
           </div>
 
           {/* RIGHT: Actions */}

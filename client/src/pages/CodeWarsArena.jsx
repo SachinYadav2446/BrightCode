@@ -1365,9 +1365,9 @@ const RoomLobby = ({ room, user, onLeave, onStart, onSwitchTeam, onCopyId }) => 
                     </div>
                     <div className="room-config">
                         <span>{room.teamSize}v{room.teamSize}</span>
-                        <span>â€¢</span>
+                        <span>•</span>
                         <span>{room.questionCount} questions</span>
-                        <span>â€¢</span>
+                        <span>•</span>
                         <span>{Math.floor(room.timeLimit / 60)}m</span>
                     </div>
                     <span className={`badge-privacy ${room.isPrivate ? 'private' : 'public'}`}>
@@ -1709,7 +1709,7 @@ const ResultsScreen = ({ room, results, user, onBackToMenu }) => {
                                             <div className="player-result-info">
                                                 <div className="player-result-name">{player.username}</div>
                                                 <div className="player-result-score">
-                                                    {player.score} pts â€¢ {player.questionsCompleted} solved
+                                                    {player.score} pts • {player.questionsCompleted} solved
                                                 </div>
                                             </div>
                                         </div>
