@@ -2470,6 +2470,7 @@ app.post('/factions/create', authenticateToken, async (req, res) => {
         members: [{ id: req.user.id, username: req.user.username, xp: founderXP, role: 'leader' }],
         pendingMembers: [],
         isPublic: isPublic !== undefined ? isPublic : true,
+        totalXp: founderXP, // Added totalXp field to match frontend expectation
         createdAt: new Date().toISOString()
     };
     factions.set(id, newFaction);
