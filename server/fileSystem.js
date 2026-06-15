@@ -199,6 +199,40 @@ class FileSystem {
     getFiles() {
         return this.files;
     }
+
+    /**
+     * Reload all files from disk (after git clone/pull/checkout)
+     */
+    loadFromDisk(exclude = new Set(['.git', 'node_modules'])) {
+        const walk = (dir, baseDir) => {
+            const results = [];
+            if (!fs.existsSync(dir)) return results;
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                if (exclude.has(entry.name)) continue;
+                const fullPath = path.join(dir, entry.name);
+                const relPath = path.relative(baseDir, fullPath).replace(/\\/g, '/');
+                if (entry.isDirectory()) {
+                    results.push(...walk(fullPath, baseDir));
+                } else if (entry.isFile() && !relPath.endsWith('.keep')) {
+                    results.push(relPath);
+                }
+            }
+            return results;
+        };
+
+        const paths = walk(this.roomDir, this.roomDir);
+        const next = {};
+        for (const filePath of paths) {
+            try {
+                const content = fs.readFileSync(path.join(this.roomDir, filePath), 'utf8');
+                next[filePath] = { content, language: this.getLanguage(filePath) };
+            } catch {
+                // skip binary files
+            }
+        }
+        this.files = next;
+        return this.files;
+    }
 }
 
 module.exports = FileSystem;

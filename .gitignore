@@ -6,6 +6,7 @@ build/
 *.log
 temp_exec/
 server/tmp_builds/
+server/workspace_store/
 server/logs/
 
 # Database files (local development data)
