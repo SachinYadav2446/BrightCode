@@ -18,6 +18,7 @@ import ProctorPage from './pages/ProctorPage';
 import BattleArena from './pages/BattleArena';
 import UserModule from './pages/UserModule';
 import UserProfile from './pages/UserProfile';
+import ContributePage from './pages/ContributePage';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
@@ -395,6 +396,14 @@ function App() {
             <Route 
               path="/u/:username" 
               element={<UserProfile />} 
+            />
+            <Route 
+              path="/contribute" 
+              element={
+                <ProtectedRoute>
+                  <ContributePage />
+                </ProtectedRoute>
+              } 
             />
             {/* Catch-all: redirect any unknown path to landing */}
             <Route path="*" element={<Navigate to="/" replace />} />
