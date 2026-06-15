@@ -75,10 +75,10 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 24px;
+    gap: 16px;
     background: linear-gradient(135deg, rgba(20,20,25,0.9) 0%, rgba(10,10,15,0.95) 100%);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 24px;
+    padding: 16px;
     position: relative;
     box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.02);
     overflow: hidden;
@@ -121,8 +121,8 @@
 
 /* Hexagon Avatar */
 .up-avatar-hex {
-    width: 100px;
-    height: 110px; /* w * 1.1 */
+    width: 80px;
+    height: 88px; /* w * 1.1 */
     clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
     background: var(--bg-surface);
     display: flex;
@@ -195,7 +195,7 @@
 
 .up-username {
     margin: 0;
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 900;
     letter-spacing: 2px;
     text-transform: uppercase;
@@ -291,9 +291,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 14px 24px;
-    font-size: 13px;
+    gap: 8px;
+    padding: 10px 18px;
+    font-size: 12px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1.5px;
@@ -304,7 +304,7 @@
     white-space: nowrap;
     background: rgba(255,255,255,0.05);
     color: #fff;
-    clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
 }
 
 .up-action-btn::before {
@@ -312,7 +312,7 @@
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     border: 1px solid rgba(255,255,255,0.1);
-    clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
     pointer-events: none;
 }
 
@@ -343,14 +343,14 @@
 /* ── Stats Dossier ── */
 .up-stats-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
 }
 
 .up-stat-card {
     background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.5) 100%);
     border-top: 2px solid;
-    padding: 16px 12px;
+    padding: 12px 10px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -377,7 +377,7 @@
 }
 
 .up-stat-value {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 900;
     margin: 0;
     letter-spacing: 1px;
