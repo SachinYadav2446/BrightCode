@@ -71,7 +71,13 @@
       "created_at": "2026-06-15T12:00:18.339Z",
       "subscription": "elite",
       "google_id": "109967909212937111766",
-      "session_id": "fff38e9c-6fdc-4aa9-96e2-9ad131c62930"
+      "session_id": "fff38e9c-6fdc-4aa9-96e2-9ad131c62930",
+      "avatarId": "Sniper",
+      "bannerId": "crimson",
+      "github": "",
+      "leetcode": "",
+      "project1": "",
+      "project2": ""
     }
   ]
 }
