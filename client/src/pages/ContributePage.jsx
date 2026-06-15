@@ -361,7 +361,8 @@ const ContributePage = () => {
         {showWizard && (
           <>
             <motion.div className="cp-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowWizard(false)} />
-            <motion.div className="cp-modal" initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }}>
+            <div className="cp-modal-centering">
+            <motion.div className="cp-modal" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }}>
               {/* Modal header */}
               <div className="cp-modal-header">
                 <div className="cp-modal-title">
@@ -498,6 +499,7 @@ const ContributePage = () => {
                 </div>
               </form>
             </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence>
@@ -507,7 +509,8 @@ const ContributePage = () => {
         {selectedReview && (
           <>
             <motion.div className="cp-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedReview(null)} />
-            <motion.div className="cp-modal large" initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }}>
+            <div className="cp-modal-centering">
+            <motion.div className="cp-modal large" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }}>
               <div className="cp-modal-header">
                 <div className="cp-modal-title">
                   <div className="cp-modal-icon admin"><Shield size={18}/></div>
@@ -587,6 +590,7 @@ const ContributePage = () => {
                 </button>
               </div>
             </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence>

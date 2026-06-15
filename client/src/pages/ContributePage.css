@@ -16,9 +16,13 @@
 /* ── Hero ── */
 .cp-hero {
   position: relative;
-  padding: 72px 40px 90px;
+  padding: 72px 40px 80px;
   overflow: hidden;
   border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 260px;
 }
 
 .cp-hero-glow {
@@ -42,7 +46,8 @@
 .cp-hero-content {
   position: relative;
   z-index: 2;
-  max-width: 700px;
+  max-width: 620px;
+  flex: 1;
 }
 
 .cp-hero-badge {
@@ -93,16 +98,15 @@
   flex-wrap: wrap;
 }
 
-/* Floating pills */
+/* Floating stat pills */
 .cp-hero-pills {
-  position: absolute;
-  right: 60px;
-  top: 50%;
-  transform: translateY(-50%);
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  z-index: 2;
+  flex-shrink: 0;
+  margin-left: 40px;
 }
 
 .cp-pill {
@@ -446,25 +450,39 @@
 /* ── OVERLAY + MODAL ── */
 .cp-overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.8);
-  backdrop-filter: blur(12px);
+  background: rgba(0,0,0,0.82);
+  backdrop-filter: blur(14px);
   z-index: 200;
 }
 
-.cp-modal {
+/* Centering wrapper — framer-motion owns `transform`, so we can't use translate trick on the animated div */
+.cp-modal-centering {
   position: fixed;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: calc(100% - 32px);
+  inset: 0;
+  z-index: 201;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  pointer-events: none; /* let overlay receive clicks */
+}
+
+.cp-modal {
+  position: relative; /* NOT fixed — centering wrapper handles that */
+  width: 100%;
   max-width: 720px;
   max-height: calc(100vh - 32px);
   background: #0d0d10;
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 18px;
-  z-index: 201;
-  display: flex; flex-direction: column;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 24px 64px rgba(0,0,0,0.9), 0 0 48px rgba(239,68,68,0.08);
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03),
+    0 24px 64px rgba(0,0,0,0.9),
+    0 0 48px rgba(239,68,68,0.08);
   overflow: hidden;
+  pointer-events: all; /* re-enable clicks on the modal itself */
 }
 
 .cp-modal.large { max-width: 860px; }
