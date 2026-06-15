@@ -372,16 +372,18 @@ const smtpUser = process.env.SMTP_USER || '';
 const smtpPass = process.env.SMTP_PASS || '';
 
 if (smtpUser && smtpPass) {
-    logger.info(`[MAIL] SMTP User found: ${smtpUser}`);
+    logger.info(`[MAIL] Attempting connection for: ${smtpUser}`);
     transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true, // use SSL
         auth: {
             user: smtpUser,
             pass: smtpPass
         },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 10000
+        connectionTimeout: 20000,
+        greetingTimeout: 20000,
+        socketTimeout: 20000
     });
     transporter.verify(function (error, success) {
         if (error) {
