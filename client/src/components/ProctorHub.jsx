@@ -112,6 +112,44 @@ const ProctorHub = () => {
     const totalCandidates = sessions.reduce((a, s) => a + (s.participants?.length || 0), 0);
     const completedCount  = sessions.filter(s => s.status === 'completed').length;
 
+    if (!user || user.subscription === 'basic') {
+        return (
+            <div className="ph2-root basic-locked">
+                <div className="proctor-lock-overlay">
+                    <div className="proctor-lock-card">
+                        <div className="lock-icon-glow">
+                            <Lock size={32} />
+                        </div>
+                        <h2>PROCTOR SYSTEM LOCKED</h2>
+                        <p className="clearance-notice">
+                            Security level BASIC does not support exam/interview surveillance features. 
+                            Upgrade clearance to PRO or ELITE to configure proctor lobbies.
+                        </p>
+                        <button 
+                            className="upgrade-clearance-btn" 
+                            onClick={() => navigate('/settings', { state: { activeTab: 'subscription' } })}
+                        >
+                            Upgrade Clearance Level
+                        </button>
+                    </div>
+                </div>
+                
+                <aside className="ph2-sidebar blurred">
+                    <div className="ph2-sidebar-brand">
+                        <div className="ph2-brand-icon"><Shield size={18} /></div>
+                        <div>
+                            <div className="ph2-brand-name">ProctorArena</div>
+                            <div className="ph2-brand-sub">Interview Platform</div>
+                        </div>
+                    </div>
+                </aside>
+                <main className="ph2-main blurred">
+                    {/* Blurred background main content */}
+                </main>
+            </div>
+        );
+    }
+
     return (
         <div className="ph2-root">
 

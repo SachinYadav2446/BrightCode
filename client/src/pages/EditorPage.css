@@ -328,8 +328,16 @@
 
 
 
-.sidebar-section {
+.git-sidebar-section {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0 !important;
+}
 
+.sidebar-section {
     padding: 0;
 
     height: 100%;

@@ -1334,3 +1334,93 @@
   .pp-cta-row { flex-direction: column; }
   .pp-cta-primary, .pp-cta-secondary { width: 100%; justify-content: center; }
 }
+
+/* ─── BASIC clearance locked style ─── */
+.proctor-lock-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  min-height: calc(100vh - 120px);
+  background: radial-gradient(circle at center, rgba(15, 10, 10, 0.8) 0%, rgba(5, 5, 5, 0.95) 100%);
+  position: relative;
+  z-index: 90;
+}
+
+.proctor-lock-card {
+  max-width: 480px;
+  width: 100%;
+  background: rgba(10, 10, 15, 0.95);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 16px;
+  padding: 40px 30px;
+  text-align: center;
+  box-shadow: 
+    0 0 0 1px rgba(239, 68, 68, 0.15),
+    0 15px 40px rgba(0, 0, 0, 0.8),
+    0 0 60px rgba(239, 68, 68, 0.15);
+  backdrop-filter: blur(20px);
+}
+
+.lock-icon-glow {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(239, 68, 68, 0.05) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ef4444;
+  margin: 0 auto 24px;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
+  animation: pp-lock-glow 2s infinite alternate;
+}
+
+@keyframes pp-lock-glow {
+  from { box-shadow: 0 0 15px rgba(239, 68, 68, 0.2); transform: scale(1); }
+  to   { box-shadow: 0 0 25px rgba(239, 68, 68, 0.45); transform: scale(1.03); }
+}
+
+.proctor-lock-card h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 0 0 16px;
+  background: linear-gradient(135deg, #fff 40%, #ef4444 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.clearance-notice {
+  font-size: 0.88rem;
+  color: #a1a1aa;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+.upgrade-clearance-btn {
+  width: 100%;
+  padding: 13px;
+  background: #ef4444;
+  border: 1px solid #ef4444;
+  border-radius: 9px;
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.upgrade-clearance-btn:hover {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.45);
+}

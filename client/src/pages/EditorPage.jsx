@@ -20,7 +20,8 @@ import {
     PenTool, Eraser, Layout as WhiteboardIcon, Zap, Shield, Languages,
     Mic, MicOff, Video, VideoOff, PhoneOff, Phone, Plus,
     ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Share2, Download,
-    Folder, FolderOpen, FolderPlus, File as FileIcon, X, MessageSquare, BookOpen, ShieldAlert, User
+    Folder, FolderOpen, FolderPlus, File as FileIcon, X, MessageSquare, BookOpen, ShieldAlert, User,
+    GitBranch
 } from 'lucide-react';
 
 import axios from 'axios';
@@ -30,6 +31,7 @@ import './EditorPage.css';
 import { useAuth } from '../context/AuthContext';
 
 import CodeBrightLogo from '../components/CodeBrightLogo';
+import GitPanel from '../components/GitPanel';
 
 // â”€â”€ RemoteVideoTile: renders a remote participant's video â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const RemoteVideoTile = ({ socketId, participant }) => {
@@ -115,7 +117,8 @@ const EditorPage = () => {
 
     // Navigate sidebar views with arrow buttons
     const goToNextView = () => {
-        if (sidebarView === 'files') setSidebarView('collaborators');
+        if (sidebarView === 'files') setSidebarView('git');
+        else if (sidebarView === 'git') setSidebarView('collaborators');
         else if (sidebarView === 'collaborators') setSidebarView('chat');
         else if (sidebarView === 'chat') setSidebarView('sentinel');
     };
@@ -123,7 +126,8 @@ const EditorPage = () => {
     const goToPreviousView = () => {
         if (sidebarView === 'sentinel') setSidebarView('chat');
         else if (sidebarView === 'chat') setSidebarView('collaborators');
-        else if (sidebarView === 'collaborators') setSidebarView('files');
+        else if (sidebarView === 'collaborators') setSidebarView('git');
+        else if (sidebarView === 'git') setSidebarView('files');
     };
 
 
@@ -218,7 +222,7 @@ const EditorPage = () => {
     // â”€â”€ FEATURE 1: Multi-User Video Call (WebRTC) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const [isVideoCallOpen, setIsVideoCallOpen] = useState(true); // Always open by default
     const [isCallActive, setIsCallActive] = useState(false);
-    const [isMuted, setIsMuted] = useState(false);
+    const [isMuted, setIsMuted] = useState(true); // Mic off by default
     const [isVideoOn, setIsVideoOn] = useState(false); // Camera off by default
     const [callParticipants, setCallParticipants] = useState({}); // socketId -> { username, stream, isMuted, isVideoOn }
     const localVideoRef = useRef(null);
@@ -385,18 +389,14 @@ const EditorPage = () => {
                     if (isStopped) return;
                     const fileNames = Object.keys(serverFiles || {});
                     console.log('[EDITOR] Received initial-data:', { fileCount: fileNames.length, files: fileNames, userCount: users?.length });
-                    // Clear the safety-net timeout since we got initial-data
                     if (window.__initialDataTimeout) { clearTimeout(window.__initialDataTimeout); window.__initialDataTimeout = null; }
-                    // Merge server files with local state:
-                    // - Server is authoritative for files it knows about
-                    // - Local-only files (just created, not yet on server) are preserved
-                    setFiles(prev => {
-                        const merged = { ...prev };
-                        Object.entries(serverFiles || {}).forEach(([name, data]) => {
-                            merged[name] = data;
-                        });
-                        return merged;
-                    });
+                    // Server is authoritative on join/rejoin — disk-persisted files restored by backend
+                    setFiles(serverFiles || {});
+                    const firstFile = fileNames.find(f => !f.endsWith('.keep'));
+                    if (firstFile && serverFiles[firstFile]) {
+                        setActiveFile(prev => (prev && serverFiles[prev]) ? prev : firstFile);
+                        setLanguage(serverFiles[firstFile].language || 'javascript');
+                    }
                     setClients(users);
                     setAdminId(adminId);
                     setMyId(yourId);
@@ -437,6 +437,20 @@ const EditorPage = () => {
 
                     });
 
+                });
+
+                socket.on('git-sync', ({ files, actor }) => {
+                    if (isStopped) return;
+                    setFiles(files);
+                    if (actor !== user?.username) {
+                        toast(`Git sync: ${actor} updated the workspace`, { icon: '🔀' });
+                    }
+                });
+
+                socket.on('git-activity', ({ type, actor, message, branch }) => {
+                    if (isStopped || actor === user?.username) return;
+                    const labels = { commit: `committed: ${message}`, push: `pushed to ${branch}`, pull: `pulled ${branch}` };
+                    toast(`${actor} ${labels[type] || type}`, { icon: '🔀' });
                 });
 
 
@@ -988,27 +1002,45 @@ const EditorPage = () => {
 
     // â”€â”€ Preview Generation Function â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const generatePreview = () => {
-        // Collect HTML, CSS, and JS files
-        let htmlContent = '';
-        let cssContent = '';
-        let jsContent = '';
+        const entries = Object.entries(files);
+        const getExt = (name) => name.split('.').pop()?.toLowerCase() || '';
 
-        Object.entries(files).forEach(([fileName, fileData]) => {
-            const ext = fileName.split('.').pop()?.toLowerCase();
+        const htmlFiles = entries.filter(([name]) => ['html', 'htm'].includes(getExt(name)));
+        const cssFiles = entries.filter(([name]) => ['css', 'scss'].includes(getExt(name)));
+        const jsFiles = entries.filter(([name]) => getExt(name) === 'js');
+        const jsxFiles = entries.filter(([name]) => ['jsx', 'tsx'].includes(getExt(name)));
 
-            if (ext === 'html' || ext === 'htm') {
-                htmlContent += fileData.content || '';
-            } else if (ext === 'css' || ext === 'scss') {
-                cssContent += fileData.content || '';
-            } else if (ext === 'js' || ext === 'jsx') {
-                jsContent += fileData.content || '';
-            }
-        });
+        // React/Vite/JSX projects can't run in a raw iframe without a bundler
+        const hasBundlerProject = entries.some(([name]) =>
+            name === 'package.json' || name === 'vite.config.js' || name === 'vite.config.ts'
+        );
+        if ((jsxFiles.length > 0 || hasBundlerProject) && htmlFiles.length === 0) {
+            return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Preview</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #0f0f12; color: #e7e5e4; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 24px; }
+  .box { max-width: 480px; text-align: center; border: 1px solid rgba(226,160,74,0.3); border-radius: 12px; padding: 32px; background: rgba(0,0,0,0.4); }
+  h2 { color: #e2a04a; margin: 0 0 12px; font-size: 1.1rem; }
+  p { margin: 0 0 8px; line-height: 1.6; color: #a8a29e; font-size: 0.9rem; }
+  code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; color: #fbbf24; }
+</style></head><body><div class="box">
+  <h2>Build Required</h2>
+  <p>This project uses <strong>JSX/React</strong> and needs a bundler to preview.</p>
+  <p>Use the terminal: <code>npm install && npm run dev</code></p>
+  <p>Plain HTML/CSS/JS files preview instantly here.</p>
+</div></body></html>`;
+        }
 
-        // If no HTML file, create a basic structure
+        // Prefer index.html (root or nested)
+        const indexEntry = htmlFiles.find(([name]) => name === 'index.html' || name.endsWith('/index.html'))
+            || htmlFiles[0];
+
+        let htmlContent = indexEntry ? indexEntry[1].content || '' : '';
+        let cssContent = cssFiles.map(([, d]) => d.content || '').join('\n');
+        let jsContent = jsFiles.map(([, d]) => d.content || '').join('\n');
+
         if (!htmlContent) {
-            htmlContent = `
-<!DOCTYPE html>
+            htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1021,7 +1053,7 @@ const EditorPage = () => {
 </html>`;
         }
 
-        // Inject CSS and JS into HTML
+        // Inject global CSS and plain JS only (never raw JSX)
         const previewHTML = htmlContent.replace(
             '</head>',
             `<style>${cssContent}</style></head>`
@@ -1478,15 +1510,20 @@ const EditorPage = () => {
 
     // Auto-join the call when workspace loads
     const autoJoinCall = async () => {
-        // Start with audio only, camera off by default
-        const stream = await getLocalStream(false);
+        // Request permissions for both audio and video, but start with all tracks DISABLED
+        // This way users must explicitly turn on mic/camera
+        const stream = await getLocalStream(true);
         if (!stream) {
             // If no permissions, still mark as active but without stream
             setIsCallActive(true);
             return;
         }
 
+        // Disable all tracks by default — mic and camera both OFF
+        stream.getTracks().forEach(t => { t.enabled = false; });
         setIsCallActive(true);
+        setIsMuted(true);
+        setIsVideoOn(false);
 
         // Tell everyone we joined
         socketRef.current?.emit('video-call-join', { roomId, username: user?.username });
@@ -1504,7 +1541,7 @@ const EditorPage = () => {
         const pc = createPeerConnection(targetId);
         setCallParticipants(prev => ({
             ...prev,
-            [targetId]: { username: targetUsername, stream: null, isMuted: false, isVideoOn: true }
+            [targetId]: { username: targetUsername, stream: null, isMuted: true, isVideoOn: false }
         }));
         localStreamRef.current.getTracks().forEach(track => pc.addTrack(track, localStreamRef.current));
         const offer = await pc.createOffer();
@@ -1517,9 +1554,13 @@ const EditorPage = () => {
         // Auto-get stream if not already in call
         let stream = localStreamRef.current;
         if (!stream) {
-            stream = await getLocalStream(isVideoOn);
+            stream = await getLocalStream(true);
             if (!stream) return;
+            // Disable all tracks by default
+            stream.getTracks().forEach(t => { t.enabled = false; });
             setIsCallActive(true);
+            setIsMuted(true);
+            setIsVideoOn(false);
             setIsVideoCallOpen(true);
             socketRef.current?.emit('video-call-join', { roomId, username: user?.username });
         }
@@ -1528,7 +1569,7 @@ const EditorPage = () => {
         const pc = createPeerConnection(from);
         setCallParticipants(prev => ({
             ...prev,
-            [from]: { username: callerInfo?.username || 'Peer', stream: null, isMuted: false, isVideoOn: true }
+            [from]: { username: callerInfo?.username || 'Peer', stream: null, isMuted: true, isVideoOn: false }
         }));
 
         stream.getTracks().forEach(track => pc.addTrack(track, stream));
@@ -1558,7 +1599,8 @@ const EditorPage = () => {
 
         setCallParticipants({});
         setIsCallActive(false);
-        setIsMuted(false);
+        setIsMuted(true);
+        setIsVideoOn(false);
 
         socketRef.current?.emit('video-call-leave', { roomId, username: user?.username });
     };
@@ -1579,6 +1621,11 @@ const EditorPage = () => {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
                 localStreamRef.current = stream;
                 if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+
+                // Respect current mute state
+                if (isMuted) {
+                    stream.getAudioTracks().forEach(t => { t.enabled = false; });
+                }
 
                 // Add tracks to all existing peer connections
                 Object.values(peerConnectionsRef.current).forEach(pc => {
@@ -1893,7 +1940,7 @@ const EditorPage = () => {
 
         if (e.key === 'Enter' && terminalInput.trim()) {
 
-            socketRef.current?.emit('terminal-command', { command: terminalInput });
+            socketRef.current?.emit('terminal-input', { input: terminalInput + '\r' });
 
             setTerminalInput('');
 
@@ -2417,7 +2464,13 @@ const EditorPage = () => {
 
                     <div className="nav-right">
                         <div className="editor-nav-actions">
-
+                            <button
+                                className={`nav-icon-btn ${sidebarView === 'git' ? 'active' : ''}`}
+                                onClick={() => { setSidebarView('git'); setIsSidebarCollapsed(false); }}
+                                title="Source Control"
+                            >
+                                <GitBranch size={18} />
+                            </button>
                             <button
                                 className={`nav-icon-btn ${!isTerminalCollapsed ? 'active' : ''}`}
                                 onClick={toggleTerminal}
@@ -2469,6 +2522,7 @@ const EditorPage = () => {
 
                                 <span className="sidebar-title">
                                     {sidebarView === 'files' && 'EXPLORER'}
+                                    {sidebarView === 'git' && 'SOURCE CONTROL'}
                                     {sidebarView === 'collaborators' && 'COLLABORATORS'}
                                     {sidebarView === 'chat' && 'TEAM CHAT'}
                                     {sidebarView === 'sentinel' && 'AI SENTINEL'}
@@ -2512,6 +2566,19 @@ const EditorPage = () => {
                                             </AnimatePresence>
                                         </div>
                                     </div>
+                                </div>
+                            )}
+
+                            {/* Git Source Control View */}
+                            {sidebarView === 'git' && (
+                                <div className="sidebar-section git-sidebar-section">
+                                    <GitPanel
+                                        roomId={roomId}
+                                        canWrite={canWrite}
+                                        isAdmin={isAdmin}
+                                        user={user}
+                                        onFilesSynced={(syncedFiles) => setFiles(syncedFiles)}
+                                    />
                                 </div>
                             )}
 
@@ -2818,6 +2885,8 @@ const EditorPage = () => {
                                         options={{
 
                                             fontSize: 14,
+                                            fontFamily: "'JetBrains Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', Consolas, Monaco, 'Courier New', monospace",
+                                            fontLigatures: true,
 
                                             minimap: { enabled: true },
 

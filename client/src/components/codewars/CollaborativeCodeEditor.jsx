@@ -590,6 +590,8 @@ const CollaborativeCodeEditor = ({
           options={{
             minimap: { enabled: false },
             fontSize: 14,
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', Consolas, Monaco, 'Courier New', monospace",
+            fontLigatures: true,
             lineNumbers: 'on',
             roundedSelection: true,
             scrollBeyondLastLine: false,

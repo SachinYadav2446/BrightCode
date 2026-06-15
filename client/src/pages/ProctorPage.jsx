@@ -310,7 +310,7 @@ const JoinSessionModal = ({ onClose }) => {
    MAIN PAGE COMPONENT
 ─────────────────────────────────────────────────────── */
 const ProctorPage = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate  = useNavigate();
 
   const [sessions,     setSessions]     = useState([]);
@@ -321,7 +321,14 @@ const ProctorPage = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [copiedId,     setCopiedId]     = useState(null);
 
-  useEffect(() => { window.scrollTo(0, 0); loadSessions(); }, []);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (user && user.subscription !== 'basic') {
+      loadSessions();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
 
   const loadSessions = async () => {
     try {
@@ -365,6 +372,16 @@ const ProctorPage = () => {
   const completedCount  = sessions.filter(s => s.status === 'completed').length;
   const totalCandidates = sessions.reduce((a, s) => a + (s.participants?.length || 0), 0);
 
+  const isBasic = !user || user.subscription === 'basic';
+
+  if (authLoading) {
+    return (
+      <div className="pp-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <div className="pp-spinner" />
+      </div>
+    );
+  }
+
   return (
     <div className="pp-page">
       {/* Mode Switcher */}
@@ -384,8 +401,29 @@ const ProctorPage = () => {
         </button>
       </div>
 
-      {/* ── HERO ── */}
-      <section className="pp-hero">
+      {isBasic ? (
+        <div className="proctor-lock-overlay">
+          <div className="proctor-lock-card">
+            <div className="lock-icon-glow">
+              <Lock size={32} />
+            </div>
+            <h2>PROCTOR SYSTEM LOCKED</h2>
+            <p className="clearance-notice">
+              Security level BASIC does not support exam/interview surveillance features. 
+              Upgrade clearance to PRO or ELITE to configure proctor lobbies.
+            </p>
+            <button 
+              className="upgrade-clearance-btn" 
+              onClick={() => navigate('/settings', { state: { activeTab: 'subscription' } })}
+            >
+              Upgrade Clearance Level
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* ── HERO ── */}
+          <section className="pp-hero">
         <div className="pp-hero-bg">
           <div className="pp-hero-glow pp-hero-glow-1" />
           <div className="pp-hero-glow pp-hero-glow-2" />
@@ -711,6 +749,9 @@ const ProctorPage = () => {
           </div>
         </div>
       </section>
+
+        </>
+      )}
 
       {/* Modals */}
       <AnimatePresence>
