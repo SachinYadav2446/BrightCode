@@ -171,61 +171,61 @@ const Home = () => {
       id: 'react-quest', 
       label: 'React Forge', 
       val: Number(user?.react_level || 0), 
-      max: 500, 
+      max: 200, 
       color: '#06b6d4', 
       icon: Globe, 
       category: 'Architecture', 
       desc: 'Test your React structure, lifecycle design, virtual DOM updates, hook mechanics, and state workflows.',
       skills: ['JSX', 'Hooks', 'State Mgmt', 'React Router'],
-      milestones: [{ name: 'Basics', end: 100 }, { name: 'Hooks', end: 250 }, { name: 'Performance', end: 400 }, { name: 'Ecosystem', end: 500 }]
+      milestones: [{ name: 'Basics', end: 50 }, { name: 'Hooks', end: 100 }, { name: 'Advanced', end: 150 }, { name: 'StateFlux', end: 200 }]
     },
     { 
       id: 'java-master', 
       label: 'Java Protocol', 
       val: Number(user?.java_level || 0), 
-      max: 400, 
+      max: 100, 
       color: '#10b981', 
       icon: Terminal, 
       category: 'OOP Core', 
       desc: 'Master object-oriented patterns, abstraction, memory, collections, multithreading, and stream optimization.',
       skills: ['OOP', 'Streams', 'Generics', 'Threads'],
-      milestones: [{ name: 'Variables', end: 80 }, { name: 'OOP Basics', end: 180 }, { name: 'Collections', end: 280 }, { name: 'Advanced Java', end: 400 }]
+      milestones: [{ name: 'Basics', end: 25 }, { name: 'OOP', end: 50 }, { name: 'Collections', end: 75 }, { name: 'Advanced', end: 100 }]
     },
     { 
       id: 'cpp-master', 
       label: 'C++ Protocol', 
       val: Number(user?.cpp_level || 0), 
-      max: 400, 
+      max: 50, 
       color: '#ec4899', 
       icon: Code2, 
       category: 'System Programming', 
       desc: 'Control system-level resources, pointers, dynamic memory management, standard template library (STL), and compilation.',
       skills: ['Pointers', 'STL', 'Templates', 'Memory Mgmt'],
-      milestones: [{ name: 'Syntax Basics', end: 80 }, { name: 'OOP', end: 180 }, { name: 'STL Containers', end: 280 }, { name: 'System Optimization', end: 400 }]
+      milestones: [{ name: 'Basics', end: 12 }, { name: 'Pointers', end: 25 }, { name: 'STL', end: 37 }, { name: 'Advanced', end: 50 }]
     },
     { 
       id: 'python-master', 
       label: 'Python Protocol', 
       val: Number(user?.python_level || 0), 
-      max: 400, 
+      max: 50, 
       color: '#eab308', 
       icon: Code2, 
       category: 'Scripting & AI', 
       desc: 'Master decorators, file I/O, custom generators, regex, algorithms, and modular scientific scripting in Python.',
       skills: ['Decorators', 'Generators', 'Data Science', 'OOP'],
-      milestones: [{ name: 'Syntax', end: 80 }, { name: 'Data structures', end: 180 }, { name: 'OOP & Modules', end: 280 }, { name: 'Pythonic Code', end: 400 }]
+      milestones: [{ name: 'Basics', end: 12 }, { name: 'Data Structures', end: 25 }, { name: 'Advanced', end: 37 }, { name: 'Expert', end: 50 }]
     },
     { 
       id: 'go-master', 
       label: 'Go Protocol', 
       val: Number(user?.go_level || 0), 
-      max: 400, 
+      max: 50, 
       color: '#0ea5e9', 
       icon: Code2, 
       category: 'Concurrency', 
       desc: 'Leverage goroutines, channels, structures, pointers, web routing, and modern distributed service paradigms.',
       skills: ['Goroutines', 'Channels', 'Interfaces', 'Pointers'],
-      milestones: [{ name: 'Go Syntax', end: 80 }, { name: 'Interfaces', end: 180 }, { name: 'Goroutines', end: 280 }, { name: 'Concurrency Patterns', end: 400 }]
+      milestones: [{ name: 'Basics', end: 12 }, { name: 'Concurrency', end: 25 }, { name: 'Advanced', end: 37 }, { name: 'Expert', end: 50 }]
     }
   ];
 
