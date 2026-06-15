@@ -375,21 +375,19 @@ if (smtpUser && smtpPass) {
     logger.info(`[MAIL] Attempting connection for: ${smtpUser}`);
     transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
-        port: 587,
-        secure: false, // Use STARTTLS
+        port: 465,
+        secure: true, // Use SSL for port 465
         auth: {
             user: smtpUser,
             pass: smtpPass
         },
-        tls: {
-            rejectUnauthorized: false // Helps with handshake issues in Docker/Cloud
-        },
-        pool: true, // Reuse connections for efficiency
-        maxConnections: 3,
-        maxMessages: 10,
-        connectionTimeout: 30000,
-        greetingTimeout: 30000,
-        socketTimeout: 30000
+        pool: true,
+        maxConnections: 5,
+        rateDelta: 1000,
+        rateLimit: 5,
+        connectionTimeout: 60000, // 60 seconds
+        greetingTimeout: 60000,
+        socketTimeout: 60000
     });
     transporter.verify(function (error, success) {
         if (error) {
