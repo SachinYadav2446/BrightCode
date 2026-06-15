@@ -373,10 +373,7 @@ const smtpPass = process.env.SMTP_PASS || '';
 
 if (smtpUser && smtpPass) {
     logger.info(`[MAIL] Attempting connection for: ${smtpUser}`);
-    transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true, // Use SSL for port 465
+    const smtpConfig = {
         auth: {
             user: smtpUser,
             pass: smtpPass
@@ -388,7 +385,18 @@ if (smtpUser && smtpPass) {
         connectionTimeout: 60000, 
         greetingTimeout: 60000,
         socketTimeout: 60000
-    });
+    };
+
+    // Use service if provided, otherwise use host/port/secure
+    if (process.env.SMTP_SERVICE) {
+        smtpConfig.service = process.env.SMTP_SERVICE;
+    } else {
+        smtpConfig.host = process.env.SMTP_HOST || 'smtp.gmail.com';
+        smtpConfig.port = parseInt(process.env.SMTP_PORT) || 465;
+        smtpConfig.secure = process.env.SMTP_SECURE !== 'false'; // Default to true
+    }
+
+    transporter = nodemailer.createTransport(smtpConfig);
     transporter.verify(function (error, success) {
         if (error) {
             logger.error("[MAIL] Connection Error:", error);
@@ -1681,7 +1689,7 @@ app.post('/api/subscription/create-order', authenticateToken, async (req, res) =
         const order = await razorpay.orders.create({
             amount,
             currency: 'INR',
-            receipt: `receipt_sub_${req.user.id}_${Date.now()}`
+            receipt: `sub_${req.user.id.slice(0, 20)}_${Date.now().toString().slice(-8)}`
         });
 
         res.json({
