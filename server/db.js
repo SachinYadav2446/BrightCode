@@ -10,7 +10,10 @@ if (DB_CONNECTION_STRING) {
     logger.info('[DB] Initializing PostgreSQL Pool...');
     pool = new Pool({
         connectionString: DB_CONNECTION_STRING,
-        ssl: DB_CONNECTION_STRING.includes('neon.tech') ? { rejectUnauthorized: false } : false,
+        ssl: DB_CONNECTION_STRING.includes('neon.tech') ? { 
+            rejectUnauthorized: false,
+            sslmode: 'verify-full'
+        } : false,
         max: 10,
         idleTimeoutMillis: 30000,
         connectionTimeoutMillis: 10000,
