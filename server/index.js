@@ -837,6 +837,7 @@ function getMockOAuthPage(provider, callbackUrl) {
             <p>Real OAuth credentials are not configured in .env. Use this developer sandbox to simulate a social login.</p>
             
             <form action="${callbackUrl}" method="GET">
+                <input type="hidden" name="provider" value="${provider}">
                 <div class="input-group">
                     <label>Mock Full Name</label>
                     <input type="text" name="name" value="Demo Developer" required>
