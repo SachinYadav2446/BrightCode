@@ -2570,3 +2570,161 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* GitHub OAuth Button Styles */
+.premium-save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px 18px;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.premium-save-btn:hover {
+  background: rgba(var(--primary-rgb), 0.1);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.2);
+}
+
+.premium-save-btn svg {
+  color: var(--primary);
+  transition: transform 0.2s;
+}
+
+.premium-save-btn:hover svg {
+  transform: rotate(-10deg) scale(1.1);
+}
+
+/* Support Form Input Styles */
+.support-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.support-input-group label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: left;
+}
+
+.support-input,
+.support-textarea {
+  background: rgba(5, 5, 8, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
+  color: #fff !important;
+  font-family: inherit !important;
+  font-size: 0.9rem !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  width: 100%;
+  outline: none;
+}
+
+.support-input::placeholder,
+.support-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.support-input:focus,
+.support-textarea:focus {
+  border-color: var(--primary) !important;
+  background: rgba(var(--primary-rgb), 0.03) !important;
+  box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.15) !important;
+}
+
+.support-textarea {
+  min-height: 160px;
+  resize: vertical;
+}
+
+.support-submit-btn {
+  width: 100%;
+  padding: 13px;
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.support-submit-btn:hover:not(:disabled) {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.45);
+}
+
+.support-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.support-submit-btn svg {
+  transition: transform 0.2s;
+}
+
+.support-submit-btn:hover svg {
+  transform: translate(2px, -2px);
+}
+
+/* Support Form Success Message Widget */
+.support-widget-success {
+  text-align: center;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.support-widget-success .success-icon {
+  width: 60px;
+  height: 60px;
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #4ade80;
+  margin-bottom: 20px;
+  box-shadow: 0 0 20px rgba(74, 222, 128, 0.15);
+}
+
+.support-widget-success h4 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.support-widget-success p {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+}

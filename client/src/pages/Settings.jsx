@@ -1047,21 +1047,20 @@ const Settings = () => {
                         </div>
                       ) : (
                         <form className="support-widget-form" onSubmit={handleSupportSubmit}>
-                          <div className="premium-input-group">
+                          <div className="support-input-group">
                             <label>Subject</label>
                             <input
-                              className="premium-input"
+                              className="support-input"
                               type="text"
                               placeholder="Brief subject line..."
                               value={supportForm.subject}
                               onChange={e => setSupportForm(p => ({ ...p, subject: e.target.value }))}
                             />
                           </div>
-                          <div className="premium-input-group" style={{ marginTop: '16px' }}>
+                          <div className="support-input-group">
                             <label>Message</label>
                             <textarea
-                              className="premium-input"
-                              style={{ minHeight: '140px', resize: 'vertical' }}
+                              className="support-textarea"
                               placeholder="Detail your request, bug report, or feature feedback..."
                               value={supportForm.message}
                               onChange={e => setSupportForm(p => ({ ...p, message: e.target.value }))}
@@ -1069,10 +1068,9 @@ const Settings = () => {
                             />
                           </div>
                           <button
-                            className="action-btn primary"
+                            className="support-submit-btn"
                             type="submit"
                             disabled={supportForm.isSending}
-                            style={{ marginTop: '20px', width: '100%', justifyContent: 'center' }}
                           >
                             <MessageSquare size={16} />
                             <span>{supportForm.isSending ? 'Sending...' : 'Send Message'}</span>
