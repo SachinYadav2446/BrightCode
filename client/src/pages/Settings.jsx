@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, User, Settings as SettingsIcon, Save, Plus, X, LogOut, Shield, Info, Globe, Terminal, Mail, Calendar, ShieldCheck, ChevronRight, Layers, Zap, Users, Activity, Lock, MessageSquare } from 'lucide-react';
+import { ArrowLeft, User, Settings as SettingsIcon, Save, Plus, X, LogOut, Shield, Info, Globe, Terminal, Mail, Calendar, ShieldCheck, ChevronRight, Layers, Zap, Users, Activity, Lock, MessageSquare, GitBranch, Link2, Unplug, CheckCircle2, CreditCard } from 'lucide-react';
+import { getOAuthStatus, getOAuthUrl, disconnectGitHub } from '../services/gitService';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import axios from 'axios';
@@ -10,12 +11,134 @@ import Chatbot from '../components/Chatbot';
 import './Settings.css';
 
 const Settings = () => {
-  const { user, updateProfile, changePassword, logout } = useAuth();
+  const { user, updateProfile, changePassword, logout, syncUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'details');
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [supportForm, setSupportForm] = useState({ subject: '', message: '', isSending: false, sent: false });
+
+  // Subscription stats and notes count
+  const [notesCount, setNotesCount] = useState(0);
+  const workspaceHistory = JSON.parse(localStorage.getItem(`workspaceHistory_${user?.username || 'guest'}`) || '[]');
+  const workspaceCount = workspaceHistory.length;
+
+  useEffect(() => {
+    const fetchNotesCount = async () => {
+      try {
+        const token = localStorage.getItem('token') || user?.token;
+        if (!token) return;
+        const { data } = await axios.get(`${API_URL}/api/notes`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setNotesCount(data.length || 0);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchNotesCount();
+  }, [user]);
+
+  const handleUpgrade = async (planCode) => {
+    try {
+      const token = localStorage.getItem('token') || user?.token;
+      if (!token) {
+        toast.error("Authentic session not found.");
+        return;
+      }
+      
+      const res = await axios.post(`${API_URL}/api/subscription/create-order`, { plan: planCode }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const order = res.data;
+      
+      const options = {
+        key: order.key_id,
+        amount: order.amount,
+        currency: order.currency,
+        name: "BrightCode Command Center",
+        description: `Upgrade system clearance to ${planCode.toUpperCase()}`,
+        order_id: order.id,
+        handler: async function (response) {
+          try {
+            toast.loading("Verifying payment transaction...", { id: "pay_verify" });
+            const verifyRes = await axios.post(`${API_URL}/api/subscription/verify-payment`, {
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              plan: planCode
+            }, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            if (verifyRes.data.success) {
+              toast.success(`Clearance upgraded to ${planCode.toUpperCase()}!`, { id: "pay_verify" });
+              await syncUser();
+            }
+          } catch (err) {
+            toast.error(err.response?.data?.error || "Payment verification failed", { id: "pay_verify" });
+          }
+        },
+        prefill: {
+          name: user.username,
+          email: user.email
+        },
+        theme: {
+          color: "#ef4444"
+        },
+        modal: {
+          ondismiss: function() {
+            toast.error("Payment checkout canceled.");
+          }
+        }
+      };
+
+      if (order.sandbox) {
+        const mockConfirm = window.confirm(`[SANDBOX MODE] Proceed with mock payment of ₹${order.amount/100} for ${planCode.toUpperCase()} plan?`);
+        if (mockConfirm) {
+          toast.loading("Verifying sandbox transaction...", { id: "pay_verify" });
+          const verifyRes = await axios.post(`${API_URL}/api/subscription/verify-payment`, {
+            razorpay_payment_id: `pay_mock_${Math.random().toString(36).substr(2, 9)}`,
+            razorpay_order_id: order.id,
+            razorpay_signature: "sandbox_mock_sig",
+            plan: planCode
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (verifyRes.data.success) {
+            toast.success(`Clearance upgraded to ${planCode.toUpperCase()}!`, { id: "pay_verify" });
+            await syncUser();
+          }
+        } else {
+          toast.error("Sandbox payment canceled.");
+        }
+      } else {
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.error || "Failed to initiate payment");
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    const confirmCancel = window.confirm("Are you sure you want to revert your system clearance to Basic? Your limits will immediately change.");
+    if (!confirmCancel) return;
+    try {
+      const token = localStorage.getItem('token') || user?.token;
+      const res = await axios.post(`${API_URL}/api/subscription/cancel`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        toast.success("Subscription canceled. Clearance level reset to Basic.");
+        await syncUser();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to cancel subscription");
+    }
+  };
 
   // Calculate Metrics (similar to Home.jsx)
   const activity = user?.activity || {};
@@ -77,12 +200,38 @@ const Settings = () => {
   const [selectedTheme, setSelectedTheme] = useState('crimson');
   const [selectedFont, setSelectedFont] = useState('poppins');
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [gitConnected, setGitConnected] = useState(false);
+  const [gitUsername, setGitUsername] = useState(null);
 
   useEffect(() => {
     if (location.state?.activeTab) {
       setActiveTab(location.state.activeTab);
     }
   }, [location.state?.activeTab]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+    if (params.get('git') === 'connected') {
+      toast.success('GitHub connected successfully!');
+      navigate(location.pathname, { replace: true });
+    } else if (params.get('git') === 'error') {
+      toast.error('GitHub connection failed');
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.search, location.pathname, navigate]);
+
+  useEffect(() => {
+    getOAuthStatus()
+      .then((data) => {
+        setGitConnected(data.connected);
+        setGitUsername(data.githubUsername);
+      })
+      .catch(() => {});
+  }, [location.search]);
 
   useEffect(() => {
     setFormData(prev => ({
@@ -456,6 +605,13 @@ const Settings = () => {
               <MessageSquare size={20} />
               <span>Support</span>
             </button>
+            <button
+              className={`nav-item ${activeTab === 'subscription' ? 'active' : ''}`}
+              onClick={() => setActiveTab('subscription')}
+            >
+              <CreditCard size={20} />
+              <span>Billing</span>
+            </button>
           </nav>
 
           <div className="sidebar-footer">
@@ -574,6 +730,52 @@ const Settings = () => {
                           </div>
                         </div>
                         
+                        <div className="premium-section-divider"></div>
+
+                        <div className="premium-input-group">
+                          <label><GitBranch size={12} style={{display:'inline', marginRight:'4px'}}/> GitHub Integration (Workspace Git)</label>
+                          <p style={{ fontSize: '0.82rem', opacity: 0.75, margin: '4px 0 10px' }}>
+                            Connect GitHub to clone private repos and push from the collaborative workspace.
+                          </p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                            {gitConnected ? (
+                              <>
+                                <CheckCircle2 size={16} style={{ color: '#4ade80' }} />
+                                <span>Connected as <strong>@{gitUsername}</strong></span>
+                                <button
+                                  type="button"
+                                  className="premium-save-btn"
+                                  style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}
+                                  onClick={async () => {
+                                    await disconnectGitHub();
+                                    setGitConnected(false);
+                                    setGitUsername(null);
+                                    toast.success('GitHub disconnected');
+                                  }}
+                                >
+                                  <Unplug size={14} /> Disconnect
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                type="button"
+                                className="premium-save-btn"
+                                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                                onClick={async () => {
+                                  try {
+                                    const { url } = await getOAuthUrl();
+                                    window.location.href = url;
+                                  } catch {
+                                    toast.error('OAuth not configured — use a Personal Access Token in the workspace Git panel');
+                                  }
+                                }}
+                              >
+                                <Link2 size={14} /> Connect GitHub
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
                         <div className="premium-section-divider"></div>
                         
                         <div className="premium-input-group">
@@ -877,6 +1079,171 @@ const Settings = () => {
                           </button>
                         </form>
                       )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ) : activeTab === 'subscription' ? (
+              <motion.div
+                key="subscription"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="dashboard-content"
+              >
+                <div className="system-section">
+                  <div className="section-header">
+                    <h2>System Clearance &amp; Limits</h2>
+                    <p style={{ color: '#71717a', fontSize: '0.85rem', marginTop: '4px' }}>
+                      Monitor your usage metrics, active features, and system clearances.
+                    </p>
+                  </div>
+
+                  {/* Subscription Summary */}
+                  <div className="dashboard-card identity-card" style={{ marginTop: '24px' }}>
+                    <div className="card-header">
+                      <div className="header-icon"><Shield size={18} /></div>
+                      <h3>Current Clearance Clearance</h3>
+                    </div>
+                    <div className="card-body">
+                      <div className="subscription-summary-layout">
+                        <div className="summary-left">
+                          <h4 style={{ color: '#ef4444', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '1.2rem' }}>
+                            {user.subscription || 'basic'} Plan
+                          </h4>
+                          <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginTop: '4px' }}>
+                            {user.subscription === 'elite' 
+                              ? 'Unlimited structural sandbox clearance. Full server priority.' 
+                              : user.subscription === 'pro' 
+                                ? 'Extended operative limits. Unlocked exam proctor cockpit.' 
+                                : 'Standard limits. Upgrade clear levels to unlock Proctor modules.'}
+                          </p>
+                        </div>
+                        {user.subscription && user.subscription !== 'basic' && (
+                          <button className="cancel-sub-btn" onClick={handleCancelSubscription}>
+                            Downgrade to Basic
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Progression Stats */}
+                      <div className="usage-stats-progress mt-4">
+                        <div className="usage-stat-bar">
+                          <div className="usage-stat-header">
+                            <span>Workspaces created</span>
+                            <span>
+                              {workspaceCount} / {user.subscription === 'elite' ? '∞' : (user.subscription === 'pro' ? 50 : 10)}
+                            </span>
+                          </div>
+                          <div className="usage-bar-track">
+                            <div 
+                              className="usage-bar-fill" 
+                              style={{ width: `${Math.min(100, (workspaceCount / (user.subscription === 'elite' ? 99999 : (user.subscription === 'pro' ? 50 : 10))) * 100)}%` }} 
+                            />
+                          </div>
+                        </div>
+
+                        <div className="usage-stat-bar mt-4">
+                          <div className="usage-stat-header">
+                            <span>CodeVault files stored</span>
+                            <span>
+                              {notesCount} / {user.subscription === 'elite' ? '∞' : (user.subscription === 'pro' ? 500 : 30)}
+                            </span>
+                          </div>
+                          <div className="usage-bar-track">
+                            <div 
+                              className="usage-bar-fill" 
+                              style={{ width: `${Math.min(100, (notesCount / (user.subscription === 'elite' ? 99999 : (user.subscription === 'pro' ? 500 : 30))) * 100)}%` }} 
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Plan Cards Grid */}
+                  <div className="pricing-cards-grid mt-4">
+                    {/* Basic Card */}
+                    <div className={`pricing-card ${(!user.subscription || user.subscription === 'basic') ? 'active-plan-card' : ''}`}>
+                      <div className="pricing-card-header">
+                        <h3>Basic</h3>
+                        <div className="pricing-price">
+                          <span className="currency">₹</span>
+                          <span className="amount">0</span>
+                          <span className="period">/mo</span>
+                        </div>
+                      </div>
+                      <div className="pricing-card-body">
+                        <ul>
+                          <li><CheckCircle2 size={14} className="check-icon" /> 10 Workspaces</li>
+                          <li><CheckCircle2 size={14} className="check-icon" /> 30 CodeVault Files</li>
+                          <li className="locked-feature"><X size={14} className="cross-icon" /> Proctor Dashboard</li>
+                          <li className="locked-feature"><X size={14} className="cross-icon" /> Unlimited Storage</li>
+                        </ul>
+                      </div>
+                      <div className="pricing-card-footer">
+                        {(!user.subscription || user.subscription === 'basic') ? (
+                          <div className="active-plan-indicator">Current Clearance</div>
+                        ) : (
+                          <button className="pricing-action-btn secondary" onClick={handleCancelSubscription}>Downgrade</button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Pro Card */}
+                    <div className={`pricing-card pro-pricing-card ${user.subscription === 'pro' ? 'active-plan-card' : ''}`}>
+                      <div className="premium-glow-border" />
+                      <div className="pricing-card-header">
+                        <div className="popular-badge">Operative choice</div>
+                        <h3>Pro Developer</h3>
+                        <div className="pricing-price">
+                          <span className="currency">₹</span>
+                          <span className="amount">999</span>
+                          <span className="period">/mo</span>
+                        </div>
+                      </div>
+                      <div className="pricing-card-body">
+                        <ul>
+                          <li><CheckCircle2 size={14} className="check-icon" /> 50 Workspaces</li>
+                          <li><CheckCircle2 size={14} className="check-icon" /> 500 CodeVault Files</li>
+                          <li><CheckCircle2 size={14} className="check-icon" /> Proctor Dashboard (Unlocked)</li>
+                          <li><CheckCircle2 size={14} className="check-icon" /> Priority Code War rooms</li>
+                        </ul>
+                      </div>
+                      <div className="pricing-card-footer">
+                        {user.subscription === 'pro' ? (
+                          <div className="active-plan-indicator">Current Clearance</div>
+                        ) : (
+                          <button className="pricing-action-btn primary" onClick={() => handleUpgrade('pro')}>Upgrade Clearance</button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Elite Card */}
+                    <div className={`pricing-card ${user.subscription === 'elite' ? 'active-plan-card' : ''}`}>
+                      <div className="pricing-card-header">
+                        <h3>Enterprise Elite</h3>
+                        <div className="pricing-price">
+                          <span className="currency">₹</span>
+                          <span className="amount">2999</span>
+                          <span className="period">/mo</span>
+                        </div>
+                      </div>
+                      <div className="pricing-card-body">
+                        <ul>
+                          <li><CheckCircle2 size={14} className="check-icon" /> Unlimited Workspaces</li>
+                          <li><CheckCircle2 size={14} className="check-icon" /> Unlimited CodeVault Files</li>
+                          <li><CheckCircle2 size={14} className="check-icon" /> Proctor Dashboard (Unlocked)</li>
+                          <li><CheckCircle2 size={14} className="check-icon" /> Dedicated Core Server Access</li>
+                        </ul>
+                      </div>
+                      <div className="pricing-card-footer">
+                        {user.subscription === 'elite' ? (
+                          <div className="active-plan-indicator">Current Clearance</div>
+                        ) : (
+                          <button className="pricing-action-btn primary" onClick={() => handleUpgrade('elite')}>Upgrade Clearance</button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
