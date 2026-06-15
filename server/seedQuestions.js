@@ -266,6 +266,7 @@ if (require.main === module) {
 module.exports = {
     seedCodeforcesQuestions,
     loadFromFile,
+    saveToFile,
     getQuestions,
     getRandomQuestions,
     getQuestionById,

@@ -23,6 +23,7 @@ const rateLimiter = require('./utils/rateLimiter');
 const chatbotAPI = require('./chatbotAPI');
 const questionsAPI = require('./questionsAPI');
 const proctorAPI = require('./proctorAPI');
+const contributeAPI = require('./contributeAPI');
 const { injectIntoQuestionsDB } = require('./localQuestionsLoader');
 const ProctorSocket = require('./proctorSocket');
 const logger = require('./logger');
@@ -93,6 +94,9 @@ app.use('/api/questions', questionsAPI);
 
 // ── Mount Proctor API ───────────────────────────────────────
 app.use('/api/proctor', proctorAPI);
+
+// ── Mount Contribute API ────────────────────────────────────
+app.use('/api/contribute', contributeAPI);
 
 // Memory Fallback (for when PostgreSQL is offline)
 let memoryStore = { users: [] };
@@ -345,6 +349,28 @@ const initDB = async () => {
         }
 
         logger.info('[DB] ✅ Users table created');
+
+        try {
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS contributed_problems (
+                    id TEXT PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    difficulty TEXT NOT NULL,
+                    category TEXT DEFAULT 'algorithms',
+                    tags JSONB DEFAULT '[]',
+                    description TEXT NOT NULL,
+                    starter_code TEXT DEFAULT '',
+                    test_cases JSONB DEFAULT '[]',
+                    contributor_id TEXT NOT NULL,
+                    contributor_username TEXT NOT NULL,
+                    status TEXT DEFAULT 'pending',
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            `);
+            logger.info('[DB] ✅ Contributed problems table created');
+        } catch (e) {
+            logger.warn('[DB] Note: Could not create contributed_problems table:', e.message);
+        }
         
         // Initialize CodeVault notes and folders tables (we'll handle migrations manually for now)
         logger.info('[DB] PostgreSQL Tables Initialized');
