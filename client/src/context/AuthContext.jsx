@@ -29,6 +29,38 @@ export const AuthProvider = ({ children }) => {
   const [navbarHidden, setNavbarHidden] = useState(false);
   const [friendsDrawerOpen, setFriendsDrawerOpen] = useState(false);
 
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('email');
+    localStorage.removeItem('user_xp');
+    localStorage.removeItem('user_activity');
+    localStorage.removeItem('user_streak');
+    localStorage.removeItem('joined_count');
+    localStorage.removeItem('created_count');
+    localStorage.removeItem('user_bio');
+    localStorage.removeItem('user_stack');
+    localStorage.removeItem('user_avatar_id');
+    localStorage.removeItem('user_banner_id');
+    localStorage.removeItem('user_github');
+    localStorage.removeItem('user_leetcode');
+    localStorage.removeItem('user_project1');
+    localStorage.removeItem('user_project2');
+    localStorage.removeItem('user_joined');
+    localStorage.removeItem('session_start');
+    localStorage.removeItem('user_subscription');
+    
+    // Clear all game-specific progress to prevent leaking to other users
+    Object.keys(localStorage).forEach(key => {
+        if (key.includes('highest_') || key.includes('_solutions')) {
+            localStorage.removeItem(key);
+        }
+    });
+
+    setUser(null);
+    setSessionValid(false);
+  };
+
   useEffect(() => {
     const savedDrawerOpen = sessionStorage.getItem('drawerOpen') === 'true';
     setFriendsDrawerOpen(savedDrawerOpen);
@@ -80,6 +112,7 @@ export const AuthProvider = ({ children }) => {
         createdCount: createdCount ? parseInt(createdCount) : 0,
         bio: bio || '',
         stack: stack ? JSON.parse(stack) : [],
+        subscription: localStorage.getItem('user_subscription') || 'basic',
         avatarId: avatarId || 'Sniper',
         bannerId: bannerId || 'crimson',
         github: github || '',
@@ -120,7 +153,12 @@ export const AuthProvider = ({ children }) => {
             ...d
           } : null);
         }
-      }).catch(() => { /* silent â€” offline is fine */ });
+      }).catch((err) => {
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          logout();
+          window.location.href = '/auth?error=session_expired';
+        }
+      });
     } else {
       setSessionValid(false);
     }
@@ -155,33 +193,35 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user_leetcode', data.leetcode || '');
       localStorage.setItem('user_project1', data.project1 || '');
       localStorage.setItem('user_project2', data.project2 || '');
-      localStorage.setItem('user_joined', data.createdAt || '');
-      localStorage.setItem('session_start', String(Date.now())); // Set session start time
+    localStorage.setItem('user_joined', data.createdAt || '');
+    localStorage.setItem('session_start', String(Date.now())); // Set session start time
+    localStorage.setItem('user_subscription', data.subscription || 'basic');
 
-      setUser({ 
-        id: userId, // Add user ID from JWT token
-        token: data.token, 
-        username: data.username, 
-        email: data.email, 
-        xp: data.xp,
-        css_level: data.css_level,
-        logic_level: data.logic_level,
-        react_level: data.react_level,
-        mern_level: data.mern_level,
-        activity: data.activity || {},
-        streak: data.streak || 0,
-        joinedCount: data.joinedCount || 0,
-        createdCount: data.createdCount || 0,
-        bio: data.bio || '',
-        stack: data.stack || [],
-        avatarId: data.avatarId || 'Sniper',
-        bannerId: data.bannerId || 'crimson',
-        github: data.github || '',
-        leetcode: data.leetcode || '',
-        project1: data.project1 || '',
-        project2: data.project2 || '',
-        createdAt: data.createdAt || null
-      });
+    setUser({ 
+      id: userId, // Add user ID from JWT token
+      token: data.token, 
+      username: data.username, 
+      email: data.email, 
+      xp: data.xp,
+      css_level: data.css_level,
+      logic_level: data.logic_level,
+      react_level: data.react_level,
+      mern_level: data.mern_level,
+      activity: data.activity || {},
+      streak: data.streak || 0,
+      joinedCount: data.joinedCount || 0,
+      createdCount: data.createdCount || 0,
+      bio: data.bio || '',
+      stack: data.stack || [],
+      subscription: data.subscription || 'basic',
+      avatarId: data.avatarId || 'Sniper',
+      bannerId: data.bannerId || 'crimson',
+      github: data.github || '',
+      leetcode: data.leetcode || '',
+      project1: data.project1 || '',
+      project2: data.project2 || '',
+      createdAt: data.createdAt || null
+    });
       setSessionValid(true);
       return { success: true };
     } catch (err) {
@@ -292,44 +332,33 @@ export const AuthProvider = ({ children }) => {
     } : null);
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    localStorage.removeItem('email');
-    localStorage.removeItem('user_xp');
-    localStorage.removeItem('user_activity');
-    localStorage.removeItem('user_streak');
-    localStorage.removeItem('joined_count');
-    localStorage.removeItem('created_count');
-    localStorage.removeItem('user_bio');
-    localStorage.removeItem('user_stack');
-    localStorage.removeItem('user_avatar_id');
-    localStorage.removeItem('user_banner_id');
-    localStorage.removeItem('user_github');
-    localStorage.removeItem('user_leetcode');
-    localStorage.removeItem('user_project1');
-    localStorage.removeItem('user_project2');
-    localStorage.removeItem('user_joined');
-    localStorage.removeItem('session_start');
-    
-    // Clear all game-specific progress to prevent leaking to other users
-    Object.keys(localStorage).forEach(key => {
-        if (key.includes('highest_') || key.includes('_solutions')) {
-            localStorage.removeItem(key);
-        }
-    });
-
-    setUser(null);
-    setSessionValid(false);
+  const syncUser = async () => {
+    const token = localStorage.getItem('token') || user?.token;
+    if (!token) return;
+    try {
+      const { data } = await axios.get(`${API_URL}/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(prev => prev ? { ...prev, ...data } : null);
+      if (data.subscription !== undefined) {
+        localStorage.setItem('user_subscription', data.subscription);
+      }
+    } catch (err) {
+      console.error('Failed to sync user:', err);
+    }
   };
 
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (error.response?.status === 401 && error.response?.data?.code === 'CONCURRENT_LOGIN') {
+        if (error.response?.status === 401 || error.response?.status === 403) {
           logout();
-          window.location.href = '/?error=concurrent_login';
+          if (error.response?.data?.code === 'CONCURRENT_LOGIN') {
+            window.location.href = '/auth?error=concurrent_login';
+          } else {
+            window.location.href = '/auth?error=session_expired';
+          }
         }
         return Promise.reject(error);
       }
@@ -340,7 +369,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, register, sendOTP, logout, updateProfile, changePassword, updateXP, loading, sessionValid, navbarHidden, setNavbarHidden, friendsDrawerOpen, setFriendsDrawerOpen }}>
+    <AuthContext.Provider value={{ user, login, register, sendOTP, logout, updateProfile, changePassword, updateXP, syncUser, loading, sessionValid, navbarHidden, setNavbarHidden, friendsDrawerOpen, setFriendsDrawerOpen }}>
       {children}
     </AuthContext.Provider>
   );
