@@ -482,6 +482,8 @@ app.get('/check-username', async (req, res) => {
     }
 });
 
+const skipEmailVerification = process.env.SKIP_EMAIL_VERIFICATION === 'true';
+
 app.post('/send-otp', async (req, res) => {
     let { email, username, type } = req.body;
 
@@ -514,6 +516,15 @@ app.post('/send-otp', async (req, res) => {
         otps.set(email, { otp, expires });
 
         logger.info(`[OTP] Verification Code for ${email}: ${otp}`);
+
+        if (skipEmailVerification) {
+            logger.info(`[MAIL] Skipping email sending (SKIP_EMAIL_VERIFICATION=true)`);
+            res.json({ 
+                message: "Verification code generated (email sending skipped)",
+                otp: otp // Return OTP in response for testing
+            });
+            return;
+        }
 
         logger.info(`[MAIL] Attempting to send email to ${email}...`);
 
@@ -559,28 +570,36 @@ app.post('/send-otp', async (req, res) => {
 app.post('/register', async (req, res) => {
     let { username, email, password, otp } = req.body;
 
-    if (!username || !email || !password || !otp) {
-        return sendError(res, 400, "Missing credentials", "All fields are required including OTP.");
+    if (!username || !email || !password) {
+        return sendError(res, 400, "Missing credentials", "Username, email, and password are required.");
     }
 
     email = email.toLowerCase().trim();
-    otp = otp.toString().trim();
 
-    logger.info(`[AUTH] Registering ${email} with OTP: ${otp}`);
-    const record = otps.get(email);
-    logger.debug(`[AUTH] Found Record:`, record);
+    if (!skipEmailVerification) {
+        if (!otp) {
+            return sendError(res, 400, "Missing credentials", "OTP is required.");
+        }
+        otp = otp.toString().trim();
 
-    if (!record || record.otp !== otp) {
-        logger.warn(`[AUTH] OTP Mismatch: Expected ${record?.otp}, Got ${otp}`);
-        return sendError(res, 400, "Invalid OTP", "The verification code is incorrect.");
+        logger.info(`[AUTH] Registering ${email} with OTP: ${otp}`);
+        const record = otps.get(email);
+        logger.debug(`[AUTH] Found Record:`, record);
+
+        if (!record || record.otp !== otp) {
+            logger.warn(`[AUTH] OTP Mismatch: Expected ${record?.otp}, Got ${otp}`);
+            return sendError(res, 400, "Invalid OTP", "The verification code is incorrect.");
+        }
+
+        if (Date.now() > record.expires) {
+            otps.delete(email);
+            return sendError(res, 400, "OTP Expired", "Please request a new code.");
+        }
+
+        otps.delete(email); // OTP used
+    } else {
+        logger.info(`[AUTH] Skipping OTP verification (SKIP_EMAIL_VERIFICATION=true)`);
     }
-
-    if (Date.now() > record.expires) {
-        otps.delete(email);
-        return sendError(res, 400, "OTP Expired", "Please request a new code.");
-    }
-
-    otps.delete(email); // OTP used
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
