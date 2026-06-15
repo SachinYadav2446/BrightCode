@@ -26,6 +26,17 @@ const Auth = () => {
   const [usernameStatus, setUsernameStatus] = useState(null); // null | 'checking' | 'available' | 'taken' | 'invalid'
   const [usernameMsg, setUsernameMsg] = useState('');
   const usernameTimeout = useRef(null);
+
+  // Social registration flow states
+  const [showSocialModal, setShowSocialModal] = useState(false);
+  const [socialEmail, setSocialEmail] = useState('');
+  const [socialUsername, setSocialUsername] = useState('');
+  const [socialPassword, setSocialPassword] = useState('');
+  const [socialConfirmPassword, setSocialConfirmPassword] = useState('');
+  const [socialTempToken, setSocialTempToken] = useState('');
+  const [socialUsernameStatus, setSocialUsernameStatus] = useState(null);
+  const [socialUsernameMsg, setSocialUsernameMsg] = useState('');
+  const socialUsernameTimeout = useRef(null);
   
   const { login, register, sendOTP } = useAuth();
   const navigate = useNavigate();
@@ -36,6 +47,75 @@ const Auth = () => {
       setIsLogin(false);
     }
   }, [location.state]);
+
+  // Handle OAuth success callback parameters & errors
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const oauthToken = params.get('token');
+    if (oauthToken) {
+      localStorage.setItem('token', oauthToken);
+      localStorage.setItem('username', params.get('username') || '');
+      localStorage.setItem('email', params.get('email') || '');
+      localStorage.setItem('user_xp', params.get('xp') || '0');
+      localStorage.setItem('css_level', params.get('css_level') || '0');
+      localStorage.setItem('logic_level', params.get('logic_level') || '0');
+      localStorage.setItem('react_level', params.get('react_level') || '0');
+      localStorage.setItem('mern_level', params.get('mern_level') || '0');
+      localStorage.setItem('user_activity', params.get('activity') || '{}');
+      localStorage.setItem('user_streak', params.get('streak') || '0');
+      localStorage.setItem('joined_count', params.get('joinedCount') || '0');
+      localStorage.setItem('created_count', params.get('createdCount') || '0');
+      localStorage.setItem('user_bio', params.get('bio') || '');
+      localStorage.setItem('user_stack', params.get('stack') || '[]');
+      localStorage.setItem('user_avatar_id', params.get('avatarId') || 'Sniper');
+      localStorage.setItem('user_banner_id', params.get('bannerId') || 'crimson');
+      localStorage.setItem('user_github', params.get('github') || '');
+      localStorage.setItem('user_leetcode', params.get('leetcode') || '');
+      localStorage.setItem('user_project1', params.get('project1') || '');
+      localStorage.setItem('user_project2', params.get('project2') || '');
+      localStorage.setItem('user_joined', params.get('createdAt') || '');
+      localStorage.setItem('session_start', String(Date.now()));
+      localStorage.setItem('user_subscription', params.get('subscription') || 'basic');
+      
+      toast.success('Successfully authenticated with Social Login!');
+      // Force page reload to hub so AuthContext pulls values
+      window.location.href = '/hub';
+      return;
+    }
+
+    const error = params.get('error');
+    if (error === 'social_email_taken') {
+      toast.error('An account with this email already exists using email/password login. Please login with password or use a different account.', { duration: 6000 });
+      navigate('/auth', { replace: true });
+      return;
+    }
+
+    if (error === 'session_expired') {
+      toast.error('Your session has expired or your account no longer exists. Please sign in again.');
+      navigate('/auth', { replace: true });
+      return;
+    }
+
+    if (error === 'concurrent_login') {
+      toast.error('You have been logged out because another session was started.');
+      navigate('/auth', { replace: true });
+      return;
+    }
+
+    const socialSignup = params.get('social_signup');
+    if (socialSignup === 'true') {
+      const emailParam = params.get('email') || '';
+      const usernameParam = params.get('username') || '';
+      const tempTokenParam = params.get('temp_token') || '';
+      
+      setSocialEmail(emailParam);
+      setSocialUsername(usernameParam);
+      setSocialTempToken(tempTokenParam);
+      setShowSocialModal(true);
+      
+      navigate('/auth', { replace: true });
+    }
+  }, [location.search, navigate]);
 
   // Live username availability check
   useEffect(() => {
@@ -67,6 +147,37 @@ const Auth = () => {
 
     return () => clearTimeout(usernameTimeout.current);
   }, [username, isLogin]);
+
+  // Live social username availability check
+  useEffect(() => {
+    if (!showSocialModal) return;
+    if (socialUsernameTimeout.current) clearTimeout(socialUsernameTimeout.current);
+
+    if (!socialUsername || socialUsername.length < 3) {
+      setSocialUsernameStatus(null);
+      setSocialUsernameMsg('');
+      return;
+    }
+
+    setSocialUsernameStatus('checking');
+    socialUsernameTimeout.current = setTimeout(async () => {
+      try {
+        const { data } = await axios.get(`${API}/check-username?username=${encodeURIComponent(socialUsername)}`);
+        if (data.available) {
+          setSocialUsernameStatus('available');
+          setSocialUsernameMsg('Username is available!');
+        } else {
+          setSocialUsernameStatus('taken');
+          setSocialUsernameMsg(data.reason || 'Username unavailable');
+        }
+      } catch (e) {
+        setSocialUsernameStatus(null);
+        setSocialUsernameMsg('');
+      }
+    }, 500);
+
+    return () => clearTimeout(socialUsernameTimeout.current);
+  }, [socialUsername, showSocialModal]);
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
@@ -128,6 +239,73 @@ const Auth = () => {
         toast.error("Authentication failed");
     } finally {
         setIsSubmitting(false);
+    }
+  };
+
+  const handleSocialSignupSubmit = async (e) => {
+    e.preventDefault();
+    if (socialPassword.length < 6) {
+      toast.error('Password must be at least 6 characters long');
+      return;
+    }
+    if (socialPassword !== socialConfirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    if (socialUsernameStatus === 'taken' || socialUsernameStatus === 'invalid') {
+      toast.error('Please choose a different username');
+      return;
+    }
+    if (socialUsernameStatus === 'checking') {
+      toast.error('Please wait while we check your username');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await axios.post(`${API}/api/auth/complete-social-signup`, {
+        username: socialUsername,
+        password: socialPassword,
+        temp_token: socialTempToken
+      });
+      
+      const { data } = response;
+      if (data && data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('username', data.username || '');
+        localStorage.setItem('email', data.email || '');
+        localStorage.setItem('user_xp', String(data.xp || '0'));
+        localStorage.setItem('css_level', String(data.css_level || '0'));
+        localStorage.setItem('logic_level', String(data.logic_level || '0'));
+        localStorage.setItem('react_level', String(data.react_level || '0'));
+        localStorage.setItem('mern_level', String(data.mern_level || '0'));
+        localStorage.setItem('user_activity', JSON.stringify(data.activity || {}));
+        localStorage.setItem('user_streak', String(data.streak || '0'));
+        localStorage.setItem('joined_count', String(data.joinedCount || '0'));
+        localStorage.setItem('created_count', String(data.createdCount || '0'));
+        localStorage.setItem('user_bio', data.bio || '');
+        localStorage.setItem('user_stack', JSON.stringify(Array.isArray(data.stack) ? data.stack : []));
+        localStorage.setItem('user_avatar_id', data.avatarId || 'Sniper');
+        localStorage.setItem('user_banner_id', data.bannerId || 'crimson');
+        localStorage.setItem('user_github', data.github || '');
+        localStorage.setItem('user_leetcode', data.leetcode || '');
+        localStorage.setItem('user_project1', data.project1 || '');
+        localStorage.setItem('user_project2', data.project2 || '');
+        localStorage.setItem('user_joined', data.createdAt || '');
+        localStorage.setItem('session_start', String(Date.now()));
+        localStorage.setItem('user_subscription', data.subscription || 'basic');
+
+        toast.success('Registration completed successfully! Welcome to BrightCode.');
+        setShowSocialModal(false);
+        // Force page reload to hub so AuthContext pulls values
+        window.location.href = '/hub';
+      } else {
+        toast.error('Failed to complete signup: no token returned.');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Registration failed');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -381,6 +559,36 @@ const Auth = () => {
               </div>
             )}
 
+            {(isLogin || step === 1) && (
+              <>
+                <div className="auth-divider">
+                  <span>or continue with</span>
+                </div>
+                <div className="social-login-group">
+                  <button
+                    type="button"
+                    className="social-btn google-btn"
+                    onClick={() => window.location.href = `${API}/api/auth/google`}
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.41 0-6.19-2.78-6.19-6.19s2.78-6.19 6.19-6.19c1.7 0 3.25.69 4.38 1.81l3.02-3.02C19.14 1.76 15.91 0 12.24 0 5.58 0 0 5.58 0 12.24s5.58 12.24 12.24 12.24c6.98 0 12.24-4.8 12.24-12.24 0-.78-.07-1.53-.2-2.255H12.24z"/>
+                    </svg>
+                    <span>Google</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="social-btn github-btn"
+                    onClick={() => window.location.href = `${API}/api/auth/github`}
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.11.82-.26.82-.577v-2.234c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.372.82 1.102.82 2.222v3.293c0 .319.22.694.825.576C20.565 21.795 24 17.3 24 12c0-6.63-5.37-12-12-12z"/>
+                    </svg>
+                    <span>GitHub</span>
+                  </button>
+                </div>
+              </>
+            )}
+
             {isLogin || step === 1 ? (
               <div className="auth-switch">
                 <p>
@@ -401,6 +609,123 @@ const Auth = () => {
           </motion.div>
         </div>   {/* auth-form-side */}
       </motion.div>
+
+      {/* ── Social Signup Modal Overlay ── */}
+      <AnimatePresence>
+        {showSocialModal && (
+          <motion.div 
+            className="social-signup-modal-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div 
+              className="social-signup-modal-content"
+              initial={{ scale: 0.95, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.95, y: 20, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+            >
+              <div className="modal-header">
+                <h2>Complete Registration</h2>
+                <p>Configure a username and password to finalize your social account setup.</p>
+                <button className="modal-close-btn" onClick={() => setShowSocialModal(false)}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSocialSignupSubmit} className="auth-form">
+                <div className="input-group">
+                  <label>Email Address</label>
+                  <div className="input-wrapper disabled-wrapper">
+                    <Mail className="input-icon" size={18} />
+                    <input 
+                      type="email" 
+                      value={socialEmail} 
+                      disabled 
+                      readOnly
+                    />
+                  </div>
+                </div>
+
+                <div className="input-group">
+                  <label>Username</label>
+                  <div className={`input-wrapper ${socialUsernameStatus === 'available' ? 'valid' : socialUsernameStatus === 'taken' ? 'invalid' : ''}`}>
+                    <User className="input-icon" size={18} />
+                    <input 
+                      type="text" 
+                      value={socialUsername} 
+                      onChange={(e) => setSocialUsername(e.target.value.replace(/\s/g, '').toLowerCase())} 
+                      placeholder="choose_username"
+                      required
+                      autoComplete="off"
+                    />
+                    <span className="input-status-icon">
+                      {socialUsernameStatus === 'checking' && <Loader size={16} className="auth-username-spinner" />}
+                      {socialUsernameStatus === 'available' && <Check size={16} color="#22c55e" />}
+                      {socialUsernameStatus === 'taken' && <X size={16} color="#ef4444" />}
+                    </span>
+                  </div>
+                  <AnimatePresence>
+                    {socialUsernameMsg && (
+                      <motion.p
+                        key={socialUsernameStatus}
+                        className={`username-hint ${socialUsernameStatus}`}
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        {socialUsernameMsg}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className="input-group">
+                  <label>Password</label>
+                  <div className="input-wrapper">
+                    <Lock className="input-icon" size={18} />
+                    <input 
+                      type="password" 
+                      value={socialPassword} 
+                      onChange={(e) => setSocialPassword(e.target.value)} 
+                      placeholder="Choose a password (min. 6 chars)"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="input-group">
+                  <label>Confirm Password</label>
+                  <div className="input-wrapper">
+                    <Lock className="input-icon" size={18} />
+                    <input 
+                      type="password" 
+                      value={socialConfirmPassword} 
+                      onChange={(e) => setSocialConfirmPassword(e.target.value)} 
+                      placeholder="Confirm password"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button 
+                  type="submit" 
+                  className={`auth-submit-btn ${isSubmitting ? 'loading' : ''}`}
+                  disabled={isSubmitting || socialUsernameStatus === 'taken' || socialUsernameStatus === 'checking' || socialUsername.length < 3}
+                >
+                  {isSubmitting ? 'Finalizing Setup...' : (
+                    <>
+                      <span>Finalize Registration</span>
+                      <ArrowRight size={18} />
+                    </>
+                  )}
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
