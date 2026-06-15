@@ -16,7 +16,6 @@ const Settings = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'details');
   const [showConfigModal, setShowConfigModal] = useState(false);
-  const [supportForm, setSupportForm] = useState({ subject: '', message: '', isSending: false, sent: false });
 
   // Subscription stats and notes count
   const [notesCount, setNotesCount] = useState(0);
@@ -168,10 +167,7 @@ const Settings = () => {
 
   // Config Modal States
   const [configData, setConfigData] = useState({
-    username: user?.username || '',
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+    username: user?.username || ''
   });
 
   const [newStackItem, setNewStackItem] = useState('');
@@ -456,70 +452,33 @@ const Settings = () => {
   const handleCloseModal = () => {
     setShowConfigModal(false);
     setConfigData({
-      username: user.username,
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
+      username: user.username
     });
   };
 
   const handleConfigureProfile = async () => {
     setIsSaving(true);
     try {
-      let hasChanges = false;
-
       // Update username if changed
-      if (configData.username !== user.username) {
-        if (!configData.username.trim()) {
-          toast.error('Username cannot be empty');
-          setIsSaving(false);
-          return;
-        }
-
-        const res = await updateProfile({
-          username: configData.username,
-          bio: user.bio,
-          stack: user.stack
-        });
-        if (!res.success) {
-          toast.error(res.error);
-          setIsSaving(false);
-          return;
-        }
-        hasChanges = true;
-      }
-
-      // Change password if provided
-      if (configData.newPassword) {
-        if (!configData.currentPassword) {
-          toast.error('Current password is required');
-          setIsSaving(false);
-          return;
-        }
-
-        if (configData.newPassword !== configData.confirmPassword) {
-          toast.error('New passwords do not match');
-          setIsSaving(false);
-          return;
-        }
-
-        if (configData.newPassword.length < 6) {
-          toast.error('Password must be at least 6 characters');
-          setIsSaving(false);
-          return;
-        }
-
-        const res = await changePassword(configData.currentPassword, configData.newPassword);
-        if (!res.success) {
-          toast.error(res.error);
-          setIsSaving(false);
-          return;
-        }
-        hasChanges = true;
-      }
-
-      if (!hasChanges) {
+      if (configData.username === user.username) {
         toast.error('No changes to save');
+        setIsSaving(false);
+        return;
+      }
+
+      if (!configData.username.trim()) {
+        toast.error('Username cannot be empty');
+        setIsSaving(false);
+        return;
+      }
+
+      const res = await updateProfile({
+        username: configData.username,
+        bio: user.bio,
+        stack: user.stack
+      });
+      if (!res.success) {
+        toast.error(res.error);
         setIsSaving(false);
         return;
       }
@@ -527,36 +486,12 @@ const Settings = () => {
       // Close modal and reset form
       setShowConfigModal(false);
       setConfigData({
-        username: user.username,
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
+        username: user.username
       });
     } catch (err) {
       toast.error('Failed to update profile');
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleSupportSubmit = async (e) => {
-    e.preventDefault();
-    if (!supportForm.message.trim()) return;
-    setSupportForm(p => ({ ...p, isSending: true }));
-    try {
-      await axios.post(`${API_URL}/support`, {
-        email: user.email,
-        username: user.username,
-        subject: supportForm.subject || 'Support Inquiry',
-        message: supportForm.message
-      });
-      setSupportForm({ subject: '', message: '', isSending: false, sent: true });
-      toast.success('Feedback received by the core team.');
-      setTimeout(() => setSupportForm(p => ({ ...p, sent: false })), 5000);
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to send message.');
-      setSupportForm(p => ({ ...p, isSending: false }));
     }
   };
 
@@ -581,11 +516,11 @@ const Settings = () => {
               <span>System</span>
             </button>
             <button
-              className={`nav-item ${activeTab === 'support' ? 'active' : ''}`}
-              onClick={() => setActiveTab('support')}
+              className={`nav-item ${activeTab === 'about' ? 'active' : ''}`}
+              onClick={() => setActiveTab('about')}
             >
-              <MessageSquare size={20} />
-              <span>Support</span>
+              <Info size={20} />
+              <span>About</span>
             </button>
             <button
               className={`nav-item ${activeTab === 'subscription' ? 'active' : ''}`}
@@ -1001,9 +936,9 @@ const Settings = () => {
                   </button>
                 </div>
               </motion.div>
-            ) : activeTab === 'support' ? (
+            ) : activeTab === 'about' ? (
               <motion.div
-                key="support"
+                key="about"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
@@ -1011,54 +946,37 @@ const Settings = () => {
               >
                 <div className="system-section">
                   <div className="section-header">
-                    <h2>Support &amp; Feedback</h2>
-                    <p style={{ color: '#71717a', fontSize: '0.85rem', marginTop: '4px' }}>Send a request or feature feedback directly to the operator team.</p>
+                    <h2>About BrightCode</h2>
+                    <p style={{ color: '#71717a', fontSize: '0.85rem', marginTop: '4px' }}>Learn more about BrightCode and how to get in touch.</p>
                   </div>
 
                   <div className="dashboard-card identity-card" style={{ marginTop: '24px' }}>
                     <div className="card-header">
-                      <div className="header-icon"><MessageSquare size={18} /></div>
-                      <h3>Transmission</h3>
+                      <div className="header-icon"><Info size={18} /></div>
+                      <h3>Get in Touch</h3>
                     </div>
                     <div className="card-body">
-                      {supportForm.sent ? (
-                        <div className="support-widget-success">
-                          <span className="success-icon">✓</span>
-                          <h4>Transmission Dispatched</h4>
-                          <p>Our operator team has received your support request.</p>
+                      <div style={{ padding: '20px 0' }}>
+                        <p style={{ color: '#a1a1aa', marginBottom: '20px' }}>
+                          We'd love to hear from you! For bug reports, feature requests, or general inquiries, reach out to us at:
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <Mail size={16} style={{ color: '#ef4444' }} />
+                            <span style={{ color: '#fff' }}>support@brightcode.io</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <Globe size={16} style={{ color: '#ef4444' }} />
+                            <span style={{ color: '#fff' }}>https://brightcode.io</span>
+                          </div>
                         </div>
-                      ) : (
-                        <form className="support-widget-form" onSubmit={handleSupportSubmit}>
-                          <div className="support-input-group">
-                            <label>Subject</label>
-                            <input
-                              className="support-input"
-                              type="text"
-                              placeholder="Brief subject line..."
-                              value={supportForm.subject}
-                              onChange={e => setSupportForm(p => ({ ...p, subject: e.target.value }))}
-                            />
-                          </div>
-                          <div className="support-input-group">
-                            <label>Message</label>
-                            <textarea
-                              className="support-textarea"
-                              placeholder="Detail your request, bug report, or feature feedback..."
-                              value={supportForm.message}
-                              onChange={e => setSupportForm(p => ({ ...p, message: e.target.value }))}
-                              required
-                            />
-                          </div>
-                          <button
-                            className="support-submit-btn"
-                            type="submit"
-                            disabled={supportForm.isSending}
-                          >
-                            <MessageSquare size={16} />
-                            <span>{supportForm.isSending ? 'Sending...' : 'Send Message'}</span>
-                          </button>
-                        </form>
-                      )}
+                        <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #333' }}>
+                          <h4 style={{ color: '#fff', marginBottom: '10px' }}>Built for Developers</h4>
+                          <p style={{ color: '#71717a', fontSize: '0.9rem' }}>
+                            BrightCode is a developer-first interactive learning platform designed to help you master programming through hands-on challenges and gamified progression.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1257,7 +1175,7 @@ const Settings = () => {
                 </div>
                 <div>
                   <h2>Configure Profile</h2>
-                  <p>Update your username and password</p>
+                  <p>Update your username</p>
                 </div>
                 <button className="modal-close-btn" onClick={handleCloseModal}>
                   <X size={20} />
@@ -1272,40 +1190,6 @@ const Settings = () => {
                     value={configData.username}
                     onChange={(e) => setConfigData(prev => ({ ...prev, username: e.target.value }))}
                     placeholder="Enter new username"
-                  />
-                </div>
-
-                <div className="config-divider">
-                  <span>Password Change (Optional)</span>
-                </div>
-
-                <div className="config-input-group">
-                  <label>Current Password</label>
-                  <input
-                    type="password"
-                    value={configData.currentPassword}
-                    onChange={(e) => setConfigData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                    placeholder="Enter current password"
-                  />
-                </div>
-
-                <div className="config-input-group">
-                  <label>New Password</label>
-                  <input
-                    type="password"
-                    value={configData.newPassword}
-                    onChange={(e) => setConfigData(prev => ({ ...prev, newPassword: e.target.value }))}
-                    placeholder="Enter new password"
-                  />
-                </div>
-
-                <div className="config-input-group">
-                  <label>Confirm New Password</label>
-                  <input
-                    type="password"
-                    value={configData.confirmPassword}
-                    onChange={(e) => setConfigData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    placeholder="Confirm new password"
                   />
                 </div>
               </div>

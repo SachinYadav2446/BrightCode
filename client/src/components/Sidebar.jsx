@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Trophy, MessageSquare, HelpCircle, Info, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Trophy, HelpCircle, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import './Sidebar.css';
 
 const Sidebar = ({ currentPage = 'home', onCollapse }) => {
@@ -18,28 +18,24 @@ const Sidebar = ({ currentPage = 'home', onCollapse }) => {
       { id: 'timeline', label: 'Timeline', icon: Calendar },
       { id: 'daily-hunt', label: 'Daily Hunt', icon: Trophy },
       { id: 'hall-of-fame', label: 'Hall of Fame', icon: Trophy },
-      { id: 'support', label: 'Command Support', icon: MessageSquare },
       { id: 'about', label: 'About', icon: Info },
     ],
     workspace: [
       { id: 'projects', label: 'Projects', icon: Calendar },
       { id: 'editor', label: 'Editor', icon: Calendar },
       { id: 'resources', label: 'Resources', icon: Calendar },
-      { id: 'support', label: 'Support', icon: MessageSquare },
       { id: 'about', label: 'About', icon: Info },
     ],
     library: [
       { id: 'browse', label: 'Browse', icon: Calendar },
       { id: 'saved', label: 'Saved', icon: Calendar },
       { id: 'history', label: 'History', icon: Calendar },
-      { id: 'support', label: 'Support', icon: MessageSquare },
       { id: 'about', label: 'About', icon: Info },
     ],
     guild: [
       { id: 'members', label: 'Members', icon: Calendar },
       { id: 'missions', label: 'Missions', icon: Trophy },
       { id: 'ranking', label: 'Ranking', icon: Trophy },
-      { id: 'support', label: 'Support', icon: MessageSquare },
       { id: 'about', label: 'About', icon: Info },
     ],
   };

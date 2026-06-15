@@ -10,7 +10,6 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
-const nodemailer = require('nodemailer');
 const pty = require('node-pty');
 const os = require('os');
 const FileSystem = require('./fileSystem');
@@ -365,88 +364,7 @@ initDB();
 // --- AUTHENTICATION REWRITE ---
 const otps = new Map(); // Store OTPs: email -> { otp, userData, expires }
 
-// Use SMTP (nodemailer) for email service
-logger.info("[MAIL] SMTP_USER present:", { present: !!process.env.SMTP_USER });
-let transporter = null;
-const smtpUser = process.env.SMTP_USER || '';
-const smtpPass = process.env.SMTP_PASS || '';
-const smtpFromEmail = process.env.SMTP_FROM_EMAIL || smtpUser;
 
-if (smtpUser && smtpPass) {
-    logger.info(`[MAIL] Attempting connection for: ${smtpUser}`);
-    const smtpConfig = {
-        auth: {
-            user: smtpUser,
-            pass: smtpPass
-        },
-        pool: true,
-        maxConnections: 1, // Limit to 1 connection for debugging stability
-        rateDelta: 5000,   // Wait 5 seconds between messages
-        rateLimit: 1,      // 1 message per delta
-        connectionTimeout: 60000, 
-        greetingTimeout: 60000,
-        socketTimeout: 60000
-    };
-
-    // Use service if provided, otherwise use host/port/secure
-    if (process.env.SMTP_SERVICE) {
-        smtpConfig.service = process.env.SMTP_SERVICE;
-    } else {
-        smtpConfig.host = process.env.SMTP_HOST || 'smtp.gmail.com';
-        smtpConfig.port = parseInt(process.env.SMTP_PORT) || 465;
-        smtpConfig.secure = process.env.SMTP_SECURE !== 'false'; // Default to true
-    }
-
-    transporter = nodemailer.createTransport(smtpConfig);
-    transporter.verify(function (error, success) {
-        if (error) {
-            logger.error("[MAIL] Connection Error:", error);
-        } else {
-            logger.info("[MAIL] Server is ready to take our messages");
-        }
-    });
-} else {
-    logger.warn("[MAIL] SMTP credentials not configured. Email features will not work.");
-}
-
-app.post('/support', async (req, res) => {
-    const { email, subject, message, username } = req.body;
-
-    if (!email || !message) {
-        return res.status(400).json({ error: 'Email and message are required' });
-    }
-
-    try {
-        if (!transporter) {
-            throw new Error('SMTP email service not configured');
-        }
-
-        const mailOptions = {
-            from: `"BrightCode Support" <${smtpFromEmail}>`,
-            to: smtpFromEmail,
-            subject: `[SUPPORT INQUIRY] ${subject || 'New Message'}`,
-            html: `
-                <div style="font-family: 'Poppins', sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb; background: #000; color: #fff;">
-                    <h2 style="color: #ef4444; text-align: center; border-bottom: 2px solid #ef4444; padding-bottom: 10px;">Support Inquiry</h2>
-                    <div style="padding: 20px;">
-                        <p style="margin-bottom: 10px;"><strong style="color: #ef4444;">From:</strong> ${username || 'User'} (${email})</p>
-                        <p style="margin-bottom: 10px;"><strong style="color: #ef4444;">Subject:</strong> ${subject || 'No Subject'}</p>
-                        <div style="background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; margin-top: 20px;">
-                            <p style="white-space: pre-wrap; line-height: 1.6;">${message}</p>
-                        </div>
-                    </div>
-                    <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
-                    <p style="text-align: center; color: #666; font-size: 12px;">&copy; 2026 BrightCode Command Center.</p>
-                </div>
-            `
-        };
-        await transporter.sendMail(mailOptions);
-        res.json({ message: "Your message has been sent to our support team." });
-    } catch (err) {
-        logger.error('SUPPORT MAIL ERROR:', err);
-        res.status(500).json({ error: 'Failed to send support message' });
-    }
-});
 
 // ── Health Check (used by Render deployment) ────────────────────────────────
 app.get('/health', (req, res) => {
@@ -517,51 +435,13 @@ app.post('/send-otp', async (req, res) => {
 
         logger.info(`[OTP] Verification Code for ${email}: ${otp}`);
 
-        if (skipEmailVerification) {
-            logger.info(`[MAIL] Skipping email sending (SKIP_EMAIL_VERIFICATION=true)`);
-            res.json({ 
-                message: "Verification code generated (email sending skipped)",
-                otp: otp // Return OTP in response for testing
-            });
-            return;
-        }
-
-        logger.info(`[MAIL] Attempting to send email to ${email}...`);
-
-        try {
-            if (!transporter) {
-                throw new Error('SMTP email service not configured');
-            }
-
-            const mailOptions = {
-                from: `"CodeBright" <${smtpFromEmail}>`,
-                to: email,
-                subject: 'Verify your CodeBright Account',
-                html: `
-                    <div style="font-family: 'Poppins', sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb;">
-                        <h2 style="color: #ef4444; text-align: center;">Welcome to CodeBright</h2>
-                        <p>Hello <strong>${username || 'Engineer'}</strong>,</p>
-                        <p>Your verification code is:</p>
-                        <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #111827; border: 1px solid #e5e7eb;">
-                            ${otp}
-                        </div>
-                        <p style="margin-top: 20px; color: #6b7280; font-size: 14px;">This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
-                        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-                        <p style="text-align: center; color: #9ca3af; font-size: 12px;">&copy; 2026 BrightCode. Built for the Architect.</p>
-                    </div>
-                `
-            };
-            await transporter.sendMail(mailOptions);
-            logger.info(`[MAIL] Email sent successfully to ${email}`);
-            res.json({ message: "Verification code sent to your email." });
-        } catch (mailErr) {
-            logger.error(`[MAIL] Failed to send email:`, mailErr.message);
-            try {
-                fs.appendFileSync(path.join(__dirname, 'mail-error.log'), `[${new Date().toISOString()}] To: ${email} Error: ${mailErr.message}\n`);
-            } catch (e) {}
-            // Send back the SMTP error so the user knows what went wrong
-            return sendError(res, 500, "Failed to send email", mailErr.message);
-        }
+        // SMTP support removed - skip email verification
+        logger.info(`[MAIL] Skipping email sending (SMTP support removed)`);
+        res.json({ 
+            message: "Verification code generated (email sending skipped)",
+            otp: otp // Return OTP in response for testing
+        });
+        return;
     } catch (err) {
         sendError(res, 500, "Server error", err.message);
     }
