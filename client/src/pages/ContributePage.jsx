@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -8,7 +8,8 @@ import API_URL from '../config';
 import {
   Plus, Code2, Trophy, Users, CheckCircle2, X, AlertTriangle,
   ChevronRight, ChevronLeft, BookOpen, Tag, Activity, Check,
-  Loader2, Shield, Eye, Trash2, HelpCircle, FileText
+  Loader2, Shield, Eye, Trash2, HelpCircle, FileText, Sparkles,
+  Zap, Clock, Star, GitPullRequest, ArrowUpRight
 } from 'lucide-react';
 import './ContributePage.css';
 
@@ -16,28 +17,26 @@ const ContributePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, admin (visible to admins)
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [contributions, setContributions] = useState([]);
   const [pendingReviews, setPendingReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // Wizard Modal
+  const [loadError, setLoadError] = useState(null);
+
   const [showWizard, setShowWizard] = useState(false);
-  const [wizardStep, setWizardStep] = useState(1); // 1: Details, 2: Starter Code, 3: Test cases
+  const [wizardStep, setWizardStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
-  
-  // Form State
+
   const [form, setForm] = useState({
     title: '',
     difficulty: 'easy',
     category: 'algorithms',
     tags: '',
     description: '',
-    starterCode: '// Write your problem starter code stub here\n\n',
+    starterCode: '// Write your problem starter code stub here\n\nfunction solution(input) {\n  // your logic here\n}\n',
     testCases: [{ input: '', expected: '' }]
   });
 
-  // Admin Review Modal
   const [selectedReview, setSelectedReview] = useState(null);
   const [reviewForm, setReviewForm] = useState({
     points: 80,
@@ -52,98 +51,69 @@ const ContributePage = () => {
   });
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
+    if (!user) { navigate('/auth'); return; }
     fetchData();
   }, [user]);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token') || user?.token;
-      
-      // Fetch personal contributions
-      const resMy = await axios.get(`${API_URL}/api/contribute/my`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setContributions(resMy.data.contributions || []);
+  const getToken = () => user?.token || localStorage.getItem('token');
 
-      // Fetch pending reviews if admin
-      if (user?.username === 'admin') {
-        const resPending = await axios.get(`${API_URL}/api/contribute/pending`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setPendingReviews(resPending.data.pending || []);
+  const fetchData = async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const token = getToken();
+      if (!token) throw new Error('No auth token found. Please log in again.');
+
+      const [myRes, pendingRes] = await Promise.allSettled([
+        axios.get(`${API_URL}/api/contribute/my`, { headers: { Authorization: `Bearer ${token}` } }),
+        user?.username === 'admin'
+          ? axios.get(`${API_URL}/api/contribute/pending`, { headers: { Authorization: `Bearer ${token}` } })
+          : Promise.resolve({ data: { pending: [] } })
+      ]);
+
+      if (myRes.status === 'fulfilled') {
+        setContributions(myRes.value.data.contributions || []);
+      } else {
+        throw new Error(myRes.reason?.response?.data?.error || 'Could not fetch your contributions');
+      }
+
+      if (pendingRes.status === 'fulfilled') {
+        setPendingReviews(pendingRes.value.data.pending || []);
       }
     } catch (err) {
-      console.error(err);
-      toast.error('Failed to load contributor data');
+      console.error('[ContributePage] fetchData error:', err);
+      const msg = err.message || 'Failed to load contributor data';
+      setLoadError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  // Add/Remove test cases in wizard
-  const addTestCase = () => {
-    setForm(p => ({ ...p, testCases: [...p.testCases, { input: '', expected: '' }] }));
-  };
+  const addTestCase = () => setForm(p => ({ ...p, testCases: [...p.testCases, { input: '', expected: '' }] }));
+  const removeTestCase = (idx) => { if (form.testCases.length <= 1) return; setForm(p => ({ ...p, testCases: p.testCases.filter((_, i) => i !== idx) })); };
+  const updateTestCase = (idx, field, value) => { setForm(p => { const copy = [...p.testCases]; copy[idx] = { ...copy[idx], [field]: value }; return { ...p, testCases: copy }; }); };
 
-  const removeTestCase = (idx) => {
-    if (form.testCases.length <= 1) return;
-    setForm(p => ({ ...p, testCases: p.testCases.filter((_, i) => i !== idx) }));
-  };
-
-  const updateTestCase = (idx, field, value) => {
-    setForm(p => {
-      const copy = [...p.testCases];
-      copy[idx] = { ...copy[idx], [field]: value };
-      return { ...p, testCases: copy };
-    });
-  };
-
-  // Submit challenge contribution
   const handleSubmitContribution = async (e) => {
     e.preventDefault();
     if (!form.title.trim()) return toast.error('Problem title is required');
     if (!form.description.trim()) return toast.error('Problem description is required');
-    
-    // Validate test cases
     const invalidCase = form.testCases.some(tc => !tc.input.trim() || !tc.expected.trim());
-    if (invalidCase) return toast.error('All test cases must have an input and expected output');
+    if (invalidCase) return toast.error('All test cases need both input and expected output');
 
     setSubmitting(true);
     try {
-      const token = localStorage.getItem('token') || user?.token;
+      const token = getToken();
       const parsedTags = form.tags.split(',').map(t => t.trim()).filter(Boolean);
-      
-      const payload = {
-        title: form.title,
-        difficulty: form.difficulty,
-        category: form.category,
-        tags: parsedTags,
-        description: form.description,
-        starterCode: form.starterCode,
-        testCases: form.testCases
-      };
-
-      const res = await axios.post(`${API_URL}/api/contribute/submit`, payload, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await axios.post(`${API_URL}/api/contribute/submit`, {
+        title: form.title, difficulty: form.difficulty, category: form.category,
+        tags: parsedTags, description: form.description, starterCode: form.starterCode, testCases: form.testCases
+      }, { headers: { Authorization: `Bearer ${token}` } });
 
       if (res.data.success) {
-        toast.success('Challenge submitted successfully for moderation!');
+        toast.success('Challenge submitted for review! 🎉');
         setShowWizard(false);
-        setForm({
-          title: '',
-          difficulty: 'easy',
-          category: 'algorithms',
-          tags: '',
-          description: '',
-          starterCode: '// Write your problem starter code stub here\n\n',
-          testCases: [{ input: '', expected: '' }]
-        });
+        setForm({ title: '', difficulty: 'easy', category: 'algorithms', tags: '', description: '', starterCode: '// Write your problem starter code stub here\n\nfunction solution(input) {\n  // your logic here\n}\n', testCases: [{ input: '', expected: '' }] });
         setWizardStep(1);
         fetchData();
       }
@@ -154,7 +124,6 @@ const ContributePage = () => {
     }
   };
 
-  // Open review editor
   const handleOpenReview = (problem) => {
     setSelectedReview(problem);
     setReviewForm({
@@ -165,219 +134,221 @@ const ContributePage = () => {
       editCategory: problem.category || 'algorithms',
       editTags: Array.isArray(problem.tags) ? problem.tags.join(', ') : '',
       editDescription: problem.description,
-      editStarterCode: problem.starterCode || '',
-      editTestCases: problem.testCases || []
+      editStarterCode: problem.starter_code || problem.starterCode || '',
+      editTestCases: problem.test_cases || problem.testCases || []
     });
   };
 
   const handleReviewAction = async (action) => {
     if (!window.confirm(`Are you sure you want to ${action} this contribution?`)) return;
-    
     try {
-      const token = localStorage.getItem('token') || user?.token;
+      const token = getToken();
       const parsedTags = reviewForm.editTags.split(',').map(t => t.trim()).filter(Boolean);
-      
-      const payload = {
-        action,
-        points: reviewForm.points,
-        timeLimit: reviewForm.timeLimit,
-        editTitle: reviewForm.editTitle,
-        editDifficulty: reviewForm.editDifficulty,
-        editCategory: reviewForm.editCategory,
-        editTags: parsedTags,
-        editDescription: reviewForm.editDescription,
-        editStarterCode: reviewForm.editStarterCode,
+      const res = await axios.post(`${API_URL}/api/contribute/review/${selectedReview.id}`, {
+        action, points: reviewForm.points, timeLimit: reviewForm.timeLimit,
+        editTitle: reviewForm.editTitle, editDifficulty: reviewForm.editDifficulty,
+        editCategory: reviewForm.editCategory, editTags: parsedTags,
+        editDescription: reviewForm.editDescription, editStarterCode: reviewForm.editStarterCode,
         editTestCases: reviewForm.editTestCases
-      };
-
-      const res = await axios.post(`${API_URL}/api/contribute/review/${selectedReview.id}`, payload, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      }, { headers: { Authorization: `Bearer ${token}` } });
 
       if (res.data.success) {
-        toast.success(res.data.message || `Submission successfully reviewed.`);
+        toast.success(res.data.message || 'Review submitted.');
         setSelectedReview(null);
         fetchData();
       }
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Failed to submit review');
-    }
+    } catch (err) { toast.error(err.response?.data?.error || 'Failed to submit review'); }
   };
 
-  // Edit test cases in admin review
-  const updateReviewTestCase = (idx, field, value) => {
-    setReviewForm(p => {
-      const copy = [...p.editTestCases];
-      copy[idx] = { ...copy[idx], [field]: value };
-      return { ...p, editTestCases: copy };
-    });
-  };
+  const updateReviewTestCase = (idx, field, value) => { setReviewForm(p => { const copy = [...p.editTestCases]; copy[idx] = { ...copy[idx], [field]: value }; return { ...p, editTestCases: copy }; }); };
+  const addReviewTestCase = () => setReviewForm(p => ({ ...p, editTestCases: [...p.editTestCases, { input: '', expected: '' }] }));
+  const removeReviewTestCase = (idx) => { if (reviewForm.editTestCases.length <= 1) return; setReviewForm(p => ({ ...p, editTestCases: p.editTestCases.filter((_, i) => i !== idx) })); };
 
-  const addReviewTestCase = () => {
-    setReviewForm(p => ({ ...p, editTestCases: [...p.editTestCases, { input: '', expected: '' }] }));
-  };
-
-  const removeReviewTestCase = (idx) => {
-    if (reviewForm.editTestCases.length <= 1) return;
-    setReviewForm(p => ({ ...p, editTestCases: p.editTestCases.filter((_, i) => i !== idx) }));
-  };
-
-  // Stats calculation
   const totalSubmissions = contributions.length;
   const approvedCount = contributions.filter(c => c.status === 'approved').length;
   const pendingCount = contributions.filter(c => c.status === 'pending').length;
   const rejectedCount = contributions.filter(c => c.status === 'rejected').length;
 
+  const stepLabels = ['Problem Info', 'Starter Code', 'Test Cases'];
+
   return (
-    <div className="contribute-page">
-      <div className="contribute-header-banner">
-        <div className="banner-overlay" />
-        <div className="banner-content">
-          <Shield size={28} className="banner-icon" />
-          <h1>Community Contributor Console</h1>
-          <p>Design challenges, verify test cases, and earn XP to build BrightCode together.</p>
+    <div className="cp-page">
+      {/* ── Hero Banner ── */}
+      <div className="cp-hero">
+        <div className="cp-hero-glow" />
+        <div className="cp-hero-grid" />
+        <div className="cp-hero-content">
+          <div className="cp-hero-badge">
+            <GitPullRequest size={13} />
+            <span>Open Contributions</span>
+          </div>
+          <h1 className="cp-hero-title">
+            Shape the <span className="cp-gradient-text">BrightCode</span> Library
+          </h1>
+          <p className="cp-hero-sub">
+            Design problems, craft test suites, and earn <strong>+500 XP</strong> when your challenge goes live.
+          </p>
+          <div className="cp-hero-actions">
+            <button className="cp-btn-primary" onClick={() => setShowWizard(true)}>
+              <Plus size={16} /> Submit a Challenge
+            </button>
+            <button className="cp-btn-ghost" onClick={() => window.scrollTo({ top: 400, behavior: 'smooth' })}>
+              View My Submissions <ArrowUpRight size={14} />
+            </button>
+          </div>
+        </div>
+
+        {/* Floating stat pills */}
+        <div className="cp-hero-pills">
+          <div className="cp-pill green"><CheckCircle2 size={14}/> {approvedCount} Live</div>
+          <div className="cp-pill yellow"><Clock size={14}/> {pendingCount} In Review</div>
+          <div className="cp-pill red"><Zap size={14}/> +{approvedCount * 500} XP</div>
         </div>
       </div>
 
-      <div className="contribute-container">
-        {/* Navigation Tabs */}
-        <div className="contribute-tabs">
-          <button
-            className={`tab-trigger ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            <Activity size={16} />
-            <span>Dashboard</span>
+      {/* ── Main Content ── */}
+      <div className="cp-body">
+
+        {/* ── Tab bar ── */}
+        <div className="cp-tabs">
+          <button className={`cp-tab ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+            <Activity size={15} /> My Dashboard
           </button>
           {user?.username === 'admin' && (
-            <button
-              className={`tab-trigger admin-tab ${activeTab === 'admin' ? 'active' : ''}`}
-              onClick={() => setActiveTab('admin')}
-            >
-              <Shield size={16} />
-              <span>Moderation Review ({pendingReviews.length})</span>
+            <button className={`cp-tab admin-tab ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
+              <Shield size={15} /> Moderation Queue
+              {pendingReviews.length > 0 && <span className="cp-badge-count">{pendingReviews.length}</span>}
             </button>
           )}
         </div>
 
-        {/* Dashboard Content */}
+        {/* ── Dashboard Tab ── */}
         {activeTab === 'dashboard' && (
-          <div className="contribute-dashboard">
-            {/* Stats Cards */}
-            <div className="stats-grid">
-              <div className="stat-card">
-                <div className="card-label">Total Submitted</div>
-                <div className="card-value">{totalSubmissions}</div>
-              </div>
-              <div className="stat-card approved">
-                <div className="card-label">Approved &amp; Live</div>
-                <div className="card-value">{approvedCount}</div>
-                <span className="xp-gain">+{approvedCount * 500} XP Earned</span>
-              </div>
-              <div className="stat-card pending">
-                <div className="card-label">Pending Review</div>
-                <div className="card-value">{pendingCount}</div>
-              </div>
-              <div className="stat-card rejected">
-                <div className="card-label">Declined</div>
-                <div className="card-value">{rejectedCount}</div>
-              </div>
+          <div className="cp-dashboard">
+            {/* Stat cards */}
+            <div className="cp-stats-row">
+              {[
+                { label: 'Total Submitted', value: totalSubmissions, icon: <FileText size={20}/>, color: 'default' },
+                { label: 'Live & Approved', value: approvedCount, icon: <CheckCircle2 size={20}/>, color: 'green', sub: `+${approvedCount * 500} XP` },
+                { label: 'Pending Review', value: pendingCount, icon: <Clock size={20}/>, color: 'yellow' },
+                { label: 'Declined', value: rejectedCount, icon: <X size={20}/>, color: 'red' },
+              ].map((s, i) => (
+                <motion.div key={i} className={`cp-stat-card ${s.color}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
+                  <div className="cp-stat-icon">{s.icon}</div>
+                  <div className="cp-stat-val">{s.value}</div>
+                  <div className="cp-stat-label">{s.label}</div>
+                  {s.sub && <div className="cp-stat-sub">{s.sub}</div>}
+                </motion.div>
+              ))}
             </div>
 
-            {/* Submissions Section */}
-            <div className="submissions-section">
-              <div className="section-header">
+            {/* Submissions panel */}
+            <div className="cp-panel">
+              <div className="cp-panel-header">
                 <div>
                   <h2>Your Submissions</h2>
-                  <p>Track the approval status of your contributed challenges.</p>
+                  <p>Track the status of every challenge you've contributed.</p>
                 </div>
-                <button className="primary-action-btn" onClick={() => setShowWizard(true)}>
-                  <Plus size={16} />
-                  <span>Submit a Challenge</span>
+                <button className="cp-btn-primary sm" onClick={() => setShowWizard(true)}>
+                  <Plus size={15}/> New Challenge
                 </button>
               </div>
 
               {loading ? (
-                <div className="list-loading">
-                  <Loader2 className="spinner" />
-                  <span>Loading submissions...</span>
+                <div className="cp-loading">
+                  <Loader2 className="cp-spinner" size={28}/>
+                  <span>Loading your contributions…</span>
+                </div>
+              ) : loadError ? (
+                <div className="cp-error-state">
+                  <AlertTriangle size={36}/>
+                  <h3>Couldn't load data</h3>
+                  <p>{loadError}</p>
+                  <button className="cp-btn-ghost sm" onClick={fetchData}>Try Again</button>
                 </div>
               ) : contributions.length === 0 ? (
-                <div className="empty-state-card">
-                  <HelpCircle size={40} />
+                <div className="cp-empty-state">
+                  <div className="cp-empty-icon"><Sparkles size={32}/></div>
                   <h3>No Contributions Yet</h3>
-                  <p>Help build the BrightCode challenge library. Submit your first coding problem to earn XP!</p>
-                  <button className="primary-action-btn mt-4" onClick={() => setShowWizard(true)}>
-                    <Plus size={16} />
-                    <span>Create Problem</span>
+                  <p>Be the first to shape the BrightCode challenge deck. Submit a problem and earn XP when it goes live!</p>
+                  <button className="cp-btn-primary" onClick={() => setShowWizard(true)}>
+                    <Plus size={15}/> Create First Problem
                   </button>
                 </div>
               ) : (
-                <div className="submissions-table">
-                  <div className="table-head">
+                <div className="cp-table">
+                  <div className="cp-table-head">
                     <span>Title</span>
                     <span>Category</span>
                     <span>Difficulty</span>
                     <span>Status</span>
-                    <span>Submitted On</span>
+                    <span>Submitted</span>
                   </div>
-                  <div className="table-body">
-                    {contributions.map((c) => (
-                      <div key={c.id} className="table-row">
-                        <span className="row-title">{c.title}</span>
-                        <span className="row-category">{c.category}</span>
-                        <span className="row-difficulty">
-                          <span className={`diff-badge ${c.difficulty}`}>{c.difficulty}</span>
-                        </span>
-                        <span className="row-status">
-                          <span className={`status-badge ${c.status}`}>{c.status}</span>
-                        </span>
-                        <span className="row-date">
-                          {new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </span>
-                      </div>
+                  <div className="cp-table-body">
+                    {contributions.map((c, i) => (
+                      <motion.div key={c.id} className="cp-table-row" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
+                        <span className="cp-row-title">{c.title}</span>
+                        <span className="cp-row-cat">{c.category || '—'}</span>
+                        <span><span className={`cp-diff-badge ${c.difficulty}`}>{c.difficulty}</span></span>
+                        <span><span className={`cp-status-badge ${c.status}`}>{c.status}</span></span>
+                        <span className="cp-row-date">{new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      </motion.div>
                     ))}
                   </div>
                 </div>
               )}
             </div>
+
+            {/* How it works */}
+            <div className="cp-how-it-works">
+              <h3><Sparkles size={16}/> How Contributions Work</h3>
+              <div className="cp-steps-row">
+                {['Design your coding problem with a clear statement & examples', 'Add a code template stub and define test cases', 'Submit for admin moderation review', 'Get approved → earn +500 XP and your problem goes live!'].map((text, i) => (
+                  <div key={i} className="cp-how-step">
+                    <div className="cp-how-num">{i + 1}</div>
+                    <p>{text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Admin Review Tab */}
+        {/* ── Admin Tab ── */}
         {activeTab === 'admin' && user?.username === 'admin' && (
-          <div className="admin-moderation-panel">
-            <h2>Pending Submissions Queue</h2>
-            <p className="subtitle">Review community questions, verify test structures, and deploy them live.</p>
+          <div className="cp-admin-panel">
+            <div className="cp-panel-header">
+              <div>
+                <h2><Shield size={18}/> Moderation Queue</h2>
+                <p>Review community submissions, verify test suites, and deploy them live.</p>
+              </div>
+            </div>
 
             {loading ? (
-              <div className="list-loading">
-                <Loader2 className="spinner" />
-                <span>Loading moderation queue...</span>
-              </div>
+              <div className="cp-loading"><Loader2 className="cp-spinner" size={28}/><span>Loading queue…</span></div>
             ) : pendingReviews.length === 0 ? (
-              <div className="empty-state-card clean">
-                <CheckCircle2 size={40} style={{ color: '#4ade80' }} />
-                <h3>Queue Clear!</h3>
-                <p>All contributed challenges have been reviewed.</p>
+              <div className="cp-empty-state clean">
+                <div className="cp-empty-icon green"><CheckCircle2 size={32}/></div>
+                <h3>Queue is clear!</h3>
+                <p>All submissions have been reviewed.</p>
               </div>
             ) : (
-              <div className="pending-queue-list">
-                {pendingReviews.map((problem) => (
-                  <div key={problem.id} className="queue-item">
-                    <div className="queue-item-info">
-                      <h3>{problem.title}</h3>
-                      <div className="meta-row">
-                        <span className="meta-item">By: <strong>@{problem.contributor_username}</strong></span>
-                        <span className="meta-item">Difficulty: <strong className={`diff-text ${problem.difficulty}`}>{problem.difficulty}</strong></span>
-                        <span className="meta-item">Category: <strong>{problem.category}</strong></span>
+              <div className="cp-queue-list">
+                {pendingReviews.map((problem, i) => (
+                  <motion.div key={problem.id} className="cp-queue-card" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
+                    <div className="cp-queue-left">
+                      <div className="cp-queue-meta">
+                        <span className={`cp-diff-badge ${problem.difficulty}`}>{problem.difficulty}</span>
+                        <span className="cp-queue-cat">{problem.category}</span>
                       </div>
+                      <h3 className="cp-queue-title">{problem.title}</h3>
+                      <p className="cp-queue-by">by <strong>@{problem.contributor_username}</strong> · {new Date(problem.created_at).toLocaleDateString()}</p>
+                      <p className="cp-queue-preview">{problem.description?.slice(0, 120)}{problem.description?.length > 120 ? '…' : ''}</p>
                     </div>
-                    <button className="review-action-btn" onClick={() => handleOpenReview(problem)}>
-                      <span>Inspect &amp; Review</span>
-                      <ChevronRight size={16} />
+                    <button className="cp-review-btn" onClick={() => handleOpenReview(problem)}>
+                      <Eye size={15}/> Inspect & Review
                     </button>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             )}
@@ -385,337 +356,237 @@ const ContributePage = () => {
         )}
       </div>
 
-      {/* WIZARD MODAL */}
+      {/* ═══════════ WIZARD MODAL ═══════════ */}
       <AnimatePresence>
         {showWizard && (
           <>
-            <div className="wizard-overlay" onClick={() => setShowWizard(false)} />
-            <div className="wizard-modal">
-              <div className="wizard-header">
-                <div className="header-left">
-                  <Plus size={20} />
-                  <h2>Create New Problem</h2>
+            <motion.div className="cp-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowWizard(false)} />
+            <motion.div className="cp-modal" initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }}>
+              {/* Modal header */}
+              <div className="cp-modal-header">
+                <div className="cp-modal-title">
+                  <div className="cp-modal-icon"><Plus size={18}/></div>
+                  <div>
+                    <h2>Submit a Challenge</h2>
+                    <p>Step {wizardStep} of 3 — {stepLabels[wizardStep - 1]}</p>
+                  </div>
                 </div>
-                <button className="close-btn" onClick={() => setShowWizard(false)}><X size={18} /></button>
+                <button className="cp-close-btn" onClick={() => setShowWizard(false)}><X size={18}/></button>
               </div>
 
-              {/* Progress Steps */}
-              <div className="wizard-steps-indicator">
-                <div className={`step-node ${wizardStep >= 1 ? 'active' : ''} ${wizardStep > 1 ? 'completed' : ''}`}>
-                  <div className="node-num">{wizardStep > 1 ? <Check size={12} /> : '1'}</div>
-                  <span>Metadata</span>
-                </div>
-                <div className="step-line" />
-                <div className={`step-node ${wizardStep >= 2 ? 'active' : ''} ${wizardStep > 2 ? 'completed' : ''}`}>
-                  <div className="node-num">{wizardStep > 2 ? <Check size={12} /> : '2'}</div>
-                  <span>Template</span>
-                </div>
-                <div className="step-line" />
-                <div className={`step-node ${wizardStep >= 3 ? 'active' : ''}`}>
-                  <div className="node-num">3</div>
-                  <span>Test Cases</span>
-                </div>
+              {/* Progress bar */}
+              <div className="cp-progress-bar">
+                {stepLabels.map((label, i) => (
+                  <React.Fragment key={i}>
+                    <div className={`cp-progress-step ${wizardStep > i ? 'done' : ''} ${wizardStep === i + 1 ? 'current' : ''}`}>
+                      <div className="cp-prog-circle">
+                        {wizardStep > i + 1 ? <Check size={12}/> : i + 1}
+                      </div>
+                      <span>{label}</span>
+                    </div>
+                    {i < stepLabels.length - 1 && <div className={`cp-prog-line ${wizardStep > i + 1 ? 'done' : ''}`} />}
+                  </React.Fragment>
+                ))}
               </div>
 
-              <form onSubmit={handleSubmitContribution} className="wizard-form-body">
-                {/* Step 1: Metadata */}
-                {wizardStep === 1 && (
-                  <div className="wizard-step-content">
-                    <div className="form-row">
-                      <div className="form-group flex-1">
-                        <label>Problem Title *</label>
-                        <input
-                          type="text"
-                          className="premium-input"
-                          placeholder="e.g. Reverse a String"
-                          value={form.title}
-                          onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                          required
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>Difficulty *</label>
-                        <select
-                          className="premium-input"
-                          value={form.difficulty}
-                          onChange={e => setForm(f => ({ ...f, difficulty: e.target.value }))}
-                        >
-                          <option value="easy">Easy</option>
-                          <option value="medium">Medium</option>
-                          <option value="hard">Hard</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="form-row mt-3">
-                      <div className="form-group flex-1">
-                        <label>Category</label>
-                        <select
-                          className="premium-input"
-                          value={form.category}
-                          onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                        >
-                          <option value="algorithms">Algorithms</option>
-                          <option value="data_structures">Data Structures</option>
-                          <option value="concurrency">Concurrency</option>
-                          <option value="database">Databases</option>
-                        </select>
-                      </div>
-                      <div className="form-group flex-1">
-                        <label>Tags (Comma separated)</label>
-                        <input
-                          type="text"
-                          className="premium-input"
-                          placeholder="e.g. strings, recursion, pointers"
-                          value={form.tags}
-                          onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="form-group mt-3">
-                      <label>Problem Statement / Description (Markdown supported) *</label>
-                      <textarea
-                        className="premium-textarea"
-                        placeholder="Write a clear statement. Describe the task, constraints, input format, output format, and examples."
-                        style={{ minHeight: '180px' }}
-                        value={form.description}
-                        onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                        required
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 2: Starter code */}
-                {wizardStep === 2 && (
-                  <div className="wizard-step-content">
-                    <div className="form-group">
-                      <label>Starter Code Stub / Boilerplate</label>
-                      <p className="input-tip">Write a code snippet template that players can build their solution on top of.</p>
-                      <textarea
-                        className="premium-textarea code-area-mono"
-                        style={{ minHeight: '300px', fontFamily: 'monospace' }}
-                        value={form.starterCode}
-                        onChange={e => setForm(f => ({ ...f, starterCode: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 3: Test Suite */}
-                {wizardStep === 3 && (
-                  <div className="wizard-step-content test-suite-step">
-                    <div className="test-cases-header">
-                      <h3>Define Test Cases</h3>
-                      <button type="button" className="add-case-btn" onClick={addTestCase}>
-                        <Plus size={14} /> Add Test Case
-                      </button>
-                    </div>
-
-                    <div className="test-cases-list">
-                      {form.testCases.map((tc, idx) => (
-                        <div key={idx} className="test-case-row">
-                          <div className="tc-index">#{idx + 1}</div>
-                          <div className="form-group flex-1">
-                            <label>Input (stdIn payload)</label>
-                            <textarea
-                              className="premium-textarea tc-area-mono"
-                              placeholder="e.g. hello"
-                              value={tc.input}
-                              onChange={e => updateTestCase(idx, 'input', e.target.value)}
-                              required
-                            />
-                          </div>
-                          <div className="form-group flex-1">
-                            <label>Expected Output (stdOut expected)</label>
-                            <textarea
-                              className="premium-textarea tc-area-mono"
-                              placeholder="e.g. olleh"
-                              value={tc.expected}
-                              onChange={e => updateTestCase(idx, 'expected', e.target.value)}
-                              required
-                            />
-                          </div>
-                          {form.testCases.length > 1 && (
-                            <button type="button" className="delete-case-btn" onClick={() => removeTestCase(idx)}>
-                              <Trash2 size={16} />
-                            </button>
-                          )}
+              {/* Form body */}
+              <form onSubmit={handleSubmitContribution} className="cp-modal-body">
+                <AnimatePresence mode="wait">
+                  {/* Step 1 */}
+                  {wizardStep === 1 && (
+                    <motion.div key="step1" className="cp-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                      <div className="cp-form-row">
+                        <div className="cp-form-group cp-flex1">
+                          <label>Problem Title <span className="req">*</span></label>
+                          <input type="text" className="cp-input" placeholder="e.g. Reverse a Linked List" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required />
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Modal Footer Controls */}
-                <div className="wizard-footer">
-                  {wizardStep > 1 ? (
-                    <button type="button" className="secondary-btn" onClick={() => setWizardStep(s => s - 1)}>
-                      <ChevronLeft size={16} /> Back
-                    </button>
-                  ) : (
-                    <button type="button" className="secondary-btn" onClick={() => setShowWizard(false)}>
-                      Cancel
-                    </button>
+                        <div className="cp-form-group">
+                          <label>Difficulty <span className="req">*</span></label>
+                          <select className="cp-input" value={form.difficulty} onChange={e => setForm(f => ({ ...f, difficulty: e.target.value }))}>
+                            <option value="easy">Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="cp-form-row mt2">
+                        <div className="cp-form-group cp-flex1">
+                          <label>Category</label>
+                          <select className="cp-input" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
+                            <option value="algorithms">Algorithms</option>
+                            <option value="data_structures">Data Structures</option>
+                            <option value="concurrency">Concurrency</option>
+                            <option value="database">Database</option>
+                            <option value="math">Math</option>
+                            <option value="strings">Strings</option>
+                          </select>
+                        </div>
+                        <div className="cp-form-group cp-flex1">
+                          <label>Tags (comma separated)</label>
+                          <input type="text" className="cp-input" placeholder="e.g. arrays, two-pointers" value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} />
+                        </div>
+                      </div>
+                      <div className="cp-form-group mt2">
+                        <label>Problem Statement <span className="req">*</span></label>
+                        <p className="cp-input-tip">Describe the task clearly. Include constraints, input/output format, and at least one example.</p>
+                        <textarea className="cp-textarea" style={{ minHeight: '200px' }} placeholder="Given an array of integers, return the two numbers that add up to a target..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} required />
+                      </div>
+                    </motion.div>
                   )}
 
-                  {wizardStep < 3 ? (
-                    <button type="button" className="primary-btn" onClick={() => setWizardStep(s => s + 1)}>
-                      Next <ChevronRight size={16} />
+                  {/* Step 2 */}
+                  {wizardStep === 2 && (
+                    <motion.div key="step2" className="cp-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                      <div className="cp-form-group">
+                        <label>Starter Code / Boilerplate</label>
+                        <p className="cp-input-tip">Provide a code template that players will build their solution on. The function signature should be included.</p>
+                        <textarea className="cp-textarea cp-mono" style={{ minHeight: '320px' }} value={form.starterCode} onChange={e => setForm(f => ({ ...f, starterCode: e.target.value }))} />
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Step 3 */}
+                  {wizardStep === 3 && (
+                    <motion.div key="step3" className="cp-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                      <div className="cp-tc-header">
+                        <div>
+                          <h3>Test Cases</h3>
+                          <p className="cp-input-tip">Define at least one input/output pair that will be used to validate solutions.</p>
+                        </div>
+                        <button type="button" className="cp-add-tc-btn" onClick={addTestCase}><Plus size={13}/> Add Case</button>
+                      </div>
+                      <div className="cp-tc-list">
+                        {form.testCases.map((tc, idx) => (
+                          <div key={idx} className="cp-tc-row">
+                            <div className="cp-tc-num">#{idx + 1}</div>
+                            <div className="cp-form-group cp-flex1">
+                              <label>Input</label>
+                              <textarea className="cp-textarea cp-mono sm" placeholder="5\n[1,2,3,4,5]" value={tc.input} onChange={e => updateTestCase(idx, 'input', e.target.value)} required />
+                            </div>
+                            <div className="cp-form-group cp-flex1">
+                              <label>Expected Output</label>
+                              <textarea className="cp-textarea cp-mono sm" placeholder="15" value={tc.expected} onChange={e => updateTestCase(idx, 'expected', e.target.value)} required />
+                            </div>
+                            {form.testCases.length > 1 && (
+                              <button type="button" className="cp-del-btn" onClick={() => removeTestCase(idx)}><Trash2 size={15}/></button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Footer */}
+                <div className="cp-modal-footer">
+                  {wizardStep > 1 ? (
+                    <button type="button" className="cp-btn-secondary" onClick={() => setWizardStep(s => s - 1)}>
+                      <ChevronLeft size={16}/> Back
                     </button>
                   ) : (
-                    <button type="submit" className="primary-btn submit" disabled={submitting}>
-                      {submitting ? 'Submitting...' : 'Submit Contribution'}
+                    <button type="button" className="cp-btn-secondary" onClick={() => setShowWizard(false)}>Cancel</button>
+                  )}
+                  {wizardStep < 3 ? (
+                    <button type="button" className="cp-btn-primary" onClick={() => setWizardStep(s => s + 1)}>
+                      Continue <ChevronRight size={16}/>
+                    </button>
+                  ) : (
+                    <button type="submit" className="cp-btn-primary submit-btn" disabled={submitting}>
+                      {submitting ? <><Loader2 size={15} className="cp-spinner-sm"/> Submitting…</> : <><CheckCircle2 size={15}/> Submit Challenge</>}
                     </button>
                   )}
                 </div>
               </form>
-            </div>
+            </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* ADMIN REVIEW MODAL */}
+      {/* ═══════════ ADMIN REVIEW MODAL ═══════════ */}
       <AnimatePresence>
         {selectedReview && (
           <>
-            <div className="wizard-overlay" onClick={() => setSelectedReview(null)} />
-            <div className="wizard-modal review-modal">
-              <div className="wizard-header">
-                <div className="header-left">
-                  <Shield size={20} className="admin-color" />
-                  <h2>Moderate Challenge Submission</h2>
+            <motion.div className="cp-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedReview(null)} />
+            <motion.div className="cp-modal large" initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }}>
+              <div className="cp-modal-header">
+                <div className="cp-modal-title">
+                  <div className="cp-modal-icon admin"><Shield size={18}/></div>
+                  <div>
+                    <h2>Moderate Submission</h2>
+                    <p>Review, edit, and deploy or reject this contribution</p>
+                  </div>
                 </div>
-                <button className="close-btn" onClick={() => setSelectedReview(null)}><X size={18}/></button>
+                <button className="cp-close-btn" onClick={() => setSelectedReview(null)}><X size={18}/></button>
               </div>
 
-              <div className="review-modal-body">
-                <div className="review-fields-column">
-                  <div className="form-row">
-                    <div className="form-group flex-1">
-                      <label>Challenge Title</label>
-                      <input
-                        type="text"
-                        className="premium-input"
-                        value={reviewForm.editTitle}
-                        onChange={e => setReviewForm(f => ({ ...f, editTitle: e.target.value }))}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Difficulty</label>
-                      <select
-                        className="premium-input"
-                        value={reviewForm.editDifficulty}
-                        onChange={e => setReviewForm(f => ({ ...f, editDifficulty: e.target.value }))}
-                      >
-                        <option value="easy">Easy</option>
-                        <option value="medium">Medium</option>
-                        <option value="hard">Hard</option>
-                      </select>
-                    </div>
+              <div className="cp-modal-body review-body">
+                <div className="cp-form-row">
+                  <div className="cp-form-group cp-flex1">
+                    <label>Title</label>
+                    <input type="text" className="cp-input" value={reviewForm.editTitle} onChange={e => setReviewForm(f => ({ ...f, editTitle: e.target.value }))} />
                   </div>
-
-                  <div className="form-row mt-3">
-                    <div className="form-group">
-                      <label>Reward points</label>
-                      <input
-                        type="number"
-                        className="premium-input"
-                        value={reviewForm.points}
-                        onChange={e => setReviewForm(f => ({ ...f, points: parseInt(e.target.value) || 80 }))}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Time Limit (sec)</label>
-                      <input
-                        type="number"
-                        className="premium-input"
-                        value={reviewForm.timeLimit}
-                        onChange={e => setReviewForm(f => ({ ...f, timeLimit: parseInt(e.target.value) || 300 }))}
-                      />
-                    </div>
-                    <div className="form-group flex-1">
-                      <label>Tags</label>
-                      <input
-                        type="text"
-                        className="premium-input"
-                        value={reviewForm.editTags}
-                        onChange={e => setReviewForm(f => ({ ...f, editTags: e.target.value }))}
-                      />
-                    </div>
+                  <div className="cp-form-group">
+                    <label>Difficulty</label>
+                    <select className="cp-input" value={reviewForm.editDifficulty} onChange={e => setReviewForm(f => ({ ...f, editDifficulty: e.target.value }))}>
+                      <option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option>
+                    </select>
                   </div>
-
-                  <div className="form-group mt-3">
-                    <label>Description Statement</label>
-                    <textarea
-                      className="premium-textarea"
-                      style={{ minHeight: '140px' }}
-                      value={reviewForm.editDescription}
-                      onChange={e => setReviewForm(f => ({ ...f, editDescription: e.target.value }))}
-                    />
+                </div>
+                <div className="cp-form-row mt2">
+                  <div className="cp-form-group">
+                    <label>Reward Points</label>
+                    <input type="number" className="cp-input" value={reviewForm.points} onChange={e => setReviewForm(f => ({ ...f, points: parseInt(e.target.value) || 80 }))} />
                   </div>
-
-                  <div className="form-group mt-3">
-                    <label>Boilerplate Starter Code</label>
-                    <textarea
-                      className="premium-textarea code-area-mono"
-                      style={{ minHeight: '180px', fontFamily: 'monospace' }}
-                      value={reviewForm.editStarterCode}
-                      onChange={e => setReviewForm(f => ({ ...f, editStarterCode: e.target.value }))}
-                    />
+                  <div className="cp-form-group">
+                    <label>Time Limit (sec)</label>
+                    <input type="number" className="cp-input" value={reviewForm.timeLimit} onChange={e => setReviewForm(f => ({ ...f, timeLimit: parseInt(e.target.value) || 300 }))} />
                   </div>
-
-                  {/* Admin Test Cases */}
-                  <div className="form-group mt-3">
-                    <div className="test-cases-header">
-                      <label>Verify Test Cases</label>
-                      <button type="button" className="add-case-btn" onClick={addReviewTestCase}>
-                        <Plus size={12} /> Add
-                      </button>
-                    </div>
-                    <div className="test-cases-list border-box">
-                      {reviewForm.editTestCases.map((tc, idx) => (
-                        <div key={idx} className="test-case-row small">
-                          <div className="form-group flex-1">
-                            <input
-                              type="text"
-                              className="premium-input tc-mono"
-                              placeholder="Input"
-                              value={tc.input}
-                              onChange={e => updateReviewTestCase(idx, 'input', e.target.value)}
-                            />
-                          </div>
-                          <div className="form-group flex-1">
-                            <input
-                              type="text"
-                              className="premium-input tc-mono"
-                              placeholder="Expected"
-                              value={tc.expected}
-                              onChange={e => updateReviewTestCase(idx, 'expected', e.target.value)}
-                            />
-                          </div>
-                          {reviewForm.editTestCases.length > 1 && (
-                            <button type="button" className="delete-case-btn" onClick={() => removeReviewTestCase(idx)}>
-                              <X size={14} />
-                            </button>
-                          )}
+                  <div className="cp-form-group cp-flex1">
+                    <label>Tags</label>
+                    <input type="text" className="cp-input" value={reviewForm.editTags} onChange={e => setReviewForm(f => ({ ...f, editTags: e.target.value }))} />
+                  </div>
+                </div>
+                <div className="cp-form-group mt2">
+                  <label>Description</label>
+                  <textarea className="cp-textarea" style={{ minHeight: '130px' }} value={reviewForm.editDescription} onChange={e => setReviewForm(f => ({ ...f, editDescription: e.target.value }))} />
+                </div>
+                <div className="cp-form-group mt2">
+                  <label>Starter Code</label>
+                  <textarea className="cp-textarea cp-mono" style={{ minHeight: '160px' }} value={reviewForm.editStarterCode} onChange={e => setReviewForm(f => ({ ...f, editStarterCode: e.target.value }))} />
+                </div>
+                <div className="cp-form-group mt2">
+                  <div className="cp-tc-header small">
+                    <label>Test Cases</label>
+                    <button type="button" className="cp-add-tc-btn xs" onClick={addReviewTestCase}><Plus size={12}/> Add</button>
+                  </div>
+                  <div className="cp-tc-list">
+                    {reviewForm.editTestCases.map((tc, idx) => (
+                      <div key={idx} className="cp-tc-row compact">
+                        <div className="cp-tc-num">#{idx + 1}</div>
+                        <div className="cp-form-group cp-flex1">
+                          <input type="text" className="cp-input cp-mono" placeholder="Input" value={tc.input} onChange={e => updateReviewTestCase(idx, 'input', e.target.value)} />
                         </div>
-                      ))}
-                    </div>
+                        <div className="cp-form-group cp-flex1">
+                          <input type="text" className="cp-input cp-mono" placeholder="Expected" value={tc.expected} onChange={e => updateReviewTestCase(idx, 'expected', e.target.value)} />
+                        </div>
+                        {reviewForm.editTestCases.length > 1 && (
+                          <button type="button" className="cp-del-btn" onClick={() => removeReviewTestCase(idx)}><X size={14}/></button>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              <div className="review-footer">
-                <button className="reject-btn" onClick={() => handleReviewAction('reject')}>
-                  Reject Submission
+              <div className="cp-review-footer">
+                <button className="cp-reject-btn" onClick={() => handleReviewAction('reject')}>
+                  <X size={15}/> Reject Submission
                 </button>
-                <button className="approve-btn" onClick={() => handleReviewAction('approve')}>
-                  <CheckCircle2 size={16} /> Approve &amp; Launch
+                <button className="cp-approve-btn" onClick={() => handleReviewAction('approve')}>
+                  <CheckCircle2 size={15}/> Approve & Launch Live
                 </button>
               </div>
-            </div>
+            </motion.div>
           </>
         )}
       </AnimatePresence>
