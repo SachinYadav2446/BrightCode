@@ -1,0 +1,596 @@
+{
+  "topic": "array",
+  "name": "Median of an Array",
+  "platform": "GFG",
+  "difficulty": "Easy",
+  "statement": "Given an unsorted array of integers, find the median of the array. If the size is even, return the average of the two middle elements after sorting.",
+  "examples": [
+    {
+      "input": [
+        90,
+        100,
+        78,
+        89,
+        67
+      ],
+      "output": 89
+    },
+    {
+      "input": [
+        56,
+        67,
+        30,
+        79
+      ],
+      "output": 61.5
+    }
+  ],
+  "constraints": {
+    "n": "1 <= n <= 100000",
+    "value": "-100000 <= arr[i] <= 100000"
+  },
+  "testCases": [
+    {
+      "id": 1,
+      "input": {
+        "arr": [
+          90,
+          100,
+          78,
+          89,
+          67
+        ]
+      },
+      "expected": 89
+    },
+    {
+      "id": 2,
+      "input": {
+        "arr": [
+          56,
+          67,
+          30,
+          79
+        ]
+      },
+      "expected": 61.5
+    },
+    {
+      "id": 3,
+      "input": {
+        "arr": [
+          1
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 4,
+      "input": {
+        "arr": [
+          1,
+          2
+        ]
+      },
+      "expected": 1.5
+    },
+    {
+      "id": 5,
+      "input": {
+        "arr": [
+          2,
+          1
+        ]
+      },
+      "expected": 1.5
+    },
+    {
+      "id": 6,
+      "input": {
+        "arr": [
+          1,
+          2,
+          3
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 7,
+      "input": {
+        "arr": [
+          3,
+          2,
+          1
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 8,
+      "input": {
+        "arr": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "expected": 2.5
+    },
+    {
+      "id": 9,
+      "input": {
+        "arr": [
+          4,
+          3,
+          2,
+          1
+        ]
+      },
+      "expected": 2.5
+    },
+    {
+      "id": 10,
+      "input": {
+        "arr": [
+          5,
+          5,
+          5
+        ]
+      },
+      "expected": 5
+    },
+    {
+      "id": 11,
+      "input": {
+        "arr": [
+          5,
+          5,
+          5,
+          5
+        ]
+      },
+      "expected": 5
+    },
+    {
+      "id": 12,
+      "input": {
+        "arr": [
+          0
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "id": 13,
+      "input": {
+        "arr": [
+          0,
+          0
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "id": 14,
+      "input": {
+        "arr": [
+          -1,
+          0,
+          1
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "id": 15,
+      "input": {
+        "arr": [
+          -5,
+          -1,
+          -3
+        ]
+      },
+      "expected": -3
+    },
+    {
+      "id": 16,
+      "input": {
+        "arr": [
+          10,
+          20,
+          30,
+          40,
+          50
+        ]
+      },
+      "expected": 30
+    },
+    {
+      "id": 17,
+      "input": {
+        "arr": [
+          10,
+          20,
+          30,
+          40
+        ]
+      },
+      "expected": 25
+    },
+    {
+      "id": 18,
+      "input": {
+        "arr": [
+          100,
+          200,
+          300
+        ]
+      },
+      "expected": 200
+    },
+    {
+      "id": 19,
+      "input": {
+        "arr": [
+          8,
+          6,
+          7,
+          5,
+          3,
+          0,
+          9
+        ]
+      },
+      "expected": 6
+    },
+    {
+      "id": 20,
+      "input": {
+        "arr": [
+          1,
+          100
+        ]
+      },
+      "expected": 50.5
+    },
+    {
+      "id": 21,
+      "input": {
+        "arr": [
+          50,
+          40,
+          30
+        ]
+      },
+      "expected": 40
+    },
+    {
+      "id": 22,
+      "input": {
+        "arr": [
+          11,
+          22,
+          33,
+          44,
+          55
+        ]
+      },
+      "expected": 33
+    },
+    {
+      "id": 23,
+      "input": {
+        "arr": [
+          99,
+          1,
+          50
+        ]
+      },
+      "expected": 50
+    },
+    {
+      "id": 24,
+      "input": {
+        "arr": [
+          7,
+          14,
+          21,
+          28
+        ]
+      },
+      "expected": 17.5
+    },
+    {
+      "id": 25,
+      "input": {
+        "arr": [
+          2,
+          4,
+          6,
+          8,
+          10
+        ]
+      },
+      "expected": 6
+    },
+    {
+      "id": 26,
+      "input": {
+        "arr": [
+          15,
+          14,
+          13,
+          12
+        ]
+      },
+      "expected": 13.5
+    },
+    {
+      "id": 27,
+      "input": {
+        "arr": [
+          1000
+        ]
+      },
+      "expected": 1000
+    },
+    {
+      "id": 28,
+      "input": {
+        "arr": [
+          -10,
+          -20,
+          -30
+        ]
+      },
+      "expected": -20
+    },
+    {
+      "id": 29,
+      "input": {
+        "arr": [
+          -10,
+          -20,
+          -30,
+          -40
+        ]
+      },
+      "expected": -25
+    },
+    {
+      "id": 30,
+      "input": {
+        "arr": [
+          1,
+          1,
+          2,
+          2,
+          3
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 31,
+      "input": {
+        "arr": [
+          42
+        ]
+      },
+      "expected": 42
+    },
+    {
+      "id": 32,
+      "input": {
+        "arr": [
+          5,
+          10,
+          15,
+          20,
+          25
+        ]
+      },
+      "expected": 15
+    },
+    {
+      "id": 33,
+      "input": {
+        "arr": [
+          9,
+          9,
+          9,
+          9,
+          9
+        ]
+      },
+      "expected": 9
+    },
+    {
+      "id": 34,
+      "input": {
+        "arr": [
+          3,
+          6,
+          9,
+          12,
+          15,
+          18
+        ]
+      },
+      "expected": 10.5
+    },
+    {
+      "id": 35,
+      "input": {
+        "arr": [
+          1,
+          3,
+          5,
+          7
+        ]
+      },
+      "expected": 4
+    },
+    {
+      "id": 36,
+      "input": {
+        "arr": [
+          2,
+          3,
+          5,
+          7,
+          11
+        ]
+      },
+      "expected": 5
+    },
+    {
+      "id": 37,
+      "input": {
+        "arr": [
+          100,
+          1,
+          99,
+          2
+        ]
+      },
+      "expected": 50.5
+    },
+    {
+      "id": 38,
+      "input": {
+        "arr": [
+          6,
+          12,
+          18
+        ]
+      },
+      "expected": 12
+    },
+    {
+      "id": 39,
+      "input": {
+        "arr": [
+          4,
+          8,
+          12,
+          16
+        ]
+      },
+      "expected": 10
+    },
+    {
+      "id": 40,
+      "input": {
+        "arr": [
+          13,
+          17,
+          19
+        ]
+      },
+      "expected": 17
+    },
+    {
+      "id": 41,
+      "generator": "random_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "median after sorting"
+    },
+    {
+      "id": 42,
+      "generator": "random_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "median after sorting"
+    },
+    {
+      "id": 43,
+      "generator": "random_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "median after sorting"
+    },
+    {
+      "id": 44,
+      "generator": "random_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "median after sorting"
+    },
+    {
+      "id": 45,
+      "generator": "random_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "median after sorting"
+    },
+    {
+      "id": 46,
+      "generator": "random_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "median after sorting"
+    },
+    {
+      "id": 47,
+      "generator": "random_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "median after sorting"
+    },
+    {
+      "id": 48,
+      "generator": "random_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "median after sorting"
+    },
+    {
+      "id": 49,
+      "generator": "random_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "median after sorting"
+    },
+    {
+      "id": 50,
+      "generator": "random_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "median after sorting"
+    }
+  ]
+}

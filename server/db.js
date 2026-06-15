@@ -13,7 +13,7 @@ if (DB_CONNECTION_STRING) {
         ssl: DB_CONNECTION_STRING.includes('neon.tech') ? { rejectUnauthorized: false } : false,
         max: 10,
         idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 2000,
+        connectionTimeoutMillis: 10000,
     });
 
     pool.on('error', (err) => {

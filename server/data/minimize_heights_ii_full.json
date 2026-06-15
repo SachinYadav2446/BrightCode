@@ -1,0 +1,645 @@
+{
+  "topic": "array",
+  "name": "Minimize the Heights II",
+  "platform": "GFG",
+  "difficulty": "Medium",
+  "statement": "Given heights of towers and integer k. For each tower either increase or decrease height by k exactly once. Minimize the difference between tallest and shortest tower after modification. Resulting heights cannot be negative.",
+  "examples": [
+    {
+      "input": {
+        "k": 2,
+        "arr": [
+          1,
+          5,
+          8,
+          10
+        ]
+      },
+      "output": 5
+    },
+    {
+      "input": {
+        "k": 3,
+        "arr": [
+          3,
+          9,
+          12,
+          16,
+          20
+        ]
+      },
+      "output": 11
+    }
+  ],
+  "constraints": {
+    "k": "1 <= k <= 10000000",
+    "n": "1 <= n <= 100000",
+    "arr_value": "1 <= arr[i] <= 10000000"
+  },
+  "testCases": [
+    {
+      "id": 1,
+      "input": {
+        "k": 2,
+        "arr": [
+          1,
+          5,
+          8,
+          10
+        ]
+      },
+      "expected": 5
+    },
+    {
+      "id": 2,
+      "input": {
+        "k": 3,
+        "arr": [
+          3,
+          9,
+          12,
+          16,
+          20
+        ]
+      },
+      "expected": 11
+    },
+    {
+      "id": 3,
+      "input": {
+        "k": 1,
+        "arr": [
+          1
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "id": 4,
+      "input": {
+        "k": 5,
+        "arr": [
+          10
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "id": 5,
+      "input": {
+        "k": 2,
+        "arr": [
+          1,
+          2,
+          3
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 6,
+      "input": {
+        "k": 1,
+        "arr": [
+          1,
+          2,
+          3
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 7,
+      "input": {
+        "k": 2,
+        "arr": [
+          4,
+          6
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 8,
+      "input": {
+        "k": 3,
+        "arr": [
+          1,
+          10
+        ]
+      },
+      "expected": 3
+    },
+    {
+      "id": 9,
+      "input": {
+        "k": 2,
+        "arr": [
+          2,
+          6,
+          3,
+          4,
+          7,
+          2,
+          10,
+          3,
+          2,
+          1
+        ]
+      },
+      "expected": 7
+    },
+    {
+      "id": 10,
+      "input": {
+        "k": 5,
+        "arr": [
+          7,
+          7,
+          7
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "id": 11,
+      "input": {
+        "k": 1,
+        "arr": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "id": 12,
+      "input": {
+        "k": 2,
+        "arr": [
+          1,
+          15,
+          10
+        ]
+      },
+      "expected": 10
+    },
+    {
+      "id": 13,
+      "input": {
+        "k": 6,
+        "arr": [
+          1,
+          10,
+          14,
+          14,
+          14,
+          15
+        ]
+      },
+      "expected": 5
+    },
+    {
+      "id": 14,
+      "input": {
+        "k": 4,
+        "arr": [
+          4,
+          6,
+          10,
+          12
+        ]
+      },
+      "expected": 4
+    },
+    {
+      "id": 15,
+      "input": {
+        "k": 2,
+        "arr": [
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "id": 16,
+      "input": {
+        "k": 3,
+        "arr": [
+          2,
+          4,
+          6,
+          8
+        ]
+      },
+      "expected": 3
+    },
+    {
+      "id": 17,
+      "input": {
+        "k": 1,
+        "arr": [
+          5,
+          8,
+          10
+        ]
+      },
+      "expected": 3
+    },
+    {
+      "id": 18,
+      "input": {
+        "k": 2,
+        "arr": [
+          1,
+          8,
+          12
+        ]
+      },
+      "expected": 7
+    },
+    {
+      "id": 19,
+      "input": {
+        "k": 5,
+        "arr": [
+          5,
+          10,
+          15
+        ]
+      },
+      "expected": 10
+    },
+    {
+      "id": 20,
+      "input": {
+        "k": 2,
+        "arr": [
+          3,
+          3,
+          3,
+          6
+        ]
+      },
+      "expected": 3
+    },
+    {
+      "id": 21,
+      "input": {
+        "k": 1,
+        "arr": [
+          2,
+          3
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 22,
+      "input": {
+        "k": 2,
+        "arr": [
+          2,
+          3
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 23,
+      "input": {
+        "k": 3,
+        "arr": [
+          2,
+          3
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 24,
+      "input": {
+        "k": 4,
+        "arr": [
+          10,
+          20,
+          30
+        ]
+      },
+      "expected": 12
+    },
+    {
+      "id": 25,
+      "input": {
+        "k": 2,
+        "arr": [
+          1,
+          100
+        ]
+      },
+      "expected": 95
+    },
+    {
+      "id": 26,
+      "input": {
+        "k": 10,
+        "arr": [
+          100,
+          200,
+          300
+        ]
+      },
+      "expected": 180
+    },
+    {
+      "id": 27,
+      "input": {
+        "k": 1,
+        "arr": [
+          10,
+          11,
+          12
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "id": 28,
+      "input": {
+        "k": 2,
+        "arr": [
+          10,
+          11,
+          12
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 29,
+      "input": {
+        "k": 3,
+        "arr": [
+          10,
+          11,
+          12
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 30,
+      "input": {
+        "k": 5,
+        "arr": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "expected": 4
+    },
+    {
+      "id": 31,
+      "input": {
+        "k": 1,
+        "arr": [
+          7,
+          14,
+          21
+        ]
+      },
+      "expected": 12
+    },
+    {
+      "id": 32,
+      "input": {
+        "k": 2,
+        "arr": [
+          7,
+          14,
+          21
+        ]
+      },
+      "expected": 10
+    },
+    {
+      "id": 33,
+      "input": {
+        "k": 3,
+        "arr": [
+          7,
+          14,
+          21
+        ]
+      },
+      "expected": 8
+    },
+    {
+      "id": 34,
+      "input": {
+        "k": 4,
+        "arr": [
+          7,
+          14,
+          21
+        ]
+      },
+      "expected": 6
+    },
+    {
+      "id": 35,
+      "input": {
+        "k": 2,
+        "arr": [
+          1000,
+          1001,
+          1002
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 36,
+      "input": {
+        "k": 1,
+        "arr": [
+          1000,
+          1001,
+          1002
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "id": 37,
+      "input": {
+        "k": 2,
+        "arr": [
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
+      },
+      "expected": 4
+    },
+    {
+      "id": 38,
+      "input": {
+        "k": 3,
+        "arr": [
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
+      },
+      "expected": 4
+    },
+    {
+      "id": 39,
+      "input": {
+        "k": 2,
+        "arr": [
+          50,
+          60,
+          70
+        ]
+      },
+      "expected": 16
+    },
+    {
+      "id": 40,
+      "input": {
+        "k": 5,
+        "arr": [
+          50,
+          60,
+          70
+        ]
+      },
+      "expected": 10
+    },
+    {
+      "id": 41,
+      "generator": "random_heights",
+      "size": 100000,
+      "heightRange": [
+        1,
+        10000000
+      ],
+      "k": "random",
+      "validation": "minimum possible difference after +/- k"
+    },
+    {
+      "id": 42,
+      "generator": "random_heights",
+      "size": 100000,
+      "heightRange": [
+        1,
+        10000000
+      ],
+      "k": "random",
+      "validation": "minimum possible difference after +/- k"
+    },
+    {
+      "id": 43,
+      "generator": "random_heights",
+      "size": 100000,
+      "heightRange": [
+        1,
+        10000000
+      ],
+      "k": "random",
+      "validation": "minimum possible difference after +/- k"
+    },
+    {
+      "id": 44,
+      "generator": "random_heights",
+      "size": 100000,
+      "heightRange": [
+        1,
+        10000000
+      ],
+      "k": "random",
+      "validation": "minimum possible difference after +/- k"
+    },
+    {
+      "id": 45,
+      "generator": "random_heights",
+      "size": 100000,
+      "heightRange": [
+        1,
+        10000000
+      ],
+      "k": "random",
+      "validation": "minimum possible difference after +/- k"
+    },
+    {
+      "id": 46,
+      "generator": "random_heights",
+      "size": 100000,
+      "heightRange": [
+        1,
+        10000000
+      ],
+      "k": "random",
+      "validation": "minimum possible difference after +/- k"
+    },
+    {
+      "id": 47,
+      "generator": "random_heights",
+      "size": 100000,
+      "heightRange": [
+        1,
+        10000000
+      ],
+      "k": "random",
+      "validation": "minimum possible difference after +/- k"
+    },
+    {
+      "id": 48,
+      "generator": "random_heights",
+      "size": 100000,
+      "heightRange": [
+        1,
+        10000000
+      ],
+      "k": "random",
+      "validation": "minimum possible difference after +/- k"
+    },
+    {
+      "id": 49,
+      "generator": "random_heights",
+      "size": 100000,
+      "heightRange": [
+        1,
+        10000000
+      ],
+      "k": "random",
+      "validation": "minimum possible difference after +/- k"
+    },
+    {
+      "id": 50,
+      "generator": "random_heights",
+      "size": 100000,
+      "heightRange": [
+        1,
+        10000000
+      ],
+      "k": "random",
+      "validation": "minimum possible difference after +/- k"
+    }
+  ]
+}

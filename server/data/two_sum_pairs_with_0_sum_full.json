@@ -1,0 +1,603 @@
+{
+  "topic": "array",
+  "name": "Two Sum - Pairs with 0 Sum",
+  "platform": "GFG",
+  "difficulty": "Easy",
+  "statement": "Given an array of integers, count or identify pairs whose sum is equal to 0.",
+  "examples": [
+    {
+      "input": [
+        1,
+        -1,
+        2,
+        -2,
+        3
+      ],
+      "output": [
+        [
+          1,
+          -1
+        ],
+        [
+          2,
+          -2
+        ]
+      ]
+    },
+    {
+      "input": [
+        2,
+        -2,
+        2,
+        -2
+      ],
+      "output": 2
+    }
+  ],
+  "constraints": {
+    "n": "1 <= n <= 100000",
+    "arr_value": "-100000 <= arr[i] <= 100000"
+  },
+  "testCases": [
+    {
+      "id": 1,
+      "input": {
+        "arr": [
+          1,
+          -1
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 2,
+      "input": {
+        "arr": [
+          1,
+          -1,
+          2,
+          -2
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 3,
+      "input": {
+        "arr": [
+          1,
+          2,
+          3
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "id": 4,
+      "input": {
+        "arr": [
+          0
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "id": 5,
+      "input": {
+        "arr": [
+          0,
+          0
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 6,
+      "input": {
+        "arr": [
+          2,
+          -2,
+          2,
+          -2
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 7,
+      "input": {
+        "arr": [
+          1,
+          -1,
+          1,
+          -1
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 8,
+      "input": {
+        "arr": [
+          3,
+          -3,
+          4,
+          -4,
+          5
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 9,
+      "input": {
+        "arr": [
+          10,
+          -10
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 10,
+      "input": {
+        "arr": [
+          5,
+          -5,
+          5
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 11,
+      "input": {
+        "arr": [
+          1,
+          1,
+          -1,
+          -1
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 12,
+      "input": {
+        "arr": [
+          2,
+          3,
+          -2,
+          -3
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 13,
+      "input": {
+        "arr": [
+          7,
+          -7,
+          8,
+          -8,
+          9,
+          -9
+        ]
+      },
+      "expected": 3
+    },
+    {
+      "id": 14,
+      "input": {
+        "arr": [
+          100,
+          -100
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 15,
+      "input": {
+        "arr": [
+          -1,
+          -2,
+          -3
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "id": 16,
+      "input": {
+        "arr": [
+          1,
+          2,
+          3
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "id": 17,
+      "input": {
+        "arr": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 18,
+      "input": {
+        "arr": [
+          4,
+          -4,
+          4,
+          -4
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 19,
+      "input": {
+        "arr": [
+          6,
+          -6,
+          1
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 20,
+      "input": {
+        "arr": [
+          8,
+          -8,
+          8
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 21,
+      "input": {
+        "arr": [
+          9,
+          -9,
+          9,
+          -9
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 22,
+      "input": {
+        "arr": [
+          1,
+          -1,
+          2,
+          3
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 23,
+      "input": {
+        "arr": [
+          2,
+          -2,
+          4,
+          -4,
+          6
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 24,
+      "input": {
+        "arr": [
+          11,
+          -11
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 25,
+      "input": {
+        "arr": [
+          12,
+          -12,
+          12,
+          -12
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 26,
+      "input": {
+        "arr": [
+          13,
+          -13,
+          14
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 27,
+      "input": {
+        "arr": [
+          14,
+          -14,
+          15,
+          -15
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 28,
+      "input": {
+        "arr": [
+          16,
+          -16,
+          17,
+          -17,
+          18
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 29,
+      "input": {
+        "arr": [
+          20,
+          -20
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 30,
+      "input": {
+        "arr": [
+          1,
+          -1,
+          2,
+          -2,
+          3,
+          -3
+        ]
+      },
+      "expected": 3
+    },
+    {
+      "id": 31,
+      "input": {
+        "arr": [
+          5,
+          5,
+          -5,
+          -5
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 32,
+      "input": {
+        "arr": [
+          7,
+          7,
+          7
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "id": 33,
+      "input": {
+        "arr": [
+          -7,
+          -7,
+          7,
+          7
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 34,
+      "input": {
+        "arr": [
+          1000,
+          -1000
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 35,
+      "input": {
+        "arr": [
+          50,
+          -50,
+          25,
+          -25
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 36,
+      "input": {
+        "arr": [
+          30,
+          -30,
+          30
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 37,
+      "input": {
+        "arr": [
+          1,
+          -1,
+          0,
+          0
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "id": 38,
+      "input": {
+        "arr": [
+          2,
+          -2,
+          0
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 39,
+      "input": {
+        "arr": [
+          3,
+          -3,
+          3,
+          -3,
+          3,
+          -3
+        ]
+      },
+      "expected": 3
+    },
+    {
+      "id": 40,
+      "input": {
+        "arr": [
+          99,
+          -99
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "id": 41,
+      "generator": "random_positive_negative_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "count pairs summing to zero"
+    },
+    {
+      "id": 42,
+      "generator": "random_positive_negative_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "count pairs summing to zero"
+    },
+    {
+      "id": 43,
+      "generator": "random_positive_negative_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "count pairs summing to zero"
+    },
+    {
+      "id": 44,
+      "generator": "random_positive_negative_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "count pairs summing to zero"
+    },
+    {
+      "id": 45,
+      "generator": "random_positive_negative_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "count pairs summing to zero"
+    },
+    {
+      "id": 46,
+      "generator": "random_positive_negative_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "count pairs summing to zero"
+    },
+    {
+      "id": 47,
+      "generator": "random_positive_negative_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "count pairs summing to zero"
+    },
+    {
+      "id": 48,
+      "generator": "random_positive_negative_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "count pairs summing to zero"
+    },
+    {
+      "id": 49,
+      "generator": "random_positive_negative_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "count pairs summing to zero"
+    },
+    {
+      "id": 50,
+      "generator": "random_positive_negative_array",
+      "size": 100000,
+      "valueRange": [
+        -100000,
+        100000
+      ],
+      "validation": "count pairs summing to zero"
+    }
+  ]
+}

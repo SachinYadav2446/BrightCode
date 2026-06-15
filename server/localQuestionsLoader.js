@@ -10,8 +10,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// Path to the JSON files (served from client/public/data/)
-const DATA_DIR = path.join(__dirname, '..', 'client', 'public', 'data');
+// Path to the JSON files (now in server/data/ for backend self-sufficiency)
+const DATA_DIR = path.join(__dirname, 'data');
 
 // All 24 question file names
 const QUESTION_FILES = [
