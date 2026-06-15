@@ -37,19 +37,37 @@
       "username": "sachinp24",
       "email": "sachin.p24@medhaviskillsuniversity.edu.in",
       "password": "$2b$10$tFsc5J4t3D6mXb16AVjd.OPRcDGVrr6B7ETDNkJp/C2roILDnCGTy",
-      "xp": 0,
+      "xp": 20,
       "css_level": 0,
       "logic_level": 0,
       "react_level": 0,
       "mern_level": 0,
-      "activity": {},
+      "activity": { "2026-06-15": 20 },
       "bio": "Signed up via Google",
       "stack": [],
       "joinedAt": "2026-06-15T10:07:28.134Z",
       "created_at": "2026-06-15T10:07:28.134Z",
       "subscription": "basic",
       "google_id": "111913696525529518289",
-      "session_id": "98780597-6fee-4690-b289-3552b1d82573"
+      "session_id": "98780597-6fee-4690-b289-3552b1d82573",
+      "cpp_level": 2
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "username": "admin",
+      "email": "admin@brightcode.dev",
+      "password": "$2b$10$oaVthJJLstmvMv8SzKMXxelWy3Pziz6oGdf1Xj6CZLoi.5r9sFjJS",
+      "xp": 9999,
+      "css_level": 10,
+      "logic_level": 10,
+      "react_level": 10,
+      "mern_level": 10,
+      "bio": "BrightCode Administrator",
+      "stack": ["JavaScript", "Node.js", "React", "PostgreSQL"],
+      "joinedAt": "2026-01-01T00:00:00.000Z",
+      "created_at": "2026-01-01T00:00:00.000Z",
+      "subscription": "pro",
+      "created_count": 0
     }
   ]
 }
