@@ -1,4 +1,26 @@
 {
-  "notes": [],
-  "folders": []
+  "notes": [
+    {
+      "id": "47a499bd-3d3c-458d-96dd-1e6cbf16046f",
+      "user_id": "b07e75ba-0e4c-43cb-8372-f0e0d9ca7df0",
+      "title": "Untitled Note",
+      "content": "<p>dwf3e</p><p>we</p><p>dwedew</p><p></p><p>cdwe</p><p>d</p><p>w</p><p>e</p><p>d</p><p>ewd</p><p></p><p>de</p><p>c</p><p>ew</p><p>dew</p><p></p>",
+      "folder_id": "3e6865c6-d977-411c-a13d-cd806f90ab8f",
+      "tags": [],
+      "challenge_id": null,
+      "challenge_module": null,
+      "created_at": "2026-06-15T11:44:06.944Z",
+      "updated_at": "2026-06-15T11:44:18.282Z",
+      "deleted_at": null
+    }
+  ],
+  "folders": [
+    {
+      "id": "3e6865c6-d977-411c-a13d-cd806f90ab8f",
+      "user_id": "b07e75ba-0e4c-43cb-8372-f0e0d9ca7df0",
+      "name": "Nothing",
+      "parent_id": null,
+      "created_at": "2026-06-15T11:44:04.200Z"
+    }
+  ]
 }
