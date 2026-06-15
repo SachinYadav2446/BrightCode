@@ -5,30 +5,15 @@ const fs = require('fs');
 const path = require('path');
 const logger = require('./logger');
 
+const { sql: dbSql, useMemoryDB } = require('./db');
+
 const JWT_SECRET = process.env.JWT_SECRET || 'brightcode_secret_key_123';
 
-// ── Always use memory/JSON store (robust fallback) ──────────────────────────
-// Neon serverless fails locally ("fetch failed"), so we always use
-// the contributed_db.json file for reliability on all environments.
-// When deployed to production with a working Neon connection, SQL queries
-// are tried first with a catch that falls back to the JSON store.
-// ────────────────────────────────────────────────────────────────────────────
-
-let sql = null;
-let neonAvailable = false;
+// ── Database setup ──────────────────────────────────────────────────────────
+let sql = dbSql;
+let neonAvailable = !useMemoryDB;
 let contributedMemoryStore = [];
 const CONTRIBUTED_DB_FILE = path.join(__dirname, 'contributed_db.json');
-
-// Try to set up Neon (will be tested lazily on first use)
-if (process.env.DB_CONNECTION_STRING) {
-    try {
-        const { neon } = require('@neondatabase/serverless');
-        sql = neon(process.env.DB_CONNECTION_STRING);
-        logger.info('[CONTRIBUTE] Neon client initialized (will test on first request)');
-    } catch (e) {
-        logger.warn('[CONTRIBUTE] Could not require @neondatabase/serverless:', e.message);
-    }
-}
 
 // ── Auth middleware ──────────────────────────────────────────────────────────
 const auth = (req, res, next) => {

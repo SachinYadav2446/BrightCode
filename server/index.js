@@ -9,7 +9,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
-const { neon } = require('@neondatabase/serverless');
 const { exec } = require('child_process');
 const nodemailer = require('nodemailer');
 const pty = require('node-pty');
@@ -28,22 +27,19 @@ const { injectIntoQuestionsDB } = require('./localQuestionsLoader');
 const ProctorSocket = require('./proctorSocket');
 const logger = require('./logger');
 
+const { pool, useMemoryDB: dbMemoryMode } = require('./db');
+let useMemoryDB = dbMemoryMode;
+
 const FRONTEND_URL = process.env.FRONTEND_URL || '*';
 const JWT_SECRET = process.env.JWT_SECRET || 'brightcode_secret_key_123';
 
 const app = express();
 const server = http.createServer(app);
 
-// Configure Socket.io with PostgreSQL adapter for multi-instance support (FREE - uses existing Neon DB)
+// Configure Socket.io with PostgreSQL adapter for multi-instance support
 let io;
-if (process.env.NODE_ENV === 'production' && process.env.DB_CONNECTION_STRING) {
-    const { Server } = require('socket.io');
+if (process.env.NODE_ENV === 'production' && pool) {
     const { createAdapter } = require('@socket.io/postgres-adapter');
-    const { Pool } = require('pg');
-
-    const pgPool = new Pool({
-        connectionString: process.env.DB_CONNECTION_STRING,
-    });
 
     io = new Server(server, {
         cors: {
@@ -62,7 +58,7 @@ if (process.env.NODE_ENV === 'production' && process.env.DB_CONNECTION_STRING) {
         allowUpgrades: true,
         pingTimeout: 60000,
         pingInterval: 25000,
-        adapter: createAdapter(pgPool),
+        adapter: createAdapter(pool),
     });
     logger.info('[SOCKET] Using PostgreSQL adapter for multi-instance support (FREE)');
 } else {
@@ -274,58 +270,14 @@ const computeStreakFromActivity = (activity = {}) => {
     return streak;
 };
 
-// PostgreSQL Configuration using Neon serverless driver (HTTP)
-const connectionString = process.env.DB_CONNECTION_STRING;
-let sql = null;
-let pool = null;
-
-if (connectionString) {
-    logger.info('[DB] Using connection string:', connectionString.replace(/:([^:@]+)@/, ':***@'));
-    sql = neon(connectionString);
-    pool = {
-        query: async (text, params = []) => {
-            try {
-                logger.debug('[DB Query]:', text.slice(0, 100), params);
-                const result = await sql.query(text, params);
-                return { rows: result, rowCount: result.length };
-            } catch (err) {
-                logger.error('[DB Query Error]:', text, params, err);
-                logger.error('[DB Error Stack]:', err.stack);
-                throw err;
-            }
-        }
-    };
-} else {
-    logger.warn('[DB] No DB_CONNECTION_STRING — starting in memory-only mode');
-    useMemoryDB = true;
-}
-
-// Test Neon connection - temporarily disabled for now
-// (async () => {
-//     try {
-//         console.log('[DB] Testing Neon connection...');
-//         const client = await pool.connect();
-//         try {
-//             const result = await client.query('SELECT NOW()');
-//             console.log('[DB] ✅ Neon connection successful! Current time:', result.rows[0].now);
-//         } finally {
-//             client.release();
-//         }
-//     } catch (err) {
-//         console.error('[DB] ❌ Neon connection failed:', err);
-//         console.error('[DB] Full error details:', err.stack);
-//     }
-// })();
-
 // Initialize Database
 const initDB = async () => {
+    if (!pool || useMemoryDB) {
+        logger.warn('[DB] Skipping database initialization — no pool or memory mode active');
+        return;
+    }
     try {
-        logger.info('[DB] Starting database initialization with Neon HTTP...');
-        
-        // Test simple query first
-        logger.info('[DB] Testing Neon connection...');
-        const testResult = await pool.query('SELECT NOW() as current_time');
-        logger.info('[DB] ✅ Neon connected successfully! Current time:', testResult.rows[0].current_time);
+        logger.info('[DB] Starting database initialization...');
         
         // Create users table
         await pool.query(`

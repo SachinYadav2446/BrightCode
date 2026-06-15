@@ -8,24 +8,18 @@ const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 const logger = require('./logger');
 
+const { pool, sql, useMemoryDB: dbMemoryMode } = require('./db');
+
 const JWT_SECRET = process.env.JWT_SECRET || 'brightcode_secret_key_123';
 
 // ── DB setup ────────────────────────────────────────────────────────────────────
-let sql = null;
-let useMemoryDB = true;
+let useMemoryDB = dbMemoryMode;
 const memoryStore = { sessions: [], violations: [], submissions: [] };
 
-if (process.env.DB_CONNECTION_STRING) {
-    try {
-        const { neon } = require('@neondatabase/serverless');
-        sql = neon(process.env.DB_CONNECTION_STRING);
-        useMemoryDB = false;
-        logger.info('[PROCTOR] Using Neon DB');
-    } catch (e) {
-        logger.warn('[PROCTOR] DB init failed, falling back to memory store:', e.message);
-    }
+if (!useMemoryDB && pool) {
+    logger.info('[PROCTOR] Using PostgreSQL Pool');
 } else {
-    logger.info('[PROCTOR] No DB_CONNECTION_STRING — using memory store');
+    logger.info('[PROCTOR] Using memory store');
 }
 
 // ── Auth middleware ──────────────────────────────────────────────────────────────

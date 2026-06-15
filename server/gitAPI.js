@@ -39,7 +39,12 @@ function decryptToken(payload) {
 }
 
 function createGitRouter(deps) {
-    const { rooms, io, pool, useMemoryDB, authenticateToken } = deps;
+    const { rooms, io, pool: passedPool, useMemoryDB: passedMemoryMode, authenticateToken } = deps;
+    const { pool: dbPool, useMemoryDB: dbMemoryMode } = require('./db');
+    
+    const pool = passedPool || dbPool;
+    const useMemoryDB = passedMemoryMode !== undefined ? passedMemoryMode : dbMemoryMode;
+    
     const router = express.Router();
     let gitDbOk = !useMemoryDB && !!pool;
 
