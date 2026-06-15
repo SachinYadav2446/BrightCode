@@ -94,29 +94,11 @@ const Settings = () => {
         }
       };
 
-      if (order.sandbox) {
-        const mockConfirm = window.confirm(`[SANDBOX MODE] Proceed with mock payment of ₹${order.amount/100} for ${planCode.toUpperCase()} plan?`);
-        if (mockConfirm) {
-          toast.loading("Verifying sandbox transaction...", { id: "pay_verify" });
-          const verifyRes = await axios.post(`${API_URL}/api/subscription/verify-payment`, {
-            razorpay_payment_id: `pay_mock_${Math.random().toString(36).substr(2, 9)}`,
-            razorpay_order_id: order.id,
-            razorpay_signature: "sandbox_mock_sig",
-            plan: planCode
-          }, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (verifyRes.data.success) {
-            toast.success(`Clearance upgraded to ${planCode.toUpperCase()}!`, { id: "pay_verify" });
-            await syncUser();
-          }
-        } else {
-          toast.error("Sandbox payment canceled.");
-        }
-      } else {
-        const rzp = new window.Razorpay(options);
-        rzp.open();
-      }
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+        toast.error(`Payment Failed: ${response.error.description}`);
+      });
+      rzp.open();
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.error || "Failed to initiate payment");

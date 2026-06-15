@@ -1663,25 +1663,21 @@ app.post('/api/subscription/create-order', authenticateToken, async (req, res) =
 
     // Amount in INR Paisa (Pro: ₹499 -> 49900, Elite: ₹1499 -> 149900)
     const amount = plan === 'pro' ? 49900 : 149900;
-    const isSandbox = !process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID.startsWith('rzp_test_dummy');
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+    // Strict check for Razorpay configuration to avoid accidental sandbox upgrades
+    if (!keyId || !keySecret || keyId.startsWith('rzp_test_dummy')) {
+        logger.error('[BILLING] Razorpay keys missing or invalid in environment');
+        return res.status(500).json({ error: 'Billing system misconfigured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.' });
+    }
 
     try {
-        if (isSandbox) {
-            logger.info(`[BILLING] Creating Sandbox Order for plan: ${plan}`);
-            return res.json({
-                id: `order_mock_${Math.random().toString(36).substr(2, 9)}`,
-                amount,
-                currency: 'INR',
-                key_id: 'rzp_test_dummy_key_id',
-                sandbox: true
-            });
-        }
-
         logger.info(`[BILLING] Connecting to Razorpay for order: ${plan}`);
         const Razorpay = require('razorpay');
         const razorpay = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID,
-            key_secret: process.env.RAZORPAY_KEY_SECRET
+            key_id: keyId,
+            key_secret: keySecret
         });
 
         const order = await razorpay.orders.create({
@@ -1694,7 +1690,7 @@ app.post('/api/subscription/create-order', authenticateToken, async (req, res) =
             id: order.id,
             amount: order.amount,
             currency: order.currency,
-            key_id: process.env.RAZORPAY_KEY_ID,
+            key_id: keyId,
             sandbox: false
         });
     } catch (err) {
@@ -1709,28 +1705,23 @@ app.post('/api/subscription/verify-payment', authenticateToken, async (req, res)
         return res.status(400).json({ error: 'Invalid plan selected' });
     }
 
-    const isSandbox = !process.env.RAZORPAY_KEY_ID || 
-                      process.env.RAZORPAY_KEY_ID.startsWith('rzp_test_dummy') || 
-                      (razorpay_order_id && razorpay_order_id.startsWith('order_mock_'));
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    const keyId = process.env.RAZORPAY_KEY_ID;
+
+    if (!keyId || !keySecret || keyId.startsWith('rzp_test_dummy')) {
+        return res.status(500).json({ error: 'Billing system misconfigured' });
+    }
 
     try {
-        let verified = false;
+        logger.info(`[BILLING] Verifying Razorpay Signature for payment: ${razorpay_payment_id}`);
+        const crypto = require('crypto');
+        const text = razorpay_order_id + "|" + razorpay_payment_id;
+        const generated_signature = crypto
+            .createHmac('sha256', keySecret)
+            .update(text)
+            .digest('hex');
 
-        if (isSandbox) {
-            logger.info(`[BILLING] Verifying Sandbox Payment for plan: ${plan}`);
-            verified = true;
-        } else {
-            logger.info(`[BILLING] Verifying Razorpay Signature for payment: ${razorpay_payment_id}`);
-            const crypto = require('crypto');
-            const text = razorpay_order_id + "|" + razorpay_payment_id;
-            const generated_signature = crypto
-                .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-                .update(text)
-                .digest('hex');
-            verified = generated_signature === razorpay_signature;
-        }
-
-        if (!verified) {
+        if (generated_signature !== razorpay_signature) {
             return res.status(400).json({ error: 'Payment signature verification failed' });
         }
 
