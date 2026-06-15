@@ -368,17 +368,20 @@ const otps = new Map(); // Store OTPs: email -> { otp, userData, expires }
 // Use SMTP (nodemailer) for email service
 logger.info("[MAIL] SMTP_USER present:", { present: !!process.env.SMTP_USER });
 let transporter = null;
-if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-    logger.info("[MAIL] Using SMTP service");
+const smtpUser = process.env.SMTP_USER || '';
+const smtpPass = process.env.SMTP_PASS || '';
+
+if (smtpUser && smtpPass) {
+    logger.info(`[MAIL] SMTP User found: ${smtpUser}`);
     transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
+            user: smtpUser,
+            pass: smtpPass
         },
-        connectionTimeout: 5000,
-        greetingTimeout: 5000,
-        socketTimeout: 5000
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 10000
     });
     transporter.verify(function (error, success) {
         if (error) {
