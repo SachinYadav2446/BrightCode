@@ -8,11 +8,19 @@ let useMemoryDB = false;
 
 if (DB_CONNECTION_STRING) {
     logger.info('[DB] Initializing PostgreSQL Pool...');
+    
+    // Clean connection string and set sslmode
+    let cleanConnString = DB_CONNECTION_STRING;
+    if (cleanConnString.includes('neon.tech')) {
+        const url = new URL(cleanConnString);
+        url.searchParams.set('sslmode', 'verify-full');
+        cleanConnString = url.toString();
+    }
+
     pool = new Pool({
-        connectionString: DB_CONNECTION_STRING,
-        ssl: DB_CONNECTION_STRING.includes('neon.tech') ? { 
-            rejectUnauthorized: false,
-            sslmode: 'verify-full'
+        connectionString: cleanConnString,
+        ssl: cleanConnString.includes('neon.tech') ? { 
+            rejectUnauthorized: false
         } : false,
         max: 10,
         idleTimeoutMillis: 30000,
