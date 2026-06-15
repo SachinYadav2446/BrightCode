@@ -15,6 +15,7 @@ const nodemailer = require('nodemailer');
 const pty = require('node-pty');
 const os = require('os');
 const FileSystem = require('./fileSystem');
+const { saveRoomState, loadRoomState, deleteRoomState, deleteRoomFiles } = require('./workspacePersistence');
 const { compileAndRunJava } = require('./javaCompiler');
 const CodeWarsArena = require('./codeWarsArena');
 const IntraFactionArena = require('./intraFactionArena');
@@ -131,6 +132,7 @@ const normalizeMemoryUser = (user) => {
     if (!Array.isArray(user.stack)) user.stack = [];
     if (!user.created_at && user.joinedAt) user.created_at = user.joinedAt;
     if (!user.joinedAt && user.created_at) user.joinedAt = user.created_at;
+    if (user.subscription === undefined) user.subscription = 'basic';
     return user;
 };
 
@@ -245,42 +247,29 @@ const computeStreakFromActivity = (activity = {}) => {
 
 // PostgreSQL Configuration using Neon serverless driver (HTTP)
 const connectionString = process.env.DB_CONNECTION_STRING;
-logger.info('[DB] Using connection string:', connectionString.replace(/:([^:@]+)@/, ':***@'));
+let sql = null;
+let pool = null;
 
-const sql = neon(connectionString);
-
-// Create a pool-like wrapper for compatibility with existing code
-const pool = {
-    query: async (text, params = []) => {
-        try {
-            logger.debug('[DB Query]:', text.slice(0, 100), params);
-            
-            // For neon(), we need to build the query with parameters
-            // Create a helper to replace $1, $2 with ${param} for neon template literals
-            let queryText = text;
-            const paramPlaceholders = [];
-            
-            // Replace $n placeholders with neon's style
-            for (let i = 0; i < params.length; i++) {
-                queryText = queryText.replace(new RegExp(`\\$${i + 1}`, 'g'), `$${i + 1}`);
-                paramPlaceholders.push(params[i]);
+if (connectionString) {
+    logger.info('[DB] Using connection string:', connectionString.replace(/:([^:@]+)@/, ':***@'));
+    sql = neon(connectionString);
+    pool = {
+        query: async (text, params = []) => {
+            try {
+                logger.debug('[DB Query]:', text.slice(0, 100), params);
+                const result = await sql.query(text, params);
+                return { rows: result, rowCount: result.length };
+            } catch (err) {
+                logger.error('[DB Query Error]:', text, params, err);
+                logger.error('[DB Error Stack]:', err.stack);
+                throw err;
             }
-            
-            // Use neon's query method with parameterized query
-            const result = await sql.query(queryText, params);
-            
-            // Format result to match node-postgres format
-            return {
-                rows: result,
-                rowCount: result.length
-            };
-        } catch (err) {
-            logger.error('[DB Query Error]:', text, params, err);
-            logger.error('[DB Error Stack]:', err.stack);
-            throw err;
         }
-    }
-};
+    };
+} else {
+    logger.warn('[DB] No DB_CONNECTION_STRING — starting in memory-only mode');
+    useMemoryDB = true;
+}
 
 // Test Neon connection - temporarily disabled for now
 // (async () => {
@@ -340,6 +329,19 @@ const initDB = async () => {
             await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS session_id TEXT;');
         } catch (e) {
             logger.warn('[DB] Note: Could not add session_id column, it may already exist or there was an error.');
+        }
+
+        try {
+            await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT;');
+            await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS github_id TEXT;');
+        } catch (e) {
+            logger.warn('[DB] Note: Could not add google_id/github_id columns.');
+        }
+
+        try {
+            await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription TEXT DEFAULT 'basic';");
+        } catch (e) {
+            logger.warn('[DB] Note: Could not add subscription column.');
         }
 
         logger.info('[DB] ✅ Users table created');
@@ -450,11 +452,11 @@ app.get('/check-username', async (req, res) => {
     try {
         if (useMemoryDB) {
             const taken = memoryStore.users.some(u => u.username?.toLowerCase() === clean);
-            return res.json({ available: !taken, reason: taken ? 'Username already taken' : null });
+            return res.json({ available: !taken, reason: taken ? 'Username already exists.' : null });
         }
         const { rows } = await pool.query('SELECT id FROM users WHERE LOWER(username) = $1', [clean]);
         const taken = rows.length > 0;
-        return res.json({ available: !taken, reason: taken ? 'Username already taken' : null });
+        return res.json({ available: !taken, reason: taken ? 'Username already exists.' : null });
     } catch (e) {
         return res.json({ available: true, reason: null }); // silent fail - server validates on register
     }
@@ -472,11 +474,17 @@ app.post('/send-otp', async (req, res) => {
             if (!username) return sendError(res, 400, "Username required");
 
             if (useMemoryDB) {
-                const exists = memoryStore.users.find(u => u.email === email || u.username === username);
-                if (exists) return sendError(res, 400, "User exists", "Name or Email is already taken.");
+                const emailExists = memoryStore.users.find(u => u.email === email);
+                if (emailExists) return sendError(res, 400, "This account is registered.");
+                
+                const usernameExists = memoryStore.users.find(u => u.username === username);
+                if (usernameExists) return sendError(res, 400, "Username already exists.");
             } else {
-                const existing = await pool.query('SELECT id FROM users WHERE email = $1 OR username = $2', [email, username]);
-                if (existing.rows.length > 0) return sendError(res, 400, "User exists", "Name or Email is already taken.");
+                const emailCheck = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+                if (emailCheck.rows.length > 0) return sendError(res, 400, "This account is registered.");
+                
+                const usernameCheck = await pool.query('SELECT id FROM users WHERE username = $1', [username]);
+                if (usernameCheck.rows.length > 0) return sendError(res, 400, "Username already exists.");
             }
         }
 
@@ -560,8 +568,11 @@ app.post('/register', async (req, res) => {
 
         // 1. Check Memory Mode
         if (useMemoryDB) {
-            const exists = memoryStore.users.find(u => u.email === email || u.username === username);
-            if (exists) return sendError(res, 400, "User exists", "Name or Email is already taken.");
+            const emailExists = memoryStore.users.find(u => u.email === email);
+            if (emailExists) return sendError(res, 400, "This account is registered.");
+            
+            const usernameExists = memoryStore.users.find(u => u.username === username);
+            if (usernameExists) return sendError(res, 400, "Username already exists.");
 
             memoryStore.users.push(normalizeMemoryUser({
                 id, username, email, password: hashedPassword,
@@ -580,8 +591,11 @@ app.post('/register', async (req, res) => {
         }
 
         // 2. Check PostgreSQL
-        const existing = await pool.query('SELECT id FROM users WHERE email = $1 OR username = $2', [email, username]);
-        if (existing.rows.length > 0) return sendError(res, 400, "User exists", "Name or Email is already taken.");
+        const emailCheck = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+        if (emailCheck.rows.length > 0) return sendError(res, 400, "This account is registered.");
+        
+        const usernameCheck = await pool.query('SELECT id FROM users WHERE username = $1', [username]);
+        if (usernameCheck.rows.length > 0) return sendError(res, 400, "Username already exists.");
 
         await pool.query(
             'INSERT INTO users (id, username, email, password, xp) VALUES ($1, $2, $3, $4, 0)',
@@ -615,8 +629,13 @@ app.post('/login', async (req, res) => {
             user = result.rows[0];
         }
 
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-            return sendError(res, 401, "Invalid credentials", "Please check your email and password.");
+        if (!user) {
+            return sendError(res, 404, "This account does not exist.");
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return sendError(res, 401, "Entered password is wrong.");
         }
 
         const sessionId = uuidV4();
@@ -644,6 +663,7 @@ app.post('/login', async (req, res) => {
             joinedCount: user.joined_count || 0,
             bio: user.bio || '',
             stack: Array.isArray(user.stack) ? user.stack : [],
+            subscription: user.subscription || 'basic',
             avatarId: user.avatarId || user.avatar_id || 'Sniper',
             bannerId: user.bannerId || user.banner_id || 'crimson',
             github: user.github || '',
@@ -655,6 +675,488 @@ app.post('/login', async (req, res) => {
     } catch (err) {
         logger.error('SERVER LOGIN ERROR:', err);
         sendError(res, 500, "Login failed", err.message);
+    }
+});
+
+// --- GOOGLE & GITHUB SOCIAL AUTHENTICATION ---
+
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const GITHUB_OAUTH_CLIENT_ID = process.env.GITHUB_OAUTH_CLIENT_ID || process.env.GITHUB_CLIENT_ID || '';
+const GITHUB_OAUTH_CLIENT_SECRET = process.env.GITHUB_OAUTH_CLIENT_SECRET || process.env.GITHUB_CLIENT_SECRET || '';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5051';
+
+function getMockOAuthPage(provider, callbackUrl) {
+    const providerName = provider === 'google' ? 'Google' : 'GitHub';
+    const accentColor = provider === 'google' ? '#ea4335' : '#24292e';
+    const bgGlow = provider === 'google' ? 'rgba(234, 67, 53, 0.15)' : 'rgba(255, 255, 255, 0.1)';
+    return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mock ${providerName} Authentication Portal</title>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+        <style>
+            :root {
+                --bg: #0a0a0a;
+                --surface: #121212;
+                --border: rgba(255, 255, 255, 0.08);
+                --text: #e0e0e0;
+                --text-muted: #666;
+                --accent: ${accentColor};
+            }
+            body {
+                background-color: var(--bg);
+                color: var(--text);
+                font-family: 'Outfit', sans-serif;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                overflow: hidden;
+                position: relative;
+            }
+            body::before {
+                content: '';
+                position: absolute;
+                width: 300px;
+                height: 300px;
+                background: radial-gradient(circle, ${bgGlow} 0%, transparent 70%);
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 0;
+                pointer-events: none;
+            }
+            .card {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 16px;
+                padding: 40px;
+                width: 100%;
+                max-width: 400px;
+                text-align: center;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                position: relative;
+                z-index: 1;
+            }
+            .badge {
+                display: inline-block;
+                background: rgba(251, 191, 36, 0.1);
+                border: 1px solid rgba(251, 191, 36, 0.2);
+                color: #fbbf24;
+                font-size: 0.72rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                padding: 4px 10px;
+                border-radius: 20px;
+                margin-bottom: 24px;
+            }
+            h1 {
+                font-size: 1.8rem;
+                font-weight: 800;
+                margin: 0 0 8px 0;
+                letter-spacing: -0.5px;
+            }
+            p {
+                font-size: 0.9rem;
+                color: var(--text-muted);
+                line-height: 1.5;
+                margin: 0 0 32px 0;
+            }
+            .input-group {
+                text-align: left;
+                margin-bottom: 24px;
+            }
+            label {
+                display: block;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 8px;
+                color: #888;
+            }
+            input {
+                width: 100%;
+                box-sizing: border-box;
+                background: rgba(255, 255, 255, 0.02);
+                border: 1px solid var(--border);
+                color: #fff;
+                padding: 12px 16px;
+                border-radius: 8px;
+                font-family: inherit;
+                font-size: 0.95rem;
+                outline: none;
+                transition: border-color 0.2s;
+            }
+            input:focus {
+                border-color: var(--accent);
+            }
+            .btn {
+                width: 100%;
+                background: var(--accent);
+                color: #fff;
+                border: none;
+                border-radius: 8px;
+                padding: 14px;
+                font-size: 0.95rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: opacity 0.2s, transform 0.1s;
+            }
+            .btn:hover {
+                opacity: 0.9;
+            }
+            .btn:active {
+                transform: translateY(1px);
+            }
+            .footer-info {
+                font-family: 'JetBrains Mono', monospace;
+                font-size: 0.7rem;
+                color: #444;
+                margin-top: 32px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="badge">Developer Sandbox</div>
+            <h1>${providerName} Auth Portal</h1>
+            <p>Real OAuth credentials are not configured in .env. Use this developer sandbox to simulate a social login.</p>
+            
+            <form action="${callbackUrl}" method="GET">
+                <div class="input-group">
+                    <label>Mock Full Name</label>
+                    <input type="text" name="name" value="Demo Developer" required>
+                </div>
+                <div class="input-group">
+                    <label>Mock Email Address</label>
+                    <input type="email" name="email" value="developer@brightcode.io" required>
+                </div>
+                <input type="hidden" name="provider" value="${provider}">
+                <button type="submit" class="btn">Authorize Sandbox Session</button>
+            </form>
+            
+            <div class="footer-info">
+                Redirect Callback: ${callbackUrl}
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+}
+
+const handleSocialAuthSuccess = async (res, email, name, provider, providerId) => {
+    email = email.toLowerCase().trim();
+    const defaultUsername = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'user';
+    
+    try {
+        let user;
+        // 1. Look up user by Google/GitHub ID first (already linked/verified)
+        if (useMemoryDB) {
+            user = memoryStore.users.find(u => provider === 'google' ? u.google_id === providerId : u.github_id === providerId);
+        } else {
+            const querySelect = provider === 'google' 
+                ? 'SELECT * FROM users WHERE google_id = $1'
+                : 'SELECT * FROM users WHERE github_id = $1';
+            const resultSelect = await pool.query(querySelect, [providerId]);
+            user = resultSelect.rows[0];
+        }
+        
+        // 2. If user doesn't exist by social ID, check if they exist by email (conflict block)
+        if (!user) {
+            let emailUser;
+            if (useMemoryDB) {
+                emailUser = memoryStore.users.find(u => u.email === email);
+            } else {
+                const resultSelect = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+                emailUser = resultSelect.rows[0];
+            }
+
+            if (emailUser) {
+                // Security Breakout Block: Email already exists, redirect to login page with warning
+                logger.warn(`[AUTH] Blocking auto-login. Email ${email} matches existing account but social account is not linked.`);
+                return res.redirect(`${FRONTEND_URL}/auth?error=social_email_taken`);
+            }
+
+            // 3. New user signup flow: sign a temporary token to prompt password setting on frontend
+            logger.info(`[AUTH] Initiating social registration for ${email} (${provider})`);
+            const tempToken = jwt.sign({ email, provider, providerId }, JWT_SECRET, { expiresIn: '10m' });
+            return res.redirect(`${FRONTEND_URL}/auth?social_signup=true&email=${encodeURIComponent(email)}&username=${encodeURIComponent(defaultUsername)}&temp_token=${tempToken}`);
+        }
+        
+        // 4. User exists and is linked: proceed with normal login
+        const sessionId = uuidV4();
+        if (useMemoryDB) {
+            user.session_id = sessionId;
+            saveStore();
+        } else {
+            await pool.query('UPDATE users SET session_id = $1 WHERE id = $2', [sessionId, user.id]);
+        }
+        
+        const token = jwt.sign({ id: user.id, username: user.username, sessionId }, JWT_SECRET, { expiresIn: '1d' });
+        const activity = user.activity || {};
+        
+        const params = new URLSearchParams({
+            token,
+            username: user.username,
+            email: user.email,
+            xp: String(user.xp || 0),
+            css_level: String(user.css_level || 0),
+            logic_level: String(user.logic_level || 0),
+            react_level: String(user.react_level || 0),
+            mern_level: String(user.mern_level || 0),
+            activity: JSON.stringify(activity),
+            streak: String(computeStreakFromActivity(activity)),
+            createdCount: String(user.created_count || 0),
+            joinedCount: String(user.joined_count || 0),
+            bio: user.bio || '',
+            stack: JSON.stringify(Array.isArray(user.stack) ? user.stack : []),
+            subscription: user.subscription || 'basic',
+            avatarId: user.avatarId || user.avatar_id || 'Sniper',
+            bannerId: user.bannerId || user.banner_id || 'crimson',
+            github: user.github || '',
+            leetcode: user.leetcode || '',
+            project1: user.project1 || '',
+            project2: user.project2 || '',
+            createdAt: user.created_at || user.joinedAt || ''
+        });
+        
+        return res.redirect(`${FRONTEND_URL}/auth?${params}`);
+    } catch (err) {
+        logger.error('SOCIAL AUTH SUCCESS ERROR:', err);
+        return res.redirect(`${FRONTEND_URL}/auth?error=social_auth_failed`);
+    }
+};
+
+// Complete Social Signup Endpoint (creates account & links social ID after choosing a password)
+app.post('/api/auth/complete-social-signup', async (req, res) => {
+    const { username, password, temp_token } = req.body;
+    if (!username || !password || !temp_token) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+        const decoded = jwt.verify(temp_token, JWT_SECRET);
+        const { email, provider, providerId } = decoded;
+
+        if (!email || !provider || !providerId) {
+            return res.status(400).json({ error: 'Invalid token payload' });
+        }
+
+        const cleanEmail = email.toLowerCase().trim();
+        const cleanUsername = username.toLowerCase().trim();
+
+        if (cleanUsername.length < 3) {
+            return res.status(400).json({ error: 'Username must be at least 3 characters long' });
+        }
+
+        // Check if username/email conflicts exist
+        if (useMemoryDB) {
+            const emailExists = memoryStore.users.find(u => u.email === cleanEmail);
+            if (emailExists) return res.status(400).json({ error: 'This account is registered.' });
+            
+            const usernameExists = memoryStore.users.find(u => u.username === cleanUsername);
+            if (usernameExists) return res.status(400).json({ error: 'Username already exists.' });
+        } else {
+            const emailCheck = await pool.query('SELECT id FROM users WHERE email = $1', [cleanEmail]);
+            if (emailCheck.rows.length > 0) return res.status(400).json({ error: 'This account is registered.' });
+            
+            const usernameCheck = await pool.query('SELECT id FROM users WHERE username = $1', [cleanUsername]);
+            if (usernameCheck.rows.length > 0) return res.status(400).json({ error: 'Username already exists.' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const id = uuidV4();
+        let user;
+
+        if (useMemoryDB) {
+            user = normalizeMemoryUser({
+                id,
+                username: cleanUsername,
+                email: cleanEmail,
+                password: hashedPassword,
+                xp: 0,
+                css_level: 0,
+                logic_level: 0,
+                react_level: 0,
+                mern_level: 0,
+                activity: {},
+                bio: `Signed up via ${provider === 'google' ? 'Google' : 'GitHub'}`,
+                stack: [],
+                joinedAt: new Date().toISOString()
+            });
+
+            if (provider === 'google') user.google_id = providerId;
+            else user.github_id = providerId;
+
+            memoryStore.users.push(user);
+            saveStore();
+        } else {
+            const googleIdVal = provider === 'google' ? providerId : null;
+            const githubIdVal = provider === 'github' ? providerId : null;
+
+            await pool.query(
+                'INSERT INTO users (id, username, email, password, xp, google_id, github_id, bio) VALUES ($1, $2, $3, $4, 0, $5, $6, $7)',
+                [id, cleanUsername, cleanEmail, hashedPassword, googleIdVal, githubIdVal, `Signed up via ${provider === 'google' ? 'Google' : 'GitHub'}`]
+            );
+
+            const freshSelect = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+            user = freshSelect.rows[0];
+        }
+
+        const sessionId = uuidV4();
+        if (useMemoryDB) {
+            user.session_id = sessionId;
+            saveStore();
+        } else {
+            await pool.query('UPDATE users SET session_id = $1 WHERE id = $2', [sessionId, user.id]);
+        }
+
+        const token = jwt.sign({ id: user.id, username: user.username, sessionId }, JWT_SECRET, { expiresIn: '1d' });
+        const activity = user.activity || {};
+
+        res.json({
+            token,
+            username: user.username,
+            email: user.email,
+            xp: user.xp || 0,
+            css_level: user.css_level || 0,
+            logic_level: user.logic_level || 0,
+            react_level: user.react_level || 0,
+            mern_level: user.mern_level || 0,
+            activity,
+            streak: 0,
+            createdCount: user.created_count || 0,
+            joinedCount: user.joined_count || 0,
+            bio: user.bio || '',
+            stack: user.stack || [],
+            subscription: user.subscription || 'basic',
+            avatarId: user.avatarId || user.avatar_id || 'Sniper',
+            bannerId: user.bannerId || user.banner_id || 'crimson',
+            github: user.github || '',
+            leetcode: user.leetcode || '',
+            project1: user.project1 || '',
+            project2: user.project2 || '',
+            createdAt: user.created_at || user.joinedAt || ''
+        });
+    } catch (err) {
+        logger.error('[COMPLETE SOCIAL SIGNUP ERROR]:', err);
+        res.status(400).json({ error: 'Invalid or expired temporary signup token' });
+    }
+});
+
+// ── Google OAuth Routes ──
+app.get('/api/auth/google', (req, res) => {
+    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+        return res.send(getMockOAuthPage('google', `${BACKEND_URL}/api/auth/google/callback`));
+    }
+    const scopes = 'email profile';
+    const redirectUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${BACKEND_URL}/api/auth/google/callback&response_type=code&scope=${encodeURIComponent(scopes)}`;
+    res.redirect(redirectUrl);
+});
+
+app.get('/api/auth/google/callback', async (req, res) => {
+    const { code, provider, email, name } = req.query;
+    
+    if (provider === 'google' && email && name) {
+        const mockSub = 'mock_google_id_' + email.replace(/[^a-zA-Z0-9]/g, '');
+        return handleSocialAuthSuccess(res, email, name, 'google', mockSub);
+    }
+    
+    if (!code) {
+        return res.redirect(`${FRONTEND_URL}/auth?error=no_auth_code`);
+    }
+    
+    try {
+        const tokenRes = await axios.post('https://oauth2.googleapis.com/token', {
+            code,
+            client_id: GOOGLE_CLIENT_ID,
+            client_secret: GOOGLE_CLIENT_SECRET,
+            redirect_uri: `${BACKEND_URL}/api/auth/google/callback`,
+            grant_type: 'authorization_code'
+        });
+        
+        const { access_token } = tokenRes.data;
+        
+        const userRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { Authorization: `Bearer ${access_token}` }
+        });
+        
+        const { email: googleEmail, name: googleName, sub } = userRes.data;
+        if (!googleEmail) {
+            throw new Error('Google did not return an email address');
+        }
+        
+        return handleSocialAuthSuccess(res, googleEmail, googleName || 'Google User', 'google', sub);
+    } catch (err) {
+        logger.error('GOOGLE CALLBACK ERROR:', err.message);
+        return res.redirect(`${FRONTEND_URL}/auth?error=google_auth_failed`);
+    }
+});
+
+// ── GitHub OAuth Routes ──
+app.get('/api/auth/github', (req, res) => {
+    if (!GITHUB_OAUTH_CLIENT_ID || !GITHUB_OAUTH_CLIENT_SECRET) {
+        return res.send(getMockOAuthPage('github', `${BACKEND_URL}/api/auth/github/callback`));
+    }
+    const redirectUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_OAUTH_CLIENT_ID}&redirect_uri=${BACKEND_URL}/api/auth/github/callback&scope=user:email`;
+    res.redirect(redirectUrl);
+});
+
+app.get('/api/auth/github/callback', async (req, res) => {
+    const { code, provider, email, name } = req.query;
+    
+    if (provider === 'github' && email && name) {
+        const mockSub = 'mock_github_id_' + email.replace(/[^a-zA-Z0-9]/g, '');
+        return handleSocialAuthSuccess(res, email, name, 'github', mockSub);
+    }
+    
+    if (!code) {
+        return res.redirect(`${FRONTEND_URL}/auth?error=no_auth_code`);
+    }
+    
+    try {
+        const tokenRes = await axios.post('https://github.com/login/oauth/access_token', {
+            client_id: GITHUB_OAUTH_CLIENT_ID,
+            client_secret: GITHUB_OAUTH_CLIENT_SECRET,
+            code,
+            redirect_uri: `${BACKEND_URL}/api/auth/github/callback`
+        }, {
+            headers: { Accept: 'application/json' }
+        });
+        
+        const { access_token } = tokenRes.data;
+        if (!access_token) {
+            throw new Error('Failed to retrieve GitHub access token');
+        }
+        
+        const userRes = await axios.get('https://api.github.com/user', {
+            headers: { Authorization: `token ${access_token}` }
+        });
+        
+        const { id, name: githubName, login } = userRes.data;
+        
+        const emailsRes = await axios.get('https://api.github.com/user/emails', {
+            headers: { Authorization: `token ${access_token}` }
+        });
+        
+        const primaryEmailObj = emailsRes.data.find(e => e.primary && e.verified) || emailsRes.data[0];
+        const githubEmail = primaryEmailObj?.email;
+        
+        if (!githubEmail) {
+            throw new Error('GitHub did not return a verified email address');
+        }
+        
+        return handleSocialAuthSuccess(res, githubEmail, githubName || login || 'GitHub User', 'github', String(id));
+    } catch (err) {
+        logger.error('GITHUB CALLBACK ERROR:', err.message);
+        return res.redirect(`${FRONTEND_URL}/auth?error=github_auth_failed`);
     }
 });
 
@@ -1110,11 +1612,12 @@ app.get('/me', authenticateToken, async (req, res) => {
                 joinedCount: u.joined_count || 0,
                 bio: u.bio || '',
                 stack: u.stack || [],
+                subscription: u.subscription || 'basic',
                 createdAt: u.created_at || u.joinedAt || null
             });
         }
         const result = await pool.query(
-            'SELECT id, username, email, xp, css_level, logic_level, react_level, mern_level, activity, created_count, joined_count, bio, stack, created_at FROM users WHERE id = $1',
+            'SELECT id, username, email, xp, css_level, logic_level, react_level, mern_level, activity, created_count, joined_count, bio, stack, subscription, created_at FROM users WHERE id = $1',
             [req.user.id]
         );
         if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
@@ -1127,12 +1630,131 @@ app.get('/me', authenticateToken, async (req, res) => {
             streak: computeStreakFromActivity(u.activity || {}),
             createdCount: u.created_count || 0,
             joinedCount: u.joined_count || 0,
+            subscription: u.subscription || 'basic',
             bio: u.bio || '',
             stack: u.stack || [],
             createdAt: u.created_at
         });
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch user data' });
+    }
+});
+
+// ── SUBSCRIPTION & RAZORPAY BILLING ROUTES ──────────────────────────────────
+app.post('/api/subscription/create-order', authenticateToken, async (req, res) => {
+    const { plan } = req.body;
+    if (!['pro', 'elite'].includes(plan)) {
+        return res.status(400).json({ error: 'Invalid plan selected' });
+    }
+
+    // Amount in INR Paisa (Pro: ₹999 -> 99900, Elite: ₹2999 -> 299900)
+    const amount = plan === 'pro' ? 99900 : 299900;
+    const isSandbox = !process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID.startsWith('rzp_test_dummy');
+
+    try {
+        if (isSandbox) {
+            logger.info(`[BILLING] Creating Sandbox Order for plan: ${plan}`);
+            return res.json({
+                id: `order_mock_${Math.random().toString(36).substr(2, 9)}`,
+                amount,
+                currency: 'INR',
+                key_id: 'rzp_test_dummy_key_id',
+                sandbox: true
+            });
+        }
+
+        logger.info(`[BILLING] Connecting to Razorpay for order: ${plan}`);
+        const Razorpay = require('razorpay');
+        const razorpay = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET
+        });
+
+        const order = await razorpay.orders.create({
+            amount,
+            currency: 'INR',
+            receipt: `receipt_sub_${req.user.id}_${Date.now()}`
+        });
+
+        res.json({
+            id: order.id,
+            amount: order.amount,
+            currency: order.currency,
+            key_id: process.env.RAZORPAY_KEY_ID,
+            sandbox: false
+        });
+    } catch (err) {
+        logger.error('[BILLING] Order Creation Error:', err);
+        res.status(500).json({ error: 'Failed to initiate checkout order' });
+    }
+});
+
+app.post('/api/subscription/verify-payment', authenticateToken, async (req, res) => {
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, plan } = req.body;
+    if (!['pro', 'elite'].includes(plan)) {
+        return res.status(400).json({ error: 'Invalid plan selected' });
+    }
+
+    const isSandbox = !process.env.RAZORPAY_KEY_ID || 
+                      process.env.RAZORPAY_KEY_ID.startsWith('rzp_test_dummy') || 
+                      (razorpay_order_id && razorpay_order_id.startsWith('order_mock_'));
+
+    try {
+        let verified = false;
+
+        if (isSandbox) {
+            logger.info(`[BILLING] Verifying Sandbox Payment for plan: ${plan}`);
+            verified = true;
+        } else {
+            logger.info(`[BILLING] Verifying Razorpay Signature for payment: ${razorpay_payment_id}`);
+            const crypto = require('crypto');
+            const text = razorpay_order_id + "|" + razorpay_payment_id;
+            const generated_signature = crypto
+                .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+                .update(text)
+                .digest('hex');
+            verified = generated_signature === razorpay_signature;
+        }
+
+        if (!verified) {
+            return res.status(400).json({ error: 'Payment signature verification failed' });
+        }
+
+        // Apply Upgrade
+        if (useMemoryDB) {
+            const u = memoryStore.users.find(x => x.id === req.user.id);
+            if (u) {
+                u.subscription = plan;
+                saveStore();
+            }
+        } else {
+            await pool.query('UPDATE users SET subscription = $1 WHERE id = $2', [plan, req.user.id]);
+        }
+
+        logger.info(`[BILLING] User ${req.user.username} upgraded to ${plan}`);
+        res.json({ success: true, subscription: plan });
+    } catch (err) {
+        logger.error('[BILLING] Payment Verification Error:', err);
+        res.status(500).json({ error: 'Failed to verify payment' });
+    }
+});
+
+app.post('/api/subscription/cancel', authenticateToken, async (req, res) => {
+    try {
+        if (useMemoryDB) {
+            const u = memoryStore.users.find(x => x.id === req.user.id);
+            if (u) {
+                u.subscription = 'basic';
+                saveStore();
+            }
+        } else {
+            await pool.query("UPDATE users SET subscription = 'basic' WHERE id = $1", [req.user.id]);
+        }
+        logger.info(`[BILLING] User ${req.user.username} reverted to basic plan`);
+        res.json({ success: true, subscription: 'basic' });
+    } catch (err) {
+        logger.error('[BILLING] Subscription Cancel Error:', err);
+        res.status(500).json({ error: 'Failed to cancel subscription' });
     }
 });
 
@@ -1241,6 +1863,23 @@ app.get('/leaderboard', async (req, res) => {
     }
 });
 
+const getUserSubscription = async (userId) => {
+    if (useMemoryDB) {
+        const u = memoryStore.users.find(x => x.id === userId);
+        return u?.subscription || 'basic';
+    }
+    const { rows } = await pool.query('SELECT subscription FROM users WHERE id = $1', [userId]);
+    return rows[0]?.subscription || 'basic';
+};
+
+const getNoteCountForUser = async (userId) => {
+    if (useMemoryDB) {
+        return (notesMemoryStore || []).filter(n => n.user_id === userId && !n.deleted_at).length;
+    }
+    const { rows } = await pool.query('SELECT COUNT(*)::int as count FROM notes WHERE user_id = $1 AND deleted_at IS NULL', [userId]);
+    return rows[0]?.count || 0;
+};
+
 // ── CodeVault Notes API ──────────────────────────────────────────────────────
 
 // GET /api/notes - Get all notes for user with filtering
@@ -1331,6 +1970,15 @@ app.get('/api/notes/:id', authenticateToken, async (req, res) => {
 
 // POST /api/notes - Create new note
 app.post('/api/notes', authenticateToken, async (req, res) => {
+    const sub = await getUserSubscription(req.user.id);
+    const noteCount = await getNoteCountForUser(req.user.id);
+    const noteLimit = sub === 'elite' ? 99999 : (sub === 'pro' ? 500 : 30);
+    if (noteCount >= noteLimit) {
+        return res.status(403).json({
+            error: `CodeVault file limit (${noteLimit}) reached under the ${sub === 'basic' ? 'Basic (Free)' : 'Pro'} plan. Please upgrade your subscription to add more files.`
+        });
+    }
+
     let { title, content, folderId, tags, challengeId, challengeModule } = req.body;
 
     if (!title || title.trim().length === 0) {
@@ -1655,6 +2303,15 @@ app.get('/api/tags', authenticateToken, async (req, res) => {
 
 // POST /api/notes/from-challenge - Create note from arcade challenge
 app.post('/api/notes/from-challenge', authenticateToken, async (req, res) => {
+    const sub = await getUserSubscription(req.user.id);
+    const noteCount = await getNoteCountForUser(req.user.id);
+    const noteLimit = sub === 'elite' ? 99999 : (sub === 'pro' ? 500 : 30);
+    if (noteCount >= noteLimit) {
+        return res.status(403).json({
+            error: `CodeVault file limit (${noteLimit}) reached under the ${sub === 'basic' ? 'Basic (Free)' : 'Pro'} plan. Please upgrade your subscription to add more files.`
+        });
+    }
+
     const { challengeId, challengeTitle, challengeModule } = req.body;
     if (!challengeId || !challengeTitle) return res.status(400).json({ error: 'Challenge ID and title are required' });
 
@@ -2196,12 +2853,68 @@ app.get('/room-status/:roomId', (req, res) => {
 // Workspace metadata storage (in-memory for now)
 const workspaceMetadata = new Map();
 
+// Rooms Management — declared early so workspace routes can reference it
+const rooms = new Map();
+
+// ── Mount Git API (needs rooms + io) ────────────────────────────────────────
+const createGitRouter = require('./gitAPI');
+app.use('/api/git', createGitRouter({ rooms, io, pool, useMemoryDB, authenticateToken }));
+
+const getUserSubscriptionByUsername = async (username) => {
+    if (!username) return 'basic';
+    if (useMemoryDB) {
+        const u = memoryStore.users.find(x => x.username?.toLowerCase() === username.toLowerCase());
+        return u?.subscription || 'basic';
+    }
+    try {
+        const { rows } = await pool.query('SELECT subscription FROM users WHERE LOWER(username) = LOWER($1)', [username]);
+        return rows[0]?.subscription || 'basic';
+    } catch (e) {
+        return 'basic';
+    }
+};
+
+const getWorkspaceCountForUser = (username) => {
+    if (!username) return 0;
+    let count = 0;
+    const storeDir = path.join(__dirname, 'workspace_store');
+    if (fs.existsSync(storeDir)) {
+        try {
+            const files = fs.readdirSync(storeDir);
+            for (const file of files) {
+                if (file.endsWith('.json')) {
+                    try {
+                        const data = JSON.parse(fs.readFileSync(path.join(storeDir, file), 'utf8'));
+                        if (data.owner?.toLowerCase() === username.toLowerCase()) {
+                            count++;
+                        }
+                    } catch (e) {}
+                }
+            }
+        } catch (e) {}
+    }
+    return count;
+};
+
 // Create workspace endpoint
-app.post('/create-workspace', (req, res) => {
+app.post('/create-workspace', async (req, res) => {
     const { workspaceId, name, admin } = req.body;
     
     if (!workspaceId || !name || !admin) {
         return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+        const sub = await getUserSubscriptionByUsername(admin);
+        const count = getWorkspaceCountForUser(admin);
+        const limit = sub === 'elite' ? 99999 : (sub === 'pro' ? 50 : 10);
+        if (count >= limit) {
+            return res.status(403).json({
+                error: `Workspace limit (${limit}) reached under the ${sub === 'basic' ? 'Basic (Free)' : 'Pro'} plan. Please upgrade your subscription to create more workspaces.`
+            });
+        }
+    } catch (err) {
+        logger.error('[WORKSPACE] Subscription limit check error:', err);
     }
     
     workspaceMetadata.set(workspaceId, {
@@ -2211,6 +2924,8 @@ app.post('/create-workspace', (req, res) => {
         createdAt: new Date().toISOString(),
         members: [admin]
     });
+
+    saveRoomState(workspaceId, { owner: admin, snapshots: [], workspaceName: name });
     
     res.json({ success: true, workspace: workspaceMetadata.get(workspaceId) });
 });
@@ -2238,13 +2953,28 @@ app.get('/workspace/:id', (req, res) => {
     res.json({ ...workspace, exists: true, isActive: rooms.has(id) });
 });
 
-// Rooms Management
-const rooms = new Map();
-
 // Grace period for transient disconnects (network blips, page refreshes)
 // Maps username → { timer, roomId, userData }
 const pendingDisconnects = new Map();
 const DISCONNECT_GRACE_MS = 5000; // 5 seconds to reconnect without being removed
+
+function persistRoom(roomId) {
+    const room = rooms.get(roomId);
+    if (!room) return;
+    const meta = workspaceMetadata.get(roomId);
+    saveRoomState(roomId, {
+        owner: room.owner,
+        snapshots: room.snapshots || [],
+        workspaceName: meta?.name || null,
+    });
+}
+
+function hydrateRoomFromDisk(room) {
+    if (!room?.fs) return {};
+    const diskFiles = room.fs.loadFromDisk();
+    room.files = diskFiles;
+    return diskFiles;
+}
 
 io.on('connection', (socket) => {
     // ── Presence tracking ──────────────────────────────────────────────
@@ -2289,21 +3019,41 @@ io.on('connection', (socket) => {
     socket.on('join-room', ({ roomId, username }) => {
         socket.join(roomId);
         socket.data.username = username; // store for end-session auth fallback
+
+        const persisted = loadRoomState(roomId);
+
         if (!rooms.has(roomId)) {
             rooms.set(roomId, {
                 adminId: socket.id,
-                owner: username, // Track original creator by username
+                owner: persisted?.owner || username,
                 users: [],
                 permissions: {},
                 files: {},
-                snapshots: []
+                snapshots: persisted?.snapshots || []
             });
+            // Restore workspace metadata from disk if server restarted
+            if (persisted && !workspaceMetadata.has(roomId)) {
+                workspaceMetadata.set(roomId, {
+                    id: roomId,
+                    name: persisted.workspaceName || persisted.owner,
+                    admin: persisted.owner,
+                    createdAt: persisted.savedAt,
+                    members: [persisted.owner],
+                });
+            }
         }
         const room = rooms.get(roomId);
 
         // Initialize robust FileSystem if not present
         if (!room.fs) {
             room.fs = new FileSystem(roomId, room.files || {});
+        }
+
+        // Restore files from disk (survives leave/rejoin and server restarts)
+        const diskFiles = hydrateRoomFromDisk(room);
+        const fileCount = Object.keys(diskFiles).length;
+        if (fileCount > 0) {
+            console.log(`[JOIN-ROOM] Restored ${fileCount} files from disk for room ${roomId}`);
         }
 
         // If the joining user is the original owner, they reclaim Admin rights
@@ -2315,14 +3065,18 @@ io.on('connection', (socket) => {
         if (!room.snapshots) room.snapshots = [];
         if (!room.permissions) room.permissions = {};
 
-        // ── SYNC VIRTUAL FILES TO DISK FOR TERMINAL ─────────────
+        // Ensure disk has latest in-memory files (for any files created before disk sync)
         const roomDir = path.join(__dirname, 'tmp_builds', roomId);
         if (!fs.existsSync(roomDir)) {
             fs.mkdirSync(roomDir, { recursive: true });
         }
         Object.entries(room.files).forEach(([fileName, fileData]) => {
             const filePath = path.join(roomDir, fileName);
-            fs.writeFileSync(filePath, fileData.content || '');
+            const dir = path.dirname(filePath);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            if (!fs.existsSync(filePath)) {
+                fs.writeFileSync(filePath, fileData.content || '');
+            }
         });
 
         // ── INITIALIZE INTERACTIVE TERMINAL ──────────────────────
@@ -2402,6 +3156,7 @@ io.on('connection', (socket) => {
         socket.on('request-room-state', ({ roomId: reqRoomId }) => {
             const reqRoom = rooms.get(reqRoomId);
             if (!reqRoom) return;
+            if (reqRoom.fs) hydrateRoomFromDisk(reqRoom);
             const reqFiles = reqRoom.fs ? reqRoom.fs.getFiles() : reqRoom.files;
             console.log(`[REQUEST-STATE] Sending room state to ${socket.id} for room ${reqRoomId}: ${Object.keys(reqFiles || {}).length} files`);
             socket.emit('initial-data', {
@@ -2505,6 +3260,7 @@ io.on('connection', (socket) => {
                 creator: username
             };
             room.snapshots.push(newSnapshot);
+            persistRoom(roomId);
             io.in(roomId).emit('snapshot-captured', newSnapshot);
         });
 
@@ -2513,11 +3269,14 @@ io.on('connection', (socket) => {
             const snapshot = room.snapshots.find(s => s.id === snapshotId);
             if (snapshot) {
                 const warpedFiles = JSON.parse(JSON.stringify(snapshot.files));
-                // Update both room.files and room.fs.files to keep them in sync
                 room.files = warpedFiles;
                 if (room.fs) {
                     room.fs.files = warpedFiles;
+                    Object.entries(warpedFiles).forEach(([name, data]) => {
+                        room.fs.syncFileToDisk(name);
+                    });
                 }
+                persistRoom(roomId);
                 io.in(roomId).emit('files-warped', {
                     files: room.files,
                     warpedBy: username,
@@ -2531,6 +3290,13 @@ io.on('connection', (socket) => {
             const ptyProcess = roomTerminals.get(roomId);
             if (ptyProcess) {
                 ptyProcess.write(input);
+            }
+        });
+
+        socket.on('terminal-command', ({ command }) => {
+            const ptyProcess = roomTerminals.get(roomId);
+            if (ptyProcess && command) {
+                ptyProcess.write(command + '\r\n');
             }
         });
 
@@ -2637,6 +3403,8 @@ io.on('connection', (socket) => {
             }
 
             if (result) {
+                room.files = room.fs.getFiles();
+                persistRoom(roomId);
                 io.in(roomId).emit('file-created', result);
             }
         }
@@ -2672,6 +3440,8 @@ io.on('connection', (socket) => {
                 if (result) createdFiles.push(result);
             });
             if (createdFiles.length > 0) {
+                room.files = room.fs.getFiles();
+                persistRoom(roomId);
                 io.in(roomId).emit('files-batch-created', { files: createdFiles });
             }
         }
@@ -2680,6 +3450,8 @@ io.on('connection', (socket) => {
     socket.on('file-delete', ({ roomId, fileName }) => {
         const room = rooms.get(roomId);
         if (room && room.fs && room.fs.deleteFile(fileName)) {
+            room.files = room.fs.getFiles();
+            persistRoom(roomId);
             io.in(roomId).emit('file-deleted', { fileName });
         }
     });
@@ -2689,6 +3461,8 @@ io.on('connection', (socket) => {
         if (room && room.fs) {
             const result = room.fs.renameFile(oldName, newName);
             if (result) {
+                room.files = room.fs.getFiles();
+                persistRoom(roomId);
                 io.in(roomId).emit('file-renamed', result);
             }
         }
@@ -2699,6 +3473,8 @@ io.on('connection', (socket) => {
         if (room && room.fs) {
             const deletedFiles = room.fs.deleteFolder(folderPath);
             if (deletedFiles) {
+                room.files = room.fs.getFiles();
+                persistRoom(roomId);
                 io.in(roomId).emit('folder-deleted', { folderPath, deletedFiles });
             }
         }
@@ -2709,6 +3485,8 @@ io.on('connection', (socket) => {
         if (room && room.fs) {
             const renamedMap = room.fs.renameFolder(oldPath, newPath);
             if (renamedMap) {
+                room.files = room.fs.getFiles();
+                persistRoom(roomId);
                 io.in(roomId).emit('folder-renamed', { oldPath, newPath, renamedMap });
             }
         }
@@ -2733,6 +3511,10 @@ io.on('connection', (socket) => {
             
             // Delete workspace metadata
             workspaceMetadata.delete(roomId);
+
+            // Only wipe persisted files when admin explicitly ends the session
+            deleteRoomState(roomId);
+            deleteRoomFiles(roomId);
             
             console.log(`[SESSION ENDED] Room ${roomId} permanently terminated by admin`);
         } else if (room && !isAdmin) {
@@ -2753,6 +3535,7 @@ io.on('connection', (socket) => {
             }
             // IMPORTANT: Do NOT delete the room even if empty
             // Room should persist until explicitly ended by admin
+            persistRoom(roomId);
         }
     });
 
@@ -2784,6 +3567,7 @@ io.on('connection', (socket) => {
                                 currentRoom.users.splice(idx, 1);
                                 io.to(roomId).emit('user-left', { id: socket.id, username });
                                 console.log(`[USER DISCONNECTED] ${username} removed from room ${roomId} after grace period (${currentRoom.users.length} users remaining)`);
+                                if (currentRoom.users.length === 0) persistRoom(roomId);
                             }
                         }
                     }, DISCONNECT_GRACE_MS);

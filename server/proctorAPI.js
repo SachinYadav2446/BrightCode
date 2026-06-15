@@ -84,11 +84,44 @@ const sanitize = (s) => ({
     violationCount: s.violationCount ?? 0,
 });
 
+const getUserSubscription = async (userId) => {
+    if (useMemoryDB) {
+        const fs = require('fs');
+        const path = require('path');
+        const dbPath = path.join(__dirname, 'users_db.json');
+        if (fs.existsSync(dbPath)) {
+            try {
+                const data = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+                const u = data.users?.find(x => x.id === userId);
+                return u?.subscription || 'basic';
+            } catch (e) {
+                logger.error('[PROCTOR] Failed to parse users_db.json', e);
+            }
+        }
+        return 'basic';
+    } else {
+        try {
+            const rows = await sql`SELECT subscription FROM users WHERE id = ${userId}`;
+            return rows[0]?.subscription || 'basic';
+        } catch (e) {
+            logger.error('[PROCTOR] Failed to query users subscription', e);
+            return 'basic';
+        }
+    }
+};
+
 // ════════════════════════════════════════════════════════════════════════════════
 // CREATE SESSION
 // ════════════════════════════════════════════════════════════════════════════════
 router.post('/create-session', auth, async (req, res) => {
     try {
+        const sub = await getUserSubscription(req.user.id);
+        if (sub === 'basic') {
+            return res.status(403).json({
+                error: 'Proctored sessions require a Pro Developer or Enterprise Elite subscription. Upgrade your account to activate exam surveillance.'
+            });
+        }
+
         const { title, mode, timeLimit, questions = [], participants = [], settings = {} } = req.body;
         if (!title || !mode || !timeLimit) return res.status(400).json({ error: 'title, mode and timeLimit are required' });
 
