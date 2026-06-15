@@ -154,7 +154,7 @@ export const AuthProvider = ({ children }) => {
           } : null);
         }
       }).catch((err) => {
-        if (err.response?.status === 401 || err.response?.status === 403) {
+        if (err.response?.status === 401) {
           logout();
           window.location.href = '/auth?error=session_expired';
         }
@@ -352,7 +352,7 @@ export const AuthProvider = ({ children }) => {
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (error.response?.status === 401 || error.response?.status === 403) {
+        if (error.response?.status === 401) {
           logout();
           if (error.response?.data?.code === 'CONCURRENT_LOGIN') {
             window.location.href = '/auth?error=concurrent_login';

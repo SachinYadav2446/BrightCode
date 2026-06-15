@@ -2428,7 +2428,7 @@ const getMemberLimit = (xp) => {
 };
 
 // POST create a faction
-const FACTION_CREATE_MIN_XP = 500; // 🛡️ Apprentice badge required
+const FACTION_CREATE_MIN_XP = 0; // Temporarily 0 for testing
 app.post('/factions/create', authenticateToken, async (req, res) => {
     const { name, description, emblem, isPublic } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: 'Faction name is required' });
