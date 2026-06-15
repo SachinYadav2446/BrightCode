@@ -733,9 +733,9 @@ const PageTroubleshooting = () => (
       <div className="um-support-icon"><LifeBuoy size={24} /></div>
       <div className="um-support-body">
         <h4>Still stuck?</h4>
-        <p>Reach out via <strong>support@codebright.com</strong> or join the community Discord for real-time help.</p>
+        <p>Reach out via <strong>codebrightlim@gmail.com</strong> or join the community Discord for real-time help.</p>
       </div>
-      <a href="mailto:support@codebright.com" className="um-support-btn">
+      <a href="mailto:codebrightlim@gmail.com" className="um-support-btn">
         Contact Support <ExternalLink size={12} />
       </a>
     </div>

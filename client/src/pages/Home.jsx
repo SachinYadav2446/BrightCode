@@ -906,6 +906,22 @@ const Home = () => {
 
               </div>
 
+              {/* Contact / Get In Touch */}
+              <div className="about-contact-section">
+                <div className="about-contact-text">
+                  <span className="about-contact-eyebrow">Get In Touch</span>
+                  <h3 className="about-contact-headline">Have questions? We're here to help.</h3>
+                  <p className="about-contact-desc">
+                    Whether you're facing a tricky algorithm, need help with the platform, or want to share your feedback, reach out to us directly at <strong>codebrightlim@gmail.com</strong>. Our team is dedicated to helping you grow as a developer.
+                  </p>
+                </div>
+                <div className="about-contact-links">
+                  <a href="mailto:codebrightlim@gmail.com" className="about-contact-btn">
+                    Send us an Email
+                  </a>
+                </div>
+              </div>
+              
               {/* Bottom CTA Banner */}
               <div className="about-cta-banner">
                 <div className="about-cta-text">
