@@ -33,30 +33,50 @@ import { useAuth } from '../context/AuthContext';
 import CodeBrightLogo from '../components/CodeBrightLogo';
 import GitPanel from '../components/GitPanel';
 
-// â”€â”€ RemoteVideoTile: renders a remote participant's video â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const RemoteVideoTile = ({ socketId, participant }) => {
+// ── PresenceVideoTile: renders a participant's video (local or remote) ──
+const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = false }) => {
     const videoRef = useRef(null);
 
     useEffect(() => {
-        if (videoRef.current && participant.stream) {
-            videoRef.current.srcObject = participant.stream;
+        if (videoRef.current && stream) {
+            videoRef.current.srcObject = stream;
         }
-    }, [participant.stream]);
+    }, [stream]);
 
     return (
-        <div className="vc-tile">
-            <video ref={videoRef} autoPlay playsInline className="vc-video" />
-            {(!participant.isVideoOn || !participant.stream) && (
-                <div className="vc-avatar-fallback">
-                    <span>{participant.username?.charAt(0).toUpperCase()}</span>
-                </div>
-            )}
-            <div className="vc-tile-label">
-                <span>{participant.username}</span>
-                <div className="vc-tile-icons">
-                    {participant.isMuted && <MicOff size={12} />}
-                    {!participant.isVideoOn && <VideoOff size={12} />}
-                </div>
+        <div className="presence-tile">
+            <div className="presence-video-container">
+                {stream ? (
+                    <>
+                        <video
+                            ref={videoRef}
+                            autoPlay
+                            playsInline
+                            muted={isLocal}
+                            className="presence-video"
+                            style={{ opacity: isVideoOn ? 1 : 0 }}
+                        />
+                        {!isVideoOn && (
+                            <div className="presence-avatar">
+                                <span>{username?.charAt(0).toUpperCase()}</span>
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    <div className="presence-avatar">
+                        <span>{username?.charAt(0).toUpperCase()}</span>
+                    </div>
+                )}
+                <div className={`presence-status-badge ${stream ? 'online' : 'offline'}`} />
+                {isMuted && (
+                    <div className="presence-muted-badge">
+                        <MicOff size={10} />
+                    </div>
+                )}
+            </div>
+            <div className="presence-info">
+                <span className="presence-name">{username}</span>
+                {isLocal && <span className="presence-you-tag">You</span>}
             </div>
         </div>
     );
@@ -65,6 +85,18 @@ const RemoteVideoTile = ({ socketId, participant }) => {
 
 
 
+
+// ── WebRTC Configuration ───────────────────────────────────────────────────
+const ICE_SERVERS = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        { urls: 'stun:global.stun.twilio.com:3478' },
+    ]
+};
 
 const EditorPage = () => {
 
@@ -1316,15 +1348,8 @@ const EditorPage = () => {
 
     // â”€â”€ FEATURE 1: Multi-User WebRTC Video Call â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    const ICE_SERVERS = {
-        iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' },
-            { urls: 'stun:stun2.l.google.com:19302' },
-            { urls: 'stun:stun3.l.google.com:19302' },
-            { urls: 'stun:stun4.l.google.com:19302' },
-        ]
-    };
+
+    // ── FEATURE 1: Multi-User Video Call (WebRTC) ──────────────────────────────
 
     const createPeerConnection = (targetId) => {
         const pc = new RTCPeerConnection(ICE_SERVERS);
@@ -1340,12 +1365,20 @@ const EditorPage = () => {
 
         pc.ontrack = (event) => {
             const stream = event.streams[0];
-            // Legacy single remote ref
-            if (remoteVideoRef.current) remoteVideoRef.current.srcObject = stream;
             setCallParticipants(prev => ({
                 ...prev,
                 [targetId]: { ...prev[targetId], stream }
             }));
+        };
+
+        pc.onnegotiationneeded = async () => {
+            try {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                socketRef.current?.emit('webrtc-offer', { roomId, offer, targetId });
+            } catch (err) {
+                console.error('Negotiation error:', err);
+            }
         };
 
         pc.onconnectionstatechange = () => {
@@ -2155,62 +2188,25 @@ const EditorPage = () => {
                 {/* Participants Grid */}
                 <div className="presence-grid">
                     {/* Local user tile */}
-                    <div className="presence-tile">
-                        <div className="presence-video-container">
-                            <video ref={localVideoRef} autoPlay playsInline muted className="presence-video" />
-                            {!isVideoOn && (
-                                <div className="presence-avatar">
-                                    <span>{user?.username?.charAt(0).toUpperCase()}</span>
-                                </div>
-                            )}
-                            <div className="presence-status-badge online" />
-                        </div>
-                        <div className="presence-info">
-                            <span className="presence-name">{user?.username}</span>
-                            <span className="presence-you-tag">You</span>
-                        </div>
-                    </div>
+                    <PresenceVideoTile
+                        username={user?.username}
+                        stream={localStreamRef.current}
+                        isMuted={isMuted}
+                        isVideoOn={isVideoOn}
+                        isLocal={true}
+                    />
 
                     {/* Remote participants */}
                     {clients.filter(c => c.id !== myId).map(client => {
                         const participant = callParticipants[client.id];
                         return (
-                            <div key={client.id} className="presence-tile">
-                                <div className="presence-video-container">
-                                    {participant?.stream ? (
-                                        <>
-                                            <video
-                                                ref={el => {
-                                                    if (el && participant.stream) {
-                                                        el.srcObject = participant.stream;
-                                                    }
-                                                }}
-                                                autoPlay
-                                                playsInline
-                                                className="presence-video"
-                                            />
-                                            {!participant.isVideoOn && (
-                                                <div className="presence-avatar">
-                                                    <span>{client.username?.charAt(0).toUpperCase()}</span>
-                                                </div>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <div className="presence-avatar">
-                                            <span>{client.username?.charAt(0).toUpperCase()}</span>
-                                        </div>
-                                    )}
-                                    <div className="presence-status-badge online" />
-                                    {participant?.isMuted && (
-                                        <div className="presence-muted-badge">
-                                            <MicOff size={10} />
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="presence-info">
-                                    <span className="presence-name">{client.username}</span>
-                                </div>
-                            </div>
+                            <PresenceVideoTile
+                                key={client.id}
+                                username={client.username}
+                                stream={participant?.stream}
+                                isMuted={participant?.isMuted}
+                                isVideoOn={participant?.isVideoOn}
+                            />
                         );
                     })}
                 </div>
