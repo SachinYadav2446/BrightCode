@@ -95,10 +95,101 @@
     repeating-linear-gradient(90deg,  transparent, transparent 63px, rgba(255,255,255,0.012) 63px, rgba(255,255,255,0.012) 64px);
   background-size: 64px 64px;
   pointer-events: none;
+  z-index: 1;
+}
+
+/* Animated background glows */
+.auth-bg-glows {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.auth-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  mix-blend-mode: screen;
+}
+
+.auth-glow-1 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+  top: -10%;
+  left: -10%;
+  animation: floatGlow1 20s infinite ease-in-out alternate;
+}
+
+.auth-glow-2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, #6366f1 0%, transparent 70%); /* indigo */
+  bottom: -10%;
+  right: -10%;
+  animation: floatGlow2 25s infinite ease-in-out alternate;
+}
+
+.auth-glow-3 {
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, #a855f7 0%, transparent 70%); /* purple */
+  top: 40%;
+  left: 30%;
+  animation: floatGlow3 18s infinite ease-in-out alternate;
+}
+
+@keyframes floatGlow1 {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translate(40px, 60px) scale(1.1);
+    opacity: 0.22;
+  }
+  100% {
+    transform: translate(-20px, 30px) scale(0.9);
+    opacity: 0.12;
+  }
+}
+
+@keyframes floatGlow2 {
+  0% {
+    transform: translate(0, 0) scale(1.1);
+    opacity: 0.12;
+  }
+  50% {
+    transform: translate(-50px, -40px) scale(0.95);
+    opacity: 0.18;
+  }
+  100% {
+    transform: translate(30px, -80px) scale(1.05);
+    opacity: 0.15;
+  }
+}
+
+@keyframes floatGlow3 {
+  0% {
+    transform: translate(0, 0) scale(0.9);
+    opacity: 0.1;
+  }
+  50% {
+    transform: translate(-30px, 30px) scale(1.15);
+    opacity: 0.16;
+  }
+  100% {
+    transform: translate(50px, -20px) scale(0.85);
+    opacity: 0.08;
+  }
 }
 
 .auth-brand {
   position: relative;
+  z-index: 2;
   margin-bottom: 56px;
 }
 
@@ -122,6 +213,7 @@
 
 .auth-left-headline {
   position: relative;
+  z-index: 2;
   margin-bottom: 48px;
 }
 
@@ -151,6 +243,7 @@
   flex-direction: column;
   gap: 14px;
   position: relative;
+  z-index: 2;
 }
 
 .auth-stat {

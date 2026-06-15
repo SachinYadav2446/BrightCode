@@ -330,6 +330,11 @@ const Auth = () => {
       >
         {/* ── Left branding panel ── */}
         <div className="auth-left">
+          <div className="auth-bg-glows">
+            <div className="auth-glow auth-glow-1"></div>
+            <div className="auth-glow auth-glow-2"></div>
+            <div className="auth-glow auth-glow-3"></div>
+          </div>
           <div className="auth-brand">
             <div className="auth-brand-name">Bright<span>Code</span></div>
             <div className="auth-brand-tag">Developer Platform</div>
