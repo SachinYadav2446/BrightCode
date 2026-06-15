@@ -47,7 +47,14 @@ if (process.env.NODE_ENV === 'production' && process.env.DB_CONNECTION_STRING) {
 
     io = new Server(server, {
         cors: {
-            origin: FRONTEND_URL === '*' ? '*' : [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:3000'],
+            origin: (origin, callback) => {
+                const allowedOrigins = [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:3000'];
+                if (!origin || allowedOrigins.includes(origin) || FRONTEND_URL === '*') {
+                    callback(null, true);
+                } else {
+                    callback(new Error('Not allowed by CORS'));
+                }
+            },
             methods: ['GET', 'POST', 'PUT', 'DELETE'],
             credentials: true,
         },
@@ -61,7 +68,14 @@ if (process.env.NODE_ENV === 'production' && process.env.DB_CONNECTION_STRING) {
 } else {
     io = new Server(server, {
         cors: {
-            origin: FRONTEND_URL === '*' ? '*' : [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:3000'],
+            origin: (origin, callback) => {
+                const allowedOrigins = [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:3000'];
+                if (!origin || allowedOrigins.includes(origin) || FRONTEND_URL === '*') {
+                    callback(null, true);
+                } else {
+                    callback(new Error('Not allowed by CORS'));
+                }
+            },
             methods: ['GET', 'POST', 'PUT', 'DELETE'],
             credentials: true,
         },
@@ -81,7 +95,14 @@ const roomTerminals = new Map();
 const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 
 app.use(cors({
-    origin: FRONTEND_URL === '*' ? '*' : [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:3000'],
+    origin: (origin, callback) => {
+        const allowedOrigins = [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:3000'];
+        if (!origin || allowedOrigins.includes(origin) || FRONTEND_URL === '*') {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
 }));
 app.use(express.json({ limit: '20mb' }));

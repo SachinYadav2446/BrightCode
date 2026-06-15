@@ -59,13 +59,13 @@
       "username": "admin",
       "email": "codebrightlim@gmail.com",
       "password": "$2b$10$LGscwAWkRhLJuTav.wuZcO/73QZAs9UXTATpTAz2Y9CeF6aMB/FTO",
-      "xp": 20,
+      "xp": 530,
       "css_level": 0,
       "logic_level": 0,
-      "react_level": 0,
+      "react_level": 50,
       "mern_level": 0,
       "activity": {
-        "2026-06-15": 20
+        "2026-06-15": 530
       },
       "bio": "Signed up via Google",
       "stack": [],
@@ -73,14 +73,15 @@
       "created_at": "2026-06-15T12:00:18.339Z",
       "subscription": "elite",
       "google_id": "109967909212937111766",
-      "session_id": "0d72fe19-37c7-4523-8092-a7c691e32983",
+      "session_id": "c4e1591a-2cd8-4ad4-93ec-f74342a00899",
       "avatarId": "Sniper",
       "bannerId": "crimson",
       "github": "",
       "leetcode": "",
       "project1": "",
       "project2": "",
-      "cpp_level": 50
+      "cpp_level": 50,
+      "python_level": 2
     }
   ]
 }

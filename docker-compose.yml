@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=brightcode
+      - POSTGRES_PASSWORD=brightcode_pass
+      - POSTGRES_DB=brightcode_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  server:
+    build:
+      context: ./server
+    ports:
+      - "5051:5051"
+    environment:
+      - PORT=5051
+      - FRONTEND_URL=http://localhost:5173
+      - DB_CONNECTION_STRING=postgresql://brightcode:brightcode_pass@db:5432/brightcode_db
+      - JWT_SECRET=${JWT_SECRET:-brightcode_secret_key_123}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - BACKEND_URL=http://localhost:5051
+    depends_on:
+      - db
+    restart: always
+
+  client:
+    build:
+      context: ./client
+      args:
+        - VITE_BACKEND_URL=http://localhost:5051
+    ports:
+      - "5173:80"
+    depends_on:
+      - server
+    restart: always
+
+volumes:
+  postgres_data:

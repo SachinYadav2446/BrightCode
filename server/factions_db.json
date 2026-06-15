@@ -58,5 +58,27 @@
         "requestedAt": "2026-05-19T15:06:49.438Z"
       }
     ]
+  },
+  {
+    "id": "f3e795f8-0c7e-4e95-8dd7-56c7b311ac83",
+    "name": "ABC",
+    "description": "",
+    "emblem": "atom",
+    "ownerId": "a3b53e92-a5f2-48f5-81c4-7efc5c37573f",
+    "ownerName": "admin",
+    "members": [
+      {
+        "id": "a3b53e92-a5f2-48f5-81c4-7efc5c37573f",
+        "username": "admin",
+        "xp": 530,
+        "role": "leader",
+        "activity": {
+          "2026-06-15": 530
+        }
+      }
+    ],
+    "pendingMembers": [],
+    "isPublic": false,
+    "createdAt": "2026-06-15T14:13:42.141Z"
   }
 ]
