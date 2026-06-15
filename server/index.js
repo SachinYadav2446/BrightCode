@@ -924,13 +924,66 @@ const handleSocialAuthSuccess = async (res, email, name, provider, providerId) =
                 return res.redirect(`${FRONTEND_URL}/auth?error=social_email_taken`);
             }
 
-            // 3. New user signup flow: sign a temporary token to prompt password setting on frontend
-            logger.info(`[AUTH] Initiating social registration for ${email} (${provider})`);
-            const tempToken = jwt.sign({ email, provider, providerId }, JWT_SECRET, { expiresIn: '10m' });
-            return res.redirect(`${FRONTEND_URL}/auth?social_signup=true&email=${encodeURIComponent(email)}&username=${encodeURIComponent(defaultUsername)}&temp_token=${tempToken}`);
+            // 3. New user signup flow: create user automatically
+            logger.info(`[AUTH] Creating new social user for ${email} (${provider})`);
+            const userId = uuidV4();
+            const hashedPassword = await bcrypt.hash(uuidV4(), 10); // Random password
+            
+            if (useMemoryDB) {
+                // Ensure username is unique
+                let finalUsername = defaultUsername;
+                let counter = 1;
+                while (memoryStore.users.find(u => u.username === finalUsername)) {
+                    finalUsername = `${defaultUsername}${counter}`;
+                    counter++;
+                }
+                
+                user = normalizeMemoryUser({
+                    id: userId,
+                    username: finalUsername,
+                    email,
+                    password: hashedPassword,
+                    xp: 0,
+                    css_level: 0,
+                    logic_level: 0,
+                    react_level: 0,
+                    mern_level: 0,
+                    activity: {},
+                    bio: '',
+                    stack: [],
+                    joinedAt: new Date().toISOString(),
+                    ...(provider === 'google' ? { google_id: providerId } : { github_id: providerId })
+                });
+                memoryStore.users.push(user);
+                saveStore();
+            } else {
+                // Ensure username is unique in DB
+                let finalUsername = defaultUsername;
+                let counter = 1;
+                let usernameExists = true;
+                while (usernameExists) {
+                    const checkResult = await pool.query('SELECT id FROM users WHERE username = $1', [finalUsername]);
+                    if (checkResult.rows.length === 0) {
+                        usernameExists = false;
+                    } else {
+                        finalUsername = `${defaultUsername}${counter}`;
+                        counter++;
+                    }
+                }
+                
+                const insertQuery = provider === 'google' 
+                    ? 'INSERT INTO users (id, username, email, password, xp, google_id) VALUES ($1, $2, $3, $4, $5, $6)'
+                    : 'INSERT INTO users (id, username, email, password, xp, github_id) VALUES ($1, $2, $3, $4, $5, $6)';
+                
+                await pool.query(insertQuery, [userId, finalUsername, email, hashedPassword, 0, providerId]);
+                
+                // Fetch the newly created user
+                const fetchResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+                user = fetchResult.rows[0];
+            }
         }
         
-        // 4. User exists and is linked: proceed with normal login
+        // 4. Proceed with normal login
         const sessionId = uuidV4();
         if (useMemoryDB) {
             user.session_id = sessionId;
@@ -967,7 +1020,8 @@ const handleSocialAuthSuccess = async (res, email, name, provider, providerId) =
             createdAt: user.created_at || user.joinedAt || ''
         });
         
-        return res.redirect(`${FRONTEND_URL}/auth?${params}`);
+        // Redirect to /hub instead of /auth
+        return res.redirect(`${FRONTEND_URL}/hub?${params}`);
     } catch (err) {
         logger.error('SOCIAL AUTH SUCCESS ERROR:', err);
         return res.redirect(`${FRONTEND_URL}/auth?error=social_auth_failed`);

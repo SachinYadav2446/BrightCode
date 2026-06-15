@@ -65,6 +65,39 @@ export const AuthProvider = ({ children }) => {
     const savedDrawerOpen = sessionStorage.getItem('drawerOpen') === 'true';
     setFriendsDrawerOpen(savedDrawerOpen);
 
+    // Handle OAuth callback params (works on both /auth and /hub)
+    const params = new URLSearchParams(window.location.search);
+    const oauthToken = params.get('token');
+    
+    if (oauthToken) {
+      localStorage.setItem('token', oauthToken);
+      localStorage.setItem('username', params.get('username') || '');
+      localStorage.setItem('email', params.get('email') || '');
+      localStorage.setItem('user_xp', params.get('xp') || '0');
+      localStorage.setItem('css_level', params.get('css_level') || '0');
+      localStorage.setItem('logic_level', params.get('logic_level') || '0');
+      localStorage.setItem('react_level', params.get('react_level') || '0');
+      localStorage.setItem('mern_level', params.get('mern_level') || '0');
+      localStorage.setItem('user_activity', params.get('activity') || '{}');
+      localStorage.setItem('user_streak', params.get('streak') || '0');
+      localStorage.setItem('joined_count', params.get('joinedCount') || '0');
+      localStorage.setItem('created_count', params.get('createdCount') || '0');
+      localStorage.setItem('user_bio', params.get('bio') || '');
+      localStorage.setItem('user_stack', params.get('stack') || '[]');
+      localStorage.setItem('user_avatar_id', params.get('avatarId') || 'Sniper');
+      localStorage.setItem('user_banner_id', params.get('bannerId') || 'crimson');
+      localStorage.setItem('user_github', params.get('github') || '');
+      localStorage.setItem('user_leetcode', params.get('leetcode') || '');
+      localStorage.setItem('user_project1', params.get('project1') || '');
+      localStorage.setItem('user_project2', params.get('project2') || '');
+      localStorage.setItem('user_joined', params.get('createdAt') || '');
+      localStorage.setItem('session_start', String(Date.now()));
+      localStorage.setItem('user_subscription', params.get('subscription') || 'basic');
+
+      // Clear params from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     const token = localStorage.getItem('token');
     const username = localStorage.getItem('username');
     const email = localStorage.getItem('email');
