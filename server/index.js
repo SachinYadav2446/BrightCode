@@ -382,10 +382,10 @@ if (smtpUser && smtpPass) {
             pass: smtpPass
         },
         pool: true,
-        maxConnections: 5,
-        rateDelta: 1000,
-        rateLimit: 5,
-        connectionTimeout: 60000, // 60 seconds
+        maxConnections: 1, // Limit to 1 connection for debugging stability
+        rateDelta: 5000,   // Wait 5 seconds between messages
+        rateLimit: 1,      // 1 message per delta
+        connectionTimeout: 60000, 
         greetingTimeout: 60000,
         socketTimeout: 60000
     });

@@ -22,9 +22,9 @@ if (DB_CONNECTION_STRING) {
         ssl: cleanConnString.includes('neon.tech') ? { 
             rejectUnauthorized: false
         } : false,
-        max: 10,
+        max: 20,
         idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 10000,
+        connectionTimeoutMillis: 30000, // 30 seconds for cloud stability
     });
 
     pool.on('error', (err) => {
