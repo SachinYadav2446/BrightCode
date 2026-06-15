@@ -1,4 +1,4 @@
-﻿﻿import API_URL from '../config';
+﻿import API_URL from '../config';
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot, User, Maximize2, Minimize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,6 +10,10 @@ const Chatbot = ({ context = {}, isSidebarOpen = false }) => {
   const { friendsDrawerOpen } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [sessionId, setSessionId] = useState(() => {
+    const saved = sessionStorage.getItem('palSessionId');
+    return saved ? saved : Date.now();
+  });
   const [messages, setMessages] = useState(() => {
     const savedHistory = sessionStorage.getItem('chatbotHistory');
     return savedHistory ? JSON.parse(savedHistory) : [
@@ -27,6 +31,11 @@ const Chatbot = ({ context = {}, isSidebarOpen = false }) => {
   useEffect(() => {
     sessionStorage.setItem('chatbotHistory', JSON.stringify(messages));
   }, [messages]);
+
+  // Save sessionId to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem('palSessionId', sessionId.toString());
+  }, [sessionId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -46,10 +55,16 @@ const Chatbot = ({ context = {}, isSidebarOpen = false }) => {
     try {
       const response = await axios.post(`${API_URL}/api/chat`, { 
         messages: updatedMessages,
+        sessionId: sessionId,
         context: context 
       });
 
       if (response.data && response.data.text) {
+        // Update sessionId if server returned a new one
+        if (response.data.sessionId) {
+          setSessionId(response.data.sessionId);
+        }
+        
         let cleanedText = response.data.text;
         
         cleanedText = cleanedText.replace(/\*\*(.*?)\*\*/g, '$1');

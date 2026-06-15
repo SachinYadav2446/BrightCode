@@ -16,11 +16,11 @@ import JSZip from 'jszip';
 import {
 
     Users, FileCode, Play, LogOut, FilePlus, Terminal as TerminalIcon,
-    Monitor, Link as LinkIcon, Trash2, Edit2, Sparkles, Brain, Bot, Send,
-    PenTool, Eraser, Layout as WhiteboardIcon, Zap, Shield, Languages,
+    Monitor, Link as LinkIcon, Trash2, Edit2, Sparkles, Bot, Send,
+    PenTool, Eraser, Layout as WhiteboardIcon, Zap, Languages,
     Mic, MicOff, Video, VideoOff, PhoneOff, Phone, Plus,
     ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Share2, Download,
-    Folder, FolderOpen, FolderPlus, File as FileIcon, X, MessageSquare, BookOpen, ShieldAlert, User,
+    Folder, FolderOpen, FolderPlus, File as FileIcon, X, MessageSquare, ShieldAlert, User,
     GitBranch
 } from 'lucide-react';
 
@@ -119,14 +119,10 @@ const EditorPage = () => {
     const goToNextView = () => {
         if (sidebarView === 'files') setSidebarView('git');
         else if (sidebarView === 'git') setSidebarView('collaborators');
-        else if (sidebarView === 'collaborators') setSidebarView('chat');
-        else if (sidebarView === 'chat') setSidebarView('sentinel');
     };
 
     const goToPreviousView = () => {
-        if (sidebarView === 'sentinel') setSidebarView('chat');
-        else if (sidebarView === 'chat') setSidebarView('collaborators');
-        else if (sidebarView === 'collaborators') setSidebarView('git');
+        if (sidebarView === 'collaborators') setSidebarView('git');
         else if (sidebarView === 'git') setSidebarView('files');
     };
 
@@ -166,9 +162,7 @@ const EditorPage = () => {
     // â”€â”€ Terminal States â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const [terminalLogs, setTerminalLogs] = useState([
-
-        { output: 'Sentinel Shell Initialized. Ready for input.', isSystem: true }
-
+        { output: 'Terminal initialized. Ready for input.', isSystem: true }
     ]);
 
     const [isTerminalOpen, setIsTerminalOpen] = useState(false);
@@ -190,6 +184,10 @@ const EditorPage = () => {
     const [showSessionEndedModal, setShowSessionEndedModal] = useState(false);
     const [sessionEndedMessage, setSessionEndedMessage] = useState('');
 
+    // Execution tracking for code runs
+    const [executionTime, setExecutionTime] = useState(null);
+    const [executionSource, setExecutionSource] = useState(null);
+
     const isAdmin = adminId === myId;
     const canWrite = isAdmin || myPermission === 'writer';
     const isViewer = myPermission === 'viewer' && !isAdmin;
@@ -199,17 +197,7 @@ const EditorPage = () => {
 
 
 
-    // ── AI Sentinel States ────────────────────────────────────────────────────────
-    const [aiMessages, setAiMessages] = useState([
-        { role: 'ai', content: "Hello! I am your AI Sentinel. How can I assist you with your code today?" }
-    ]);
-    const [isAiThinking, setIsAiThinking] = useState(false);
-    const [aiInput, setAiInput] = useState('');
-    const [sentinelMode, setSentinelMode] = useState('chat'); // 'chat', 'explain', 'optimize', 'fix'
-    const [includeCodeContext, setIncludeCodeContext] = useState(true);
-    const [executionTime, setExecutionTime] = useState(null);
-    const [executionSource, setExecutionSource] = useState(null);
-    const sentinelEndRef = useRef(null);
+
 
 
 
@@ -247,6 +235,7 @@ const EditorPage = () => {
     const [isPresencePanelCollapsed, setIsPresencePanelCollapsed] = useState(false);
 
     const [isTerminalCollapsed, setIsTerminalCollapsed] = useState(false);
+    const [isRightChatOpen, setIsRightChatOpen] = useState(false);
 
 
 
@@ -1086,13 +1075,6 @@ const EditorPage = () => {
         }
     }, [chatMessages]);
 
-    // Auto-scroll Sentinel chat to bottom
-    useEffect(() => {
-        if (sentinelEndRef.current) {
-            sentinelEndRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [aiMessages, isAiThinking]);
-
 
 
     // â”€â”€ File System Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1110,94 +1092,7 @@ const EditorPage = () => {
         openModal({ type: 'create-folder', targetFile: path, defaultValue: '' });
     };
 
-    const renderSentinelMarkdown = (text) => {
-        if (!text) return null;
-        const parts = text.split(/(```[\s\S]*?```)/g);
-        
-        return parts.map((part, index) => {
-            if (part.startsWith('```') && part.endsWith('```')) {
-                const match = part.match(/```(\w*)\n([\s\S]*?)```/);
-                const lang = match ? match[1] : '';
-                const code = match ? match[2] : part.slice(3, -3);
-                return (
-                    <div key={index} className="sentinel-markdown-codeblock">
-                        {lang && <div className="codeblock-header">{lang.toUpperCase()}</div>}
-                        <pre><code>{code.trim()}</code></pre>
-                    </div>
-                );
-            }
-            
-            const lines = part.split('\n');
-            return (
-                <div key={index} className="sentinel-markdown-paragraph">
-                    {lines.map((line, lIdx) => {
-                        const segments = line.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
-                        return (
-                            <div key={lIdx} className="sentinel-markdown-line">
-                                {segments.map((seg, sIdx) => {
-                                    if (seg.startsWith('`') && seg.endsWith('`')) {
-                                        return <code key={sIdx} className="sentinel-inline-code">{seg.slice(1, -1)}</code>;
-                                    }
-                                    if (seg.startsWith('**') && seg.endsWith('**')) {
-                                        return <strong key={sIdx} className="sentinel-strong">{seg.slice(2, -2)}</strong>;
-                                    }
-                                    return seg;
-                                })}
-                            </div>
-                        );
-                    })}
-                </div>
-            );
-        });
-    };
 
-    const sendMessageToAi = async (customPrompt = null, customMode = null) => {
-        const promptText = customPrompt !== null ? customPrompt : aiInput;
-        const currentMode = customMode !== null ? customMode : sentinelMode;
-
-        if (!promptText.trim()) return;
-
-        const userMsg = { role: 'user', content: promptText };
-        setAiMessages(prev => [...prev, userMsg]);
-        
-        if (customPrompt === null) {
-            setAiInput('');
-        }
-        setIsAiThinking(true);
-
-        try {
-            const currentFile = activeFile ? files[activeFile] : null;
-            const codeToSend = includeCodeContext && currentFile ? currentFile.content : '';
-            const languageToSend = currentFile ? currentFile.language : '';
-            const filenameToSend = activeFile || '';
-
-            const response = await axios.post(`${API_URL}/api/sentinel`, {
-                messages: [...aiMessages.map(m => ({ role: m.role, content: m.content })), userMsg],
-                code: codeToSend,
-                language: languageToSend,
-                filename: filenameToSend,
-                mode: currentMode
-            });
-
-            if (response.data && response.data.text) {
-                setAiMessages(prev => [...prev, { role: 'ai', content: response.data.text }]);
-            } else {
-                throw new Error('Invalid Sentinel response');
-            }
-        } catch (error) {
-            console.error('Sentinel Error:', error);
-            toast.error("Sentinel Offline.");
-            setAiMessages(prev => [
-                ...prev, 
-                { 
-                    role: 'ai', 
-                    content: "### ⚠️ System Diagnostic Interrupted\nFailed to establish sync matrix with Sentinel AI. Please verify network configuration." 
-                }
-            ]);
-        } finally {
-            setIsAiThinking(false);
-        }
-    };
 
     const getFileLanguage = (name) => {
         const ext = (name.split('.').pop() || '').toLowerCase();
@@ -1403,15 +1298,10 @@ const EditorPage = () => {
             .replace(/console\.log/g, 'print');
 
         const translations = {
-
-            python: `# AI Sentinel â€” Translated to Python\n# Source: ${activeFile}\n\ndef main():\n    ${sanitized}\n\nif __name__ == '__main__':\n    main()`,
-
-            rust: `// AI Sentinel â€” Translated to Rust\n// Source: ${activeFile}\n\nfn main() {\n    println!("Code Sight â€” Rust port");\n    // Note: Rust requires explicit type annotations\n    // Manual port recommended for production use\n}`,
-
-            go: `// AI Sentinel â€” Translated to Go\npackage main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Code Sight â€” Go port")\n    // Note: Go requires explicit type declarations\n}`,
-
-            java: `// AI Sentinel â€” Translated to Java\n// Source: ${activeFile}\n\npublic class Translated {\n    public static void main(String[] args) {\n        System.out.println("Code Sight â€” Java port");\n    }\n}`,
-
+            python: `# BrightCode — Translated to Python\n# Source: ${activeFile}\n\ndef main():\n    ${sanitized}\n\nif __name__ == '__main__':\n    main()`,
+            rust: `// BrightCode — Translated to Rust\n// Source: ${activeFile}\n\nfn main() {\n    println!("BrightCode — Rust port");\n    // Note: Rust requires explicit type annotations\n    // Manual port recommended for production use\n}`,
+            go: `// BrightCode — Translated to Go\npackage main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("BrightCode — Go port")\n    // Note: Go requires explicit type declarations\n}`,
+            java: `// BrightCode — Translated to Java\n// Source: ${activeFile}\n\npublic class Translated {\n    public static void main(String[] args) {\n        System.out.println("BrightCode — Java port");\n    }\n}`
         };
 
         setTranslatedCode(translations[translateTarget] || '// Translation not available for this target language.');
@@ -2478,6 +2368,13 @@ const EditorPage = () => {
                             >
                                 <TerminalIcon size={18} />
                             </button>
+                            <button
+                                className={`nav-icon-btn ${isRightChatOpen ? 'active' : ''}`}
+                                onClick={() => setIsRightChatOpen(!isRightChatOpen)}
+                                title="Chat"
+                            >
+                                <MessageSquare size={18} />
+                            </button>
                             <button className="export-btn" onClick={exportFile} disabled={!activeFile}>
                                 <Download size={16} /> Export
                             </button>
@@ -2524,12 +2421,10 @@ const EditorPage = () => {
                                     {sidebarView === 'files' && 'EXPLORER'}
                                     {sidebarView === 'git' && 'SOURCE CONTROL'}
                                     {sidebarView === 'collaborators' && 'COLLABORATORS'}
-                                    {sidebarView === 'chat' && 'TEAM CHAT'}
-                                    {sidebarView === 'sentinel' && 'AI SENTINEL'}
                                 </span>
 
                                 {/* Right arrow - only show if not on last view */}
-                                {sidebarView !== 'sentinel' && (
+                                {sidebarView !== 'collaborators' && (
                                     <button className="sidebar-nav-btn" onClick={goToNextView} title="Next">
                                         <ChevronRight size={16} />
                                     </button>
@@ -2640,178 +2535,9 @@ const EditorPage = () => {
                                 </div>
                             )}
 
-                            {/* Chat View */}
-                            {sidebarView === 'chat' && (
-                                <div className="sidebar-section chat-section">
-                                    <div className="chat-messages">
-                                        {chatMessages.length === 0 ? (
-                                            <div className="chat-empty">
-                                                <Send size={32} style={{ opacity: 0.3 }} />
-                                                <p>No messages yet</p>
-                                                <span>Start the conversation!</span>
-                                            </div>
-                                        ) : (
-                                            chatMessages.map(msg => {
-                                                const isOwnMessage = msg.username === user?.username;
-                                                return (
-                                                    <div key={msg.id} className={`chat-message ${isOwnMessage ? 'own-message' : ''}`}>
-                                                        <div className="chat-message-header">
-                                                            <span className="chat-username">{isOwnMessage ? 'You' : msg.username}</span>
-                                                            <span className="chat-time">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                        </div>
-                                                        <div className="chat-message-text">{msg.message}</div>
-                                                    </div>
-                                                );
-                                            })
-                                        )}
-                                        <div ref={chatEndRef} />
-                                    </div>
-                                    <div className="chat-input-container">
-                                        <input
-                                            type="text"
-                                            className="chat-input"
-                                            placeholder="Type a message..."
-                                            value={chatInput}
-                                            onChange={(e) => setChatInput(e.target.value)}
-                                            onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
-                                        />
-                                        <button className="chat-send-btn" onClick={sendChatMessage}>
-                                            <Send size={16} />
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
 
-                            {/* Sentinel AI Panel */}
-                            {sidebarView === 'sentinel' && (
-                                <div className="sidebar-section sentinel-section">
-                                    {/* Sentinel Modes selector */}
-                                    <div className="sentinel-modes-bar">
-                                        <button 
-                                            className={`sentinel-mode-btn ${sentinelMode === 'chat' ? 'active' : ''}`}
-                                            onClick={() => setSentinelMode('chat')}
-                                            title="General Chat"
-                                        >
-                                            <MessageSquare size={14} />
-                                            <span>Chat</span>
-                                        </button>
-                                        <button 
-                                            className={`sentinel-mode-btn ${sentinelMode === 'explain' ? 'active' : ''}`}
-                                            onClick={() => {
-                                                setSentinelMode('explain');
-                                                sendMessageToAi("Explain the active code structure", "explain");
-                                            }}
-                                            title="Explain Active Code"
-                                        >
-                                            <BookOpen size={14} />
-                                            <span>Explain</span>
-                                        </button>
-                                        <button 
-                                            className={`sentinel-mode-btn ${sentinelMode === 'optimize' ? 'active' : ''}`}
-                                            onClick={() => {
-                                                setSentinelMode('optimize');
-                                                sendMessageToAi("Optimize the active code performance", "optimize");
-                                            }}
-                                            title="Optimize Performance"
-                                        >
-                                            <Zap size={14} />
-                                            <span>Optimize</span>
-                                        </button>
-                                        <button 
-                                            className={`sentinel-mode-btn ${sentinelMode === 'fix' ? 'active' : ''}`}
-                                            onClick={() => {
-                                                setSentinelMode('fix');
-                                                sendMessageToAi("Scan and fix bugs in active code", "fix");
-                                            }}
-                                            title="Check for Warnings"
-                                        >
-                                            <ShieldAlert size={14} />
-                                            <span>Diagnostics</span>
-                                        </button>
-                                    </div>
 
-                                    {/* Active context status */}
-                                    <div className="sentinel-context-box">
-                                        <label className="sentinel-context-label">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={includeCodeContext}
-                                                onChange={(e) => setIncludeCodeContext(e.target.checked)}
-                                            />
-                                            <span className="checkbox-custom"></span>
-                                            <span className="label-text">Attach editor buffer</span>
-                                        </label>
-                                        {activeFile ? (
-                                            <span className="sentinel-context-file">
-                                                active: <code className="glow-cyan">{activeFile.split('/').pop()}</code>
-                                            </span>
-                                        ) : (
-                                            <span className="sentinel-context-file text-muted">no active file</span>
-                                        )}
-                                    </div>
 
-                                    {/* Messages list */}
-                                    <div className="sentinel-chat-messages">
-                                        {aiMessages.map((msg, index) => (
-                                            <div key={index} className={`sentinel-msg-bubble ${msg.role}`}>
-                                                <div className="sentinel-msg-header">
-                                                    {msg.role === 'ai' ? (
-                                                        <>
-                                                            <Bot size={12} className="glow-icon" />
-                                                            <span>SENTINEL</span>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <User size={12} />
-                                                            <span>DEVELOPER</span>
-                                                        </>
-                                                    )}
-                                                </div>
-                                                <div className="sentinel-msg-text">
-                                                    {renderSentinelMarkdown(msg.content)}
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {isAiThinking && (
-                                            <div className="sentinel-msg-bubble ai thinking">
-                                                <div className="sentinel-msg-header">
-                                                    <Bot size={12} className="glow-icon animating" />
-                                                    <span>SENTINEL IS ANALYZING...</span>
-                                                </div>
-                                                <div className="sentinel-thinking-indicator">
-                                                    <div className="thinking-bar"></div>
-                                                </div>
-                                            </div>
-                                        )}
-                                        <div ref={sentinelEndRef} />
-                                    </div>
-
-                                    {/* Chat input form */}
-                                    <div className="sentinel-input-container">
-                                        <input
-                                            type="text"
-                                            className="sentinel-input"
-                                            placeholder={
-                                                sentinelMode === 'chat' ? "Ask Sentinel something..." :
-                                                sentinelMode === 'explain' ? "Ask questions about this code..." :
-                                                sentinelMode === 'optimize' ? "Ask about performance limits..." :
-                                                "Ask for specific syntax repairs..."
-                                            }
-                                            value={aiInput}
-                                            onChange={(e) => setAiInput(e.target.value)}
-                                            onKeyPress={(e) => e.key === 'Enter' && sendMessageToAi()}
-                                            disabled={isAiThinking}
-                                        />
-                                        <button 
-                                            className={`sentinel-send-btn ${isAiThinking ? 'disabled' : ''}`}
-                                            onClick={() => sendMessageToAi()}
-                                            disabled={isAiThinking}
-                                        >
-                                            <Send size={14} />
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
                         </div>
 
                         <div className="sidebar-action-bar">
@@ -2848,7 +2574,10 @@ const EditorPage = () => {
 
 
 
-                    <main className="main-content" style={{ gridTemplateRows: `1fr ${isTerminalCollapsed ? 0 : 2}px ${terminalHeight}px` }}>
+                    <main className="main-content" style={{ 
+                        gridTemplateRows: `1fr ${isTerminalCollapsed ? 0 : 2}px ${terminalHeight}px`,
+                        marginRight: `${(isRightChatOpen ? 300 : 0) + (isPresencePanelCollapsed ? 0 : 240)}px`
+                    }}>
 
 
 
@@ -3118,7 +2847,56 @@ const EditorPage = () => {
 
                     </main>
 
+                    {/* Right Chat Panel */}
+                    <aside className={`right-chat-panel ${isRightChatOpen ? 'open' : ''} ${isPresencePanelCollapsed ? 'collapsed-presence' : ''}`}>
+                        <div className="right-chat-header">
+                            <span className="right-chat-title">TEAM CHAT</span>
+                            <button
+                                className="right-chat-close"
+                                onClick={() => setIsRightChatOpen(false)}
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
 
+                        <div className="right-chat-messages">
+                            {chatMessages.length === 0 ? (
+                                <div className="chat-empty">
+                                    <Send size={32} style={{ opacity: 0.3 }} />
+                                    <p>No messages yet</p>
+                                    <span>Start the conversation!</span>
+                                </div>
+                            ) : (
+                                chatMessages.map(msg => {
+                                    const isOwnMessage = msg.username === user?.username;
+                                    return (
+                                        <div key={msg.id} className={`chat-message ${isOwnMessage ? 'own-message' : ''}`}>
+                                            <div className="chat-message-header">
+                                                <span className="chat-username">{isOwnMessage ? 'You' : msg.username}</span>
+                                                <span className="chat-time">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
+                                            <div className="chat-message-text">{msg.message}</div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                            <div ref={chatEndRef} />
+                        </div>
+
+                        <div className="chat-input-container">
+                            <input
+                                type="text"
+                                className="chat-input"
+                                placeholder="Type a message..."
+                                value={chatInput}
+                                onChange={(e) => setChatInput(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
+                            />
+                            <button className="chat-send-btn" onClick={sendChatMessage}>
+                                <Send size={16} />
+                            </button>
+                        </div>
+                    </aside>
 
                 </div>
 

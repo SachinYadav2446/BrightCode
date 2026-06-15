@@ -1,0 +1,196 @@
+{
+  "intents": {
+    "greeting": {
+      "patterns": ["hello", "hi", "hey", "sup", "yo", "good morning", "good afternoon", "good evening", "howdy", "greetings"],
+      "responses": [
+        "Hey there! I'm Pal, your BrightCode buddy! How's it going today?",
+        "Hi! Welcome to BrightCode! What can I do for you?",
+        "Hey! Great to see you! What are you working on?"
+      ],
+      "slots": [],
+      "followUp": "What's on your mind today?"
+    },
+    "ask_about_feature": {
+      "patterns": ["what is", "tell me about", "explain", "how does", "what's", "how works", "describe"],
+      "entityType": "feature",
+      "slots": [
+        {
+          "name": "featureName",
+          "entityType": "feature",
+          "prompt": "Which BrightCode feature are you interested in? (Library, Code Wars, Workspace, CodeVault, Factions)"
+        }
+      ]
+    },
+    "ask_about_library": {
+      "patterns": ["library", "challenges", "problems", "practice", "learn", "coding challenges", "problem sets"],
+      "entityType": "feature",
+      "responses": [
+        "The Library is BrightCode's awesome learning hub with hundreds of coding challenges! It supports Java, Python, JavaScript, C++, and more! Problems are organized into modules like Arrays, Strings, OOP, Recursion, Dynamic Programming - you name it! You earn XP for solving problems: easy is 50 XP, medium 80 XP, hard 150 XP! Track your progress on the leaderboard! What language or module are you curious about?",
+        "Oh, the Library is where the magic happens! It's your personal coding gym with problems from beginner to advanced. Practice, earn XP, level up! What do you want to learn first?"
+      ],
+      "slots": [
+        {
+          "name": "language",
+          "entityType": "language",
+          "prompt": "Which programming language do you want to practice?"
+        }
+      ]
+    },
+    "ask_about_codewars": {
+      "patterns": ["code wars", "battle", "team battle", "competition", "compete", "multiplayer"],
+      "entityType": "feature",
+      "responses": [
+        "Code Wars is our intense team-based battle mode! You can play 1v1, 2v2, or 4v4 against another team! You get 3 problems, a time limit, and a collaborative code editor to work with your teammates! Each problem has 15 test cases across categories like sample, hidden, edge cases, stress tests, and random! Weighted scoring means harder tests are worth more! Highest score when time runs out wins! Have you tried it yet?",
+        "Code Wars is super fun! Grab some friends, form a team, and battle it out solving problems! It's a great way to practice and have a blast together!"
+      ],
+      "slots": [
+        {
+          "name": "teamSize",
+          "entityType": "teamSize",
+          "prompt": "What team size are you thinking of? (1v1, 2v2, 4v4)"
+        }
+      ]
+    },
+    "ask_about_workspace": {
+      "patterns": ["workspace", "pair programming", "collaboration", "join session", "create session", "real-time coding"],
+      "entityType": "feature",
+      "responses": [
+        "The Workspace is our real-time pair programming environment! Create or join coding sessions, see your friend's cursor live, and code together! It uses Monaco Editor (just like VS Code!) with syntax highlighting, and supports multiple languages! Perfect for interviews, tutoring, or just coding with friends! Want to start a session?",
+        "The Workspace is amazing for collaborative coding! Real-time sync, live cursors, everything you need to code together!"
+      ]
+    },
+    "ask_about_codevault": {
+      "patterns": ["codevault", "notes", "note taking", "documentation", "markdown", "diagrams", "mermaid", "save notes"],
+      "entityType": "feature",
+      "responses": [
+        "CodeVault is our rich note-taking and documentation system! It supports Markdown with live preview, code blocks with syntax highlighting, Mermaid diagrams (flowcharts, sequence diagrams, etc.), image uploads and embeds, folder organization, repository structure, search functionality, and export/import! Perfect for keeping track of your learning journey! What kind of notes do you want to take?",
+        "CodeVault is your personal knowledge base! Write notes, draw diagrams, save code snippets - organize everything in one place!"
+      ]
+    },
+    "ask_about_factions": {
+      "patterns": ["factions", "faction", "team", "join faction", "faction battle", "team system"],
+      "entityType": "feature",
+      "responses": [
+        "Factions is BrightCode's team system! Join a faction, collaborate with your teammates, compete in faction battles, and climb the faction leaderboards! It's a great way to make friends, learn together, and have a blast! Which faction sounds good to you?",
+        "Factions make coding even more fun! Join forces with other developers and take on the world!"
+      ]
+    },
+    "ask_for_joke": {
+      "patterns": ["joke", "funny", "laugh", "humor", "pun", "tell me a joke", "make me laugh"],
+      "responses": [
+        "Why do programmers prefer dark mode? Because light attracts bugs! 😄",
+        "Why did the developer go broke? Because he used up all his cache! 💸",
+        "Why do Java developers wear glasses? Because they don't C#! 👓",
+        "What's a programmer's favorite type of coffee? Java! ☕",
+        "Why was the JavaScript developer sad? Because he didn't Node how to Express himself! 😂",
+        "How many programmers does it take to change a light bulb? None, that's a hardware problem! 💡",
+        "Why do programmers always mix up Halloween and Christmas? Because Oct 31 == Dec 25! 🎃🎄",
+        "What's the object-oriented way to become wealthy? Inheritance! 💰"
+      ]
+    },
+    "ask_for_motivation": {
+      "patterns": ["motivation", "motivate", "sad", "down", "stressed", "bad", "tired", "not good enough", "imposter", "can't do it", "give up"],
+      "responses": [
+        "Hey, stop right there! Imposter syndrome is real and it hits everyone - even senior devs with years of experience! The fact that you're here, learning, practicing, and pushing yourself? That's what matters! You don't have to be 'good enough' right now - you just have to be better than you were yesterday! Every problem you solve, every bug you fix, every concept you grasp - that's progress! Keep going, you've got this! 💪",
+        "You're doing amazing! Learning to code is hard, but every step you take is a win! Don't give up - I believe in you! 🌟",
+        "It's okay to feel stuck sometimes! That's how you know you're learning! Take a deep breath, maybe take a short break, and come back fresh - you've got this! 🚀"
+      ]
+    },
+    "ask_for_debugging_help": {
+      "patterns": ["debug", "debugging", "bug", "error", "fix", "how to debug", "help with bug", "not working"],
+      "responses": [
+        "Debugging tips! 1) Read the error message carefully - it usually tells you exactly where the problem is! 2) Print out variables or use console.log to see what's happening! 3) Break the problem down into smaller parts - test each one individually! 4) Use a debugger if available! 5) Take a break and come back later - sometimes fresh eyes help! 6) Ask for help! Remember, debugging is just detective work without clues - you've got this! 🔍",
+        "Don't worry, we all get bugs! Try these steps: check the error message, print variables, simplify the code, and if all else fails, take a break! You'll find it! 🐛"
+      ]
+    },
+    "ask_about_xp": {
+      "patterns": ["xp", "experience", "points", "how much xp", "earn xp", "leaderboard", "ranking"],
+      "responses": [
+        "You earn XP for solving problems in the Library! Easy problems give 50 XP, medium give 80 XP, and hard give 150 XP! Your XP accumulates and you can see your ranking on the global leaderboard! Keep solving problems to climb the ranks! 🎉",
+        "XP is how you track your progress! Solve more problems, earn more XP, and climb the leaderboard! Are you aiming for the top spot?"
+      ]
+    },
+    "small_talk": {
+      "patterns": ["how are you", "what's up", "how's it going", "what are you doing", "what's new"],
+      "responses": [
+        "I'm doing great, thanks for asking! How about you?",
+        "I'm here and ready to help! What's on your mind today?",
+        "Just hanging out, waiting to help you with BrightCode! What are you working on?"
+      ]
+    },
+    "thanking": {
+      "patterns": ["thank", "thanks", "appreciate", "grateful", "thanks a lot", "thank you"],
+      "responses": [
+        "You're welcome! I'm glad I could help! 😊",
+        "Anytime! That's what I'm here for!",
+        "Happy to help! Let me know if you need anything else!"
+      ]
+    },
+    "goodbye": {
+      "patterns": ["bye", "goodbye", "see you", "later", "quit", "exit", "gotta go"],
+      "responses": [
+        "Bye! Happy coding! Come back soon! 👋",
+        "See you later! Have a great day!",
+        "Goodbye! Keep coding and keep learning! 🚀"
+      ]
+    },
+    "faq": {
+      "patterns": ["faq", "frequently asked questions", "how do i", "can i", "is it possible", "does it support"],
+      "entityType": "faq"
+    },
+    "fallback": {
+      "responses": [
+        "Hey! I'm Pal, your BrightCode buddy! I can tell you all about BrightCode's features like the Library, Code Wars, Workspace, and more! I can also tell jokes, give motivation, and help with debugging! What would you like to know about?",
+        "I'm not sure I understand that! Ask me about BrightCode, request a joke, or just chat! I'm here for you!",
+        "Hmm, I'm not quite sure about that! Can you rephrase or ask about BrightCode features, jokes, or debugging?"
+      ]
+    }
+  },
+  "entities": {
+    "feature": {
+      "library": ["library", "challenges", "problems", "practice", "learn"],
+      "codewars": ["code wars", "battle", "team", "competition"],
+      "workspace": ["workspace", "pair programming", "collaboration"],
+      "codevault": ["codevault", "notes", "note taking", "documentation"],
+      "factions": ["factions", "team", "faction"]
+    },
+    "language": {
+      "java": ["java"],
+      "python": ["python", "py"],
+      "javascript": ["javascript", "js"],
+      "c++": ["c++", "cpp", "c plus plus"],
+      "csharp": ["c#", "c sharp"],
+      "go": ["go", "golang"],
+      "rust": ["rust"]
+    },
+    "teamSize": {
+      "1v1": ["1v1", "1 vs 1", "one on one", "solo battle"],
+      "2v2": ["2v2", "2 vs 2", "two on two"],
+      "4v4": ["4v4", "4 vs 4", "four on four"]
+    },
+    "faq": {
+      "howToSignUp": ["how do i sign up", "sign up", "create account", "register"],
+      "isFree": ["is brightcode free", "free", "cost", "price", "how much"],
+      "supportedLanguages": ["what languages are supported", "supported languages", "languages available"],
+      "howToAddFriends": ["how do i add friends", "add friends", "friend system"]
+    }
+  },
+  "faqs": {
+    "howToSignUp": "Signing up is easy! Just click the 'Sign Up' button on the homepage, enter your details, and you're good to go! You can also sign up with GitHub!",
+    "isFree": "Yes! BrightCode is completely free to use! Enjoy all features without any cost!",
+    "supportedLanguages": "BrightCode supports Java, Python, JavaScript, C++, C#, Go, Rust, and many more! Check the Library for the full list!",
+    "howToAddFriends": "To add friends, go to your profile, click 'Add Friends', and search for their username. You can also send friend requests from the Users page!"
+  },
+  "typoFixes": {
+    "librery": "library",
+    "libraries": "library",
+    "codewar": "code wars",
+    "codewars": "code wars",
+    "workspac": "workspace",
+    "codevaultt": "codevault",
+    "factionss": "factions",
+    "jokee": "joke",
+    "motivationn": "motivation",
+    "debuging": "debugging"
+  }
+}
