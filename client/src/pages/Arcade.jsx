@@ -25,7 +25,6 @@ const BASE_TABS = [
     { id: 'frontend', label: 'Frontend', icon: Layout, active: true },
     { id: 'backend', label: 'Backend', icon: Server, active: false },
     { id: 'language', label: 'Language', icon: Code2, active: true },
-    { id: 'curriculum', label: 'Curriculum', icon: GraduationCap, active: false },
 ];
 
 // â”€â”€ CURRICULUM SUBJECT DATA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
