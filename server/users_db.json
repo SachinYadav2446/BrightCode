@@ -51,7 +51,7 @@
       "created_at": "2026-06-15T10:07:28.134Z",
       "subscription": "basic",
       "google_id": "111913696525529518289",
-      "session_id": "4c20a8f2-8805-4cb6-968c-2c5d1dd24c53",
+      "session_id": "5dfb400b-c5e0-479e-b1fd-cc28ec86230f",
       "cpp_level": 2
     },
     {
@@ -59,25 +59,28 @@
       "username": "admin",
       "email": "codebrightlim@gmail.com",
       "password": "$2b$10$LGscwAWkRhLJuTav.wuZcO/73QZAs9UXTATpTAz2Y9CeF6aMB/FTO",
-      "xp": 0,
+      "xp": 20,
       "css_level": 0,
       "logic_level": 0,
       "react_level": 0,
       "mern_level": 0,
-      "activity": {},
+      "activity": {
+        "2026-06-15": 20
+      },
       "bio": "Signed up via Google",
       "stack": [],
       "joinedAt": "2026-06-15T12:00:18.339Z",
       "created_at": "2026-06-15T12:00:18.339Z",
       "subscription": "elite",
       "google_id": "109967909212937111766",
-      "session_id": "fff38e9c-6fdc-4aa9-96e2-9ad131c62930",
+      "session_id": "0d72fe19-37c7-4523-8092-a7c691e32983",
       "avatarId": "Sniper",
       "bannerId": "crimson",
       "github": "",
       "leetcode": "",
       "project1": "",
-      "project2": ""
+      "project2": "",
+      "cpp_level": 50
     }
   ]
 }

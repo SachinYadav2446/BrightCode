@@ -628,10 +628,10 @@ const Arcade = () => {
             name: 'Language Fundamentals',
             description: 'Master core programming language concepts and syntax.',
             games: [
-                { id: 'java-master',   title: 'Java Mastery',   subtitle: '10 Modules · 400 Levels', type: 'mixed', desc: 'From variables to OOP, Collections and File I/O — 400 levels across 10 structured modules.', icon: <Code2 />, progressKey: 'highest_java_master_level',   total: JAVA_LEVELS.length   },
-                { id: 'cpp-master',    title: 'C++ Mastery',    subtitle: '4 Phases · 100 Levels',  type: 'coding', desc: 'Pointers, memory management, STL, templates — master C++ from basics to advanced.', icon: <Zap />,   progressKey: 'highest_cpp_master_level',    total: CPP_LEVELS.length    },
-                { id: 'python-master', title: 'Python Mastery', subtitle: '4 Phases · 100 Levels',  type: 'coding', desc: 'Data structures, comprehensions, decorators, generators — Pythonic excellence.',       icon: <Brain />, progressKey: 'highest_python_master_level', total: PYTHON_LEVELS.length },
-                { id: 'go-master',     title: 'Go Mastery',     subtitle: '4 Phases · 100 Levels',  type: 'coding', desc: 'Goroutines, channels, concurrency patterns — master Go for high-performance backends.', icon: <Activity />, progressKey: 'highest_go_master_level', total: GO_LEVELS.length }
+                { id: 'java-master',   title: 'Java Mastery',   subtitle: '10 Modules · 100 Levels', type: 'mcq', desc: 'From variables to OOP, Collections and File I/O — 100 conceptual MCQ levels across 10 structured modules.', icon: <Code2 />, progressKey: 'highest_java_master_level',   total: JAVA_LEVELS.length   },
+                { id: 'cpp-master',    title: 'C++ Mastery',    subtitle: '4 Phases · 50 Levels',  type: 'mcq', desc: 'Pointers, memory management, STL, templates — master C++ concepts with 50 structured MCQ levels.', icon: <Zap />,   progressKey: 'highest_cpp_master_level',    total: CPP_LEVELS.length    },
+                { id: 'python-master', title: 'Python Mastery', subtitle: '4 Phases · 50 Levels',  type: 'mcq', desc: 'Data structures, comprehensions, decorators, generators — master Python concepts with 50 structured MCQ levels.',       icon: <Brain />, progressKey: 'highest_python_master_level', total: PYTHON_LEVELS.length },
+                { id: 'go-master',     title: 'Go Mastery',     subtitle: '4 Phases · 50 Levels',  type: 'mcq', desc: 'Goroutines, channels, concurrency patterns — master Go concepts with 50 structured MCQ levels.', icon: <Activity />, progressKey: 'highest_go_master_level', total: GO_LEVELS.length }
             ]
         },
         {

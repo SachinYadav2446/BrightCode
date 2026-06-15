@@ -218,406 +218,149 @@ const javaCodingProblems = [
     }
 ];
 
-// Generate 400 levels: Module 1-10 (40 each)
-for (let i = 1; i <= 400; i++) {
-    if (i <= 10) {
-        // First 10: MCQ Questions
-        const mcq = javaMCQs[i - 1];
-        JAVA_LEVELS.push({
-            id: i,
-            title: `Java Basics ${i}`,
-            type: 'MCQ',
-            question: mcq.q,
-            options: mcq.opts,
-            answer: mcq.ans,
-            explanation: `Java fundamental concept`,
-            phase: 'Module 1: Basics'
-        });
-    } else if (i <= 40) {
-        // Next 30: Coding Problems (11-40)
-        const problem = javaCodingProblems[i - 11];
-        JAVA_LEVELS.push({
-            id: i,
-            title: problem.title,
-            type: 'CODING',
-            desc: problem.desc,
-            syntax: problem.syntax,
-            params: '',
-            testCases: problem.testCases || [],
-            explanation: problem.desc,
-            phase: 'Module 1: Basics'
-        });
-    } else if (i <= 80) {
-        // Module 2: Operators & Control Flow (41-80)
-        const module2Question = JAVA_MODULE2_QUESTIONS[i - 41];
-        if (module2Question) {
-            JAVA_LEVELS.push({
-                id: i,
-                title: module2Question.title,
-                type: module2Question.type,
-                question: module2Question.question,
-                options: module2Question.options,
-                answer: module2Question.answer,
-                desc: module2Question.desc,
-                syntax: module2Question.syntax,
-                params: module2Question.params,
-                testCases: module2Question.testCases,
-                explanation: module2Question.explanation,
-                phase: 'Module 2: Operators & Control Flow'
-            });
-        }
-    } else if (i <= 120) {
-        // Module 3: Loops & Pattern Printing (81-120)
-        const module3Question = JAVA_MODULE3_QUESTIONS[i - 81];
-        if (module3Question) {
-            JAVA_LEVELS.push({
-                id: i,
-                title: module3Question.title,
-                type: module3Question.type,
-                question: module3Question.question,
-                options: module3Question.options,
-                answer: module3Question.answer,
-                desc: module3Question.desc,
-                syntax: module3Question.syntax,
-                params: module3Question.params,
-                testCases: module3Question.testCases,
-                explanation: module3Question.explanation,
-                phase: 'Module 3: Loops & Pattern Printing'
-            });
-        }
-    } else if (i <= 160) {
-        // Module 4: Methods & Recursion (121-160)
-        const module4Question = JAVA_MODULE4_QUESTIONS[i - 121];
-        if (module4Question) {
-            JAVA_LEVELS.push({
-                id: i,
-                title: module4Question.title,
-                type: module4Question.type,
-                question: module4Question.question,
-                options: module4Question.options,
-                answer: module4Question.answer,
-                desc: module4Question.desc,
-                syntax: module4Question.syntax,
-                params: module4Question.params,
-                testCases: module4Question.testCases,
-                explanation: module4Question.explanation,
-                phase: 'Module 4: Methods & Recursion'
-            });
-        }
-    } else if (i <= 200) {
-        // Module 5: Arrays (161-200)
-        const module5Question = JAVA_MODULE5_QUESTIONS[i - 161];
-        if (module5Question) {
-            JAVA_LEVELS.push({
-                id: i,
-                title: module5Question.title,
-                type: module5Question.type,
-                question: module5Question.question,
-                options: module5Question.options,
-                answer: module5Question.answer,
-                desc: module5Question.desc,
-                syntax: module5Question.syntax,
-                params: module5Question.params,
-                testCases: module5Question.testCases,
-                explanation: module5Question.explanation,
-                phase: 'Module 5: Arrays'
-            });
-        }
-    } else if (i <= 240) {
-        // Module 6: Strings (201-240)
-        const module6Question = JAVA_MODULE6_QUESTIONS[i - 201];
-        if (module6Question) {
-            JAVA_LEVELS.push({
-                id: i,
-                title: module6Question.title,
-                type: module6Question.type,
-                question: module6Question.question,
-                options: module6Question.options,
-                answer: module6Question.answer,
-                desc: module6Question.desc,
-                syntax: module6Question.syntax,
-                params: module6Question.params,
-                testCases: module6Question.testCases,
-                explanation: module6Question.explanation,
-                phase: 'Module 6: Strings'
-            });
-        }
-    } else if (i <= 280) {
-        // Module 7: OOP Core (241-280)
-        const module7Question = JAVA_MODULE7_QUESTIONS[i - 241];
-        if (module7Question) {
-            JAVA_LEVELS.push({
-                id: i,
-                title: module7Question.title,
-                type: module7Question.type,
-                question: module7Question.question,
-                options: module7Question.options,
-                answer: module7Question.answer,
-                desc: module7Question.desc,
-                syntax: module7Question.syntax,
-                params: module7Question.params,
-                testCases: module7Question.testCases,
-                explanation: module7Question.explanation,
-                phase: 'Module 7: OOP Core'
-            });
-        }
-    } else if (i <= 320) {
-        // Module 8: OOP Advanced (281-320)
-        const module8Question = JAVA_MODULE8_QUESTIONS[i - 281];
-        if (module8Question) {
-            JAVA_LEVELS.push({
-                id: i,
-                title: module8Question.title,
-                type: module8Question.type,
-                question: module8Question.question,
-                options: module8Question.options,
-                answer: module8Question.answer,
-                desc: module8Question.desc,
-                syntax: module8Question.syntax,
-                params: module8Question.params,
-                testCases: module8Question.testCases,
-                explanation: module8Question.explanation,
-                phase: 'Module 8: OOP Advanced'
-            });
-        }
-    } else if (i <= 360) {
-        // Module 9: Collections Framework (321-360)
-        const module9Question = JAVA_MODULE9_QUESTIONS[i - 321];
-        if (module9Question) {
-            JAVA_LEVELS.push({
-                id: i,
-                title: module9Question.title,
-                type: module9Question.type,
-                question: module9Question.question,
-                options: module9Question.options,
-                answer: module9Question.answer,
-                desc: module9Question.desc,
-                syntax: module9Question.syntax,
-                params: module9Question.params,
-                testCases: module9Question.testCases,
-                explanation: module9Question.explanation,
-                phase: 'Module 9: Collections Framework'
-            });
-        }
-    } else if (i <= 400) {
-        // Module 10: Exception Handling & File I/O (361-400)
-        const module10Question = JAVA_MODULE10_QUESTIONS[i - 361];
-        if (module10Question) {
-            JAVA_LEVELS.push({
-                id: i,
-                title: module10Question.title,
-                type: module10Question.type,
-                question: module10Question.question,
-                options: module10Question.options,
-                answer: module10Question.answer,
-                desc: module10Question.desc,
-                syntax: module10Question.syntax,
-                params: module10Question.params,
-                testCases: module10Question.testCases,
-                explanation: module10Question.explanation,
-                phase: 'Module 10: Exception Handling & File I/O'
-            });
-        }
+// Helper to shuffle options and answer
+function shuffleOptionsAndAnswer(opts, correctIdx) {
+    if (!opts || opts.length === 0) return { options: [], answer: 0 };
+    const items = opts.map((opt, idx) => ({ opt, isCorrect: idx === correctIdx }));
+    // Shuffle using Fisher-Yates
+    for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
     }
+    return {
+        options: items.map(x => x.opt),
+        answer: items.findIndex(x => x.isCorrect)
+    };
 }
 
-// ── C++ LEVELS (100 total) ──────────────────────────────────
+// Build Java MCQ Levels (100 total: 10 modules * 10 MCQs)
+let javaLevelId = 1;
+
+// Module 1 Basics (10 MCQs)
+javaMCQs.forEach((mcq, index) => {
+    const shuffled = shuffleOptionsAndAnswer(mcq.opts, mcq.ans);
+    JAVA_LEVELS.push({
+        id: javaLevelId++,
+        title: `Java Basics ${index + 1}`,
+        type: 'MCQ',
+        question: mcq.q,
+        options: shuffled.options,
+        answer: shuffled.answer,
+        explanation: `Java fundamental concept`,
+        phase: 'Module 1: Basics'
+    });
+});
+
+// Helper function to push module MCQs
+function addJavaModuleMCQs(moduleName, questionList) {
+    // Filter only MCQ questions
+    const mcqs = questionList.filter(q => q.type === 'MCQ');
+    mcqs.forEach((q, index) => {
+        const shuffled = shuffleOptionsAndAnswer(q.options, q.answer);
+        JAVA_LEVELS.push({
+            id: javaLevelId++,
+            title: q.title || `${moduleName} Q${index + 1}`,
+            type: 'MCQ',
+            question: q.question,
+            options: shuffled.options,
+            answer: shuffled.answer,
+            explanation: q.explanation || `${moduleName} fundamental concept`,
+            phase: moduleName
+        });
+    });
+}
+
+addJavaModuleMCQs('Module 2: Operators & Control Flow', JAVA_MODULE2_QUESTIONS);
+addJavaModuleMCQs('Module 3: Loops & Pattern Printing', JAVA_MODULE3_QUESTIONS);
+addJavaModuleMCQs('Module 4: Methods & Recursion', JAVA_MODULE4_QUESTIONS);
+addJavaModuleMCQs('Module 5: Arrays', JAVA_MODULE5_QUESTIONS);
+addJavaModuleMCQs('Module 6: Strings', JAVA_MODULE6_QUESTIONS);
+addJavaModuleMCQs('Module 7: OOP Core', JAVA_MODULE7_QUESTIONS);
+addJavaModuleMCQs('Module 8: OOP Advanced', JAVA_MODULE8_QUESTIONS);
+addJavaModuleMCQs('Module 9: Collections Framework', JAVA_MODULE9_QUESTIONS);
+addJavaModuleMCQs('Module 10: Exception Handling & File I/O', JAVA_MODULE10_QUESTIONS);
+
+// ── C++ LEVELS (50 total MCQs) ──────────────────────────────────
 export const CPP_LEVELS = [];
 
-const cppQuestions = [
-    { q: 'What is a pointer?', opts: ['Integer variable', 'Memory address variable', 'String variable', 'Boolean variable'], ans: 1 },
-    { q: 'Which operator accesses pointer value?', opts: ['&', '*', '->', '.'], ans: 1 },
-    { q: 'What is a reference?', opts: ['Copy of variable', 'Alias to variable', 'Pointer to variable', 'New variable'], ans: 1 },
-    { q: 'Which header for input/output?', opts: ['stdio.h', 'iostream', 'conio.h', 'fstream'], ans: 1 },
-    { q: 'What is a class?', opts: ['Built-in type', 'User-defined type', 'Primitive type', 'Abstract type'], ans: 1 },
-    { q: 'Which keyword for dynamic memory?', opts: ['malloc', 'new', 'alloc', 'create'], ans: 1 },
-    { q: 'What is a destructor?', opts: ['Constructor', 'Cleanup function', 'Member function', 'Friend function'], ans: 1 },
-    { q: 'Which loop is entry-controlled?', opts: ['do-while', 'while', 'goto', 'switch'], ans: 1 },
-    { q: 'What is STL?', opts: ['System Template Library', 'Standard Template Library', 'String Template Library', 'Static Template Library'], ans: 1 },
-    { q: 'Which container is LIFO?', opts: ['queue', 'vector', 'stack', 'list'], ans: 2 },
-    { q: 'What is inheritance?', opts: ['Code hiding', 'Code reusability', 'Code duplication', 'Code deletion'], ans: 1 },
-    { q: 'Which operator deallocates memory?', opts: ['free', 'delete', 'remove', 'clear'], ans: 1 },
-    { q: 'What is a virtual function?', opts: ['Static function', 'Runtime polymorphism', 'Compile-time function', 'Inline function'], ans: 1 },
-    { q: 'Which keyword prevents inheritance?', opts: ['static', 'final', 'sealed', 'const'], ans: 1 },
-    { q: 'What is operator overloading?', opts: ['Creating new operators', 'Redefining operator behavior', 'Deleting operators', 'Hiding operators'], ans: 1 },
-    { q: 'Which access specifier is default for class?', opts: ['public', 'private', 'protected', 'default'], ans: 1 },
-    { q: 'What is a friend function?', opts: ['Member function', 'Non-member with access', 'Static function', 'Virtual function'], ans: 1 },
-    { q: 'Which container is associative?', opts: ['vector', 'map', 'array', 'list'], ans: 1 },
-    { q: 'What is multiple inheritance?', opts: ['One base class', 'Multiple base classes', 'No base class', 'Abstract base'], ans: 1 },
-    { q: 'Which keyword makes variable constant?', opts: ['final', 'const', 'static', 'readonly'], ans: 1 },
-    { q: 'What is a template?', opts: ['Specific type', 'Generic programming', 'Abstract class', 'Interface'], ans: 1 },
-    { q: 'Which operator is scope resolution?', opts: ['.', '->', '::', '->*'], ans: 2 },
-    { q: 'What is exception handling?', opts: ['Compile errors', 'Runtime error management', 'Syntax errors', 'Logic errors'], ans: 1 },
-    { q: 'Which keyword throws exception?', opts: ['throws', 'throw', 'try', 'catch'], ans: 1 },
-    { q: 'What is a namespace?', opts: ['Class scope', 'Scope for identifiers', 'Function scope', 'Block scope'], ans: 1 },
-    { q: 'Which loop checks condition last?', opts: ['while', 'for', 'do-while', 'foreach'], ans: 2 },
-    { q: 'What is encapsulation?', opts: ['Data hiding', 'Data exposure', 'Data duplication', 'Data deletion'], ans: 0 },
-    { q: 'Which keyword for inline function?', opts: ['static', 'inline', 'virtual', 'const'], ans: 1 },
-    { q: 'What is polymorphism?', opts: ['One form', 'Many forms', 'No form', 'Static form'], ans: 1 },
-    { q: 'Which container is sequential?', opts: ['map', 'set', 'vector', 'unordered_map'], ans: 2 },
-    { q: 'What is abstraction?', opts: ['Showing details', 'Hiding complexity', 'Code duplication', 'Code deletion'], ans: 1 },
-    { q: 'Which keyword for static member?', opts: ['const', 'static', 'final', 'virtual'], ans: 1 },
-    { q: 'What is a pure virtual function?', opts: ['Has implementation', 'No implementation', 'Static function', 'Inline function'], ans: 1 },
-    { q: 'Which operator is member access?', opts: ['::', '->', '.', '->*'], ans: 2 },
-    { q: 'What is constructor overloading?', opts: ['One constructor', 'Multiple constructors', 'No constructor', 'Virtual constructor'], ans: 1 },
-    { q: 'Which keyword for constant pointer?', opts: ['const', 'static', 'final', 'readonly'], ans: 0 },
-    { q: 'What is a copy constructor?', opts: ['Default constructor', 'Copies object', 'Destructor', 'Static constructor'], ans: 1 },
-    { q: 'Which container is ordered?', opts: ['unordered_map', 'map', 'unordered_set', 'hash_map'], ans: 1 },
-    { q: 'What is function overloading?', opts: ['Same name, different parameters', 'Different name, same parameters', 'Same signature', 'Virtual function'], ans: 0 },
-    { q: 'Which keyword for abstract class?', opts: ['abstract', 'virtual', 'pure', 'interface'], ans: 1 },
-    { q: 'What is RAII?', opts: ['Resource Acquisition Is Initialization', 'Random Access Is Initialization', 'Resource Allocation Is Important', 'Runtime Access Is Initialization'], ans: 0 },
-    { q: 'Which container is FIFO?', opts: ['stack', 'queue', 'vector', 'list'], ans: 1 },
-    { q: 'What is a smart pointer?', opts: ['Raw pointer', 'Automatic memory management', 'Manual pointer', 'Static pointer'], ans: 1 },
-    { q: 'Which keyword for type casting?', opts: ['cast', 'static_cast', 'convert', 'change'], ans: 1 },
-    { q: 'What is move semantics?', opts: ['Copy data', 'Transfer ownership', 'Delete data', 'Duplicate data'], ans: 1 },
-    { q: 'Which container allows duplicates?', opts: ['set', 'map', 'multiset', 'unordered_set'], ans: 2 },
-    { q: 'What is a lambda expression?', opts: ['Named function', 'Anonymous function', 'Static function', 'Virtual function'], ans: 1 },
-    { q: 'Which keyword for compile-time constant?', opts: ['const', 'constexpr', 'static', 'final'], ans: 1 },
-    { q: 'What is the auto keyword?', opts: ['Manual type', 'Type inference', 'Static type', 'Dynamic type'], ans: 1 },
-    { q: 'Which standard is C++11?', opts: ['Old standard', 'Modern C++ standard', 'Future standard', 'Deprecated standard'], ans: 1 }
-];
+cppQuestions.forEach((template, index) => {
+    const shuffled = shuffleOptionsAndAnswer(template.opts, template.ans);
+    CPP_LEVELS.push({
+        id: index + 1,
+        title: `C++ Concept ${index + 1}`,
+        type: 'MCQ',
+        question: template.q,
+        options: shuffled.options,
+        answer: shuffled.answer,
+        explanation: `C++ fundamental: ${template.q}`
+    });
+});
 
-for (let i = 1; i <= 100; i++) {
-    if (i <= 50) {
-        const template = cppQuestions[i - 1];
-        CPP_LEVELS.push({
-            id: i,
-            title: `C++ Concept ${i}`,
-            type: 'MCQ',
-            question: template.q,
-            options: template.opts,
-            answer: template.ans,
-            explanation: `C++ fundamental: ${template.q}`
-        });
-    } else {
-        CPP_LEVELS.push({
-            id: i,
-            title: `C++ Coding ${i}`,
-            type: 'CODING',
-            desc: `Write a C++ function to solve problem ${i - 50}`,
-            syntax: 'int solution() {\n    // Your code here\n    return 0;\n}',
-            params: '',
-            testCases: [],
-            explanation: 'Implement the solution in C++'
-        });
-    }
-}
-
-// ── PYTHON LEVELS (100 total) ──────────────────────────────────
+// ── PYTHON LEVELS (50 total MCQs) ──────────────────────────────────
 export const PYTHON_LEVELS = [];
 
-const pythonQuestions = [
-    { q: 'What is a list?', opts: ['Mutable sequence', 'Immutable sequence', 'Dictionary', 'Set'], ans: 0, type: 'MCQ' },
-    { q: 'Which keyword defines function?', opts: ['def', 'function', 'func', 'define'], ans: 0, type: 'MCQ' },
-    { q: 'What is a tuple?', opts: ['Immutable sequence', 'Mutable sequence', 'Dictionary', 'Set'], ans: 0, type: 'MCQ' },
-    { q: 'Which method adds to list?', opts: ['append', 'add', 'insert', 'push'], ans: 0, type: 'MCQ' },
-    { q: 'What is a dictionary?', opts: ['Key-value pairs', 'Ordered list', 'Unordered list', 'Tuple'], ans: 0, type: 'MCQ' },
-    { q: 'Which loop iterates sequences?', opts: ['for', 'while', 'do-while', 'foreach'], ans: 0, type: 'MCQ' },
-    { q: 'What is list comprehension?', opts: ['Concise list creation', 'List method', 'List function', 'List class'], ans: 0, type: 'MCQ' },
-    { q: 'Which keyword handles exceptions?', opts: ['try', 'catch', 'throw', 'error'], ans: 0, type: 'MCQ' },
-    { q: 'What is a lambda?', opts: ['Anonymous function', 'Named function', 'Class method', 'Module'], ans: 0, type: 'MCQ' },
-    { q: 'Which method removes from list?', opts: ['remove', 'delete', 'pop', 'clear'], ans: 0, type: 'MCQ' },
-];
-
-for (let i = 1; i <= 100; i++) {
-    if (i <= 50) {
-        const template = pythonQuestions[(i - 1) % pythonQuestions.length];
-        PYTHON_LEVELS.push({
-            id: i,
-            title: `Python Concept ${i}`,
-            type: 'MCQ',
-            question: template.q,
-            options: template.opts,
-            answer: template.ans,
-            explanation: `Python fundamental: ${template.q}`
-        });
-    } else {
-        PYTHON_LEVELS.push({
-            id: i,
-            title: `Python Coding ${i}`,
-            type: 'CODING',
-            desc: `Write a Python function to solve problem ${i - 50}`,
-            syntax: 'def solution():\n    # Your code here\n    return 0',
-            params: '',
-            testCases: [[42]],
-            explanation: 'Implement the solution in Python'
-        });
-    }
+for (let i = 1; i <= 50; i++) {
+    const template = pythonQuestions[(i - 1) % pythonQuestions.length];
+    const shuffled = shuffleOptionsAndAnswer(template.opts, template.ans);
+    PYTHON_LEVELS.push({
+        id: i,
+        title: `Python Concept ${i}`,
+        type: 'MCQ',
+        question: template.q,
+        options: shuffled.options,
+        answer: shuffled.answer,
+        explanation: `Python fundamental: ${template.q}`
+    });
 }
 
-// ── GO LEVELS (100 total) ──────────────────────────────────
+// ── GO LEVELS (50 total MCQs) ──────────────────────────────────
 export const GO_LEVELS = [];
 
-const goQuestions = [
-    { q: 'What is a goroutine?', opts: ['Lightweight thread', 'Heavy thread', 'Process', 'Function'], ans: 0, type: 'MCQ' },
-    { q: 'Which keyword starts goroutine?', opts: ['go', 'start', 'run', 'thread'], ans: 0, type: 'MCQ' },
-    { q: 'What is a channel?', opts: ['Communication pipe', 'Data structure', 'Function', 'Variable'], ans: 0, type: 'MCQ' },
-    { q: 'Which keyword declares variable?', opts: ['var', 'let', 'const', 'define'], ans: 0, type: 'MCQ' },
-    { q: 'What is a slice?', opts: ['Dynamic array', 'Static array', 'Map', 'Struct'], ans: 0, type: 'MCQ' },
-    { q: 'Which keyword defines function?', opts: ['func', 'function', 'def', 'fn'], ans: 0, type: 'MCQ' },
-    { q: 'What is a struct?', opts: ['Custom type', 'Built-in type', 'Interface', 'Channel'], ans: 0, type: 'MCQ' },
-    { q: 'Which keyword for constants?', opts: ['const', 'final', 'static', 'readonly'], ans: 0, type: 'MCQ' },
-    { q: 'What is defer?', opts: ['Delayed execution', 'Immediate execution', 'Async execution', 'Sync execution'], ans: 0, type: 'MCQ' },
-    { q: 'Which loop exists in Go?', opts: ['for', 'while', 'do-while', 'foreach'], ans: 0, type: 'MCQ' },
-];
-
-for (let i = 1; i <= 100; i++) {
-    if (i <= 50) {
-        const template = goQuestions[(i - 1) % goQuestions.length];
-        GO_LEVELS.push({
-            id: i,
-            title: `Go Concept ${i}`,
-            type: 'MCQ',
-            question: template.q,
-            options: template.opts,
-            answer: template.ans,
-            explanation: `Go fundamental: ${template.q}`
-        });
-    } else {
-        GO_LEVELS.push({
-            id: i,
-            title: `Go Coding ${i}`,
-            type: 'CODING',
-            desc: `Write a Go function to solve problem ${i - 50}`,
-            syntax: 'func solution() int {\n    // Your code here\n    return 0\n}',
-            params: '',
-            testCases: [[42]],
-            explanation: 'Implement the solution in Go'
-        });
-    }
+for (let i = 1; i <= 50; i++) {
+    const template = goQuestions[(i - 1) % goQuestions.length];
+    const shuffled = shuffleOptionsAndAnswer(template.opts, template.ans);
+    GO_LEVELS.push({
+        id: i,
+        title: `Go Concept ${i}`,
+        type: 'MCQ',
+        question: template.q,
+        options: shuffled.options,
+        answer: shuffled.answer,
+        explanation: `Go fundamental: ${template.q}`
+    });
 }
 
 // ── PHASES (for each language) ──────────────────────────────────
 export const LANGUAGE_PHASES = {
     java: [
-        { name: 'Module 1: Basics', start: 0, end: 39, label: 'Module 1: Java Basics' },
-        { name: 'Module 2: Operators & Control Flow', start: 40, end: 79, label: 'Module 2: Operators & Control Flow' },
-        { name: 'Module 3: Loops & Pattern Printing', start: 80, end: 119, label: 'Module 3: Loops & Pattern Printing' },
-        { name: 'Module 4: Methods & Recursion', start: 120, end: 159, label: 'Module 4: Methods & Recursion' },
-        { name: 'Module 5: Arrays', start: 160, end: 199, label: 'Module 5: Arrays' },
-        { name: 'Module 6: Strings', start: 200, end: 239, label: 'Module 6: Strings' },
-        { name: 'Module 7: OOP Core', start: 240, end: 279, label: 'Module 7: OOP Core' },
-        { name: 'Module 8: OOP Advanced', start: 280, end: 319, label: 'Module 8: OOP Advanced' },
-        { name: 'Module 9: Collections Framework', start: 320, end: 359, label: 'Module 9: Collections Framework' },
-        { name: 'Module 10: Exception Handling & File I/O', start: 360, end: 399, label: 'Module 10: Exception Handling & File I/O' }
+        { name: 'Module 1: Basics', start: 0, end: 9, label: 'Module 1: Java Basics' },
+        { name: 'Module 2: Operators & Control Flow', start: 10, end: 19, label: 'Module 2: Operators & Control Flow' },
+        { name: 'Module 3: Loops & Pattern Printing', start: 20, end: 29, label: 'Module 3: Loops & Pattern Printing' },
+        { name: 'Module 4: Methods & Recursion', start: 30, end: 39, label: 'Module 4: Methods & Recursion' },
+        { name: 'Module 5: Arrays', start: 40, end: 49, label: 'Module 5: Arrays' },
+        { name: 'Module 6: Strings', start: 50, end: 59, label: 'Module 6: Strings' },
+        { name: 'Module 7: OOP Core', start: 60, end: 69, label: 'Module 7: OOP Core' },
+        { name: 'Module 8: OOP Advanced', start: 70, end: 79, label: 'Module 8: OOP Advanced' },
+        { name: 'Module 9: Collections Framework', start: 80, end: 89, label: 'Module 9: Collections Framework' },
+        { name: 'Module 10: Exception Handling & File I/O', start: 90, end: 99, label: 'Module 10: Exception Handling & File I/O' }
     ],
     cpp: [
-        { name: 'Basics', start: 0, end: 24, label: 'Phase 1: C++ Basics' },
-        { name: 'Pointers', start: 25, end: 49, label: 'Phase 2: Pointers & Memory' },
-        { name: 'STL', start: 50, end: 74, label: 'Phase 3: STL & Templates' },
-        { name: 'Advanced', start: 75, end: 99, label: 'Phase 4: Advanced C++' }
+        { name: 'Basics', start: 0, end: 11, label: 'Phase 1: C++ Basics' },
+        { name: 'Pointers', start: 12, end: 24, label: 'Phase 2: Pointers & Memory' },
+        { name: 'STL', start: 25, end: 36, label: 'Phase 3: STL & Templates' },
+        { name: 'Advanced', start: 37, end: 49, label: 'Phase 4: Advanced C++' }
     ],
     python: [
-        { name: 'Basics', start: 0, end: 24, label: 'Phase 1: Python Basics' },
-        { name: 'Data Structures', start: 25, end: 49, label: 'Phase 2: Data Structures' },
-        { name: 'Advanced', start: 50, end: 74, label: 'Phase 3: Advanced Python' },
-        { name: 'Expert', start: 75, end: 99, label: 'Phase 4: Expert Level' }
+        { name: 'Basics', start: 0, end: 11, label: 'Phase 1: Python Basics' },
+        { name: 'Data Structures', start: 12, end: 24, label: 'Phase 2: Data Structures' },
+        { name: 'Advanced', start: 25, end: 36, label: 'Phase 3: Advanced Python' },
+        { name: 'Expert', start: 37, end: 49, label: 'Phase 4: Expert Level' }
     ],
     go: [
-        { name: 'Basics', start: 0, end: 24, label: 'Phase 1: Go Basics' },
-        { name: 'Concurrency', start: 25, end: 49, label: 'Phase 2: Goroutines & Channels' },
-        { name: 'Advanced', start: 50, end: 74, label: 'Phase 3: Advanced Go' },
-        { name: 'Expert', start: 75, end: 99, label: 'Phase 4: Expert Level' }
+        { name: 'Basics', start: 0, end: 11, label: 'Phase 1: Go Basics' },
+        { name: 'Concurrency', start: 12, end: 24, label: 'Phase 2: Goroutines & Channels' },
+        { name: 'Advanced', start: 25, end: 36, label: 'Phase 3: Advanced Go' },
+        { name: 'Expert', start: 37, end: 49, label: 'Phase 4: Expert Level' }
     ]
 };
 
