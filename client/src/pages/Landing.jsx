@@ -53,7 +53,7 @@ export default function Landing() {
           {/* Actions */}
           <div className="nav-actions">
             <button className="nav-btn-ghost" onClick={() => handleAuth('login')}>Sign In</button>
-            <button className="nav-btn-primary" onClick={() => handleAuth('register')}>Get Started →</button>
+            <button className="nav-btn-primary" onClick={() => handleAuth('register')}>Get Started</button>
           </div>
         </div>
       </nav>
@@ -75,11 +75,9 @@ export default function Landing() {
             <div className="hero-actions">
               <button className="btn-primary" onClick={() => handleAuth('register')}>
                 Join Now
-                <ArrowRight size={16} />
               </button>
               <button className="btn-secondary" onClick={handleHub}>
                 Explore Challenges
-                <ChevronRight size={16} />
               </button>
             </div>
 
@@ -165,7 +163,7 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* ══ KEY CAPABILITIES ══ */}
+      {/* ══ CORE FEATURES ══ */}
       <section className="section" id="features">
         <div className="section-inner">
           <div className="section-header">
@@ -177,11 +175,11 @@ export default function Landing() {
           <div className="features-grid">
             <div className="feature-card">
               <div className="feat-icon-box blue-box">
-                <Users size={20} />
+                <Code2 size={20} />
               </div>
-              <h3 className="feat-title">Collaborative Forge</h3>
+              <h3 className="feat-title">Algorithmic Playground</h3>
               <p className="feat-desc">
-                WS-based instant document sync. Work in pairs, coordinate sprint reviews, and pair program in shared code spaces with low-latency updates.
+                Practice coding in an isolated code compiler with support for Python, JavaScript, Java, C++, and Go. Run test cases and check runtime execution speeds.
               </p>
             </div>
 
@@ -189,9 +187,9 @@ export default function Landing() {
               <div className="feat-icon-box orange-box">
                 <Trophy size={20} />
               </div>
-              <h3 className="feat-title">Code Arena</h3>
+              <h3 className="feat-title">Multiplayer Code Arenas</h3>
               <p className="feat-desc">
-                Time-attack competitive coding challenges. Race against the clock, submit optimized algorithms, build streaks, and rise on the global leaderboards.
+                Join live speed-coding lobbies to solve challenges against competitors. Rack up points, maintain streaks, and climb global leaderboards.
               </p>
             </div>
 
@@ -199,9 +197,9 @@ export default function Landing() {
               <div className="feat-icon-box green-box">
                 <Brain size={20} />
               </div>
-              <h3 className="feat-title">The Sentinel</h3>
+              <h3 className="feat-title">AI Sentinel Assistant</h3>
               <p className="feat-desc">
-                An integrated AI copilot that reviews syntax, suggests complexity optimizations, and helps you refactor algorithms directly inside the editor.
+                Get instant complexity analysis (Big-O diagnostics), syntax repair suggestions, and conversational debugging assistance inside the editor.
               </p>
             </div>
 
@@ -209,19 +207,19 @@ export default function Landing() {
               <div className="feat-icon-box purple-box">
                 <BookOpen size={20} />
               </div>
-              <h3 className="feat-title">CodeVault Notes</h3>
+              <h3 className="feat-title">Note Vault & Drawing Deck</h3>
               <p className="feat-desc">
-                A personal knowledge base supporting markdown notes, Excalidraw whiteboards, inline code segments, and folder trees for structured revision sheets.
+                Maintain study sheets, write rich markdown documentation, and sketch system architectures using integrated Excalidraw whiteboards.
               </p>
             </div>
 
             <div className="feature-card">
               <div className="feat-icon-box red-box">
-                <Activity size={20} />
+                <Users size={20} />
               </div>
-              <h3 className="feat-title">Contribution Analytics</h3>
+              <h3 className="feat-title">Real-Time Collaboration</h3>
               <p className="feat-desc">
-                A daily contribution grid displaying historical XP gain levels, streak metrics, and module-specific level indices so you can visualize your progression.
+                Work together in shared workspaces. Features low-latency document synchronization, system whiteboard syncing, and built-in audio/video channels.
               </p>
             </div>
 
@@ -229,21 +227,21 @@ export default function Landing() {
               <div className="feat-icon-box gold-box">
                 <Shield size={20} />
               </div>
-              <h3 className="feat-title">Isolated Execution</h3>
+              <h3 className="feat-title">Secure Proctoring Suite</h3>
               <p className="feat-desc">
-                Run and compile submissions in isolated code sandboxes with execution timeouts and safety guidelines. Supports Python, Java, JS, and C++.
+                Host monitored exam lobbies with screen sharing, web camera feeds, automated tab-switching trackers, and dynamic event logging.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ══ NEW CONTENT: THE COMMAND DECK (MODULES) ══ */}
+      {/* ══ INTERACTIVE WORKSPACE (ECOSYSTEM) ══ */}
       <section className="section bg-alt" id="modules">
         <div className="section-inner">
           <div className="section-header">
             <span className="section-tag">Interactive Workspace</span>
-            <h2 className="section-heading">The BrightCode Ecosystem</h2>
+            <h2 className="section-heading">Built-in Developer Tools</h2>
             <p className="section-subtext">Powerful workflows built into a single, clean workspace deck.</p>
           </div>
 
@@ -252,21 +250,21 @@ export default function Landing() {
               <div className="module-info">
                 <div className="module-badge-box">
                   <Terminal size={18} />
-                  <span>Logic Lab (100-Level Campaign)</span>
+                  <span>Logic Lab Path</span>
                 </div>
-                <h3 className="module-title">A progressive path to code mastery</h3>
+                <h3 className="module-title">Structured learning campaigns</h3>
                 <p className="module-desc">
-                  Our custom curriculum consists of successive operational phases, ranging from basic control structures to advanced graph theory. Each step contains interactive quests to validate your syntactic and algorithmic expertise.
+                  Our curriculum consists of successive operational levels, ranging from basic control structures to advanced graph theory. Complete linear campaigns with immediate, automated feedback on every test case.
                 </p>
                 <ul className="module-bullets">
-                  <li><Check size={14} className="bullet-check" /> 10 progressive linear campaign phases</li>
+                  <li><Check size={14} className="bullet-check" /> 10+ progressive learning levels</li>
                   <li><Check size={14} className="bullet-check" /> Immediate test case execution feedback</li>
                   <li><Check size={14} className="bullet-check" /> Detailed algorithm breakdown analytics</li>
                 </ul>
               </div>
               <div className="module-visual">
                 <div className="mock-visual-box">
-                  <div className="box-header">Logic Lab Phase 2: Array Structures</div>
+                  <div className="box-header">Logic Lab: Array Structures</div>
                   <div className="box-progress">
                     <span className="prog-label">Level Completion: 78%</span>
                     <div className="prog-bar"><div className="prog-fill" style={{width: "78%"}} /></div>
@@ -285,11 +283,11 @@ export default function Landing() {
               <div className="module-info">
                 <div className="module-badge-box">
                   <GitBranch size={18} />
-                  <span>Warp Drive</span>
+                  <span>Warp Drive Snapshots</span>
                 </div>
-                <h3 className="module-title">Time-travel code snapshotting</h3>
+                <h3 className="module-title">Time-travel code timeline</h3>
                 <p className="module-desc">
-                  Never worry about breaking your solutions again. Warp Drive captures editor snapshots at milestones, giving you an interactive chronological commit timeline to rollback or view code diffs on the fly.
+                  Warp Drive dynamically captures code milestones as you edit. Roll back, compare code diffs side-by-side, or restore previous versions in one click without git overhead.
                 </p>
                 <ul className="module-bullets">
                   <li><Check size={14} className="bullet-check" /> Instant version checkpoints in one click</li>
@@ -299,7 +297,7 @@ export default function Landing() {
               </div>
               <div className="module-visual">
                 <div className="mock-visual-box warp-visual">
-                  <div className="box-header">Warp Drive Chronology</div>
+                  <div className="box-header">Warp Drive Checkpoints</div>
                   <div className="timeline-trail">
                     <div className="timeline-node solved">
                       <span className="time-lbl">09:12 PM</span>
@@ -326,10 +324,10 @@ export default function Landing() {
                 </div>
                 <h3 className="module-title">Contextual runtime optimization</h3>
                 <p className="module-desc">
-                  Sentinel reads your Monaco editor buffer to diagnose code execution runtime errors, identify potential complexity traps, and offer custom refactoring code suggestions in seconds.
+                  Identify nested loop performance bottlenecks, resolve runtime compiler crashes, and apply recommended optimizations immediately to make your code run faster.
                 </p>
                 <ul className="module-bullets">
-                  <li><Check size={14} className="bullet-check" /> Interactive inline code syntax repairs</li>
+                  <li><Check size={14} className="bullet-check" /> AI-powered syntax repairs</li>
                   <li><Check size={14} className="bullet-check" /> Time/Space Big-O complexity diagnostics</li>
                   <li><Check size={14} className="bullet-check" /> Dynamic prompt customization options</li>
                 </ul>
@@ -351,7 +349,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ══ NEW CONTENT: HOW IT WORKS ══ */}
+      {/* ══ HOW IT WORKS ══ */}
       <section className="section" id="workflow">
         <div className="section-inner">
           <div className="section-header">
@@ -365,21 +363,21 @@ export default function Landing() {
               <span className="step-num">1</span>
               <h4 className="step-title">Select your quest</h4>
               <p className="step-desc">
-                Choose from over a thousand algorithmic problems, join competitive arcade arenas, or launch a pair programming sandbox session.
+                Choose from algorithmic problems, join speed-coding arenas, or launch collaborative rooms.
               </p>
             </div>
             <div className="step-card">
               <span className="step-num">2</span>
               <h4 className="step-title">Write and debug</h4>
               <p className="step-desc">
-                Code with live sync, format rich text notes, and use Excalidraw blocks to design complex systems in our sandbox deck.
+                Write solutions, get suggestions from Sentinel AI, and roll back code using Warp Drive checkpoints.
               </p>
             </div>
             <div className="step-card">
               <span className="step-num">3</span>
-              <h4 className="step-title">Climb the leaderboard</h4>
+              <h4 className="step-title">Climb the ranks</h4>
               <p className="step-desc">
-                Pass test cases to claim XP, build consistent daily activity streaks, and collaborate to elevate your Faction's global rank.
+                Pass test cases to earn XP, maintain daily streaks, and lead your faction to the top.
               </p>
             </div>
           </div>
@@ -390,66 +388,65 @@ export default function Landing() {
       <section className="section bg-alt" id="arena">
         <div className="section-inner">
           <div className="arena-grid">
-          <div className="arena-left">
-            <span className="section-tag">Competitive</span>
-            <h2 className="section-heading">Rise on the Leaderboard</h2>
-            <p className="section-subtext" style={{maxWidth: "100%"}}>
-              Build your faction, challenge other syndicates, and compete in scheduled coding battles. Rack up XP by solving problems and secure your spot in the Hall of Fame podium.
-            </p>
-            <div className="arena-features">
-              <div className="arena-feat-item">
-                <div className="item-dot" />
-                <span>Earn XP and rank up from Apprentice to Grandmaster.</span>
+            <div className="arena-left">
+              <span className="section-tag">Competitive</span>
+              <h2 className="section-heading">Rise on the Leaderboard</h2>
+              <p className="section-subtext" style={{maxWidth: "100%"}}>
+                Track your progress, earn experience points, and compare ranks against other software engineers on the platform.
+              </p>
+              <div className="arena-features">
+                <div className="arena-feat-item">
+                  <div className="item-dot" />
+                  <span>Earn XP and rank up from Apprentice to Grandmaster.</span>
+                </div>
+                <div className="arena-feat-item">
+                  <div className="item-dot" />
+                  <span>Join Factions and compete in Faction Wars.</span>
+                </div>
+                <div className="arena-feat-item">
+                  <div className="item-dot" />
+                  <span>Gain multipliers for consistent daily streaks.</span>
+                </div>
               </div>
-              <div className="arena-feat-item">
-                <div className="item-dot" />
-                <span>Join Factions (Alpha, Omega, Sigma) and compete in Faction Wars.</span>
-              </div>
-              <div className="arena-feat-item">
-                <div className="item-dot" />
-                <span>Gain performance multipliers for consistent daily streaks.</span>
-              </div>
+              <button className="btn-primary" style={{marginTop: "24px"}} onClick={() => handleAuth('register')}>
+                Join a Faction
+              </button>
             </div>
-            <button className="btn-primary" style={{marginTop: "24px"}} onClick={() => handleAuth('register')}>
-              Join a Faction
-              <ArrowRight size={16} />
-            </button>
-          </div>
 
-          <div className="arena-right">
-            <div className="leaderboard-card">
-              <div className="card-header">
-                <Trophy size={16} className="trophy-gold" />
-                <span>Hall of Fame - Top Performers</span>
-              </div>
-              <div className="leaderboard-list">
-                {lbLoading ? (
-                  <div className="leader-row" style={{justifyContent: "center", color: "var(--text-muted)", fontSize: "0.85rem", padding: "20px"}}>
-                    Loading operatives...
-                  </div>
-                ) : leaderboard.length > 0 ? (
-                  leaderboard.map((user, idx) => {
-                    const colors = ["#ef4444", "#3b82f6", "#10b981", "#a78bfa", "#f59e0b"];
-                    const pillColor = colors[idx % colors.length];
-                    return (
-                      <div className="leader-row" key={user.username || idx}>
-                        <span className="leader-rank">{idx + 1}</span>
-                        <span className="leader-name">{user.username}</span>
-                        <span className="leader-faction" style={{borderColor: pillColor, color: pillColor}}>
-                          {user.level || "Initiate"}
-                        </span>
-                        <span className="leader-xp">{(user.xp || 0).toLocaleString()} XP</span>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="leader-row" style={{justifyContent: "center", color: "var(--text-muted)", fontSize: "0.85rem", padding: "20px"}}>
-                    No operatives ranked yet.
-                  </div>
-                )}
+            <div className="arena-right">
+              <div className="leaderboard-card">
+                <div className="card-header">
+                  <Trophy size={16} className="trophy-gold" />
+                  <span>Hall of Fame - Top Performers</span>
+                </div>
+                <div className="leaderboard-list">
+                  {lbLoading ? (
+                    <div className="leader-row" style={{justifyContent: "center", color: "var(--text-muted)", fontSize: "0.85rem", padding: "20px"}}>
+                      Loading operatives...
+                    </div>
+                  ) : leaderboard.length > 0 ? (
+                    leaderboard.map((user, idx) => {
+                      const colors = ["#ef4444", "#3b82f6", "#10b981", "#a78bfa", "#f59e0b"];
+                      const pillColor = colors[idx % colors.length];
+                      return (
+                        <div className="leader-row" key={user.username || idx}>
+                          <span className="leader-rank">{idx + 1}</span>
+                          <span className="leader-name">{user.username}</span>
+                          <span className="leader-faction" style={{borderColor: pillColor, color: pillColor}}>
+                            {user.level || "Initiate"}
+                          </span>
+                          <span className="leader-xp">{(user.xp || 0).toLocaleString()} XP</span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="leader-row" style={{justifyContent: "center", color: "var(--text-muted)", fontSize: "0.85rem", padding: "20px"}}>
+                      No operatives ranked yet.
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
           </div>        {/* end arena-grid */}
         </div>          {/* end section-inner */}
       </section>
