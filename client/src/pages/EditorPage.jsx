@@ -838,24 +838,50 @@ const EditorPage = () => {
 
     // â”€â”€ Core Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    const handleCodeChange = (value) => {
+    // Optimization: Debounce code changes to prevent lag in collaborative mode
+    const debouncedCodeEmitRef = useRef(null);
 
+    const handleCodeChange = (value) => {
         if (!activeFile || !socketRef.current) return;
 
-        setFiles(prev => ({ ...prev, [activeFile]: { ...prev[activeFile], content: value } }));
+        // 1. Update local state immediately for zero-lag typing
+        setFiles(prev => ({ 
+            ...prev, 
+            [activeFile]: { ...prev[activeFile], content: value } 
+        }));
 
-        socketRef.current.emit('code-change', { roomId, fileName: activeFile, content: value });
+        // 2. Debounce the socket emission to prevent flooding the server
+        if (debouncedCodeEmitRef.current) {
+            clearTimeout(debouncedCodeEmitRef.current);
+        }
 
+        debouncedCodeEmitRef.current = setTimeout(() => {
+            socketRef.current.emit('code-change', { 
+                roomId, 
+                fileName: activeFile, 
+                content: value 
+            });
+        }, 150); // 150ms debounce
     };
+
+    // Optimization: Debounce cursor changes
+    const debouncedCursorEmitRef = useRef(null);
 
     const handleCursorChange = (cursorPosition) => {
         if (!activeFile || !socketRef.current) return;
-        socketRef.current.emit('cursor-change', {
-            roomId,
-            fileName: activeFile,
-            cursor: cursorPosition,
-            username: user?.username
-        });
+
+        if (debouncedCursorEmitRef.current) {
+            clearTimeout(debouncedCursorEmitRef.current);
+        }
+
+        debouncedCursorEmitRef.current = setTimeout(() => {
+            socketRef.current.emit('cursor-change', {
+                roomId,
+                fileName: activeFile,
+                cursor: cursorPosition,
+                username: user?.username
+            });
+        }, 100); // 100ms debounce
     };
 
 
