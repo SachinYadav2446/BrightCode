@@ -1196,7 +1196,7 @@ const Settings = () => {
                         <h3>Pro Developer</h3>
                         <div className="pricing-price">
                           <span className="currency">₹</span>
-                          <span className="amount">999</span>
+                          <span className="amount">499</span>
                           <span className="period">/mo</span>
                         </div>
                       </div>
@@ -1223,7 +1223,7 @@ const Settings = () => {
                         <h3>Enterprise Elite</h3>
                         <div className="pricing-price">
                           <span className="currency">₹</span>
-                          <span className="amount">2999</span>
+                          <span className="amount">1499</span>
                           <span className="period">/mo</span>
                         </div>
                       </div>

@@ -1661,8 +1661,8 @@ app.post('/api/subscription/create-order', authenticateToken, async (req, res) =
         return res.status(400).json({ error: 'Invalid plan selected' });
     }
 
-    // Amount in INR Paisa (Pro: ₹999 -> 99900, Elite: ₹2999 -> 299900)
-    const amount = plan === 'pro' ? 99900 : 299900;
+    // Amount in INR Paisa (Pro: ₹499 -> 49900, Elite: ₹1499 -> 149900)
+    const amount = plan === 'pro' ? 49900 : 149900;
     const isSandbox = !process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID.startsWith('rzp_test_dummy');
 
     try {
