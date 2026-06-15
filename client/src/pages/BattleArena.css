@@ -431,6 +431,43 @@
     box-shadow: none;
 }
 
+/* Coming Soon Page */
+.coming-soon-page {
+    align-items: center;
+    justify-content: center;
+}
+
+.coming-soon-container {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.coming-soon-container svg {
+    color: var(--arena-red);
+    filter: drop-shadow(0 0 12px rgba(var(--primary-rgb), 0.6));
+}
+
+.coming-soon-container h1 {
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--arena-cream);
+    margin: 0;
+    letter-spacing: -0.03em;
+}
+
+.coming-soon-container p {
+    font-size: 1.1rem;
+    color: var(--arena-text-muted);
+    max-width: 400px;
+    line-height: 1.6;
+    margin: 0;
+}
+
 /* ══════════════════════════════════════════════════════
    RESPONSIVE
    ══════════════════════════════════════════════════════ */

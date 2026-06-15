@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Swords, Trophy, Users, Zap, ArrowLeft, Settings } from 'lucide-react';
+import { Swords, Trophy, Users, Zap, ArrowLeft, Settings, Lock } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import './BattleArena.css';
 
 const BattleArena = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [selectedContest, setSelectedContest] = useState('code-wars');
 
   const contests = [
@@ -95,6 +97,28 @@ const BattleArena = () => {
       navigate(selectedContestData.route);
     }
   };
+
+  // Check if user is admin
+  const isAdmin = user?.username === 'admin';
+
+  if (!isAdmin) {
+    return (
+      <div className="battle-arena-page coming-soon-page">
+        <div className="arena-bg">
+          <div className="arena-grid"></div>
+          <div className="arena-glow"></div>
+        </div>
+        <div className="coming-soon-container">
+          <Lock size={64} />
+          <h1>Battle Arena</h1>
+          <p>Coming soon! Stay tuned for epic coding battles!</p>
+          <button className="enter-arena-btn" onClick={() => navigate('/')}>
+            Go Home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="battle-arena-page">
