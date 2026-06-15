@@ -1321,14 +1321,6 @@
   .fs-section { padding: 64px 20px; }
 }
 
-/* Remove old features grid styles */
-.features-section,
-.features-container,
-.features-header,
-.features-grid,
-.feature-card,
-.feature-icon { display: none !important; }
-
 /* ============================
    STATS BAR — feature 4
    ============================ */

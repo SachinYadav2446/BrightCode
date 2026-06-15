@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import Chatbot from '../components/Chatbot';
 import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 import './Workspace.css';
 
 const generateWorkspaceId = () => {
@@ -381,6 +382,14 @@ const Workspace = () => {
 
   const handleCreateWorkspace = async () => {
     if (!workspaceName.trim()) return;
+
+    const sub = user?.subscription || 'basic';
+    const limit = sub === 'elite' ? 99999 : (sub === 'pro' ? 50 : 10);
+    if (workspaceHistory.length >= limit) {
+      toast.error(`Workspace limit (${limit}) reached under the ${sub === 'basic' ? 'Basic (Free)' : 'Pro'} plan. Please upgrade to create more workspaces.`);
+      return;
+    }
+
     const workspaceId = generateWorkspaceId();
     const currentUser = user?.username || 'User-' + Math.random().toString(36).substr(2, 4);
     try {
@@ -389,7 +398,10 @@ const Workspace = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ workspaceId, name: workspaceName, admin: currentUser }),
       });
-      if (!response.ok) throw new Error((await response.json()).error || 'Failed to create workspace');
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(errBody.error || `Server error (${response.status})`);
+      }
       const data = await response.json();
       localStorage.setItem('currentWorkspace', workspaceId);
       localStorage.setItem(`workspace_${workspaceId}_isAdmin`, 'true');
@@ -397,7 +409,10 @@ const Workspace = () => {
       setCreatedWorkspace({ id: workspaceId, name: workspaceName, ...data.workspace });
     } catch (error) {
       console.error('Error creating workspace:', error);
-      alert('Failed to create workspace: ' + error.message);
+      const msg = error.message === 'Failed to fetch'
+        ? 'Cannot reach the server. Make sure the backend is running on port 5051.'
+        : error.message;
+      toast.error('Failed to create workspace: ' + msg);
     }
   };
 
@@ -788,11 +803,38 @@ const Workspace = () => {
               <>
                 <h3 className="modal-title">Create New Workspace</h3>
                 <p className="modal-desc">Give your workspace a name to get started</p>
-                <input type="text" className="modal-input" placeholder="My Awesome Project"
-                  value={workspaceName} onChange={(e) => setWorkspaceName(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleCreateWorkspace()} autoFocus />
-                <button className="modal-button primary" onClick={handleCreateWorkspace} disabled={!workspaceName.trim()} type="button">
-                  Create Workspace
+                {(() => {
+                  const sub = user?.subscription || 'basic';
+                  const limit = sub === 'elite' ? 99999 : (sub === 'pro' ? 50 : 10);
+                  const isLimitReached = workspaceHistory.length >= limit;
+                  
+                  if (isLimitReached) {
+                    return (
+                      <div className="limit-warning-banner" style={{
+                        padding: '12px',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                        borderRadius: '8px',
+                        color: '#ef4444',
+                        fontSize: '0.8rem',
+                        marginBottom: '16px',
+                        textAlign: 'center',
+                        lineHeight: '1.4'
+                      }}>
+                        Workspace deployment limit ({limit}) reached under the {sub === 'basic' ? 'Basic (Free)' : 'Pro'} plan. Upgrade clearance in Settings to deploy more workspaces.
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <input type="text" className="modal-input" placeholder="My Awesome Project"
+                      value={workspaceName} onChange={(e) => setWorkspaceName(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleCreateWorkspace()} autoFocus />
+                  );
+                })()}
+                <button className="modal-button primary" onClick={handleCreateWorkspace} 
+                  disabled={!workspaceName.trim() || (workspaceHistory.length >= (user?.subscription === 'elite' ? 99999 : (user?.subscription === 'pro' ? 50 : 10)))} type="button">
+                  {(workspaceHistory.length >= (user?.subscription === 'elite' ? 99999 : (user?.subscription === 'pro' ? 50 : 10))) ? 'Limit Reached' : 'Create Workspace'}
                 </button>
               </>
             ) : (
