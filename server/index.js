@@ -370,6 +370,7 @@ logger.info("[MAIL] SMTP_USER present:", { present: !!process.env.SMTP_USER });
 let transporter = null;
 const smtpUser = process.env.SMTP_USER || '';
 const smtpPass = process.env.SMTP_PASS || '';
+const smtpFromEmail = process.env.SMTP_FROM_EMAIL || smtpUser;
 
 if (smtpUser && smtpPass) {
     logger.info(`[MAIL] Attempting connection for: ${smtpUser}`);
@@ -421,8 +422,8 @@ app.post('/support', async (req, res) => {
         }
 
         const mailOptions = {
-            from: '"BrightCode Support" <codebrightlim@gmail.com>',
-            to: 'codebrightlim@gmail.com',
+            from: `"BrightCode Support" <${smtpFromEmail}>`,
+            to: smtpFromEmail,
             subject: `[SUPPORT INQUIRY] ${subject || 'New Message'}`,
             html: `
                 <div style="font-family: 'Poppins', sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb; background: #000; color: #fff;">
@@ -522,7 +523,7 @@ app.post('/send-otp', async (req, res) => {
             }
 
             const mailOptions = {
-                from: '"CodeBright" <codebrightlim@gmail.com>',
+                from: `"CodeBright" <${smtpFromEmail}>`,
                 to: email,
                 subject: 'Verify your CodeBright Account',
                 html: `
