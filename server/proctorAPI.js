@@ -93,6 +93,7 @@ const getUserSubscription = async (userId) => {
             try {
                 const data = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
                 const u = data.users?.find(x => x.id === userId);
+                if (u?.username === 'admin') return 'elite';
                 return u?.subscription || 'basic';
             } catch (e) {
                 logger.error('[PROCTOR] Failed to parse users_db.json', e);
@@ -101,7 +102,8 @@ const getUserSubscription = async (userId) => {
         return 'basic';
     } else {
         try {
-            const rows = await sql`SELECT subscription FROM users WHERE id = ${userId}`;
+            const rows = await sql`SELECT username, subscription FROM users WHERE id = ${userId}`;
+            if (rows[0]?.username === 'admin') return 'elite';
             return rows[0]?.subscription || 'basic';
         } catch (e) {
             logger.error('[PROCTOR] Failed to query users subscription', e);

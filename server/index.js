@@ -136,7 +136,11 @@ const normalizeMemoryUser = (user) => {
     if (!Array.isArray(user.stack)) user.stack = [];
     if (!user.created_at && user.joinedAt) user.created_at = user.joinedAt;
     if (!user.joinedAt && user.created_at) user.joinedAt = user.created_at;
-    if (user.subscription === undefined) user.subscription = 'basic';
+    if (user.username === 'admin') {
+        user.subscription = 'elite';
+    } else if (user.subscription === undefined) {
+        user.subscription = 'basic';
+    }
     return user;
 };
 
@@ -1892,10 +1896,16 @@ app.get('/leaderboard', async (req, res) => {
 const getUserSubscription = async (userId) => {
     if (useMemoryDB) {
         const u = memoryStore.users.find(x => x.id === userId);
+        if (u?.username === 'admin') return 'elite';
         return u?.subscription || 'basic';
     }
-    const { rows } = await pool.query('SELECT subscription FROM users WHERE id = $1', [userId]);
-    return rows[0]?.subscription || 'basic';
+    try {
+        const { rows } = await pool.query('SELECT username, subscription FROM users WHERE id = $1', [userId]);
+        if (rows[0]?.username === 'admin') return 'elite';
+        return rows[0]?.subscription || 'basic';
+    } catch (e) {
+        return 'basic';
+    }
 };
 
 const getNoteCountForUser = async (userId) => {
@@ -2888,6 +2898,7 @@ app.use('/api/git', createGitRouter({ rooms, io, pool, useMemoryDB, authenticate
 
 const getUserSubscriptionByUsername = async (username) => {
     if (!username) return 'basic';
+    if (username.toLowerCase() === 'admin') return 'elite';
     if (useMemoryDB) {
         const u = memoryStore.users.find(x => x.username?.toLowerCase() === username.toLowerCase());
         return u?.subscription || 'basic';

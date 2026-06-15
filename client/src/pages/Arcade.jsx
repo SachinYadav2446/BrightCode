@@ -709,11 +709,13 @@ const Arcade = () => {
     };
 
     const isLevelLocked = (levelIdx) => {
+        if (user?.username === 'admin') return false;
         if (levelIdx === 0) return false;
         return !isLevelSolved(levelIdx - 1);
     };
 
     const isPhaseLocked = (phaseIdx) => {
+        if (user?.username === 'admin') return false;
         if (phaseIdx === 0) return false;
         let phases;
         if (activeGame === 'java-master') phases = LANGUAGE_PHASES.java;
