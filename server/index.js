@@ -117,7 +117,6 @@ app.use('/api/contribute', contributeAPI);
 
 // Memory Fallback (for when PostgreSQL is offline)
 let memoryStore = { users: [] };
-let useMemoryDB = false;
 
 // In-memory CodeVault store (used when PostgreSQL is unavailable)
 let notesMemoryStore = [];
