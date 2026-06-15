@@ -1062,10 +1062,10 @@ app.post('/api/auth/complete-social-signup', async (req, res) => {
 // ── Google OAuth Routes ──
 app.get('/api/auth/google', (req, res) => {
     if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-        return res.send(getMockOAuthPage('google', `${BACKEND_URL}/api/auth/google/callback`));
+        return res.send(getMockOAuthPage('google', `${process.env.BACKEND_URL || BACKEND_URL}/api/auth/google/callback`));
     }
     const scopes = 'email profile';
-    const redirectUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${BACKEND_URL}/api/auth/google/callback&response_type=code&scope=${encodeURIComponent(scopes)}`;
+    const redirectUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${process.env.BACKEND_URL || BACKEND_URL}/api/auth/google/callback&response_type=code&scope=${encodeURIComponent(scopes)}`;
     res.redirect(redirectUrl);
 });
 
@@ -1086,7 +1086,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
             code,
             client_id: GOOGLE_CLIENT_ID,
             client_secret: GOOGLE_CLIENT_SECRET,
-            redirect_uri: `${BACKEND_URL}/api/auth/google/callback`,
+            redirect_uri: `${process.env.BACKEND_URL || BACKEND_URL}/api/auth/google/callback`,
             grant_type: 'authorization_code'
         });
         
@@ -1111,9 +1111,9 @@ app.get('/api/auth/google/callback', async (req, res) => {
 // ── GitHub OAuth Routes ──
 app.get('/api/auth/github', (req, res) => {
     if (!GITHUB_OAUTH_CLIENT_ID || !GITHUB_OAUTH_CLIENT_SECRET) {
-        return res.send(getMockOAuthPage('github', `${BACKEND_URL}/api/auth/github/callback`));
+        return res.send(getMockOAuthPage('github', `${process.env.BACKEND_URL || BACKEND_URL}/api/auth/github/callback`));
     }
-    const redirectUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_OAUTH_CLIENT_ID}&redirect_uri=${BACKEND_URL}/api/auth/github/callback&scope=user:email`;
+    const redirectUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_OAUTH_CLIENT_ID}&redirect_uri=${process.env.BACKEND_URL || BACKEND_URL}/api/auth/github/callback&scope=user:email`;
     res.redirect(redirectUrl);
 });
 
@@ -1134,7 +1134,7 @@ app.get('/api/auth/github/callback', async (req, res) => {
             client_id: GITHUB_OAUTH_CLIENT_ID,
             client_secret: GITHUB_OAUTH_CLIENT_SECRET,
             code,
-            redirect_uri: `${BACKEND_URL}/api/auth/github/callback`
+            redirect_uri: `${process.env.BACKEND_URL || BACKEND_URL}/api/auth/github/callback`
         }, {
             headers: { Accept: 'application/json' }
         });
