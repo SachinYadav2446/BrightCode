@@ -1694,8 +1694,16 @@ app.post('/api/subscription/create-order', authenticateToken, async (req, res) =
             sandbox: false
         });
     } catch (err) {
-        logger.error('[BILLING] Order Creation Error:', err);
-        res.status(500).json({ error: 'Failed to initiate checkout order' });
+        logger.error('[BILLING] Order Creation Error Details:', {
+            message: err.message,
+            statusCode: err.statusCode,
+            description: err.error?.description,
+            code: err.error?.code
+        });
+        res.status(500).json({ 
+            error: 'Failed to initiate checkout order', 
+            details: err.error?.description || err.message 
+        });
     }
 });
 
