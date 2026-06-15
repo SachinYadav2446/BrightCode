@@ -260,6 +260,45 @@
     border-radius: 4px;
 }
 
+/* ── Type tag pills (CODING / MCQ / MIXED) ── */
+.lib-module-badges-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.lib-type-tag {
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.lib-type-tag.tag-coding {
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+}
+
+.lib-type-tag.tag-mcq {
+    background: rgba(245, 158, 11, 0.10);
+    border: 1px solid rgba(245, 158, 11, 0.28);
+    color: #fbbf24;
+}
+
+.lib-type-tag.tag-mixed {
+    background: rgba(167, 139, 250, 0.10);
+    border: 1px solid rgba(167, 139, 250, 0.28);
+    color: #a78bfa;
+}
+
+
+
 .lib-module-title {
     font-size: 0.95rem;
     font-weight: 600;

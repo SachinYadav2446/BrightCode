@@ -465,6 +465,15 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                                     return 0;
                                 })();
                                 const pct = Math.round((solvedCount / game.total) * 100);
+
+                                // Tag config
+                                const typeConfig = {
+                                    coding: { label: 'CODING', cls: 'tag-coding' },
+                                    mcq:    { label: 'MCQ',    cls: 'tag-mcq'    },
+                                    mixed:  { label: 'MIXED',  cls: 'tag-mixed'  },
+                                };
+                                const tag = typeConfig[game.type];
+
                                 return (
                                     <motion.div
                                         key={game.id}
@@ -479,7 +488,10 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                                             <div className="lib-module-icon">
                                                 {React.cloneElement(game.icon, { size: 32, color: 'var(--primary)' })}
                                             </div>
-                                            <div className="lib-module-badge">{game.subtitle}</div>
+                                            <div className="lib-module-badges-row">
+                                                <div className="lib-module-badge">{game.subtitle}</div>
+                                                {tag && <div className={`lib-type-tag ${tag.cls}`}>{tag.label}</div>}
+                                            </div>
                                         </div>
                                         <h3 className="lib-module-title">{game.title}</h3>
                                         <p className="lib-module-desc">{game.desc}</p>
@@ -600,9 +612,9 @@ const Arcade = () => {
             name: 'Frontend Development',
             description: 'Master the art of building beautiful, responsive user interfaces and logical core.',
             games: [
-                { id: 'css-odyssey', title: 'CSS Forge', subtitle: 'Advanced Layouts', desc: 'Master layouts, grids, and complex animations in a high-fidelity simulator.', icon: <Code2 />, progressKey: 'highest_css_odyssey_level', total: CSS_LEVELS.length },
-                { id: 'logic-lab', title: 'Logic Forge', subtitle: 'Logic Systems', desc: 'Conquer 100 levels of JavaScript puzzles, from control flow to advanced patterns.', icon: <Zap />, progressKey: 'highest_logic_lab_level', total: LOGIC_LEVELS.length },
-                { id: 'react-quest', title: 'React Forge', subtitle: 'Architecture Lab', desc: 'Theoretical MCQ challenges designed to push your React knowledge to its limits.', icon: <RefreshCw />, progressKey: 'highest_react_quest_level', total: REACT_LEVELS.length }
+                { id: 'css-odyssey', title: 'CSS Forge', subtitle: 'Advanced Layouts', type: 'coding', desc: 'Master layouts, grids, and complex animations in a high-fidelity simulator.', icon: <Code2 />, progressKey: 'highest_css_odyssey_level', total: CSS_LEVELS.length },
+                { id: 'logic-lab', title: 'Logic Forge', subtitle: 'Logic Systems', type: 'coding', desc: 'Conquer 100 levels of JavaScript puzzles, from control flow to advanced patterns.', icon: <Zap />, progressKey: 'highest_logic_lab_level', total: LOGIC_LEVELS.length },
+                { id: 'react-quest', title: 'React Forge', subtitle: 'Architecture Lab', type: 'mcq', desc: 'Theoretical MCQ challenges designed to push your React knowledge to its limits.', icon: <RefreshCw />, progressKey: 'highest_react_quest_level', total: REACT_LEVELS.length }
             ]
         },
         { 
@@ -615,7 +627,12 @@ const Arcade = () => {
             id: 'language',
             name: 'Language Fundamentals',
             description: 'Master core programming language concepts and syntax.',
-            games: []
+            games: [
+                { id: 'java-master',   title: 'Java Mastery',   subtitle: '10 Modules · 400 Levels', type: 'mixed', desc: 'From variables to OOP, Collections and File I/O — 400 levels across 10 structured modules.', icon: <Code2 />, progressKey: 'highest_java_master_level',   total: JAVA_LEVELS.length   },
+                { id: 'cpp-master',    title: 'C++ Mastery',    subtitle: '4 Phases · 100 Levels',  type: 'coding', desc: 'Pointers, memory management, STL, templates — master C++ from basics to advanced.', icon: <Zap />,   progressKey: 'highest_cpp_master_level',    total: CPP_LEVELS.length    },
+                { id: 'python-master', title: 'Python Mastery', subtitle: '4 Phases · 100 Levels',  type: 'coding', desc: 'Data structures, comprehensions, decorators, generators — Pythonic excellence.',       icon: <Brain />, progressKey: 'highest_python_master_level', total: PYTHON_LEVELS.length },
+                { id: 'go-master',     title: 'Go Mastery',     subtitle: '4 Phases · 100 Levels',  type: 'coding', desc: 'Goroutines, channels, concurrency patterns — master Go for high-performance backends.', icon: <Activity />, progressKey: 'highest_go_master_level', total: GO_LEVELS.length }
+            ]
         },
         {
             id: 'curriculum',
