@@ -1767,16 +1767,16 @@ const EditorPage = () => {
             }
         }));
 
-        // Adding tracks triggers onnegotiationneeded → offer is sent automatically
-        const tracks = localStreamRef.current.getTracks();
-        // Sort tracks: audio first, then video
-        const sortedTracks = [
-            ...tracks.filter(t => t.kind === 'audio'),
-            ...tracks.filter(t => t.kind === 'video')
-        ];
-        sortedTracks.forEach(track => {
-            pc.addTrack(track, localStreamRef.current);
-        });
+        // Add transceivers explicitly to ensure track order: audio first, then video
+        const audioTrack = localStreamRef.current.getAudioTracks()[0];
+        const videoTrack = localStreamRef.current.getVideoTracks()[0];
+
+        if (audioTrack) {
+            pc.addTransceiver(audioTrack, { direction: 'sendrecv', streams: [localStreamRef.current] });
+        }
+        if (videoTrack) {
+            pc.addTransceiver(videoTrack, { direction: 'sendrecv', streams: [localStreamRef.current] });
+        }
     };
 
     // Handle incoming offer from a peer
@@ -1818,17 +1818,17 @@ const EditorPage = () => {
                     isVideoOn: false 
                 }
             }));
-            // Only add tracks for brand-new connections.
-            // For renegotiation (isNewConnection=false), tracks are already in the PC.
-            const answerTracks = stream.getTracks();
-            // Sort tracks: audio first, then video
-            const sortedAnswerTracks = [
-                ...answerTracks.filter(t => t.kind === 'audio'),
-                ...answerTracks.filter(t => t.kind === 'video')
-            ];
-            sortedAnswerTracks.forEach(track => {
-                pc.addTrack(track, stream);
-            });
+            // Only add transceivers for brand-new connections.
+            // For renegotiation (isNewConnection=false), transceivers are already in the PC.
+            const answerAudioTrack = stream.getAudioTracks()[0];
+            const answerVideoTrack = stream.getVideoTracks()[0];
+
+            if (answerAudioTrack) {
+                pc.addTransceiver(answerAudioTrack, { direction: 'sendrecv', streams: [stream] });
+            }
+            if (answerVideoTrack) {
+                pc.addTransceiver(answerVideoTrack, { direction: 'sendrecv', streams: [stream] });
+            }
         }
 
         try {
