@@ -696,6 +696,10 @@ select.cp-input option { background: #1a1a1e; }
 .cp-approve-btn:hover { background: rgba(74,222,128,0.2); box-shadow: 0 0 16px rgba(74,222,128,0.15); }
 
 /* ── Responsive ── */
+/* For big screens (1280px and up) */
+@media (min-width: 1280px) {
+  .cp-wrapper { max-width: 1400px; margin: 0 auto; }
+}
 @media (max-width: 900px) {
   .cp-hero-pills { display: none; }
   .cp-hero { padding: 48px 24px 56px; }

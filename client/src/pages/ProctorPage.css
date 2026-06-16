@@ -1289,6 +1289,10 @@
 /* ──────────────────────────────────────────
    RESPONSIVE
 ────────────────────────────────────────── */
+/* For big screens (1280px and up) */
+@media (min-width: 1280px) {
+  .pp-wrapper { max-width: 1400px; margin: 0 auto; }
+}
 @media (max-width: 1024px) {
   .pp-hero-inner {
     grid-template-columns: 1fr;

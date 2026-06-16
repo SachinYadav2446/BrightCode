@@ -2440,6 +2440,11 @@
     transform: translateY(0);
 }
 
+/* For big screens (1280px and up) */
+@media (min-width: 1280px) {
+    .editor-wrapper { max-width: 1400px; margin: 0 auto; }
+}
+
 @media (max-width: 640px) {
     .end-session-modal {
         padding: 28px 20px;

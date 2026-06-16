@@ -1229,6 +1229,13 @@
 /* ════════════════════════════════
    RESPONSIVE
 ════════════════════════════════ */
+
+/* For big screens (1280px and up) */
+@media (min-width: 1280px) {
+  .section { padding: 100px 80px; }
+  .hero-inner { max-width: 1280px; }
+}
+
 @media (max-width: 1024px) {
   .hero-inner    { grid-template-columns: 1fr; gap: 48px; text-align: center; }
   .hero-badge    { margin: 0 auto; }

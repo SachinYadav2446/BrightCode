@@ -647,3 +647,53 @@
     letter-spacing: 2px;
 }
 
+/* ═════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════ */
+
+/* For big screens (1280px and up) */
+@media (min-width: 1280px) {
+    .up-container {
+        padding: 40px 60px;
+    }
+    
+    .up-hero {
+        padding: 32px;
+        gap: 24px;
+    }
+    
+    .up-avatar-hex {
+        width: 100px;
+        height: 110px;
+    }
+    
+    .up-username {
+        font-size: 2.5rem;
+    }
+    
+    .up-stats-row {
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
+    
+    .up-stat-card {
+        padding: 16px 12px;
+    }
+    
+    .up-stat-value {
+        font-size: 1.8rem;
+    }
+    
+    .up-action-btn {
+        padding: 14px 28px;
+        font-size: 0.9rem;
+        clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+    }
+}
+
+/* Tablet (768px - 1279px) */
+@media (max-width: 1279px) and (min-width: 768px) {
+    .up-container {
+        padding: 32px 40px;
+    }
+}
+

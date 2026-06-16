@@ -747,6 +747,11 @@
    RESPONSIVE
    ══════════════════════════════════════════════════ */
 
+/* For big screens (1280px and up) */
+@media (min-width: 1280px) {
+    .fp-wrapper { max-width: 1400px; margin: 0 auto; }
+}
+
 @media (max-width: 1100px) {
     .fp-perks-grid  { grid-template-columns: 1.4fr 1fr 1fr; }
     .fp-perks-row2  { grid-template-columns: 1fr 1fr 1.4fr; }

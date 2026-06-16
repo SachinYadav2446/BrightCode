@@ -579,6 +579,11 @@
     align-items: start;
 }
 
+/* For big screens (1280px and up) */
+@media (min-width: 1280px) {
+    .phase-cards-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+}
+
 @media (max-width: 1024px) {
     .phase-cards-grid {
         grid-template-columns: repeat(2, 1fr);

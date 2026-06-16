@@ -2211,6 +2211,43 @@
 }
 
 /* ── RESPONSIVE ── */
+
+/* For big screens (1280px and up) */
+@media (min-width: 1280px) {
+  .home-wrapper {
+    padding-top: 80px;
+  }
+  
+  .profile-header-black {
+    padding: 60px 80px 100px 80px;
+  }
+  
+  .welcome-banner-text {
+    font-size: 2.5rem;
+    margin-bottom: 40px;
+  }
+  
+  .dashboard-content-area {
+    padding: 40px 80px;
+  }
+  
+  .progression-fullwidth-inner {
+    padding: 0 80px;
+  }
+  
+  .achievements-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .about-section-inner {
+    padding: 0 80px;
+  }
+  
+  .about-main-title {
+    font-size: 2.5rem;
+  }
+}
+
 @media (max-width: 1200px) {
   .achievements-grid {
     grid-template-columns: repeat(3, 1fr);

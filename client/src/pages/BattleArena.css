@@ -471,6 +471,10 @@
 /* ══════════════════════════════════════════════════════
    RESPONSIVE
    ══════════════════════════════════════════════════════ */
+/* For big screens (1280px and up) */
+@media (min-width: 1280px) {
+    .contest-layout { max-width: 1400px; margin: 0 auto; }
+}
 @media (max-width: 1024px) {
     .contest-layout {
         grid-template-columns: 1fr;

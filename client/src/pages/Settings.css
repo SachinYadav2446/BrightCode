@@ -544,6 +544,10 @@
 .logout-btn-large:hover { background: var(--primary); color: #fff; }
 
 /* ── Responsive ── */
+/* For big screens (1280px and up) */
+@media (min-width: 1280px) {
+  .settings-wrapper { max-width: 1400px; margin: 0 auto; }
+}
 @media (max-width: 1000px) {
   .settings-wrapper { flex-direction: column; }
   .settings-sidebar {
