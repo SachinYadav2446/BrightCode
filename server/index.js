@@ -605,171 +605,7 @@ const GITHUB_OAUTH_CLIENT_ID = process.env.GITHUB_OAUTH_CLIENT_ID || process.env
 const GITHUB_OAUTH_CLIENT_SECRET = process.env.GITHUB_OAUTH_CLIENT_SECRET || process.env.GITHUB_CLIENT_SECRET || '';
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5051';
 
-function getMockOAuthPage(provider, callbackUrl) {
-    const providerName = provider === 'google' ? 'Google' : 'GitHub';
-    const accentColor = provider === 'google' ? '#ea4335' : '#24292e';
-    const bgGlow = provider === 'google' ? 'rgba(234, 67, 53, 0.15)' : 'rgba(255, 255, 255, 0.1)';
-    return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Mock ${providerName} Authentication Portal</title>
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
-        <style>
-            :root {
-                --bg: #0a0a0a;
-                --surface: #121212;
-                --border: rgba(255, 255, 255, 0.08);
-                --text: #e0e0e0;
-                --text-muted: #666;
-                --accent: ${accentColor};
-            }
-            body {
-                background-color: var(--bg);
-                color: var(--text);
-                font-family: 'Outfit', sans-serif;
-                margin: 0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                min-height: 100vh;
-                overflow: hidden;
-                position: relative;
-            }
-            body::before {
-                content: '';
-                position: absolute;
-                width: 300px;
-                height: 300px;
-                background: radial-gradient(circle, ${bgGlow} 0%, transparent 70%);
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                z-index: 0;
-                pointer-events: none;
-            }
-            .card {
-                background: var(--surface);
-                border: 1px solid var(--border);
-                border-radius: 16px;
-                padding: 40px;
-                width: 100%;
-                max-width: 400px;
-                text-align: center;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-                position: relative;
-                z-index: 1;
-            }
-            .badge {
-                display: inline-block;
-                background: rgba(251, 191, 36, 0.1);
-                border: 1px solid rgba(251, 191, 36, 0.2);
-                color: #fbbf24;
-                font-size: 0.72rem;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                padding: 4px 10px;
-                border-radius: 20px;
-                margin-bottom: 24px;
-            }
-            h1 {
-                font-size: 1.8rem;
-                font-weight: 800;
-                margin: 0 0 8px 0;
-                letter-spacing: -0.5px;
-            }
-            p {
-                font-size: 0.9rem;
-                color: var(--text-muted);
-                line-height: 1.5;
-                margin: 0 0 32px 0;
-            }
-            .input-group {
-                text-align: left;
-                margin-bottom: 24px;
-            }
-            label {
-                display: block;
-                font-size: 0.75rem;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                margin-bottom: 8px;
-                color: #888;
-            }
-            input {
-                width: 100%;
-                box-sizing: border-box;
-                background: rgba(255, 255, 255, 0.02);
-                border: 1px solid var(--border);
-                color: #fff;
-                padding: 12px 16px;
-                border-radius: 8px;
-                font-family: inherit;
-                font-size: 0.95rem;
-                outline: none;
-                transition: border-color 0.2s;
-            }
-            input:focus {
-                border-color: var(--accent);
-            }
-            .btn {
-                width: 100%;
-                background: var(--accent);
-                color: #fff;
-                border: none;
-                border-radius: 8px;
-                padding: 14px;
-                font-size: 0.95rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: opacity 0.2s, transform 0.1s;
-            }
-            .btn:hover {
-                opacity: 0.9;
-            }
-            .btn:active {
-                transform: translateY(1px);
-            }
-            .footer-info {
-                font-family: 'JetBrains Mono', monospace;
-                font-size: 0.7rem;
-                color: #444;
-                margin-top: 32px;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="card">
-            <div class="badge">Developer Sandbox</div>
-            <h1>${providerName} Auth Portal</h1>
-            <p>Real OAuth credentials are not configured in .env. Use this developer sandbox to simulate a social login.</p>
-            
-            <form action="${callbackUrl}" method="GET">
-                <input type="hidden" name="provider" value="${provider}">
-                <div class="input-group">
-                    <label>Mock Full Name</label>
-                    <input type="text" name="name" value="Demo Developer" required>
-                </div>
-                <div class="input-group">
-                    <label>Mock Email Address</label>
-                    <input type="email" name="email" value="developer@brightcode.io" required>
-                </div>
-                <input type="hidden" name="provider" value="${provider}">
-                <button type="submit" class="btn">Authorize Sandbox Session</button>
-            </form>
-            
-            <div class="footer-info">
-                Redirect Callback: ${callbackUrl}
-            </div>
-        </div>
-    </body>
-    </html>
-    `;
-}
+
 
 const handleSocialAuthSuccess = async (res, email, name, provider, providerId) => {
     email = email.toLowerCase().trim();
@@ -1028,7 +864,47 @@ app.post('/api/auth/complete-social-signup', async (req, res) => {
 // ── Google OAuth Routes ──
 app.get('/api/auth/google', (req, res) => {
     if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-        return res.send(getMockOAuthPage('google', `${process.env.BACKEND_URL || BACKEND_URL}/api/auth/google/callback`));
+        return res.status(503).send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { 
+                        font-family: system-ui, -apple-system, sans-serif; 
+                        background: #0a0a0a; 
+                        color: #e0e0e0; 
+                        display: flex; 
+                        justify-content: center; 
+                        align-items: center; 
+                        min-height: 100vh; 
+                        margin: 0;
+                    }
+                    .container { 
+                        background: #121212; 
+                        padding: 40px; 
+                        border-radius: 16px; 
+                        border: 1px solid rgba(255,255,255,0.1); 
+                        max-width: 450px; 
+                        text-align: center; 
+                    }
+                    h1 { font-size: 1.5rem; margin-bottom: 12px; }
+                    p { color: #888; line-height: 1.5; margin-bottom: 24px; }
+                    a { 
+                        color: #ea4335; 
+                        text-decoration: none; 
+                        font-weight: 600; 
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>Google OAuth Not Configured</h1>
+                    <p>Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the server environment variables to use Google login.</p>
+                    <a href="${FRONTEND_URL}/auth">← Go Back</a>
+                </div>
+            </body>
+            </html>
+        `);
     }
     const scopes = 'email profile';
     const redirectUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${process.env.BACKEND_URL || BACKEND_URL}/api/auth/google/callback&response_type=code&scope=${encodeURIComponent(scopes)}`;
@@ -1036,12 +912,7 @@ app.get('/api/auth/google', (req, res) => {
 });
 
 app.get('/api/auth/google/callback', async (req, res) => {
-    const { code, provider, email, name } = req.query;
-    
-    if (provider === 'google' && email && name) {
-        const mockSub = 'mock_google_id_' + email.replace(/[^a-zA-Z0-9]/g, '');
-        return handleSocialAuthSuccess(res, email, name, 'google', mockSub);
-    }
+    const { code } = req.query;
     
     if (!code) {
         return res.redirect(`${FRONTEND_URL}/auth?error=no_auth_code`);
@@ -1077,19 +948,57 @@ app.get('/api/auth/google/callback', async (req, res) => {
 // ── GitHub OAuth Routes ──
 app.get('/api/auth/github', (req, res) => {
     if (!GITHUB_OAUTH_CLIENT_ID || !GITHUB_OAUTH_CLIENT_SECRET) {
-        return res.send(getMockOAuthPage('github', `${process.env.BACKEND_URL || BACKEND_URL}/api/auth/github/callback`));
+        return res.status(503).send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { 
+                        font-family: system-ui, -apple-system, sans-serif; 
+                        background: #0a0a0a; 
+                        color: #e0e0e0; 
+                        display: flex; 
+                        justify-content: center; 
+                        align-items: center; 
+                        min-height: 100vh; 
+                        margin: 0;
+                    }
+                    .container { 
+                        background: #121212; 
+                        padding: 40px; 
+                        border-radius: 16px; 
+                        border: 1px solid rgba(255,255,255,0.1); 
+                        max-width: 450px; 
+                        text-align: center; 
+                    }
+                    h1 { font-size: 1.5rem; margin-bottom: 12px; }
+                    p { color: #888; line-height: 1.5; margin-bottom: 24px; }
+                    a { 
+                        color: #24292e; 
+                        text-decoration: none; 
+                        font-weight: 600; 
+                        background: #fff; 
+                        padding: 8px 16px; 
+                        border-radius: 8px; 
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>GitHub OAuth Not Configured</h1>
+                    <p>Please set GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET in the server environment variables to use GitHub login.</p>
+                    <a href="${FRONTEND_URL}/auth">← Go Back</a>
+                </div>
+            </body>
+            </html>
+        `);
     }
     const redirectUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_OAUTH_CLIENT_ID}&redirect_uri=${process.env.BACKEND_URL || BACKEND_URL}/api/auth/github/callback&scope=user:email`;
     res.redirect(redirectUrl);
 });
 
 app.get('/api/auth/github/callback', async (req, res) => {
-    const { code, provider, email, name } = req.query;
-    
-    if (provider === 'github' && email && name) {
-        const mockSub = 'mock_github_id_' + email.replace(/[^a-zA-Z0-9]/g, '');
-        return handleSocialAuthSuccess(res, email, name, 'github', mockSub);
-    }
+    const { code } = req.query;
     
     if (!code) {
         return res.redirect(`${FRONTEND_URL}/auth?error=no_auth_code`);
