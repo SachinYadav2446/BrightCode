@@ -40,10 +40,15 @@ const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = fal
 
     useEffect(() => {
         const videoEl = videoRef.current;
-        if (!videoEl) return;
+        console.log('[PresenceVideoTile - useEffect] Called with stream:', stream, 'videoEl:', videoEl);
+        if (!videoEl) {
+            console.warn('[PresenceVideoTile - useEffect] videoEl is null!');
+            return;
+        }
 
         // Always set srcObject (even when stream is null, to clear it)
         videoEl.srcObject = stream || null;
+        console.log('[PresenceVideoTile - useEffect] Set videoEl.srcObject to:', videoEl.srcObject);
 
         if (stream) {
             let playTimeout;
@@ -330,6 +335,11 @@ const EditorPage = () => {
 
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isPresencePanelCollapsed, setIsPresencePanelCollapsed] = useState(false);
+
+    // Debug: log changes to localStream and isVideoOn
+    useEffect(() => {
+        console.log('[EditorPage - DEBUG] localStream or isVideoOn changed:', { localStream, isVideoOn });
+    }, [localStream, isVideoOn]);
 
     const [isTerminalCollapsed, setIsTerminalCollapsed] = useState(false);
     const [isRightChatOpen, setIsRightChatOpen] = useState(false);
