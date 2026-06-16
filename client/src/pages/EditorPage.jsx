@@ -45,21 +45,43 @@ const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = fal
         videoEl.srcObject = stream || null;
 
         if (stream) {
-            // Explicitly call play() — browsers may block autoplay
+            let playTimeout;
             const tryPlay = () => {
                 const promise = videoEl.play();
                 if (promise !== undefined) {
-                    promise.catch(() => {
-                        // Autoplay blocked (unmuted video) — mute and retry
-                        videoEl.muted = true;
-                        videoEl.play().catch(() => {});
+                    promise.catch((err) => {
+                        console.warn("Autoplay blocked for remote stream. Registering interaction listener to play.", err);
+                        // If blocked and not local, we wait for user interaction to play unmuted.
+                        if (!isLocal) {
+                            const resumeAudio = () => {
+                                videoEl.play()
+                                    .then(() => {
+                                        console.log("Successfully started remote audio/video after user interaction.");
+                                        cleanup();
+                                    })
+                                    .catch((playErr) => {
+                                        console.error("Failed to play remote stream even after interaction:", playErr);
+                                    });
+                            };
+                            const cleanup = () => {
+                                window.removeEventListener('click', resumeAudio);
+                                window.removeEventListener('keydown', resumeAudio);
+                                window.removeEventListener('touchstart', resumeAudio);
+                            };
+                            window.addEventListener('click', resumeAudio);
+                            window.addEventListener('keydown', resumeAudio);
+                            window.addEventListener('touchstart', resumeAudio);
+                        }
                     });
                 }
             };
             // Small delay to let srcObject settle
-            setTimeout(tryPlay, 100);
+            playTimeout = setTimeout(tryPlay, 100);
+            return () => {
+                clearTimeout(playTimeout);
+            };
         }
-    }, [stream]);
+    }, [stream, isLocal]);
 
     return (
         <div className="presence-tile">
@@ -288,6 +310,7 @@ const EditorPage = () => {
     const [localStream, setLocalStream] = useState(null); // Track local stream in state for re-renders
     const localVideoRef = useRef(null);
     const localStreamRef = useRef(null);
+    const localStreamPromiseRef = useRef(null);
     const peerConnectionsRef = useRef({}); // socketId -> RTCPeerConnection
     // Keep legacy refs for backward compat
     const remoteVideoRef = useRef(null);
@@ -758,14 +781,34 @@ const EditorPage = () => {
                 socket.on('webrtc-answer', async ({ answer, from }) => {
                     const pc = peerConnectionsRef.current[from];
                     if (pc) {
-                        try { await pc.setRemoteDescription(new RTCSessionDescription(answer)); } catch { }
+                        try {
+                            await pc.setRemoteDescription(new RTCSessionDescription(answer));
+                            // Drain queued ICE candidates
+                            if (pc._iceQueue && pc._iceQueue.length > 0) {
+                                for (const cand of pc._iceQueue) {
+                                    try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) { }
+                                }
+                                pc._iceQueue = [];
+                            }
+                        } catch (err) {
+                            console.error('Error setting remote description for answer:', err);
+                        }
                     }
                 });
 
                 socket.on('webrtc-ice-candidate', async ({ candidate, from }) => {
                     const pc = peerConnectionsRef.current[from];
                     if (pc && candidate) {
-                        try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch { }
+                        try {
+                            if (pc.remoteDescription && pc.remoteDescription.type) {
+                                await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                            } else {
+                                pc._iceQueue = pc._iceQueue || [];
+                                pc._iceQueue.push(candidate);
+                            }
+                        } catch (err) {
+                            console.error('Error adding ice candidate:', err);
+                        }
                     }
                 });
 
@@ -1480,6 +1523,7 @@ const EditorPage = () => {
 
     const createPeerConnection = (targetId) => {
         const pc = new RTCPeerConnection(ICE_SERVERS);
+        pc._iceQueue = []; // Initialize ICE candidate queue
         peerConnectionsRef.current[targetId] = pc;
         // Legacy single ref
         peerConnectionRef.current = pc;
@@ -1491,30 +1535,27 @@ const EditorPage = () => {
         };
 
         pc.ontrack = (event) => {
-            // event.streams[0] can be undefined if tracks arrive before stream negotiation
-            // Build a MediaStream manually from the track as a safe fallback
             let remoteStream = event.streams && event.streams[0];
-            if (!remoteStream) {
-                // Check if we already have a stream for this peer, add track to it
-                const existing = peerConnectionsRef.current[targetId]?._remoteStream;
-                if (existing) {
-                    existing.addTrack(event.track);
-                    remoteStream = existing;
-                } else {
-                    remoteStream = new MediaStream([event.track]);
-                    if (peerConnectionsRef.current[targetId]) {
-                        peerConnectionsRef.current[targetId]._remoteStream = remoteStream;
-                    }
-                }
-            } else {
-                // Cache it for future tracks
-                if (peerConnectionsRef.current[targetId]) {
-                    peerConnectionsRef.current[targetId]._remoteStream = remoteStream;
-                }
+            const pcObj = peerConnectionsRef.current[targetId];
+            if (!pcObj) return;
+
+            let existing = pcObj._remoteStream;
+            if (!existing) {
+                existing = new MediaStream();
+                pcObj._remoteStream = existing;
             }
+
+            // Add the track if it's not already in the stream
+            if (!existing.getTracks().find(t => t.id === event.track.id)) {
+                existing.addTrack(event.track);
+            }
+
+            // Always create a new MediaStream instance so React detects reference change
+            const updatedStream = new MediaStream(existing.getTracks());
+
             setCallParticipants(prev => ({
                 ...prev,
-                [targetId]: { ...prev[targetId], stream: remoteStream }
+                [targetId]: { ...prev[targetId], stream: updatedStream }
             }));
         };
 
@@ -1550,6 +1591,10 @@ const EditorPage = () => {
 
     // Get local media stream (audio + optional video)
     const getLocalStream = async (withVideo = true) => {
+        if (localStreamPromiseRef.current) {
+            return localStreamPromiseRef.current;
+        }
+
         // Note: browsers require HTTPS in production for getUserMedia.
         // We allow it to proceed and let the browser handle permission errors.
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -1557,34 +1602,41 @@ const EditorPage = () => {
             return null;
         }
 
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: withVideo });
-            localStreamRef.current = stream;
-            setLocalStream(stream);
-            if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-            return stream;
-        } catch (err) {
-            console.error('Media access error:', err);
-            // Try audio only if video fails
+        const acquire = async () => {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: withVideo });
                 localStreamRef.current = stream;
                 setLocalStream(stream);
                 if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-                toast('Camera not available, using audio only', { icon: '🎤' });
                 return stream;
-            } catch (audioErr) {
-                console.error('Audio access error:', audioErr);
-                if (audioErr.name === 'NotAllowedError') {
-                    toast.error('Permission denied. Please allow mic/camera in browser settings.', { duration: 5000 });
-                } else if (audioErr.name === 'NotFoundError') {
-                    toast.error('No microphone found. Please connect a mic and try again.', { duration: 5000 });
-                } else {
-                    toast.error('Could not access microphone: ' + audioErr.message, { duration: 5000 });
+            } catch (err) {
+                console.error('Media access error:', err);
+                // Try audio only if video fails
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                    localStreamRef.current = stream;
+                    setLocalStream(stream);
+                    if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+                    toast('Camera not available, using audio only', { icon: '🎤' });
+                    return stream;
+                } catch (audioErr) {
+                    console.error('Audio access error:', audioErr);
+                    if (audioErr.name === 'NotAllowedError') {
+                        toast.error('Permission denied. Please allow mic/camera in browser settings.', { duration: 5000 });
+                    } else if (audioErr.name === 'NotFoundError') {
+                        toast.error('No microphone found. Please connect a mic and try again.', { duration: 5000 });
+                    } else {
+                        toast.error('Could not access microphone: ' + audioErr.message, { duration: 5000 });
+                    }
+                    return null;
                 }
-                return null;
+            } finally {
+                localStreamPromiseRef.current = null;
             }
-        }
+        };
+
+        localStreamPromiseRef.current = acquire();
+        return localStreamPromiseRef.current;
     };
 
     // Auto-join the call when workspace loads
@@ -1604,6 +1656,7 @@ const EditorPage = () => {
 
         // Tell everyone we joined
         socketRef.current?.emit('video-call-join', { roomId, username: user?.username });
+        socketRef.current?.emit('video-call-state', { roomId, isMuted: false, isVideoOn: false, username: user?.username });
 
         // Connect to all existing participants in the room (except self)
         const otherClients = clients.filter(c => c.id !== myId);
@@ -1641,6 +1694,7 @@ const EditorPage = () => {
             stream.getVideoTracks().forEach(t => { t.enabled = false; });
             setIsVideoCallOpen(true);
             socketRef.current?.emit('video-call-join', { roomId, username: user?.username });
+            socketRef.current?.emit('video-call-state', { roomId, isMuted: true, isVideoOn: false, username: user?.username });
         }
 
         const callerInfo = clients.find(c => c.id === from);
@@ -1660,6 +1714,15 @@ const EditorPage = () => {
         }
 
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        
+        // Drain queued ICE candidates
+        if (pc._iceQueue && pc._iceQueue.length > 0) {
+            for (const cand of pc._iceQueue) {
+                try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) { }
+            }
+            pc._iceQueue = [];
+        }
+
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         socketRef.current?.emit('webrtc-answer', { roomId, answer, targetId: from });
@@ -2752,6 +2815,7 @@ const EditorPage = () => {
                                 {activeFile ? (
 
                                     <Editor
+                                        key={activeFile}
 
                                         height="100%"
 
