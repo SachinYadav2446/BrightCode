@@ -1592,11 +1592,7 @@ const EditorPage = () => {
             console.log(`[WebRTC] onnegotiationneeded for ${targetId}`);
             try {
                 const offer = await pc.createOffer();
-                
-                // #region debug-point D:check-offer-sdp-m-lines
-                fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"webrtc-mic-camera-not-working",runId:"pre",hypothesisId:"D",location:"EditorPage.jsx:1594",msg:"[DEBUG] Created offer, checking m-lines",data:{targetId, sdp: offer.sdp, mLines: offer.sdp.split('\n').filter(line => line.startsWith('m='))},ts:Date.now()})}).catch(()=>{});
-                // #endregion
-                
+
                 // Guard: if signaling state changed while we awaited, bail out
                 if (pc.signalingState !== 'stable') {
                     console.warn(`[WebRTC] Aborting offer for ${targetId} — signalingState is ${pc.signalingState}`);
@@ -1665,11 +1661,7 @@ const EditorPage = () => {
                 console.log(`[WebRTC - AUDIO DEBUG] Got local stream:`, stream);
                 console.log(`[WebRTC - AUDIO DEBUG] Local audio tracks:`, stream.getAudioTracks());
                 console.log(`[WebRTC - AUDIO DEBUG] Local audio track enabled state:`, stream.getAudioTracks()[0]?.enabled);
-                
-                // #region debug-point A:check-local-track-order
-                fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"webrtc-mic-camera-not-working",runId:"pre",hypothesisId:"A",location:"EditorPage.jsx:1660",msg:"[DEBUG] Got local stream, checking track order",data:{tracks: stream.getTracks().map(t => ({kind: t.kind, id: t.id, enabled: t.enabled}))},ts:Date.now()})}).catch(()=>{});
-                // #endregion
-                
+
                 localStreamRef.current = stream;
                 setLocalStream(stream);
                 if (localVideoRef.current) localVideoRef.current.srcObject = stream;
@@ -1782,14 +1774,7 @@ const EditorPage = () => {
             ...tracks.filter(t => t.kind === 'audio'),
             ...tracks.filter(t => t.kind === 'video')
         ];
-        // #region debug-point B:check-track-add-order-in-offer
-        fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"webrtc-mic-camera-not-working",runId:"pre",hypothesisId:"B",location:"EditorPage.jsx:1770",msg:"[DEBUG] Adding sorted tracks to peer connection (initiator)",data:{targetId, tracks: sortedTracks.map(t => ({kind: t.kind, id: t.id, enabled: t.enabled}))},ts:Date.now()})}).catch(()=>{});
-        // #endregion
         sortedTracks.forEach(track => {
-            console.log(`[WebRTC - AUDIO DEBUG] Adding ${track.kind} track to PC for ${targetId}`);
-            if (track.kind === 'audio') {
-                console.log(`[WebRTC - AUDIO DEBUG] Adding audio track ${track.id} (enabled: ${track.enabled}) to PC for ${targetId}`);
-            }
             pc.addTrack(track, localStreamRef.current);
         });
     };
@@ -1841,14 +1826,7 @@ const EditorPage = () => {
                 ...answerTracks.filter(t => t.kind === 'audio'),
                 ...answerTracks.filter(t => t.kind === 'video')
             ];
-            // #region debug-point C:check-track-add-order-in-answer
-            fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"webrtc-mic-camera-not-working",runId:"pre",hypothesisId:"C",location:"EditorPage.jsx:1820",msg:"[DEBUG] Adding sorted tracks to peer connection (answerer)",data:{from, tracks: sortedAnswerTracks.map(t => ({kind: t.kind, id: t.id, enabled: t.enabled}))},ts:Date.now()})}).catch(()=>{});
-            // #endregion
             sortedAnswerTracks.forEach(track => {
-                console.log(`[WebRTC - AUDIO DEBUG] Adding ${track.kind} track to answering PC for ${from}`);
-                if (track.kind === 'audio') {
-                    console.log(`[WebRTC - AUDIO DEBUG] Adding audio track ${track.id} (enabled: ${track.enabled}) to answering PC for ${from}`);
-                }
                 pc.addTrack(track, stream);
             });
         }
@@ -1865,17 +1843,10 @@ const EditorPage = () => {
             }
 
             const answer = await pc.createAnswer();
-            
-            // #region debug-point E:check-answer-sdp-m-lines
-            fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"webrtc-mic-camera-not-working",runId:"pre",hypothesisId:"E",location:"EditorPage.jsx:1840",msg:"[DEBUG] Created answer, checking m-lines",data:{from, sdp: answer.sdp, mLines: answer.sdp.split('\n').filter(line => line.startsWith('m='))},ts:Date.now()})}).catch(()=>{});
-            // #endregion
-            
+
             await pc.setLocalDescription(answer);
             socketRef.current?.emit('webrtc-answer', { roomId, answer, targetId: from });
         } catch (err) {
-            // #region debug-point F:set-remote-description-error
-            fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"webrtc-mic-camera-not-working",runId:"pre",hypothesisId:"F",location:"EditorPage.jsx:1866",msg:"[DEBUG] handleIncomingOffer error",data:{from, error: err.message, offerMLines: offer.sdp.split('\n').filter(line => line.startsWith('m='))},ts:Date.now()})}).catch(()=>{});
-            // #endregion
             console.error('[WebRTC] handleIncomingOffer error:', err);
         }
     };
