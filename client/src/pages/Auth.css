@@ -389,7 +389,7 @@
 .input-group label {
   font-size: 0.68rem;
   font-weight: 700;
-  color: #666;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -398,15 +398,15 @@
   position: relative;
   display: flex;
   align-items: center;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--bg-surface-lighter);
+  border: 1px solid var(--border);
   border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .input-wrapper:focus-within {
   border-color: rgba(var(--primary-rgb), 0.5);
-  background: rgba(255,255,255,0.05);
+  background: rgba(var(--primary-rgb), 0.05);
   box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
   transform: translateY(-1px);
 }
@@ -414,7 +414,7 @@
 .input-wrapper .input-icon {
   position: absolute;
   left: 14px;
-  color: #555;
+  color: var(--text-muted);
   pointer-events: none;
   flex-shrink: 0;
 }
@@ -425,12 +425,12 @@
   border: none;
   outline: none;
   padding: 12px 16px 12px 44px;
-  color: #fff;
+  color: var(--text-main);
   font-size: 0.88rem;
   font-family: var(--font-sans), 'Poppins', sans-serif;
 }
 
-.input-wrapper input::placeholder { color: #333; }
+.input-wrapper input::placeholder { color: var(--text-muted); }
 
 /* Valid / invalid wrappers */
 .input-wrapper.valid {
@@ -473,7 +473,7 @@
 /* Spinner */
 .auth-username-spinner {
   animation: auth-spin 0.7s linear infinite;
-  color: #555;
+  color: var(--text-muted);
 }
 
 @keyframes auth-spin { to { transform: rotate(360deg); } }
@@ -489,7 +489,7 @@
 
 .resend-text {
   font-size: 0.75rem;
-  color: #555;
+  color: var(--text-muted);
   text-align: center;
   margin-top: 6px;
 }
@@ -561,7 +561,7 @@
 .back-btn-link {
   background: none;
   border: none;
-  color: #555;
+  color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 500;
   display: inline-flex;
@@ -578,13 +578,13 @@
 .auth-switch {
   margin-top: 28px;
   padding-top: 24px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--border);
   text-align: center;
 }
 
 .auth-switch p {
   font-size: 0.88rem;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .auth-switch button {
