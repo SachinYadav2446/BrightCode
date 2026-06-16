@@ -245,6 +245,7 @@ const EditorPage = () => {
     const [isMuted, setIsMuted] = useState(true); // Mic off by default
     const [isVideoOn, setIsVideoOn] = useState(false); // Camera off by default
     const [callParticipants, setCallParticipants] = useState({}); // socketId -> { username, stream, isMuted, isVideoOn }
+    const [localStream, setLocalStream] = useState(null); // Track local stream in state for re-renders
     const localVideoRef = useRef(null);
     const localStreamRef = useRef(null);
     const peerConnectionsRef = useRef({}); // socketId -> RTCPeerConnection
@@ -419,12 +420,20 @@ const EditorPage = () => {
                         setLanguage(serverFiles[firstFile].language || 'javascript');
                     }
                     setClients(users);
+                    // Initialize call participants for all existing users
+                    const initialParticipants = {};
+                    users.forEach(user => {
+                        if (user.id !== yourId) {
+                            initialParticipants[user.id] = { username: user.username, isMuted: true, isVideoOn: false };
+                        }
+                    });
+                    setCallParticipants(initialParticipants);
                     setAdminId(adminId);
                     setMyId(yourId);
                     setSnapshots(snapshots || []);
                     if (workspaceOwner) setWorkspaceOwner(workspaceOwner);
                     if (workspaceName) setWorkspaceName(workspaceName);
-                    // Don't auto-open any file â€” let user pick from tree
+                    // Don't auto-open any file — let user pick from tree
                 });
 
                 // Safety net: if initial-data doesn't arrive within 3s, request files explicitly
@@ -497,6 +506,12 @@ const EditorPage = () => {
                     toast.success(`${username} joined as ${role}`);
 
                     setClients(prev => prev.find(u => u.id === socketId) ? prev : [...prev, { id: socketId, username, role }]);
+                    
+                    // Add to call participants
+                    setCallParticipants(prev => ({
+                        ...prev,
+                        [socketId]: { username, isMuted: true, isVideoOn: false }
+                    }));
 
                 });
 
@@ -733,6 +748,12 @@ const EditorPage = () => {
                             const newCursors = { ...prev };
                             delete newCursors[id];
                             return newCursors;
+                        });
+                        // Remove from call participants
+                        setCallParticipants(prev => {
+                            const newParticipants = { ...prev };
+                            delete newParticipants[id];
+                            return newParticipants;
                         });
                     }
                 });
@@ -1438,6 +1459,7 @@ const EditorPage = () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: withVideo });
             localStreamRef.current = stream;
+            setLocalStream(stream);
             if (localVideoRef.current) localVideoRef.current.srcObject = stream;
             return stream;
         } catch (err) {
@@ -1446,6 +1468,7 @@ const EditorPage = () => {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                 localStreamRef.current = stream;
+                setLocalStream(stream);
                 if (localVideoRef.current) localVideoRef.current.srcObject = stream;
                 toast('Camera access denied, using audio only', { icon: '🎤' });
                 return stream;
@@ -1537,6 +1560,7 @@ const EditorPage = () => {
             localStreamRef.current.getTracks().forEach(t => t.stop());
             localStreamRef.current = null;
         }
+        setLocalStream(null);
         if (localVideoRef.current) localVideoRef.current.srcObject = null;
 
         // Close all peer connections
@@ -1569,12 +1593,15 @@ const EditorPage = () => {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
                 localStreamRef.current = stream;
+                setLocalStream(stream);
                 if (localVideoRef.current) localVideoRef.current.srcObject = stream;
 
                 // Respect current mute state
                 if (isMuted) {
                     stream.getAudioTracks().forEach(t => { t.enabled = false; });
                 }
+                // Disable video initially if we were turning it off? Wait, toggleVideo means we want to turn it on!
+                stream.getVideoTracks().forEach(t => { t.enabled = true; });
 
                 // Add tracks to all existing peer connections
                 Object.values(peerConnectionsRef.current).forEach(pc => {
@@ -1600,6 +1627,7 @@ const EditorPage = () => {
                     const videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
                     const videoTrack = videoStream.getVideoTracks()[0];
                     localStreamRef.current.addTrack(videoTrack);
+                    setLocalStream(new MediaStream([...localStreamRef.current.getTracks()]));
 
                     // Add to all peer connections
                     Object.values(peerConnectionsRef.current).forEach(pc => {
@@ -2216,7 +2244,7 @@ const EditorPage = () => {
                     {/* Local user tile */}
                     <PresenceVideoTile
                         username={user?.username}
-                        stream={localStreamRef.current}
+                        stream={localStream}
                         isMuted={isMuted}
                         isVideoOn={isVideoOn}
                         isLocal={true}
