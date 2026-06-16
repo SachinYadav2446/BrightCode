@@ -809,6 +809,8 @@ const EditorPage = () => {
 
                 socket.on('webrtc-answer', async ({ answer, from }) => {
                     console.log(`[WebRTC] Socket received webrtc-answer from ${from}:`, answer);
+                    console.log(`[WebRTC] Answer M-lines from ${from}:`, 
+                        answer.sdp.split('\n').filter(line => line.startsWith('m=')));
                     const pc = peerConnectionsRef.current[from];
                     if (pc) {
                         try {
@@ -1637,6 +1639,9 @@ const EditorPage = () => {
                     offerToReceiveVideo: true 
                 });
 
+                console.log(`[WebRTC] Created offer for ${targetId}. M-lines:`, 
+                    offer.sdp.split('\n').filter(line => line.startsWith('m=')));
+
                 // Guard: if signaling state changed while we awaited, bail out
                 if (pc.signalingState !== 'stable') {
                     console.warn(`[WebRTC] Aborting offer for ${targetId} — signalingState is ${pc.signalingState}`);
@@ -1878,6 +1883,9 @@ const EditorPage = () => {
         }
 
         try {
+            console.log(`[WebRTC] Received offer from ${from}. M-lines:`, 
+                offer.sdp.split('\n').filter(line => line.startsWith('m=')));
+                
             await pc.setRemoteDescription(new RTCSessionDescription(offer));
 
             // Drain ICE queue
@@ -1889,6 +1897,8 @@ const EditorPage = () => {
             }
 
             const answer = await pc.createAnswer();
+            console.log(`[WebRTC] Created answer for ${from}. M-lines:`, 
+                answer.sdp.split('\n').filter(line => line.startsWith('m=')));
 
             await pc.setLocalDescription(answer);
             socketRef.current?.emit('webrtc-answer', { roomId, answer, targetId: from });
