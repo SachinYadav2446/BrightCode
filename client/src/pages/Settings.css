@@ -2210,9 +2210,33 @@
   border-radius: 4px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .premium-details-grid {
     grid-template-columns: 1fr;
+  }
+  .pricing-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .settings-wrapper {
+    flex-direction: column;
+  }
+  .settings-sidebar {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding: 12px 16px;
+  }
+  .sidebar-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .settings-main {
+    padding: 16px;
   }
   .premium-header {
     flex-direction: column;
@@ -2226,6 +2250,84 @@
   }
   .premium-header .action-btn {
     flex: 1;
+    font-size: 0.75rem;
+  }
+  .profile-info-group {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .premium-stats-row {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .pricing-cards-grid {
+    grid-template-columns: 1fr;
+  }
+  .subscription-summary-layout {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .cancel-sub-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .settings-main {
+    padding: 12px;
+  }
+  .premium-header {
+    padding: 16px;
+  }
+  .premium-avatar-hex {
+    width: 48px;
+    height: 54px;
+  }
+  .premium-rank-badge {
+    font-size: 10px;
+  }
+  .stat-pill {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+  .nav-item {
+    font-size: 0.75rem;
+    padding: 6px 8px;
+  }
+  .nav-item span {
+    display: none;
+  }
+  .nav-item svg {
+    width: 24px;
+    height: 24px;
+  }
+  .theme-selector {
+    grid-template-columns: 1fr;
+  }
+  .font-selector {
+    grid-template-columns: 1fr;
+  }
+  .danger-zone {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .logout-btn-large {
+    width: 100%;
+  }
+  .banner-selection-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .pricing-card {
+    padding: 20px;
+  }
+  .pricing-price .amount {
+    font-size: 1.8rem;
+  }
+  .popular-badge {
+    font-size: 0.55rem;
+    padding: 3px 8px;
   }
 }
 
