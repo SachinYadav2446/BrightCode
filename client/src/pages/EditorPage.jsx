@@ -1926,14 +1926,17 @@ const EditorPage = () => {
                 stream.getAudioTracks().forEach(t => { t.enabled = !isMuted; });
                 stream.getVideoTracks().forEach(t => { t.enabled = true; });
 
-                // Add all tracks to existing peer connections, then renegotiate (sorted: audio first)
-                const toggleVideoTracks = stream.getTracks();
-                const sortedToggleVideoTracks = [
-                    ...toggleVideoTracks.filter(t => t.kind === 'audio'),
-                    ...toggleVideoTracks.filter(t => t.kind === 'video')
-                ];
+                // Add all transceivers to existing peer connections, then renegotiate (audio first)
+                const toggleAudioTrack = stream.getAudioTracks()[0];
+                const toggleVideoTrack = stream.getVideoTracks()[0];
+                
                 for (const [peerId, pc] of Object.entries(peerConnectionsRef.current)) {
-                    sortedToggleVideoTracks.forEach(track => pc.addTrack(track, stream));
+                    if (toggleAudioTrack) {
+                        pc.addTransceiver(toggleAudioTrack, { direction: 'sendrecv', streams: [stream] });
+                    }
+                    if (toggleVideoTrack) {
+                        pc.addTransceiver(toggleVideoTrack, { direction: 'sendrecv', streams: [stream] });
+                    }
                     await renegotiateWithPeer(peerId, pc);
                 }
 
@@ -1973,9 +1976,17 @@ const EditorPage = () => {
                 setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
                 if (localVideoRef.current) localVideoRef.current.srcObject = localStreamRef.current;
 
-                // Add to all peer connections and renegotiate
+                // Add video track to all peer connections (use existing transceiver or add new one)
                 for (const [peerId, pc] of Object.entries(peerConnectionsRef.current)) {
-                    pc.addTrack(videoTrack, localStreamRef.current);
+                    const videoTransceiver = pc.getTransceivers().find(t => 
+                        t.sender.track?.kind === 'video' || t.receiver.track?.kind === 'video'
+                    );
+                    
+                    if (videoTransceiver && videoTransceiver.sender) {
+                        await videoTransceiver.sender.replaceTrack(videoTrack);
+                    } else {
+                        pc.addTransceiver(videoTrack, { direction: 'sendrecv', streams: [localStreamRef.current] });
+                    }
                     await renegotiateWithPeer(peerId, pc);
                 }
 
