@@ -37,6 +37,19 @@ import GitPanel from '../components/GitPanel';
 const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = false }) => {
     const videoRef = useRef(null);
     console.log('[PresenceVideoTile - DEBUG] Rendering:', { username, stream, isMuted, isVideoOn, isLocal });
+    
+    // Log stream tracks
+    useEffect(() => {
+        if (isLocal && stream) {
+            const audioTracks = stream.getAudioTracks();
+            const videoTracks = stream.getVideoTracks();
+            console.log('[PresenceVideoTile - DEBUG] Local stream tracks:', {
+                isVideoOn,
+                audioTracks: audioTracks.map(t => ({ id: t.id, enabled: t.enabled, kind: t.kind })),
+                videoTracks: videoTracks.map(t => ({ id: t.id, enabled: t.enabled, kind: t.kind })),
+            });
+        }
+    }, [stream, isLocal, isVideoOn]);
 
     useEffect(() => {
         const videoEl = videoRef.current;
