@@ -36,6 +36,7 @@ import GitPanel from '../components/GitPanel';
 // ── PresenceVideoTile: renders a participant's video (local or remote) ──
 const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = false }) => {
     const videoRef = useRef(null);
+    console.log('[PresenceVideoTile - DEBUG] Rendering:', { username, stream, isMuted, isVideoOn, isLocal });
 
     useEffect(() => {
         const videoEl = videoRef.current;
@@ -1664,9 +1665,11 @@ const EditorPage = () => {
                 console.log(`[WebRTC - AUDIO DEBUG] Got local stream:`, stream);
                 console.log(`[WebRTC - AUDIO DEBUG] Local audio tracks:`, stream.getAudioTracks());
                 console.log(`[WebRTC - AUDIO DEBUG] Local audio track enabled state:`, stream.getAudioTracks()[0]?.enabled);
+                console.log(`[WebRTC - AUDIO DEBUG] Local video tracks:`, stream.getVideoTracks());
 
                 localStreamRef.current = stream;
                 setLocalStream(stream);
+                console.log('[WebRTC - DEBUG: getLocalStream (video on) set localStream:", stream.getTracks(), "set localStreamRef:", localStreamRef.current);
                 if (localVideoRef.current) localVideoRef.current.srcObject = stream;
                 return stream;
             } catch (err) {
@@ -1920,6 +1923,7 @@ const EditorPage = () => {
     };
 
     const toggleVideo = async () => {
+        console.log('[toggleVideo - DEBUG] Called, current state:', { localStreamRef: localStreamRef.current, isVideoOn, localStream });
         if (!localStreamRef.current) {
             // No stream at all — get one with video
             try {
@@ -1964,6 +1968,7 @@ const EditorPage = () => {
         if (videoTracks.length > 0) {
             // We already have a video track — just toggle it
             const newVideoOn = !isVideoOn;
+            console.log('[toggleVideo - DEBUG] Toggling existing video track:', { videoTracks, newVideoOn });
             videoTracks.forEach(t => { t.enabled = newVideoOn; });
             setIsVideoOn(newVideoOn);
             socketRef.current?.emit('video-call-state', { 
