@@ -150,6 +150,10 @@ const EditorPage = () => {
     const [remoteCursors, setRemoteCursors] = useState({});
     const editorRef = useRef(null);
     const cursorDecorationsRef = useRef({});
+    // Ref to track active file inside stale socket closures (avoids re-subscribing socket events)
+    const activeFileRef = useRef('');
+    // Ref flag: true while we're applying a remote code update to suppress the local onChange echo
+    const isRemoteUpdateRef = useRef(false);
 
 
 
@@ -557,8 +561,9 @@ const EditorPage = () => {
                 socket.on('get-kicked', () => { toast.error("Removed from workspace by admin."); navigate('/'); });
 
                 socket.on('code-update', ({ fileName, content, socketId }) => {
-                    // Don't update if the change is from the current user (avoids blinking)
+                    // Don't update if the change is from the current user (avoids echo)
                     if (!isStopped && socketId !== socket.id) {
+                        // Update files state (for file switching, saving, etc.)
                         setFiles(prev => ({
                             ...prev,
                             [fileName]: {
@@ -566,8 +571,29 @@ const EditorPage = () => {
                                 content
                             }
                         }));
+                        // If this file is currently open in the editor, update it
+                        // imperatively WITHOUT causing a React re-render / blink.
+                        // We use a ref flag to suppress the local onChange echo.
+                        if (fileName === activeFileRef.current && editorRef.current) {
+                            const editor = editorRef.current;
+                            const model = editor.getModel();
+                            if (model && model.getValue() !== content) {
+                                isRemoteUpdateRef.current = true;
+                                // Use pushEditOperations to preserve undo history
+                                model.pushEditOperations(
+                                    [],
+                                    [{
+                                        range: model.getFullModelRange(),
+                                        text: content
+                                    }],
+                                    () => null
+                                );
+                                isRemoteUpdateRef.current = false;
+                            }
+                        }
                     }
                 });
+
 
                 socket.on('file-created', ({ fileName, language, content }) => {
                     if (!isStopped) {
@@ -825,6 +851,21 @@ const EditorPage = () => {
         }
     }, [clients.length]);
 
+    // Keep activeFileRef in sync so socket handlers (stale closures) can read current active file
+    useEffect(() => {
+        activeFileRef.current = activeFile;
+        // When switching files, load the file's content into the editor imperatively
+        if (editorRef.current && activeFile && files[activeFile]) {
+            const model = editorRef.current.getModel();
+            const newContent = files[activeFile].content ?? '';
+            if (model && model.getValue() !== newContent) {
+                isRemoteUpdateRef.current = true;
+                model.setValue(newContent);
+                isRemoteUpdateRef.current = false;
+            }
+        }
+    }, [activeFile]);
+
     // Update cursor decorations when remote cursors change
     useEffect(() => {
         if (!editorRef.current) return;
@@ -883,12 +924,13 @@ const EditorPage = () => {
 
     const handleCodeChange = (value) => {
         if (!activeFile || !socketRef.current) return;
+        // Skip if this change was triggered by a remote update (avoids echo)
+        if (isRemoteUpdateRef.current) return;
 
-        // 1. Update local state immediately for zero-lag typing
-        setFiles(prev => ({ 
-            ...prev, 
-            [activeFile]: { ...prev[activeFile], content: value } 
-        }));
+        // 1. Update local files ref (no setState = no re-render = no blink)
+        if (files[activeFile]) {
+            files[activeFile].content = value; // Mutate ref directly — safe here
+        }
 
         // 2. Debounce the socket emission to prevent flooding the server
         if (debouncedCodeEmitRef.current) {
@@ -2671,7 +2713,7 @@ const EditorPage = () => {
 
                                         theme="vs-dark"
 
-                                        value={files[activeFile]?.content}
+                                        defaultValue={files[activeFile]?.content ?? ''}
 
                                         onChange={handleCodeChange}
 
