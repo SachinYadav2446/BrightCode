@@ -1669,7 +1669,7 @@ const EditorPage = () => {
 
                 localStreamRef.current = stream;
                 setLocalStream(stream);
-                console.log('[WebRTC - DEBUG: getLocalStream (video on) set localStream:", stream.getTracks(), "set localStreamRef:", localStreamRef.current);
+                console.log('[WebRTC - DEBUG: getLocalStream (video on)] set localStream, tracks:', stream.getTracks(), 'set localStreamRef:', localStreamRef.current);
                 if (localVideoRef.current) localVideoRef.current.srcObject = stream;
                 return stream;
             } catch (err) {
