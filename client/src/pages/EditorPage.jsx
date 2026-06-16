@@ -155,6 +155,10 @@ const ICE_SERVERS = {
         { urls: 'stun:stun2.l.google.com:19302' },
         { urls: 'stun:stun3.l.google.com:19302' },
         { urls: 'stun:stun4.l.google.com:19302' },
+        // Cloudflare STUN
+        { urls: 'stun:stun.cloudflare.com:3478' },
+        // Mozilla STUN
+        { urls: 'stun:stun.services.mozilla.com' },
         // Open Relay TURN servers (free, for fallback through firewalls)
         {
             urls: 'turn:openrelay.metered.ca:80',
