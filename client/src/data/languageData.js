@@ -279,16 +279,10 @@ addJavaModuleMCQs('Module 7: OOP Core', JAVA_MODULE7_QUESTIONS);
 addJavaModuleMCQs('Module 8: OOP Advanced', JAVA_MODULE8_QUESTIONS);
 addJavaModuleMCQs('Module 9: Collections Framework', JAVA_MODULE9_QUESTIONS);
 addJavaModuleMCQs('Module 10: Exception Handling & File I/O', JAVA_MODULE10_QUESTIONS);
-
 // ── C++ LEVELS (50 total MCQs) ──────────────────────────────────
 export const CPP_LEVELS = [];
 
 const cppQuestions = [
-    { q: 'Which is the correct way to declare a variable?', opts: ['int x = 10;', 'x int = 10;', 'int = x 10;', 'declare int x'], ans: 0 },
-    { q: 'Default value of int in C++?', opts: ['0', 'undefined', 'garbage', '1'], ans: 2 },
-    { q: 'Size of int in C++?', opts: ['2 bytes', '4 bytes', '8 bytes', 'depends on compiler'], ans: 3 },
-    { q: 'Which is NOT a primitive type?', opts: ['int', 'float', 'String', 'char'], ans: 2 },
-    { q: 'Which keyword is used for constants?', opts: ['static', 'const', 'final', 'fixed'], ans: 1 },
     { q: 'What is a pointer?', opts: ['A variable that stores address', 'A function', 'A loop', 'A data type'], ans: 0 },
     { q: 'Which operator is used to access value at pointer address?', opts: ['&', '*', '->', '.'], ans: 1 },
     { q: 'What does STL stand for?', opts: ['Standard Template Library', 'Simple Template Library', 'Standard Type Library', 'None'], ans: 0 },

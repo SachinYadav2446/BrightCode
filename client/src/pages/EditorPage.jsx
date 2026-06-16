@@ -501,7 +501,9 @@ const EditorPage = () => {
 
                 socket.on('user-joined', ({ username, socketId, role }) => {
 
-                    if (isStopped || username === user?.username) return;
+                    if (isStopped) return;
+                    // Skip only if it's our OWN socket ID (not just username match)
+                    if (socketId === socketRef.current?.id) return;
 
                     toast.success(`${username} joined as ${role}`);
 
@@ -1449,10 +1451,10 @@ const EditorPage = () => {
 
     // Get local media stream (audio + optional video)
     const getLocalStream = async (withVideo = true) => {
-        // Check if HTTPS is required
-        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-            console.error('WebRTC requires HTTPS in production');
-            toast.error('Camera and microphone require HTTPS connection', { duration: 5000 });
+        // Note: browsers require HTTPS in production for getUserMedia.
+        // We allow it to proceed and let the browser handle permission errors.
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            toast.error('Your browser does not support camera/microphone access.', { duration: 5000 });
             return null;
         }
 
@@ -1470,11 +1472,17 @@ const EditorPage = () => {
                 localStreamRef.current = stream;
                 setLocalStream(stream);
                 if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-                toast('Camera access denied, using audio only', { icon: '🎤' });
+                toast('Camera not available, using audio only', { icon: '🎤' });
                 return stream;
             } catch (audioErr) {
                 console.error('Audio access error:', audioErr);
-                toast.error('Microphone access denied. Please allow permissions in browser settings.', { duration: 5000 });
+                if (audioErr.name === 'NotAllowedError') {
+                    toast.error('Permission denied. Please allow mic/camera in browser settings.', { duration: 5000 });
+                } else if (audioErr.name === 'NotFoundError') {
+                    toast.error('No microphone found. Please connect a mic and try again.', { duration: 5000 });
+                } else {
+                    toast.error('Could not access microphone: ' + audioErr.message, { duration: 5000 });
+                }
                 return null;
             }
         }
