@@ -34,6 +34,20 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* Large screens (1280px and above) */
+@media (min-width: 1280px) {
+  html {
+    font-size: 90%;
+  }
+}
+
+/* Extra large screens (1600px and above) */
+@media (min-width: 1600px) {
+  html {
+    font-size: 100%;
+  }
+}
+
 * {
   margin: 0;
   padding: 0;
