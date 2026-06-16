@@ -176,7 +176,6 @@ const Settings = () => {
   const bioSaveTimer = useRef(null);
   const [useMemoryDB, setUseMemoryDB] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState('crimson');
-  const [selectedFont, setSelectedFont] = useState('poppins');
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [gitConnected, setGitConnected] = useState(false);
   const [gitUsername, setGitUsername] = useState(null);
@@ -229,20 +228,15 @@ const Settings = () => {
     if (bioSaveTimer.current) clearTimeout(bioSaveTimer.current);
   }, []);
 
-  // Apply theme and font on mount
+  // Apply theme on mount
   React.useEffect(() => {
     let savedTheme = localStorage.getItem('app_theme') || 'crimson';
     if (savedTheme === 'cyber-neon') {
       savedTheme = 'neo-noir';
       localStorage.setItem('app_theme', 'neo-noir');
     }
-    const savedFont = localStorage.getItem('app_font') || 'poppins';
     setSelectedTheme(savedTheme);
-    setSelectedFont(savedFont);
     applyTheme(savedTheme);
-    if (savedTheme !== 'amber' && savedTheme !== 'neo-noir') {
-      applyFont(savedFont);
-    }
   }, []);
 
   const applyTheme = (theme) => {
@@ -327,28 +321,7 @@ const Settings = () => {
     }, 1000);
   };
 
-  const applyFont = (font) => {
-    const root = document.documentElement;
-    const fonts = {
-      'poppins': "'Poppins', sans-serif",
-      'inter': "'Inter', sans-serif",
-      'outfit': "'Outfit', sans-serif",
-      'montserrat': "'Montserrat', sans-serif"
-    };
-    root.style.setProperty('--font-sans', fonts[font] || fonts['poppins']);
-  };
 
-  const handleFontChange = (font) => {
-    setSelectedFont(font);
-    localStorage.setItem('app_font', font);
-    applyFont(font);
-
-    // Trigger cinematic transition
-    setIsTransitioning(true);
-    setTimeout(() => {
-      window.location.href = '/settings';
-    }, 1000);
-  };
 
   if (!user) return null;
 
@@ -873,56 +846,7 @@ const Settings = () => {
                   </div>
                 </div>
 
-                {/* Font Section - ONLY for Scarlet Flare */}
-                {selectedTheme === 'crimson' && (
-                  <div className="system-section">
-                    <div className="section-header">
-                      <h2>Font Style</h2>
-                    </div>
-                    <div className="font-selector">
-                      <div
-                        className={`font-option ${selectedFont === 'poppins' ? 'active' : ''}`}
-                        onClick={() => handleFontChange('poppins')}
-                      >
-                        <div className="font-preview" style={{ fontFamily: "'Poppins', sans-serif" }}>Aa</div>
-                        <div className="font-info">
-                          <h3>Poppins</h3>
-                          <p>Modern Geometric</p>
-                        </div>
-                      </div>
-                      <div
-                        className={`font-option ${selectedFont === 'inter' ? 'active' : ''}`}
-                        onClick={() => handleFontChange('inter')}
-                      >
-                        <div className="font-preview" style={{ fontFamily: "'Inter', sans-serif" }}>Aa</div>
-                        <div className="font-info">
-                          <h3>Inter</h3>
-                          <p>Clean Precision</p>
-                        </div>
-                      </div>
-                      <div
-                        className={`font-option ${selectedFont === 'outfit' ? 'active' : ''}`}
-                        onClick={() => handleFontChange('outfit')}
-                      >
-                        <div className="font-preview" style={{ fontFamily: "'Outfit', sans-serif" }}>Aa</div>
-                        <div className="font-info">
-                          <h3>Outfit</h3>
-                          <p>Elegant Round</p>
-                        </div>
-                      </div>
-                      <div
-                        className={`font-option ${selectedFont === 'montserrat' ? 'active' : ''}`}
-                        onClick={() => handleFontChange('montserrat')}
-                      >
-                        <div className="font-preview" style={{ fontFamily: "'Montserrat', sans-serif" }}>Aa</div>
-                        <div className="font-info">
-                          <h3>Montserrat</h3>
-                          <p>Classic Modern</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+
 
                 {/* Danger Zone */}
                 <div className="danger-zone">
