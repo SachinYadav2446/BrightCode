@@ -54,7 +54,10 @@ const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = fal
                             playsInline
                             muted={isLocal}
                             className="presence-video"
-                            style={{ opacity: isVideoOn ? 1 : 0 }}
+                            style={{ 
+                                opacity: isVideoOn ? 1 : 0,
+                                position: isVideoOn ? 'relative' : 'absolute'
+                            }}
                         />
                         {!isVideoOn && (
                             <div className="presence-avatar">
@@ -1549,19 +1552,17 @@ const EditorPage = () => {
 
     // Auto-join the call when workspace loads
     const autoJoinCall = async () => {
-        // Request permissions for both audio and video, but start with all tracks DISABLED
-        // This way users must explicitly turn on mic/camera
         const stream = await getLocalStream(true);
         if (!stream) {
-            // If no permissions, still mark as active but without stream
             setIsCallActive(true);
             return;
         }
 
-        // Disable all tracks by default — mic and camera both OFF
-        stream.getTracks().forEach(t => { t.enabled = false; });
+        // Start with mic ON, video OFF
+        stream.getAudioTracks().forEach(t => { t.enabled = true; });
+        stream.getVideoTracks().forEach(t => { t.enabled = false; });
         setIsCallActive(true);
-        setIsMuted(true);
+        setIsMuted(false);
         setIsVideoOn(false);
 
         // Tell everyone we joined
@@ -1573,6 +1574,7 @@ const EditorPage = () => {
             await initiateCallToPeer(client.id, client.username);
         }
     };
+
 
     // Initiate a peer connection and send offer
     const initiateCallToPeer = async (targetId, targetUsername) => {
@@ -1595,30 +1597,37 @@ const EditorPage = () => {
         if (!stream) {
             stream = await getLocalStream(true);
             if (!stream) return;
-            // Disable all tracks by default
-            stream.getTracks().forEach(t => { t.enabled = false; });
             setIsCallActive(true);
             setIsMuted(true);
             setIsVideoOn(false);
+            // Keep audio enabled but disable video by default
+            stream.getVideoTracks().forEach(t => { t.enabled = false; });
             setIsVideoCallOpen(true);
             socketRef.current?.emit('video-call-join', { roomId, username: user?.username });
         }
 
         const callerInfo = clients.find(c => c.id === from);
-        const pc = createPeerConnection(from);
-        setCallParticipants(prev => ({
-            ...prev,
-            [from]: { username: callerInfo?.username || 'Peer', stream: null, isMuted: true, isVideoOn: false }
-        }));
 
-        stream.getTracks().forEach(track => pc.addTrack(track, stream));
+        // ── KEY FIX: Reuse existing peer connection for renegotiation ──
+        // If we already have a peer connection with this peer, reuse it.
+        // Creating a new one (old behaviour) destroys the working connection.
+        let pc = peerConnectionsRef.current[from];
+        if (!pc || pc.connectionState === 'closed' || pc.connectionState === 'failed') {
+            pc = createPeerConnection(from);
+            setCallParticipants(prev => ({
+                ...prev,
+                [from]: { username: callerInfo?.username || 'Peer', stream: null, isMuted: false, isVideoOn: false }
+            }));
+            // Add local tracks to the new peer connection
+            stream.getTracks().forEach(track => pc.addTrack(track, stream));
+        }
+
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         socketRef.current?.emit('webrtc-answer', { roomId, answer, targetId: from });
-
-        // No toast here — user-joined already notifies about the join
     };
+
 
     // Leave the call (only called when leaving workspace)
     const endCall = () => {
