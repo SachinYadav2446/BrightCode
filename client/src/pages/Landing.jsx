@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   Code2, Users, Terminal, BookOpen, Brain, 
   Trophy, ArrowRight, Shield, Activity, ChevronRight, Play, CheckCircle,
-  GitBranch, Sparkles, Flame, Check, HelpCircle
+  GitBranch, Sparkles, Flame, Check, HelpCircle, Menu, X
 } from "lucide-react";
 import API_URL from "../config";
 import CodeBrightLogo from "../components/CodeBrightLogo";
@@ -13,6 +13,7 @@ export default function Landing() {
   const navigate = useNavigate();
   const [leaderboard, setLeaderboard] = useState([]);
   const [lbLoading, setLbLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch(`${API_URL}/leaderboard`)
@@ -36,11 +37,9 @@ export default function Landing() {
       <nav className="nav">
         <div className="nav-inner">
           {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <a className="nav-logo" href="#" onClick={e => e.preventDefault()} style={{ textDecoration: 'none' }}>
-              <CodeBrightLogo size="small" />
-            </a>
-          </div>
+          <a className="nav-logo" href="#" onClick={e => e.preventDefault()} style={{ textDecoration: 'none' }}>
+            <CodeBrightLogo size="small" />
+          </a>
 
           {/* Center Links */}
           <div className="nav-links">
@@ -55,7 +54,28 @@ export default function Landing() {
             <button className="nav-btn-ghost" onClick={() => handleAuth('login')}>Sign In</button>
             <button className="nav-btn-primary" onClick={() => handleAuth('register')}>Get Started</button>
           </div>
+
+          {/* Mobile Menu Toggle */}
+          <button 
+            className="nav-mobile-toggle"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="nav-mobile-menu">
+            <a href="#features" className="nav-mobile-link" onClick={() => setMobileMenuOpen(false)}>Features</a>
+            <a href="#modules" className="nav-mobile-link" onClick={() => setMobileMenuOpen(false)}>Modules</a>
+            <a href="#workflow" className="nav-mobile-link" onClick={() => setMobileMenuOpen(false)}>How it Works</a>
+            <a href="#arena" className="nav-mobile-link" onClick={() => setMobileMenuOpen(false)}>Leaderboard</a>
+            <hr className="nav-mobile-divider" />
+            <button className="nav-mobile-btn-ghost" onClick={() => { handleAuth('login'); setMobileMenuOpen(false); }}>Sign In</button>
+            <button className="nav-mobile-btn-primary" onClick={() => { handleAuth('register'); setMobileMenuOpen(false); }}>Get Started</button>
+          </div>
+        )}
       </nav>
 
       {/* ══ HERO ══ */}
@@ -63,36 +83,40 @@ export default function Landing() {
         <div className="hero-inner">
           {/* Left Column */}
           <div className="hero-left">
+            <div className="hero-badge">
+              <span className="badge-dot"></span>
+              <span className="badge-text">✨ New Features Released</span>
+            </div>
             <h1 className="hero-h1">
-              A new way to <br />
-              <span>master algorithms</span>.
+              Code, Collaborate, <br />
+              <span>Conquer Challenges</span>.
             </h1>
 
             <p className="hero-sub">
-              Practice coding, solve competitive challenges, and collaborate in real-time. Join factions, track your milestones, and code alongside your peers in an integrated environment.
+              BrightCode is your all-in-one platform for mastering programming. Practice with thousands of questions, join competitive factions, collaborate in real-time, and get AI-powered assistance to level up your coding skills.
             </p>
 
             <div className="hero-actions">
               <button className="btn-primary" onClick={() => handleAuth('register')}>
-                Join Now
+                Start Coding for Free <ArrowRight size={18} />
               </button>
               <button className="btn-secondary" onClick={handleHub}>
-                Explore Challenges
+                <Play size={18} fill="currentColor" /> Watch Demo
               </button>
             </div>
 
             <div className="hero-stats">
               <div className="h-stat">
-                <span className="h-stat-val">1.2k+</span>
-                <span className="h-stat-lbl">Questions</span>
+                <span className="h-stat-val">2,500+</span>
+                <span className="h-stat-lbl">Coding Problems</span>
               </div>
               <div className="h-stat">
-                <span className="h-stat-val">8</span>
+                <span className="h-stat-val">15+</span>
                 <span className="h-stat-lbl">Active Factions</span>
               </div>
               <div className="h-stat">
-                <span className="h-stat-val">&lt;50ms</span>
-                <span className="h-stat-lbl">Sync Latency</span>
+                <span className="h-stat-val">&lt;30ms</span>
+                <span className="h-stat-lbl">Real-time Sync</span>
               </div>
             </div>
           </div>
@@ -167,69 +191,69 @@ export default function Landing() {
       <section className="section" id="features">
         <div className="section-inner">
           <div className="section-header">
-            <span className="section-tag">Core Features</span>
-            <h2 className="section-heading">Designed for modern developers</h2>
-            <p className="section-subtext">Everything you need to practice, learn, and excel in coding.</p>
+            <span className="section-tag">💪 Powerful Features</span>
+            <h2 className="section-heading">Everything a Developer Needs</h2>
+            <p className="section-subtext">From coding practice to competitive programming, BrightCode has you covered with all the tools you need to succeed.</p>
           </div>
 
           <div className="features-grid">
             <div className="feature-card">
               <div className="feat-icon-box blue-box">
-                <Code2 size={20} />
+                <Code2 size={24} />
               </div>
-              <h3 className="feat-title">Algorithmic Playground</h3>
+              <h3 className="feat-title">Smart Code Editor</h3>
               <p className="feat-desc">
-                Practice coding in an isolated code compiler with support for Python, JavaScript, Java, C++, and Go. Run test cases and check runtime execution speeds.
+                Practice coding in our feature-rich editor with support for 10+ languages, syntax highlighting, and instant test case validation.
               </p>
             </div>
 
             <div className="feature-card">
               <div className="feat-icon-box orange-box">
-                <Trophy size={20} />
+                <Trophy size={24} />
               </div>
-              <h3 className="feat-title">Multiplayer Code Arenas</h3>
+              <h3 className="feat-title">Competitive Arenas</h3>
               <p className="feat-desc">
-                Join live speed-coding lobbies to solve challenges against competitors. Rack up points, maintain streaks, and climb global leaderboards.
+                Join live speed-coding battles, compete against other developers, and climb the global leaderboards to prove your skills.
               </p>
             </div>
 
             <div className="feature-card">
               <div className="feat-icon-box green-box">
-                <Brain size={20} />
+                <Brain size={24} />
               </div>
-              <h3 className="feat-title">AI Sentinel Assistant</h3>
+              <h3 className="feat-title">AI-Powered Help</h3>
               <p className="feat-desc">
-                Get instant complexity analysis (Big-O diagnostics), syntax repair suggestions, and conversational debugging assistance inside the editor.
+                Get instant code suggestions, complexity analysis (Big-O), and debugging assistance from our AI assistant, Sentinel.
               </p>
             </div>
 
             <div className="feature-card">
               <div className="feat-icon-box purple-box">
-                <BookOpen size={20} />
+                <BookOpen size={24} />
               </div>
-              <h3 className="feat-title">Note Vault & Drawing Deck</h3>
+              <h3 className="feat-title">Study & Notes</h3>
               <p className="feat-desc">
-                Maintain study sheets, write rich markdown documentation, and sketch system architectures using integrated Excalidraw whiteboards.
+                Keep your knowledge organized with our built-in note vault, markdown editor, and Excalidraw whiteboard for diagrams.
               </p>
             </div>
 
             <div className="feature-card">
               <div className="feat-icon-box red-box">
-                <Users size={20} />
+                <Users size={24} />
               </div>
-              <h3 className="feat-title">Real-Time Collaboration</h3>
+              <h3 className="feat-title">Team Collaboration</h3>
               <p className="feat-desc">
-                Work together in shared workspaces. Features low-latency document synchronization, system whiteboard syncing, and built-in audio/video channels.
+                Code together in real-time with shared workspaces, collaborative whiteboards, and integrated voice and video calls.
               </p>
             </div>
 
             <div className="feature-card">
               <div className="feat-icon-box gold-box">
-                <Shield size={20} />
+                <Shield size={24} />
               </div>
-              <h3 className="feat-title">Secure Proctoring Suite</h3>
+              <h3 className="feat-title">Secure Proctoring</h3>
               <p className="feat-desc">
-                Host monitored exam lobbies with screen sharing, web camera feeds, automated tab-switching trackers, and dynamic event logging.
+                Host or take secure coding assessments with screen monitoring, tab tracking, and detailed event logging.
               </p>
             </div>
           </div>
