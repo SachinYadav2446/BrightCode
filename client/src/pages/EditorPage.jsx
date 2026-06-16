@@ -1543,6 +1543,7 @@ const EditorPage = () => {
         const pc = new RTCPeerConnection(ICE_SERVERS);
         pc._iceQueue = [];
         pc._isNegotiating = false; // guard against concurrent negotiations
+        pc._targetId = targetId;
         peerConnectionsRef.current[targetId] = pc;
         peerConnectionRef.current = pc;
 
@@ -1581,29 +1582,10 @@ const EditorPage = () => {
             }));
         };
 
-        // KEY FIX: This is now the ONLY place offers are created.
-        // initiateCallToPeer just calls addTrack; the browser fires this automatically.
+        // KEY FIX: Only let the caller (the one who initiated the connection) handle offers
+        // This prevents conflicting negotiations
         pc.onnegotiationneeded = async () => {
-            if (pc._isNegotiating) {
-                console.log(`[WebRTC] Skipping onnegotiationneeded for ${targetId} — already negotiating`);
-                return;
-            }
-            pc._isNegotiating = true;
             console.log(`[WebRTC] onnegotiationneeded for ${targetId}`);
-            try {
-                const offer = await pc.createOffer();
-                // Guard: if signaling state changed while we awaited, bail out
-                if (pc.signalingState !== 'stable') {
-                    console.warn(`[WebRTC] Aborting offer for ${targetId} — signalingState is ${pc.signalingState}`);
-                    return;
-                }
-                await pc.setLocalDescription(offer);
-                socketRef.current?.emit('webrtc-offer', { roomId, offer, targetId });
-            } catch (err) {
-                console.error('[WebRTC] onnegotiationneeded error:', err);
-            } finally {
-                pc._isNegotiating = false;
-            }
         };
 
         pc.onconnectionstatechange = () => {
@@ -1619,10 +1601,6 @@ const EditorPage = () => {
 
         pc.onsignalingstatechange = () => {
             console.log(`[WebRTC] signalingState for ${targetId}: ${pc.signalingState}`);
-            // Reset negotiation guard when we return to stable
-            if (pc.signalingState === 'stable') {
-                pc._isNegotiating = false;
-            }
         };
 
         return pc;
@@ -1765,14 +1743,28 @@ const EditorPage = () => {
             }
         }));
 
-        // Adding tracks triggers onnegotiationneeded → offer is sent automatically
-        localStreamRef.current.getTracks().forEach(track => {
-            console.log(`[WebRTC - AUDIO DEBUG] Adding ${track.kind} track to PC for ${targetId}`);
-            if (track.kind === 'audio') {
-                console.log(`[WebRTC - AUDIO DEBUG] Adding audio track ${track.id} (enabled: ${track.enabled}) to PC for ${targetId}`);
+        // Add transceivers first (consistent order: audio then video)
+            const audioTrack = localStreamRef.current.getAudioTracks()[0];
+            const videoTrack = localStreamRef.current.getVideoTracks()[0];
+            if (audioTrack) {
+                console.log(`[WebRTC - AUDIO DEBUG] Adding audio transceiver for ${targetId}`);
+                pc.addTransceiver(audioTrack, { direction: 'sendrecv', streams: [localStreamRef.current] });
             }
-            pc.addTrack(track, localStreamRef.current);
-        });
+            if (videoTrack) {
+                console.log(`[WebRTC - AUDIO DEBUG] Adding video transceiver for ${targetId}`);
+                pc.addTransceiver(videoTrack, { direction: 'sendrecv', streams: [localStreamRef.current] });
+            }
+
+        // Now manually create and send the offer
+        console.log(`[WebRTC] Manually creating offer for ${targetId}`);
+        try {
+            const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+            await pc.setLocalDescription(offer);
+            socketRef.current?.emit('webrtc-offer', { roomId, offer, targetId });
+            console.log(`[WebRTC] Sent offer to ${targetId}`);
+        } catch (err) {
+            console.error(`[WebRTC] Error creating/sending offer to ${targetId}:`, err);
+        }
     };
 
     // Handle incoming offer from a peer
@@ -1814,15 +1806,18 @@ const EditorPage = () => {
                     isVideoOn: false 
                 }
             }));
-            // Only add tracks for brand-new connections.
-            // For renegotiation (isNewConnection=false), tracks are already in the PC.
-            stream.getTracks().forEach(track => {
-                console.log(`[WebRTC - AUDIO DEBUG] Adding ${track.kind} track to answering PC for ${from}`);
-                if (track.kind === 'audio') {
-                    console.log(`[WebRTC - AUDIO DEBUG] Adding audio track ${track.id} (enabled: ${track.enabled}) to answering PC for ${from}`);
-                }
-                pc.addTrack(track, stream);
-            });
+            // Only add transceivers for brand-new connections (consistent order: audio then video)
+            // For renegotiation (isNewConnection=false), transceivers are already in the PC.
+            const audioTrack = stream.getAudioTracks()[0];
+            const videoTrack = stream.getVideoTracks()[0];
+            if (audioTrack) {
+                console.log(`[WebRTC - AUDIO DEBUG] Adding audio transceiver to answering PC for ${from}`);
+                pc.addTransceiver(audioTrack, { direction: 'sendrecv', streams: [stream] });
+            }
+            if (videoTrack) {
+                console.log(`[WebRTC - AUDIO DEBUG] Adding video transceiver to answering PC for ${from}`);
+                pc.addTransceiver(videoTrack, { direction: 'sendrecv', streams: [stream] });
+            }
         }
 
         try {
@@ -1896,7 +1891,7 @@ const EditorPage = () => {
         if (pc.signalingState !== 'stable' || pc._isNegotiating) return;
         pc._isNegotiating = true;
         try {
-            const offer = await pc.createOffer();
+            const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
             await pc.setLocalDescription(offer);
             socketRef.current?.emit('webrtc-offer', { roomId, offer, targetId });
         } catch (err) {
@@ -1919,9 +1914,16 @@ const EditorPage = () => {
                 stream.getAudioTracks().forEach(t => { t.enabled = !isMuted; });
                 stream.getVideoTracks().forEach(t => { t.enabled = true; });
 
-                // Add all tracks to existing peer connections, then renegotiate
+                // Add transceivers for new stream to existing peer connections, then renegotiate
                 for (const [peerId, pc] of Object.entries(peerConnectionsRef.current)) {
-                    stream.getTracks().forEach(track => pc.addTrack(track, stream));
+                    const audioTrack = stream.getAudioTracks()[0];
+                    const videoTrack = stream.getVideoTracks()[0];
+                    if (audioTrack) {
+                        pc.addTransceiver(audioTrack, { direction: 'sendrecv', streams: [stream] });
+                    }
+                    if (videoTrack) {
+                        pc.addTransceiver(videoTrack, { direction: 'sendrecv', streams: [stream] });
+                    }
                     await renegotiateWithPeer(peerId, pc);
                 }
 
@@ -1961,9 +1963,14 @@ const EditorPage = () => {
                 setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
                 if (localVideoRef.current) localVideoRef.current.srcObject = localStreamRef.current;
 
-                // Add to all peer connections and renegotiate
+                // Replace or add video track to all peer connections and renegotiate
                 for (const [peerId, pc] of Object.entries(peerConnectionsRef.current)) {
-                    pc.addTrack(videoTrack, localStreamRef.current);
+                    const videoTransceiver = pc.getTransceivers().find(t => t.receiver.track?.kind === 'video' || t.sender.track?.kind === 'video');
+                    if (videoTransceiver) {
+                        videoTransceiver.sender.replaceTrack(videoTrack);
+                    } else {
+                        pc.addTransceiver(videoTrack, { direction: 'sendrecv', streams: [localStreamRef.current] });
+                    }
                     await renegotiateWithPeer(peerId, pc);
                 }
 
