@@ -38,34 +38,49 @@ const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = fal
     const videoRef = useRef(null);
 
     useEffect(() => {
-        if (videoRef.current && stream) {
-            videoRef.current.srcObject = stream;
+        const videoEl = videoRef.current;
+        if (!videoEl) return;
+
+        // Always set srcObject (even when stream is null, to clear it)
+        videoEl.srcObject = stream || null;
+
+        if (stream) {
+            // Explicitly call play() — browsers may block autoplay
+            const tryPlay = () => {
+                const promise = videoEl.play();
+                if (promise !== undefined) {
+                    promise.catch(() => {
+                        // Autoplay blocked (unmuted video) — mute and retry
+                        videoEl.muted = true;
+                        videoEl.play().catch(() => {});
+                    });
+                }
+            };
+            // Small delay to let srcObject settle
+            setTimeout(tryPlay, 100);
         }
     }, [stream]);
 
     return (
         <div className="presence-tile">
             <div className="presence-video-container">
-                {stream ? (
-                    <>
-                        <video
-                            ref={videoRef}
-                            autoPlay
-                            playsInline
-                            muted={isLocal}
-                            className="presence-video"
-                            style={{ 
-                                opacity: isVideoOn ? 1 : 0,
-                                position: isVideoOn ? 'relative' : 'absolute'
-                            }}
-                        />
-                        {!isVideoOn && (
-                            <div className="presence-avatar">
-                                <span>{username?.charAt(0).toUpperCase()}</span>
-                            </div>
-                        )}
-                    </>
-                ) : (
+                {/* Always render video element — removing it from DOM resets srcObject */}
+                <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted={isLocal}
+                    className="presence-video"
+                    style={{
+                        display: stream ? 'block' : 'none',
+                        opacity: isVideoOn ? 1 : 0,
+                        position: isVideoOn ? 'relative' : 'absolute',
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                    }}
+                />
+                {(!stream || !isVideoOn) && (
                     <div className="presence-avatar">
                         <span>{username?.charAt(0).toUpperCase()}</span>
                     </div>
@@ -84,6 +99,7 @@ const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = fal
         </div>
     );
 };
+
 
 
 
@@ -1475,12 +1491,33 @@ const EditorPage = () => {
         };
 
         pc.ontrack = (event) => {
-            const stream = event.streams[0];
+            // event.streams[0] can be undefined if tracks arrive before stream negotiation
+            // Build a MediaStream manually from the track as a safe fallback
+            let remoteStream = event.streams && event.streams[0];
+            if (!remoteStream) {
+                // Check if we already have a stream for this peer, add track to it
+                const existing = peerConnectionsRef.current[targetId]?._remoteStream;
+                if (existing) {
+                    existing.addTrack(event.track);
+                    remoteStream = existing;
+                } else {
+                    remoteStream = new MediaStream([event.track]);
+                    if (peerConnectionsRef.current[targetId]) {
+                        peerConnectionsRef.current[targetId]._remoteStream = remoteStream;
+                    }
+                }
+            } else {
+                // Cache it for future tracks
+                if (peerConnectionsRef.current[targetId]) {
+                    peerConnectionsRef.current[targetId]._remoteStream = remoteStream;
+                }
+            }
             setCallParticipants(prev => ({
                 ...prev,
-                [targetId]: { ...prev[targetId], stream }
+                [targetId]: { ...prev[targetId], stream: remoteStream }
             }));
         };
+
 
         pc.onnegotiationneeded = async () => {
             try {
