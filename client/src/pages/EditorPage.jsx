@@ -1558,7 +1558,7 @@ const EditorPage = () => {
         };
 
         pc.ontrack = (event) => {
-            console.log(`[WebRTC] ontrack for target ${targetId}:`, event.track.kind);
+            console.log(`[WebRTC - AUDIO DEBUG] ontrack for target ${targetId}:`, event.track.kind, event.track);
             const pcObj = peerConnectionsRef.current[targetId];
             if (!pcObj) return;
 
@@ -1567,8 +1567,11 @@ const EditorPage = () => {
             }
 
             if (!pcObj._remoteStream.getTracks().find(t => t.id === event.track.id)) {
+                console.log(`[WebRTC - AUDIO DEBUG] Adding ${event.track.kind} track to remote stream for ${targetId}`);
                 pcObj._remoteStream.addTrack(event.track);
             }
+
+            console.log(`[WebRTC - AUDIO DEBUG] Remote stream tracks now:`, pcObj._remoteStream.getTracks());
 
             // New MediaStream reference so React re-renders the tile
             const updatedStream = new MediaStream(pcObj._remoteStream.getTracks());
@@ -1652,27 +1655,31 @@ const EditorPage = () => {
 
         const acquire = async () => {
             try {
-                console.log(`[WebRTC] Requesting user media...`);
+                console.log(`[WebRTC - AUDIO DEBUG] Requesting user media... (audio: true, video: ${withVideo})`);
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: withVideo });
-                console.log(`[WebRTC] Got local stream:`, stream);
+                console.log(`[WebRTC - AUDIO DEBUG] Got local stream:`, stream);
+                console.log(`[WebRTC - AUDIO DEBUG] Local audio tracks:`, stream.getAudioTracks());
+                console.log(`[WebRTC - AUDIO DEBUG] Local audio track enabled state:`, stream.getAudioTracks()[0]?.enabled);
                 localStreamRef.current = stream;
                 setLocalStream(stream);
                 if (localVideoRef.current) localVideoRef.current.srcObject = stream;
                 return stream;
             } catch (err) {
-                console.error('[WebRTC] Media access error:', err);
+                console.error('[WebRTC - AUDIO DEBUG] Media access error:', err);
                 // Try audio only if video fails
                 try {
-                    console.log(`[WebRTC] Trying audio only...`);
+                    console.log(`[WebRTC - AUDIO DEBUG] Trying audio only...`);
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                    console.log(`[WebRTC] Got local audio stream:`, stream);
+                    console.log(`[WebRTC - AUDIO DEBUG] Got local audio stream:`, stream);
+                    console.log(`[WebRTC - AUDIO DEBUG] Local audio tracks (audio only):`, stream.getAudioTracks());
+                    console.log(`[WebRTC - AUDIO DEBUG] Local audio track enabled state (audio only):`, stream.getAudioTracks()[0]?.enabled);
                     localStreamRef.current = stream;
                     setLocalStream(stream);
                     if (localVideoRef.current) localVideoRef.current.srcObject = stream;
                     toast('Camera not available, using audio only', { icon: '🎤' });
                     return stream;
                 } catch (audioErr) {
-                    console.error('[WebRTC] Audio access error:', audioErr);
+                    console.error('[WebRTC - AUDIO DEBUG] Audio access error:', audioErr);
                     if (audioErr.name === 'NotAllowedError') {
                         toast.error('Permission denied. Please allow mic/camera in browser settings.', { duration: 5000 });
                     } else if (audioErr.name === 'NotFoundError') {
@@ -1703,9 +1710,14 @@ const EditorPage = () => {
         }
 
         // Start muted, video off — matches the default state flags (isMuted=true, isVideoOn=false)
-        stream.getAudioTracks().forEach(t => { t.enabled = false; });
+        console.log(`[WebRTC - AUDIO DEBUG] autoJoinCall: Disabling audio tracks initially`);
+        stream.getAudioTracks().forEach(t => {
+            console.log(`[WebRTC - AUDIO DEBUG] Setting audio track ${t.id} enabled: false`);
+            t.enabled = false;
+        });
         stream.getVideoTracks().forEach(t => { t.enabled = false; });
 
+        console.log(`[WebRTC - AUDIO DEBUG] autoJoinCall: Setting isCallActive=true, isMuted=true, isVideoOn=false`);
         setIsCallActive(true);
         setIsMuted(true);
         setIsVideoOn(false);
@@ -1755,7 +1767,10 @@ const EditorPage = () => {
 
         // Adding tracks triggers onnegotiationneeded → offer is sent automatically
         localStreamRef.current.getTracks().forEach(track => {
-            console.log(`[WebRTC] Adding ${track.kind} track to PC for ${targetId}`);
+            console.log(`[WebRTC - AUDIO DEBUG] Adding ${track.kind} track to PC for ${targetId}`);
+            if (track.kind === 'audio') {
+                console.log(`[WebRTC - AUDIO DEBUG] Adding audio track ${track.id} (enabled: ${track.enabled}) to PC for ${targetId}`);
+            }
             pc.addTrack(track, localStreamRef.current);
         });
     };
@@ -1802,7 +1817,10 @@ const EditorPage = () => {
             // Only add tracks for brand-new connections.
             // For renegotiation (isNewConnection=false), tracks are already in the PC.
             stream.getTracks().forEach(track => {
-                console.log(`[WebRTC] Adding ${track.kind} track to answering PC for ${from}`);
+                console.log(`[WebRTC - AUDIO DEBUG] Adding ${track.kind} track to answering PC for ${from}`);
+                if (track.kind === 'audio') {
+                    console.log(`[WebRTC - AUDIO DEBUG] Adding audio track ${track.id} (enabled: ${track.enabled}) to answering PC for ${from}`);
+                }
                 pc.addTrack(track, stream);
             });
         }
@@ -1853,11 +1871,23 @@ const EditorPage = () => {
     };
 
     const toggleMute = () => {
+        console.log(`[WebRTC - AUDIO DEBUG] toggleMute called. Current isMuted: ${isMuted}`);
         if (localStreamRef.current) {
+            const audioTracks = localStreamRef.current.getAudioTracks();
+            console.log(`[WebRTC - AUDIO DEBUG] Local audio tracks:`, audioTracks);
+            
             const newMuted = !isMuted;
-            localStreamRef.current.getAudioTracks().forEach(t => { t.enabled = !newMuted; });
+            audioTracks.forEach(t => {
+                console.log(`[WebRTC - AUDIO DEBUG] Setting audio track ${t.id} enabled: ${!newMuted}`);
+                t.enabled = !newMuted;
+                console.log(`[WebRTC - AUDIO DEBUG] Audio track ${t.id} enabled state:`, t.enabled);
+            });
+            
             setIsMuted(newMuted);
+            console.log(`[WebRTC - AUDIO DEBUG] Emitting video-call-state: isMuted=${newMuted}, isVideoOn=${isVideoOn}`);
             socketRef.current?.emit('video-call-state', { roomId, isMuted: newMuted, isVideoOn, username: user?.username });
+        } else {
+            console.warn(`[WebRTC - AUDIO DEBUG] No local stream available in toggleMute!`);
         }
     };
 
