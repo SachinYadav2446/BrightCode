@@ -1591,7 +1591,10 @@ const EditorPage = () => {
             pc._isNegotiating = true;
             console.log(`[WebRTC] onnegotiationneeded for ${targetId}`);
             try {
-                const offer = await pc.createOffer();
+                const offer = await pc.createOffer({ 
+                    offerToReceiveAudio: true, 
+                    offerToReceiveVideo: true 
+                });
 
                 // Guard: if signaling state changed while we awaited, bail out
                 if (pc.signalingState !== 'stable') {
@@ -1903,7 +1906,10 @@ const EditorPage = () => {
         if (pc.signalingState !== 'stable' || pc._isNegotiating) return;
         pc._isNegotiating = true;
         try {
-            const offer = await pc.createOffer();
+            const offer = await pc.createOffer({ 
+                offerToReceiveAudio: true, 
+                offerToReceiveVideo: true 
+            });
             await pc.setLocalDescription(offer);
             socketRef.current?.emit('webrtc-offer', { roomId, offer, targetId });
         } catch (err) {
