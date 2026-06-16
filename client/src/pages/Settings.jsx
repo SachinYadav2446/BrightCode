@@ -963,7 +963,7 @@ const Settings = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <Mail size={16} style={{ color: '#ef4444' }} />
-                            <span style={{ color: '#fff' }}>support@brightcode.io</span>
+                            <span style={{ color: '#fff' }}>codebrightlim@gmail.com</span>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <Globe size={16} style={{ color: '#ef4444' }} />
@@ -971,9 +971,25 @@ const Settings = () => {
                           </div>
                         </div>
                         <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #333' }}>
-                          <h4 style={{ color: '#fff', marginBottom: '10px' }}>Built for Developers</h4>
-                          <p style={{ color: '#71717a', fontSize: '0.9rem' }}>
+                          <h4 style={{ color: '#fff', marginBottom: '10px' }}>About BrightCode</h4>
+                          <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginBottom: '16px' }}>
                             BrightCode is a developer-first interactive learning platform designed to help you master programming through hands-on challenges and gamified progression.
+                          </p>
+                          <h4 style={{ color: '#fff', marginBottom: '10px' }}>Our Mission</h4>
+                          <p style={{ color: '#71717a', fontSize: '0.9rem', marginBottom: '16px' }}>
+                            To make programming education accessible, engaging, and effective for developers of all skill levels. We believe in learning by doing, and that's what BrightCode is all about!
+                          </p>
+                          <h4 style={{ color: '#fff', marginBottom: '10px' }}>What We Offer</h4>
+                          <ul style={{ color: '#71717a', fontSize: '0.9rem', paddingLeft: '20px', marginBottom: '16px' }}>
+                            <li style={{ marginBottom: '8px' }}>Interactive coding challenges</li>
+                            <li style={{ marginBottom: '8px' }}>Gamified progression system</li>
+                            <li style={{ marginBottom: '8px' }}>Real-time collaboration</li>
+                            <li style={{ marginBottom: '8px' }}>Built-in code editor and vault</li>
+                            <li style={{ marginBottom: '8px' }}>Proctoring tools for assessments</li>
+                          </ul>
+                          <h4 style={{ color: '#fff', marginBottom: '10px' }}>Built with Passion</h4>
+                          <p style={{ color: '#71717a', fontSize: '0.9rem' }}>
+                            BrightCode is built by developers, for developers. We understand the struggles of learning to code, and we've created a platform that makes the journey enjoyable and rewarding.
                           </p>
                         </div>
                       </div>
