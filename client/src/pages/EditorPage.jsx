@@ -1705,8 +1705,14 @@ const EditorPage = () => {
 
         const acquire = async () => {
             try {
-                console.log(`[WebRTC - AUDIO DEBUG] Requesting user media... (audio: true, video: ${withVideo})`);
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: withVideo });
+                console.log(`[WebRTC - AUDIO DEBUG] Requesting user media... (audio: true, video: true)`);
+                let stream;
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                } catch (videoErr) {
+                    console.log(`[WebRTC - AUDIO DEBUG] Video request failed, falling back to audio only:`, videoErr);
+                    stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                }
                 console.log(`[WebRTC - AUDIO DEBUG] Got local stream:`, stream);
                 console.log(`[WebRTC - AUDIO DEBUG] Local audio tracks:`, stream.getAudioTracks());
                 console.log(`[WebRTC - AUDIO DEBUG] Local audio track enabled state:`, stream.getAudioTracks()[0]?.enabled);
@@ -1818,15 +1824,22 @@ const EditorPage = () => {
             }
         }));
 
-        // Add transceivers explicitly to ensure track order: audio first, then video
+        // ALWAYS add both transceivers (audio first, then video) to ensure m-line order is fixed!
         const audioTrack = localStreamRef.current.getAudioTracks()[0];
         const videoTrack = localStreamRef.current.getVideoTracks()[0];
 
+        // Add audio transceiver first
         if (audioTrack) {
             pc.addTransceiver(audioTrack, { direction: 'sendrecv', streams: [localStreamRef.current] });
+        } else {
+            pc.addTransceiver('audio', { direction: 'recvonly' });
         }
+        
+        // Add video transceiver second
         if (videoTrack) {
             pc.addTransceiver(videoTrack, { direction: 'sendrecv', streams: [localStreamRef.current] });
+        } else {
+            pc.addTransceiver('video', { direction: 'recvonly' });
         }
     };
 
@@ -1871,14 +1884,22 @@ const EditorPage = () => {
             }));
             // Only add transceivers for brand-new connections.
             // For renegotiation (isNewConnection=false), transceivers are already in the PC.
+            // ALWAYS add both transceivers (audio first, then video) to ensure m-line order is fixed!
             const answerAudioTrack = stream.getAudioTracks()[0];
             const answerVideoTrack = stream.getVideoTracks()[0];
 
+            // Add audio transceiver first
             if (answerAudioTrack) {
                 pc.addTransceiver(answerAudioTrack, { direction: 'sendrecv', streams: [stream] });
+            } else {
+                pc.addTransceiver('audio', { direction: 'recvonly' });
             }
+            
+            // Add video transceiver second
             if (answerVideoTrack) {
                 pc.addTransceiver(answerVideoTrack, { direction: 'sendrecv', streams: [stream] });
+            } else {
+                pc.addTransceiver('video', { direction: 'recvonly' });
             }
         }
 
@@ -1986,16 +2007,20 @@ const EditorPage = () => {
                 stream.getAudioTracks().forEach(t => { t.enabled = !isMuted; });
                 stream.getVideoTracks().forEach(t => { t.enabled = true; });
 
-                // Add all transceivers to existing peer connections, then renegotiate (audio first)
-                const toggleAudioTrack = stream.getAudioTracks()[0];
-                const toggleVideoTrack = stream.getVideoTracks()[0];
+                // For each peer connection, replace tracks on the EXISTING transceivers (audio first, then video)!
+                const newAudioTrack = stream.getAudioTracks()[0];
+                const newVideoTrack = stream.getVideoTracks()[0];
                 
                 for (const [peerId, pc] of Object.entries(peerConnectionsRef.current)) {
-                    if (toggleAudioTrack) {
-                        pc.addTransceiver(toggleAudioTrack, { direction: 'sendrecv', streams: [stream] });
+                    const transceivers = pc.getTransceivers();
+                    // First transceiver should always be audio, second should always be video!
+                    if (transceivers[0]?.sender && newAudioTrack) {
+                        await transceivers[0].sender.replaceTrack(newAudioTrack);
+                        transceivers[0].direction = 'sendrecv';
                     }
-                    if (toggleVideoTrack) {
-                        pc.addTransceiver(toggleVideoTrack, { direction: 'sendrecv', streams: [stream] });
+                    if (transceivers[1]?.sender && newVideoTrack) {
+                        await transceivers[1].sender.replaceTrack(newVideoTrack);
+                        transceivers[1].direction = 'sendrecv';
                     }
                     await renegotiateWithPeer(peerId, pc);
                 }
@@ -2016,7 +2041,7 @@ const EditorPage = () => {
         const videoTracks = localStreamRef.current.getVideoTracks();
 
         if (videoTracks.length > 0) {
-            // We already have a video track — just toggle it
+            // We already have a video track — just toggle it (no renegotiation needed!)
             const newVideoOn = !isVideoOn;
             console.log('[toggleVideo - DEBUG] Toggling existing video track:', { videoTracks, newVideoOn });
             videoTracks.forEach(t => { t.enabled = newVideoOn; });
@@ -2028,7 +2053,7 @@ const EditorPage = () => {
                 username: user?.username 
             });
         } else {
-            // We have a stream but no video track — get one and add it
+            // We have a stream but no video track — get one and replace on existing transceivers!
             try {
                 const videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
                 const videoTrack = videoStream.getVideoTracks()[0];
@@ -2037,16 +2062,13 @@ const EditorPage = () => {
                 setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
                 if (localVideoRef.current) localVideoRef.current.srcObject = localStreamRef.current;
 
-                // Add video track to all peer connections (use existing transceiver or add new one)
+                // Replace track on EXISTING video transceivers (second transceiver in each pc)!
                 for (const [peerId, pc] of Object.entries(peerConnectionsRef.current)) {
-                    const videoTransceiver = pc.getTransceivers().find(t => 
-                        t.sender.track?.kind === 'video' || t.receiver.track?.kind === 'video'
-                    );
-                    
-                    if (videoTransceiver && videoTransceiver.sender) {
-                        await videoTransceiver.sender.replaceTrack(videoTrack);
-                    } else {
-                        pc.addTransceiver(videoTrack, { direction: 'sendrecv', streams: [localStreamRef.current] });
+                    const transceivers = pc.getTransceivers();
+                    // Second transceiver should always be video!
+                    if (transceivers[1]?.sender) {
+                        await transceivers[1].sender.replaceTrack(videoTrack);
+                        transceivers[1].direction = 'sendrecv';
                     }
                     await renegotiateWithPeer(peerId, pc);
                 }
