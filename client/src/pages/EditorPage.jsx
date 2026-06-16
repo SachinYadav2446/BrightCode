@@ -1572,13 +1572,26 @@ const EditorPage = () => {
 
         pc.onicecandidate = (event) => {
             if (event.candidate && socketRef.current) {
-                console.log(`[WebRTC] Sending ICE candidate to ${targetId}`);
+                console.log(`[WebRTC] Sending ICE candidate to ${targetId}`, {
+                    type: event.candidate.type,
+                    address: event.candidate.address,
+                    protocol: event.candidate.protocol,
+                    port: event.candidate.port,
+                    candidate: event.candidate.candidate
+                });
                 socketRef.current.emit('webrtc-ice-candidate', { 
                     roomId, 
                     candidate: event.candidate, 
                     targetId 
                 });
+            } else if (!event.candidate) {
+                console.log(`[WebRTC] ICE gathering complete for ${targetId}`);
             }
+        };
+
+        // Log ICE gathering state changes
+        pc.onicegatheringstatechange = () => {
+            console.log(`[WebRTC] iceGatheringState for ${targetId}:`, pc.iceGatheringState);
         };
 
         pc.ontrack = (event) => {
