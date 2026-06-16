@@ -965,10 +965,6 @@ const Settings = () => {
                             <Mail size={16} style={{ color: '#ef4444' }} />
                             <span style={{ color: '#fff' }}>codebrightlim@gmail.com</span>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <Globe size={16} style={{ color: '#ef4444' }} />
-                            <span style={{ color: '#fff' }}>https://brightcode.io</span>
-                          </div>
                         </div>
                         <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #333' }}>
                           <h4 style={{ color: '#fff', marginBottom: '10px' }}>About BrightCode</h4>
