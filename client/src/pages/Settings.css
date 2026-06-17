@@ -1114,6 +1114,25 @@
   box-shadow: 0 0 6px #ff0080;
 }
 
+/* Classy Light Theme preview (LeetCode style) */
+.theme-preview.classy-theme {
+  background: #f8fafc;
+}
+.theme-preview.classy-theme .preview-header {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+.theme-preview.classy-theme .preview-sidebar {
+  background: #f1f5f9;
+  border-right: 1px solid #e2e8f0;
+}
+.theme-preview.classy-theme .preview-line {
+  background: #3b82f6;
+}
+.theme-preview.classy-theme .preview-line.short {
+  background: #60a5fa;
+}
+
 /* LeetCode Dark Theme preview — removed */
 
 /* Eclipse / Midnight Dark Theme preview — removed */

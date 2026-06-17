@@ -153,27 +153,47 @@ const applyGlobalTheme = (theme) => {
     root.style.setProperty('--text-mid', '#f5f5dc');
     root.style.setProperty('--text-lo', '#d2b48c');
     localStorage.setItem('app_theme', 'crimson');
-  } else {
-    // ── Scarlet Flare theme (default) ──────────────────────────
-    root.style.setProperty('--primary', '#ef4444');
-    root.style.setProperty('--primary-rgb', '239, 68, 68');
-    root.style.setProperty('--primary-dark', '#dc2626');
-    root.style.setProperty('--primary-dark-rgb', '220, 38, 38');
-    root.style.setProperty('--primary-light', '#f87171');
-    root.style.setProperty('--primary-light-rgb', '248, 113, 113');
-    root.style.setProperty('--primary-glow', 'rgba(239, 68, 68, 0.5)');
-    root.style.setProperty('--complementary', '#fdf5e6');
-    root.style.setProperty('--text-complementary', '#1a1a1a');
-    root.style.setProperty('--panel-text', '#1a1a1a');
-    root.style.setProperty('--bg-dark', '#0f0f0f');
-    root.style.setProperty('--bg-surface', '#1a1a1a');
-    // Text variables – always set explicitly to prevent CSS cascade bugs
-    root.style.setProperty('--text-main', '#ffffff');
-    root.style.setProperty('--text-muted', '#a0a0a0');
-    root.style.setProperty('--text-hi', '#fffdd0');   // Cream – the Scarlet Flare signature
-    root.style.setProperty('--text-mid', '#f5f5dc');  // Light cream
-    root.style.setProperty('--text-lo', '#d2b48c');   // Tan
-  }
+  } else if (activeTheme === 'classy') {
+      // ── Classy Light theme (LeetCode inspired) ──────────────────────────
+      root.style.setProperty('--primary', '#2563eb');
+      root.style.setProperty('--primary-rgb', '37, 99, 235');
+      root.style.setProperty('--primary-dark', '#1d4ed8');
+      root.style.setProperty('--primary-dark-rgb', '29, 78, 216');
+      root.style.setProperty('--primary-light', '#60a5fa');
+      root.style.setProperty('--primary-light-rgb', '96, 165, 250');
+      root.style.setProperty('--primary-glow', 'rgba(37, 99, 235, 0.3)');
+      root.style.setProperty('--complementary', '#eff6ff');
+      root.style.setProperty('--text-complementary', '#1e293b');
+      root.style.setProperty('--panel-text', '#0f172a');
+      root.style.setProperty('--bg-dark', '#f8fafc');
+      root.style.setProperty('--bg-surface', '#ffffff');
+      root.style.setProperty('--text-main', '#1e293b');
+      root.style.setProperty('--text-muted', '#64748b');
+      root.style.setProperty('--text-hi', '#0f172a');
+      root.style.setProperty('--text-mid', '#334155');
+      root.style.setProperty('--text-lo', '#94a3b8');
+      root.style.setProperty('--font-sans', "'Inter', 'Poppins', sans-serif");
+    } else {
+      // ── Scarlet Flare theme (default) ──────────────────────────
+      root.style.setProperty('--primary', '#ef4444');
+      root.style.setProperty('--primary-rgb', '239, 68, 68');
+      root.style.setProperty('--primary-dark', '#dc2626');
+      root.style.setProperty('--primary-dark-rgb', '220, 38, 38');
+      root.style.setProperty('--primary-light', '#f87171');
+      root.style.setProperty('--primary-light-rgb', '248, 113, 113');
+      root.style.setProperty('--primary-glow', 'rgba(239, 68, 68, 0.5)');
+      root.style.setProperty('--complementary', '#fdf5e6');
+      root.style.setProperty('--text-complementary', '#1a1a1a');
+      root.style.setProperty('--panel-text', '#1a1a1a');
+      root.style.setProperty('--bg-dark', '#0f0f0f');
+      root.style.setProperty('--bg-surface', '#1a1a1a');
+      // Text variables – always set explicitly to prevent CSS cascade bugs
+      root.style.setProperty('--text-main', '#ffffff');
+      root.style.setProperty('--text-muted', '#a0a0a0');
+      root.style.setProperty('--text-hi', '#fffdd0');   // Cream – the Scarlet Flare signature
+      root.style.setProperty('--text-mid', '#f5f5dc');  // Light cream
+      root.style.setProperty('--text-lo', '#d2b48c');   // Tan
+    }
 };
 
 const applyGlobalFont = (font) => {
