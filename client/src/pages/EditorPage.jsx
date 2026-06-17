@@ -36,6 +36,7 @@ import GitPanel from '../components/GitPanel';
 // ── PresenceVideoTile: renders a participant's video (local or remote) ──
 const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = false }) => {
     const videoRef = useRef(null);
+    const prevVideoOnRef = useRef(isVideoOn);
     console.log('[PresenceVideoTile - DEBUG] Rendering:', { username, stream, isMuted, isVideoOn, isLocal });
     
     // Log stream tracks
@@ -53,15 +54,23 @@ const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = fal
 
     useEffect(() => {
         const videoEl = videoRef.current;
-        console.log('[PresenceVideoTile - useEffect] Called with stream:', stream, 'videoEl:', videoEl);
+        console.log('[PresenceVideoTile - useEffect] Called with stream:', stream, 'videoEl:', videoEl, 'isVideoOn:', isVideoOn);
         if (!videoEl) {
             console.warn('[PresenceVideoTile - useEffect] videoEl is null!');
             return;
         }
 
-        // Always set srcObject (even when stream is null, to clear it)
-        videoEl.srcObject = stream || null;
-        console.log('[PresenceVideoTile - useEffect] Set videoEl.srcObject to:', videoEl.srcObject);
+        const videoToggledOn = isVideoOn && !prevVideoOnRef.current;
+        prevVideoOnRef.current = isVideoOn;
+
+        // Always set/reset srcObject if the stream changed, or if video was toggled ON.
+        // Re-assigning srcObject is a critical workaround for iOS Safari/WebKit where video tracks
+        // added/enabled later fail to render unless the pipeline is rebuild.
+        const needsSrcAssignment = videoEl.srcObject !== stream || videoToggledOn;
+        if (needsSrcAssignment) {
+            videoEl.srcObject = stream || null;
+            console.log('[PresenceVideoTile - useEffect] Set videoEl.srcObject to:', videoEl.srcObject);
+        }
 
         if (stream) {
             let playTimeout;
@@ -100,12 +109,13 @@ const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = fal
                 clearTimeout(playTimeout);
             };
         }
-    }, [stream, isLocal]);
+    }, [stream, isLocal, isVideoOn]);
 
     return (
         <div className="presence-tile">
             <div className="presence-video-container">
                 {/* Always render video element — removing it from DOM resets srcObject */}
+                {/* Keep position: 'absolute' to avoid iOS Safari compositing/layout bugs during toggles */}
                 <video
                     ref={videoRef}
                     autoPlay
@@ -115,20 +125,23 @@ const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = fal
                     style={{
                         display: stream ? 'block' : 'none',
                         opacity: isVideoOn ? 1 : 0,
-                        position: isVideoOn ? 'relative' : 'absolute',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover'
+                        objectFit: 'cover',
+                        zIndex: isVideoOn ? 1 : 0
                     }}
                 />
                 {(!stream || !isVideoOn) && (
-                    <div className="presence-avatar">
+                    <div className="presence-avatar" style={{ zIndex: isVideoOn ? 0 : 2 }}>
                         <span>{username?.charAt(0).toUpperCase()}</span>
                     </div>
                 )}
-                <div className={`presence-status-badge ${stream ? 'online' : 'offline'}`} />
+                <div className={`presence-status-badge ${stream ? 'online' : 'offline'}`} style={{ zIndex: 3 }} />
                 {isMuted && (
-                    <div className="presence-muted-badge">
+                    <div className="presence-muted-badge" style={{ zIndex: 3 }}>
                         <MicOff size={10} />
                     </div>
                 )}
