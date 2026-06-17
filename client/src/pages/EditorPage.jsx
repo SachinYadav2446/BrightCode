@@ -80,10 +80,6 @@ const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = fal
         if (stream) {
             let playTimeout;
             const tryPlay = () => {
-                // If it's already playing and we didn't reassign srcObject, don't interrupt it (prevents autoplay blocks)
-                if (!needsSrcAssignment && !videoEl.paused) {
-                    return;
-                }
                 const promise = videoEl.play();
                 if (promise !== undefined) {
                     promise.catch((err) => {
