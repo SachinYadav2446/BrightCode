@@ -350,6 +350,17 @@ const EditorPage = () => {
     const peerConnectionsRef = useRef({}); // socketId -> RTCPeerConnection
     const myIdRef = useRef(null); // Keep myId accessible in stale socket closures
     const pendingIceCandidatesRef = useRef({}); // socketId -> ICE candidate[]
+    const isMutedRef = useRef(isMuted);
+    const isVideoOnRef = useRef(isVideoOn);
+
+    useEffect(() => {
+        isMutedRef.current = isMuted;
+    }, [isMuted]);
+
+    useEffect(() => {
+        isVideoOnRef.current = isVideoOn;
+    }, [isVideoOn]);
+
     // Keep legacy refs for backward compat
     const remoteVideoRef = useRef(null);
     const peerConnectionRef = useRef(null);
@@ -872,6 +883,15 @@ const EditorPage = () => {
                 });                // New peer joined the call — only GREATER socket ID initiates (avoids glare)
                 socket.on('video-call-user-joined', async ({ socketId, username }) => {
                     console.log(`[WebRTC] Socket received video-call-user-joined: socketId=${socketId}, username=${username}`);
+                    
+                    // Share our current video/audio state with the new joiner so their UI updates
+                    socketRef.current?.emit('video-call-state', { 
+                        roomId, 
+                        isMuted: isMutedRef.current, 
+                        isVideoOn: isVideoOnRef.current, 
+                        username: user?.username 
+                    });
+
                     const myCurrentId = myIdRef.current;
                     if (!localStreamRef.current) {
                         console.warn(`[WebRTC] Skipping for ${socketId} - localStream not ready yet!`);
@@ -1888,15 +1908,18 @@ const EditorPage = () => {
         }
 
         const pc = createPeerConnection(targetId);
-        setCallParticipants(prev => ({
-            ...prev,
-            [targetId]: { 
-                username: targetUsername, 
-                stream: null, 
-                isMuted: true, 
-                isVideoOn: false 
-            }
-        }));
+        setCallParticipants(prev => {
+            const existing = prev[targetId] || {};
+            return {
+                ...prev,
+                [targetId]: { 
+                    username: targetUsername, 
+                    stream: existing.stream || null, 
+                    isMuted: existing.isMuted !== undefined ? existing.isMuted : true, 
+                    isVideoOn: existing.isVideoOn !== undefined ? existing.isVideoOn : false 
+                }
+            };
+        });
 
         // ALWAYS add both transceivers (audio first, then video) to ensure m-line order is fixed!
         const audioTrack = localStreamRef.current.getAudioTracks()[0];
@@ -1963,15 +1986,18 @@ const EditorPage = () => {
 
         if (isNewConnection) {
             pc = createPeerConnection(from);
-            setCallParticipants(prev => ({
-                ...prev,
-                [from]: { 
-                    username: callerInfo?.username || 'Peer', 
-                    stream: null, 
-                    isMuted: false, 
-                    isVideoOn: false 
-                }
-            }));
+            setCallParticipants(prev => {
+                const existing = prev[from] || {};
+                return {
+                    ...prev,
+                    [from]: { 
+                        username: callerInfo?.username || 'Peer', 
+                        stream: existing.stream || null, 
+                        isMuted: existing.isMuted !== undefined ? existing.isMuted : false, 
+                        isVideoOn: existing.isVideoOn !== undefined ? existing.isVideoOn : false 
+                    }
+                };
+            });
             // ALWAYS add both transceivers (audio first, then video) to match offer m-line order!
             const answerAudioTrack = stream.getAudioTracks()[0];
             const answerVideoTrack = stream.getVideoTracks()[0];
