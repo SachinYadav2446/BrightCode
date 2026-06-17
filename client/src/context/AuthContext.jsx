@@ -187,7 +187,7 @@ export const AuthProvider = ({ children }) => {
           } : null);
         }
       }).catch((err) => {
-        if (err.response?.status === 401) {
+        if (err.response?.status === 401 || err.response?.status === 403) {
           logout();
           window.location.href = '/auth?error=session_expired';
         }

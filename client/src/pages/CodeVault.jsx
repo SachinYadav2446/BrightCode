@@ -38,7 +38,7 @@ import './CodeVault.css';
 import VaultModal from '../components/codevault/VaultModal';
 
 const CodeVault = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [notes, setNotes] = useState([]);
   const [folders, setFolders] = useState([]);
   const [activeNote, setActiveNote] = useState(null);
@@ -71,7 +71,13 @@ const CodeVault = () => {
       setFolders(foldersData || []);
     } catch (error) {
       console.error('Failed to load data:', error);
-      toast.error('Failed to load notes: ' + error.message);
+      if (error.message.includes('Session expired') || error.message.includes('token') || error.message.includes('403') || error.message.includes('401')) {
+        toast.error('Session expired. Redirecting to login...');
+        logout();
+        window.location.href = '/auth?error=session_expired';
+      } else {
+        toast.error('Failed to load notes: ' + error.message);
+      }
       setNotes([]);
       setFolders([]);
     } finally {
