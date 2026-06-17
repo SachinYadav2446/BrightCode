@@ -2020,21 +2020,6 @@ const EditorPage = () => {
                     }
                 };
             });
-            // ALWAYS add both transceivers (audio first, then video) to match offer m-line order!
-            const answerAudioTrack = stream.getAudioTracks()[0];
-            const answerVideoTrack = stream.getVideoTracks()[0];
-
-            if (answerAudioTrack) {
-                pc.addTransceiver(answerAudioTrack, { direction: 'sendrecv', streams: [stream] });
-            } else {
-                pc.addTransceiver('audio', { direction: 'recvonly' });
-            }
-            
-            if (answerVideoTrack) {
-                pc.addTransceiver(answerVideoTrack, { direction: 'sendrecv', streams: [stream] });
-            } else {
-                pc.addTransceiver('video', { direction: 'recvonly' });
-            }
         } else if (offerCollision && isPolite) {
             // I am polite — roll back my local offer so I can accept their offer
             console.log(`[WebRTC] Glare detected with ${from}, I am polite, rolling back my offer`);
@@ -2051,6 +2036,28 @@ const EditorPage = () => {
                 offer.sdp.split('\n').filter(line => line.startsWith('m=')));
                 
             await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+            // ALWAYS associate local tracks with existing transceivers created by setRemoteDescription
+            const transceivers = pc.getTransceivers();
+            const answerAudioTrack = stream.getAudioTracks()[0];
+            const answerVideoTrack = stream.getVideoTracks()[0];
+
+            if (transceivers[0]) {
+                if (answerAudioTrack) {
+                    await transceivers[0].sender.replaceTrack(answerAudioTrack);
+                    transceivers[0].direction = 'sendrecv';
+                } else {
+                    transceivers[0].direction = 'recvonly';
+                }
+            }
+            if (transceivers[1]) {
+                if (answerVideoTrack) {
+                    await transceivers[1].sender.replaceTrack(answerVideoTrack);
+                    transceivers[1].direction = 'sendrecv';
+                } else {
+                    transceivers[1].direction = 'recvonly';
+                }
+            }
 
             // Drain pending ICE candidates (both old _iceQueue and new pendingIceCandidatesRef)
             await drainPendingIceCandidates(from, pc);
