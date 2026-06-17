@@ -3800,3 +3800,81 @@
     box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
 }
 
+/* ================================================================
+   NEW MOBILE RESPONSIVENESS OVERRIDES FOR LIBRARY/ARCADE PAGE
+   ================================================================ */
+@media (max-width: 768px) {
+  .library-lobby {
+    flex-direction: column !important;
+    height: auto !important;
+    overflow-y: auto !important;
+  }
+
+  .library-sidebar {
+    width: 100% !important;
+    min-width: 100% !important;
+    height: auto !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding: 10px 14px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    position: sticky !important;
+    top: 64px !important;
+    z-index: 100 !important;
+    background: #0f0f0f !important;
+  }
+
+  .sidebar-brand {
+    display: none !important; /* Hide label on mobile */
+  }
+
+  .sidebar-nav {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 8px !important;
+    flex: 1 !important;
+    padding: 0 !important;
+  }
+
+  .sidebar-nav::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .sidebar-tab {
+    flex-shrink: 0 !important;
+    padding: 8px 12px !important;
+    font-size: 0.8rem !important;
+    width: auto !important;
+  }
+
+  .tab-active-bar {
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    bottom: 0 !important;
+    width: auto !important;
+    height: 3px !important;
+    border-radius: 2px 2px 0 0 !important;
+  }
+
+  .sidebar-footer {
+    display: none !important; /* Hide stats footer on mobile to keep simple horizontal bar */
+  }
+
+  .library-content {
+    padding: 16px 12px !important;
+    overflow-y: visible !important;
+    height: auto !important;
+  }
+
+  .lib-modules-grid {
+    grid-template-columns: 1fr !important; /* Single column layout for modules cards on phone */
+  }
+}
+
