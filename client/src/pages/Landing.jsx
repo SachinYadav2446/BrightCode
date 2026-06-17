@@ -183,7 +183,7 @@ export default function Landing() {
           >
             <div className="hero-badge">
               <span className="badge-dot"></span>
-              <span className="badge-text">✨ Redesigned High-Performance IDE</span>
+              <span className="badge-text">Redesigned High-Performance IDE</span>
             </div>
             <h1 className="hero-h1">
               Code, Collaborate, <br />
@@ -309,7 +309,7 @@ export default function Landing() {
       <section className="section" id="features">
         <div className="section-inner">
           <div className="section-header">
-            <span className="section-tag">💪 Powerful Features</span>
+            <span className="section-tag">Powerful Features</span>
             <h2 className="section-heading">Everything a Developer Needs</h2>
             <p className="section-subtext">From coding practice to competitive programming, BrightCode has you covered with all the tools you need to succeed.</p>
           </div>
