@@ -230,6 +230,7 @@ const Settings = () => {
 
   // Apply theme on mount
   React.useEffect(() => {
+    // Load saved theme on mount
     let savedTheme = localStorage.getItem('app_theme') || 'crimson';
     if (savedTheme === 'cyber-neon') {
       savedTheme = 'neo-noir';
@@ -287,26 +288,6 @@ const Settings = () => {
       root.style.setProperty('--text-mid', '#00d9ff');
       root.style.setProperty('--text-lo', '#ff0080');
       root.style.setProperty('--font-sans', "'Orbitron', 'Share Tech Mono', sans-serif");
-    } else if (theme === 'classy') {
-      // ── Classy Light theme (LeetCode inspired) ──────────────────────────
-      root.style.setProperty('--primary', '#2563eb');
-      root.style.setProperty('--primary-rgb', '37, 99, 235');
-      root.style.setProperty('--primary-dark', '#1d4ed8');
-      root.style.setProperty('--primary-dark-rgb', '29, 78, 216');
-      root.style.setProperty('--primary-light', '#60a5fa');
-      root.style.setProperty('--primary-light-rgb', '96, 165, 250');
-      root.style.setProperty('--primary-glow', 'rgba(37, 99, 235, 0.3)');
-      root.style.setProperty('--complementary', '#eff6ff');
-      root.style.setProperty('--text-complementary', '#1e293b');
-      root.style.setProperty('--panel-text', '#0f172a');
-      root.style.setProperty('--bg-dark', '#f8fafc');
-      root.style.setProperty('--bg-surface', '#ffffff');
-      root.style.setProperty('--text-main', '#1e293b');
-      root.style.setProperty('--text-muted', '#64748b');
-      root.style.setProperty('--text-hi', '#0f172a');
-      root.style.setProperty('--text-mid', '#334155');
-      root.style.setProperty('--text-lo', '#94a3b8');
-      root.style.setProperty('--font-sans', "'Inter', 'Poppins', sans-serif");
     } else {
       // ── Scarlet Flare theme (default) ──────────────────────────
       root.style.setProperty('--primary', '#ef4444');
@@ -857,29 +838,6 @@ const Settings = () => {
                       <div className="theme-info">
                         <h3>Night City</h3>
                         <p>Cyberpunk neon grid</p>
-                      </div>
-                      <div className="theme-check">
-                        <ShieldCheck size={16} />
-                      </div>
-                    </div>
-
-                    <div
-                      className={`theme-option ${selectedTheme === 'classy' ? 'active' : ''}`}
-                      onClick={() => handleThemeChange('classy')}
-                    >
-                      <div className="theme-preview classy-theme">
-                        <div className="preview-header"></div>
-                        <div className="preview-content">
-                          <div className="preview-sidebar"></div>
-                          <div className="preview-main">
-                            <div className="preview-line"></div>
-                            <div className="preview-line short"></div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="theme-info">
-                        <h3>Classy Light</h3>
-                        <p>LeetCode style light theme</p>
                       </div>
                       <div className="theme-check">
                         <ShieldCheck size={16} />

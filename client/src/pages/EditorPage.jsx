@@ -335,6 +335,8 @@ const EditorPage = () => {
     const localStreamRef = useRef(null);
     const localStreamPromiseRef = useRef(null);
     const peerConnectionsRef = useRef({}); // socketId -> RTCPeerConnection
+    const myIdRef = useRef(null); // Keep myId accessible in stale socket closures
+    const pendingIceCandidatesRef = useRef({}); // socketId -> ICE candidate[]
     // Keep legacy refs for backward compat
     const remoteVideoRef = useRef(null);
     const peerConnectionRef = useRef(null);
@@ -521,6 +523,7 @@ const EditorPage = () => {
                     setCallParticipants(initialParticipants);
                     setAdminId(adminId);
                     setMyId(yourId);
+                    myIdRef.current = yourId; // keep ref in sync for stale closures
                     setSnapshots(snapshots || []);
                     if (workspaceOwner) setWorkspaceOwner(workspaceOwner);
                     if (workspaceName) setWorkspaceName(workspaceName);
@@ -816,9 +819,10 @@ const EditorPage = () => {
                         try {
                             console.log(`[WebRTC] Setting remote description from answer from ${from}`);
                             await pc.setRemoteDescription(new RTCSessionDescription(answer));
-                            // Drain queued ICE candidates
+                            // Drain ALL queued ICE candidates (both sources)
+                            await drainPendingIceCandidates(from, pc);
                             if (pc._iceQueue && pc._iceQueue.length > 0) {
-                                console.log(`[WebRTC] Draining queued ICE candidates for ${from}:`, pc._iceQueue);
+                                console.log(`[WebRTC] Draining legacy queued ICE candidates for ${from}:`, pc._iceQueue);
                                 for (const cand of pc._iceQueue) {
                                     try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) { }
                                 }
@@ -834,33 +838,42 @@ const EditorPage = () => {
 
                 socket.on('webrtc-ice-candidate', async ({ candidate, from }) => {
                     console.log(`[WebRTC] Socket received webrtc-ice-candidate from ${from}:`, candidate);
+                    if (!candidate) return;
                     const pc = peerConnectionsRef.current[from];
-                    if (pc && candidate) {
+                    if (pc && pc.remoteDescription && pc.remoteDescription.type) {
+                        // Remote description already set — add immediately
                         try {
-                            if (pc.remoteDescription && pc.remoteDescription.type) {
-                                console.log(`[WebRTC] Adding ICE candidate from ${from}`);
-                                await pc.addIceCandidate(new RTCIceCandidate(candidate));
-                            } else {
-                                console.log(`[WebRTC] Queuing ICE candidate from ${from}`);
-                                pc._iceQueue = pc._iceQueue || [];
-                                pc._iceQueue.push(candidate);
-                            }
+                            console.log(`[WebRTC] Adding ICE candidate from ${from}`);
+                            await pc.addIceCandidate(new RTCIceCandidate(candidate));
                         } catch (err) {
                             console.error('[WebRTC] Error adding ice candidate:', err);
                         }
                     } else {
-                        console.warn(`[WebRTC] Received ICE candidate from ${from} but no peer connection found or no candidate!`);
+                        // Queue it — will be drained once remoteDescription is set
+                        console.log(`[WebRTC] Queuing ICE candidate from ${from} (no PC or no remoteDescription yet)`);
+                        if (!pendingIceCandidatesRef.current[from]) {
+                            pendingIceCandidatesRef.current[from] = [];
+                        }
+                        pendingIceCandidatesRef.current[from].push(candidate);
                     }
-                });
-
-                // New peer joined the call â€” initiate connection to them
+                });                // New peer joined the call — only GREATER socket ID initiates (avoids glare)
                 socket.on('video-call-user-joined', async ({ socketId, username }) => {
                     console.log(`[WebRTC] Socket received video-call-user-joined: socketId=${socketId}, username=${username}`);
-                    // No toast here — user-joined already notifies; this is just for WebRTC setup
-                    if (localStreamRef.current) {
+                    const myCurrentId = myIdRef.current;
+                    if (!localStreamRef.current) {
+                        console.warn(`[WebRTC] Skipping for ${socketId} - localStream not ready yet!`);
+                        return;
+                    }
+                    if (myCurrentId && myCurrentId > socketId) {
+                        // I have the higher ID — I initiate
                         await initiateCallToPeer(socketId, username);
                     } else {
-                        console.warn(`[WebRTC] Skipping initiateCallToPeer for ${socketId} - localStream not ready yet!`);
+                        // Lower ID — other peer will initiate; prepare participant slot
+                        console.log(`[WebRTC] I am polite peer (${myCurrentId} <= ${socketId}), waiting for their offer`);
+                        setCallParticipants(prev => ({
+                            ...prev,
+                            [socketId]: prev[socketId] || { username, stream: null, isMuted: true, isVideoOn: false }
+                        }));
                     }
                 });
 
@@ -1681,11 +1694,46 @@ const EditorPage = () => {
     const closePeerConnection = (socketId) => {
         const pc = peerConnectionsRef.current[socketId];
         if (pc) { pc.close(); delete peerConnectionsRef.current[socketId]; }
+        // Clear any pending ICE candidates for this peer
+        delete pendingIceCandidatesRef.current[socketId];
         setCallParticipants(prev => {
             const updated = { ...prev };
             delete updated[socketId];
             return updated;
         });
+    };
+
+    // Drain pending ICE candidates once remoteDescription is set for a peer
+    const drainPendingIceCandidates = async (peerId, pc) => {
+        const pending = pendingIceCandidatesRef.current[peerId];
+        if (!pending || pending.length === 0) return;
+        console.log(`[WebRTC] Draining ${pending.length} pending ICE candidates for ${peerId}`);
+        delete pendingIceCandidatesRef.current[peerId];
+        for (const cand of pending) {
+            try {
+                await pc.addIceCandidate(new RTCIceCandidate(cand));
+            } catch (err) {
+                console.warn(`[WebRTC] Error adding drained ICE candidate:`, err);
+            }
+        }
+    };
+
+    // Ensure connections exist to all current call participants (after stream is acquired)
+    const ensurePeerConnections = async () => {
+        const myCurrentId = myIdRef.current;
+        if (!myCurrentId || !localStreamRef.current) return;
+        const otherClients = clients.filter(c => c.id !== myCurrentId);
+        for (const client of otherClients) {
+            const existing = peerConnectionsRef.current[client.id];
+            const isConnected = existing &&
+                existing.connectionState !== 'closed' &&
+                existing.connectionState !== 'failed' &&
+                existing.connectionState !== 'disconnected';
+            // Only initiate if we are the higher ID and not already connected
+            if (!isConnected && myCurrentId > client.id) {
+                await initiateCallToPeer(client.id, client.username);
+            }
+        }
     };
 
     // Get local media stream (audio + optional video)
@@ -1789,16 +1837,26 @@ const EditorPage = () => {
             username: user?.username 
         });
 
-        // Connect to all existing participants
+        // Connect to all existing participants — only if we are the higher socket ID (avoid glare)
         const otherClients = clients.filter(c => c.id !== myId);
-        console.log(`[WebRTC] Connecting to ${otherClients.length} existing peers`);
+        console.log(`[WebRTC] Connecting to ${otherClients.length} existing peers (I am ${myId})`);
         for (const client of otherClients) {
-            await initiateCallToPeer(client.id, client.username);
+            if (myId > client.id) {
+                // I have the higher ID — I initiate
+                await initiateCallToPeer(client.id, client.username);
+            } else {
+                // I have the lower ID — the other peer will initiate; just prepare participant slot
+                console.log(`[WebRTC] I am polite peer for ${client.id}, waiting for their offer`);
+                setCallParticipants(prev => ({
+                    ...prev,
+                    [client.id]: prev[client.id] || { username: client.username, stream: null, isMuted: true, isVideoOn: false }
+                }));
+            }
         }
     };
 
 
-    // Initiate a peer connection and send offer
+    // Initiate a peer connection and send offer (called only by the lexicographically GREATER socket ID)
     const initiateCallToPeer = async (targetId, targetUsername) => {
         console.log(`[WebRTC] initiateCallToPeer → ${targetId} (${targetUsername})`);
         if (!localStreamRef.current) {
@@ -1806,10 +1864,13 @@ const EditorPage = () => {
             return;
         }
 
-        // Don't create a duplicate connection
+        // Don't create a duplicate connection if already connected/connecting
         const existing = peerConnectionsRef.current[targetId];
-        if (existing && existing.connectionState !== 'closed' && existing.connectionState !== 'failed') {
-            console.log(`[WebRTC] Peer connection to ${targetId} already exists, skipping`);
+        if (existing &&
+            existing.connectionState !== 'closed' &&
+            existing.connectionState !== 'failed' &&
+            existing.connectionState !== 'disconnected') {
+            console.log(`[WebRTC] Peer connection to ${targetId} already exists (${existing.connectionState}), skipping`);
             return;
         }
 
@@ -1841,9 +1902,10 @@ const EditorPage = () => {
         } else {
             pc.addTransceiver('video', { direction: 'recvonly' });
         }
+        // Offer will be sent automatically via onnegotiationneeded
     };
 
-    // Handle incoming offer from a peer
+    // Handle incoming offer from a peer (polite/impolite peer pattern to avoid glare)
     const handleIncomingOffer = async (offer, from) => {
         console.log(`[WebRTC] Incoming offer from ${from}`);
 
@@ -1851,7 +1913,7 @@ const EditorPage = () => {
         if (!stream) {
             stream = await getLocalStream(true);
             if (!stream) return;
-            // New joiner: start muted
+            // New joiner: start muted and video off
             stream.getAudioTracks().forEach(t => { t.enabled = false; });
             stream.getVideoTracks().forEach(t => { t.enabled = false; });
             setIsCallActive(true);
@@ -1869,7 +1931,22 @@ const EditorPage = () => {
 
         const callerInfo = clients.find(c => c.id === from);
         let pc = peerConnectionsRef.current[from];
-        const isNewConnection = !pc || pc.connectionState === 'closed' || pc.connectionState === 'failed';
+        const myCurrentId = myIdRef.current;
+
+        // Detect glare: both sides created an offer simultaneously.
+        // The POLITE peer (lower socket ID) rolls back and accepts the remote offer.
+        // The IMPOLITE peer (higher socket ID) ignores the incoming offer — its offer wins.
+        const isPolite = myCurrentId < from; // I am polite if my ID is lexicographically less
+        const offerCollision = pc &&
+            (pc.signalingState === 'have-local-offer' || pc._isNegotiating);
+
+        if (offerCollision && !isPolite) {
+            // I am impolite — ignore incoming offer, my offer takes priority
+            console.log(`[WebRTC] Glare detected with ${from}, I am impolite, ignoring their offer`);
+            return;
+        }
+
+        const isNewConnection = !pc || pc.connectionState === 'closed' || pc.connectionState === 'failed' || pc.connectionState === 'disconnected';
 
         if (isNewConnection) {
             pc = createPeerConnection(from);
@@ -1882,25 +1959,30 @@ const EditorPage = () => {
                     isVideoOn: false 
                 }
             }));
-            // Only add transceivers for brand-new connections.
-            // For renegotiation (isNewConnection=false), transceivers are already in the PC.
-            // ALWAYS add both transceivers (audio first, then video) to ensure m-line order is fixed!
+            // ALWAYS add both transceivers (audio first, then video) to match offer m-line order!
             const answerAudioTrack = stream.getAudioTracks()[0];
             const answerVideoTrack = stream.getVideoTracks()[0];
 
-            // Add audio transceiver first
             if (answerAudioTrack) {
                 pc.addTransceiver(answerAudioTrack, { direction: 'sendrecv', streams: [stream] });
             } else {
                 pc.addTransceiver('audio', { direction: 'recvonly' });
             }
             
-            // Add video transceiver second
             if (answerVideoTrack) {
                 pc.addTransceiver(answerVideoTrack, { direction: 'sendrecv', streams: [stream] });
             } else {
                 pc.addTransceiver('video', { direction: 'recvonly' });
             }
+        } else if (offerCollision && isPolite) {
+            // I am polite — roll back my local offer so I can accept their offer
+            console.log(`[WebRTC] Glare detected with ${from}, I am polite, rolling back my offer`);
+            try {
+                await pc.setLocalDescription({ type: 'rollback' });
+            } catch (rollbackErr) {
+                console.warn(`[WebRTC] Rollback failed for ${from}:`, rollbackErr);
+            }
+            pc._isNegotiating = false;
         }
 
         try {
@@ -1909,7 +1991,8 @@ const EditorPage = () => {
                 
             await pc.setRemoteDescription(new RTCSessionDescription(offer));
 
-            // Drain ICE queue
+            // Drain pending ICE candidates (both old _iceQueue and new pendingIceCandidatesRef)
+            await drainPendingIceCandidates(from, pc);
             if (pc._iceQueue?.length > 0) {
                 for (const cand of pc._iceQueue) {
                     try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (_) {}
@@ -1944,6 +2027,8 @@ const EditorPage = () => {
             peerConnectionsRef.current[id]?.close();
         });
         peerConnectionsRef.current = {};
+        // Clear all pending ICE candidates
+        pendingIceCandidatesRef.current = {};
         peerConnectionRef.current = null;
 
         setCallParticipants({});
@@ -1954,25 +2039,66 @@ const EditorPage = () => {
         socketRef.current?.emit('video-call-leave', { roomId, username: user?.username });
     };
 
-    const toggleMute = () => {
+    const toggleMute = async () => {
         console.log(`[WebRTC - AUDIO DEBUG] toggleMute called. Current isMuted: ${isMuted}`);
-        if (localStreamRef.current) {
-            const audioTracks = localStreamRef.current.getAudioTracks();
-            console.log(`[WebRTC - AUDIO DEBUG] Local audio tracks:`, audioTracks);
-            
-            const newMuted = !isMuted;
-            audioTracks.forEach(t => {
-                console.log(`[WebRTC - AUDIO DEBUG] Setting audio track ${t.id} enabled: ${!newMuted}`);
-                t.enabled = !newMuted;
-                console.log(`[WebRTC - AUDIO DEBUG] Audio track ${t.id} enabled state:`, t.enabled);
-            });
-            
-            setIsMuted(newMuted);
-            console.log(`[WebRTC - AUDIO DEBUG] Emitting video-call-state: isMuted=${newMuted}, isVideoOn=${isVideoOn}`);
-            socketRef.current?.emit('video-call-state', { roomId, isMuted: newMuted, isVideoOn, username: user?.username });
-        } else {
-            console.warn(`[WebRTC - AUDIO DEBUG] No local stream available in toggleMute!`);
+
+        if (!localStreamRef.current) {
+            // No stream yet — acquire one first, then unmute
+            console.log(`[WebRTC - AUDIO DEBUG] No local stream, acquiring one first...`);
+            const stream = await getLocalStream(true);
+            if (!stream) return;
+            // Start video off, audio enabled
+            stream.getVideoTracks().forEach(t => { t.enabled = false; });
+            stream.getAudioTracks().forEach(t => { t.enabled = true; });
+            setIsMuted(false);
+            setIsCallActive(true);
+            socketRef.current?.emit('video-call-join', { roomId, username: user?.username });
+            socketRef.current?.emit('video-call-state', { roomId, isMuted: false, isVideoOn, username: user?.username });
+            // Connect to any peers we aren't connected to yet
+            await ensurePeerConnections();
+            return;
         }
+
+        const audioTracks = localStreamRef.current.getAudioTracks();
+        console.log(`[WebRTC - AUDIO DEBUG] Local audio tracks:`, audioTracks);
+        
+        if (audioTracks.length === 0) {
+            // Stream exists but no audio track — try to add one
+            try {
+                console.log(`[WebRTC - AUDIO DEBUG] No audio tracks in existing stream, requesting mic...`);
+                const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const micTrack = micStream.getAudioTracks()[0];
+                localStreamRef.current.addTrack(micTrack);
+                setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
+                // Replace on existing peer connections
+                for (const [peerId, pc] of Object.entries(peerConnectionsRef.current)) {
+                    const transceivers = pc.getTransceivers();
+                    if (transceivers[0]?.sender) {
+                        await transceivers[0].sender.replaceTrack(micTrack);
+                        transceivers[0].direction = 'sendrecv';
+                    }
+                    await renegotiateWithPeer(peerId, pc);
+                }
+                micTrack.enabled = true;
+                setIsMuted(false);
+                socketRef.current?.emit('video-call-state', { roomId, isMuted: false, isVideoOn, username: user?.username });
+            } catch (err) {
+                console.error('[WebRTC - AUDIO DEBUG] Failed to acquire mic:', err);
+                toast.error('Could not access microphone. Please allow mic permissions.');
+            }
+            return;
+        }
+
+        const newMuted = !isMuted;
+        audioTracks.forEach(t => {
+            console.log(`[WebRTC - AUDIO DEBUG] Setting audio track ${t.id} enabled: ${!newMuted}`);
+            t.enabled = !newMuted;
+            console.log(`[WebRTC - AUDIO DEBUG] Audio track ${t.id} enabled state:`, t.enabled);
+        });
+        
+        setIsMuted(newMuted);
+        console.log(`[WebRTC - AUDIO DEBUG] Emitting video-call-state: isMuted=${newMuted}, isVideoOn=${isVideoOn}`);
+        socketRef.current?.emit('video-call-state', { roomId, isMuted: newMuted, isVideoOn, username: user?.username });
     };
 
     const renegotiateWithPeer = async (targetId, pc) => {

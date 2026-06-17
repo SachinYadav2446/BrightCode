@@ -402,7 +402,23 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, register, sendOTP, logout, updateProfile, changePassword, updateXP, syncUser, loading, sessionValid, navbarHidden, setNavbarHidden, friendsDrawerOpen, setFriendsDrawerOpen }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      register, 
+      sendOTP, 
+      logout, 
+      updateProfile, 
+      changePassword, 
+      updateXP, 
+      syncUser, 
+      loading, 
+      sessionValid, 
+      navbarHidden, 
+      setNavbarHidden, 
+      friendsDrawerOpen, 
+      setFriendsDrawerOpen
+    }}>
       {children}
     </AuthContext.Provider>
   );

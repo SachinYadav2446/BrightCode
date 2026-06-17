@@ -5,7 +5,10 @@ import { Link, useLocation } from 'react-router-dom';
 import CodeBrightLogo from './CodeBrightLogo';
 import FriendsDrawer from './FriendsDrawer';
 import axios from 'axios';
-import { Users } from 'lucide-react';
+import { 
+  Users, 
+  Shield
+} from 'lucide-react';
 import './Navbar.css';
 import './FriendsDrawer.css';
 
@@ -51,6 +54,7 @@ const Navbar = () => {
     return () => clearInterval(interval);
   }, [user?.token]);
 
+  // Else render original navbar
   return (
     <>
       <nav className="floating-nav">

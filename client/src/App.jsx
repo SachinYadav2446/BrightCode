@@ -51,7 +51,7 @@ const NavbarWrapper = () => {
   
   const hideOnPaths = ['/auth', '/editor', '/code-wars', '/battle-arena', '/u', '/user-guide'];
   const isLanding = location.pathname === '/';
-  // Hide navbar during active proctor sessions but NOT on /proctor hub
+  // Hide navbar during active proctor sessions but not on /proctor hub
   const isActiveSession = /^\/proctor\/.+/.test(location.pathname);
   const shouldHide = navbarHidden || isLanding || isActiveSession || hideOnPaths.some(p => location.pathname.startsWith(p));
   
@@ -153,27 +153,7 @@ const applyGlobalTheme = (theme) => {
     root.style.setProperty('--text-mid', '#f5f5dc');
     root.style.setProperty('--text-lo', '#d2b48c');
     localStorage.setItem('app_theme', 'crimson');
-  } else if (activeTheme === 'classy') {
-      // ── Classy Light theme (LeetCode inspired) ──────────────────────────
-      root.style.setProperty('--primary', '#2563eb');
-      root.style.setProperty('--primary-rgb', '37, 99, 235');
-      root.style.setProperty('--primary-dark', '#1d4ed8');
-      root.style.setProperty('--primary-dark-rgb', '29, 78, 216');
-      root.style.setProperty('--primary-light', '#60a5fa');
-      root.style.setProperty('--primary-light-rgb', '96, 165, 250');
-      root.style.setProperty('--primary-glow', 'rgba(37, 99, 235, 0.3)');
-      root.style.setProperty('--complementary', '#eff6ff');
-      root.style.setProperty('--text-complementary', '#1e293b');
-      root.style.setProperty('--panel-text', '#0f172a');
-      root.style.setProperty('--bg-dark', '#f8fafc');
-      root.style.setProperty('--bg-surface', '#ffffff');
-      root.style.setProperty('--text-main', '#1e293b');
-      root.style.setProperty('--text-muted', '#64748b');
-      root.style.setProperty('--text-hi', '#0f172a');
-      root.style.setProperty('--text-mid', '#334155');
-      root.style.setProperty('--text-lo', '#94a3b8');
-      root.style.setProperty('--font-sans', "'Inter', 'Poppins', sans-serif");
-    } else {
+  } else {
       // ── Scarlet Flare theme (default) ──────────────────────────
       root.style.setProperty('--primary', '#ef4444');
       root.style.setProperty('--primary-rgb', '239, 68, 68');
@@ -307,127 +287,127 @@ function App() {
           />
           <NavbarWrapper />
           <Routes>
-            <Route path="/" element={<LandingRoute />} />
-            <Route 
-              path="/hub" 
-              element={
-                <ProtectedRoute>
-                  <Home />
-                </ProtectedRoute>
-              } 
-            />
-            <Route path="/auth" element={<Auth />} />
-            <Route 
-              path="/library" 
-              element={
-                <ProtectedRoute>
-                  <Arcade />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/workspace" 
-              element={
-                <ProtectedRoute>
-                  <Workspace />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/settings" 
-              element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/build" 
-              element={
-                <ProtectedRoute>
-                  <Navigate to="/editor/new" />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/editor/:roomId" 
-              element={
-                <ProtectedRoute>
-                  <EditorPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/leaderboard" 
-              element={<Leaderboard />} 
-            />
-            <Route 
-              path="/factions" 
-              element={
-                <ProtectedRoute>
-                  <Factions />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/codevault" 
-              element={
-                <ProtectedRoute>
-                  <CodeVault />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/battle-arena" 
-              element={
-                <ProtectedRoute>
-                  <BattleArena />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/code-wars" 
-              element={
-                <ProtectedRoute>
-                  <CodeWarsArena />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/proctor/:sessionId" 
-              element={
-                <ProtectedRoute>
-                  <ProctorSessionRoute />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/proctor" 
-              element={
-                <ProtectedRoute>
-                  <ProctorPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/user-guide" 
-              element={<UserModule />} 
-            />
-            <Route 
-              path="/u/:username" 
-              element={<UserProfile />} 
-            />
-            <Route 
-              path="/contribute" 
-              element={
-                <ProtectedRoute>
-                  <ContributePage />
-                </ProtectedRoute>
-              } 
-            />
-            {/* Catch-all: redirect any unknown path to landing */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+              <Route path="/" element={<LandingRoute />} />
+              <Route 
+                path="/hub" 
+                element={
+                  <ProtectedRoute>
+                    <Home />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="/auth" element={<Auth />} />
+              <Route 
+                path="/library" 
+                element={
+                  <ProtectedRoute>
+                    <Arcade />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/workspace" 
+                element={
+                  <ProtectedRoute>
+                    <Workspace />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/settings" 
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/build" 
+                element={
+                  <ProtectedRoute>
+                    <Navigate to="/editor/new" />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/editor/:roomId" 
+                element={
+                  <ProtectedRoute>
+                    <EditorPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/leaderboard" 
+                element={<Leaderboard />} 
+              />
+              <Route 
+                path="/factions" 
+                element={
+                  <ProtectedRoute>
+                    <Factions />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/codevault" 
+                element={
+                  <ProtectedRoute>
+                    <CodeVault />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/battle-arena" 
+                element={
+                  <ProtectedRoute>
+                    <BattleArena />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/code-wars" 
+                element={
+                  <ProtectedRoute>
+                    <CodeWarsArena />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/proctor/:sessionId" 
+                element={
+                  <ProtectedRoute>
+                    <ProctorSessionRoute />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/proctor" 
+                element={
+                  <ProtectedRoute>
+                    <ProctorPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/user-guide" 
+                element={<UserModule />} 
+              />
+              <Route 
+                path="/u/:username" 
+                element={<UserProfile />} 
+              />
+              <Route 
+                path="/contribute" 
+                element={
+                  <ProtectedRoute>
+                    <ContributePage />
+                  </ProtectedRoute>
+                } 
+              />
+              {/* Catch-all: redirect any unknown path to landing */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
         </BrowserRouter>
       </AuthProvider>
     </ErrorBoundary>
