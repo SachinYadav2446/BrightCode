@@ -52,73 +52,86 @@ const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = fal
         }
     }, [stream, isLocal, isVideoOn]);
 
+    // EFFECT 1: Runs when the stream itself changes (new peer connected / disconnected).
+    // This handles the initial srcObject assignment and triggers play() for the first time.
+    // Both Chrome and Safari need this.
     useEffect(() => {
         const videoEl = videoRef.current;
-        console.log('[PresenceVideoTile - useEffect] Called with stream:', stream, 'videoEl:', videoEl, 'isVideoOn:', isVideoOn);
-        if (!videoEl) {
-            console.warn('[PresenceVideoTile - useEffect] videoEl is null!');
-            return;
-        }
+        if (!videoEl) return;
+
+        videoEl.srcObject = stream || null;
+
+        if (!stream) return;
+
+        let playTimeout;
+        const tryPlay = () => {
+            const promise = videoEl.play();
+            if (promise !== undefined) {
+                promise.catch((err) => {
+                    console.warn('[PresenceVideoTile] Autoplay blocked, waiting for user interaction:', err);
+                    if (!isLocal) {
+                        const resume = () => {
+                            videoEl.play()
+                                .then(() => { cleanup(); })
+                                .catch(() => {});
+                        };
+                        const cleanup = () => {
+                            window.removeEventListener('click', resume);
+                            window.removeEventListener('keydown', resume);
+                            window.removeEventListener('touchstart', resume);
+                        };
+                        window.addEventListener('click', resume);
+                        window.addEventListener('keydown', resume);
+                        window.addEventListener('touchstart', resume);
+                    }
+                });
+            }
+        };
+        playTimeout = setTimeout(tryPlay, 100);
+        return () => clearTimeout(playTimeout);
+    }, [stream, isLocal]);
+
+    // EFFECT 2: Runs when isVideoOn changes for a REMOTE participant.
+    // Only needed on WebKit (Safari/iOS) where the video pipeline freezes when the
+    // stream was hidden and a video track is enabled later.
+    // Chrome handles this automatically via CSS opacity change — no play() needed.
+    useEffect(() => {
+        if (isLocal) return; // local video never needs this
+        const videoEl = videoRef.current;
+        if (!videoEl || !stream) return;
 
         const videoToggledOn = isVideoOn && !prevVideoOnRef.current;
         prevVideoOnRef.current = isVideoOn;
 
-        // CRITICAL: Only force re-assign srcObject on WebKit (Safari/iOS) browsers.
-        // On Desktop Chrome/Firefox, re-assigning srcObject resets the media player,
-        // which can trigger autoplay blocks if not accompanied by a user gesture.
-        // Chrome/Firefox can render newly enabled tracks dynamically without resetting srcObject.
-        const isWebKit = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+        if (!videoToggledOn) return; // only act when transitioning OFF -> ON
+
+        // Detect WebKit (Safari on iOS/desktop)
+        const isWebKit = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
                          (/Safari/i.test(navigator.userAgent) && !/Chrome/i.test(navigator.userAgent));
 
-        const needsSrcAssignment = videoEl.srcObject !== stream || (videoToggledOn && isWebKit && !isLocal);
-        if (needsSrcAssignment) {
-            videoEl.srcObject = stream || null;
-            console.log('[PresenceVideoTile - useEffect] Set videoEl.srcObject to:', videoEl.srcObject);
-        }
-
-        if (stream) {
-            let playTimeout;
-            const tryPlay = () => {
-                const needsPlay = needsSrcAssignment || videoToggledOn || videoEl.paused;
-                if (!needsPlay) {
-                    return;
-                }
+        if (isWebKit) {
+            // On Safari: force-rebuild the media pipeline by reassigning srcObject, then play.
+            // Safari freezes when a stream goes from no-video-track to having one.
+            console.log('[PresenceVideoTile] WebKit video toggle ON detected, rebuilding pipeline');
+            const newStream = new MediaStream(stream.getTracks());
+            videoEl.srcObject = newStream;
+            const promise = videoEl.play();
+            if (promise !== undefined) {
+                promise.catch(err => console.warn('[PresenceVideoTile] WebKit play() blocked after toggle:', err));
+            }
+        } else {
+            // On Chrome/Firefox: CSS opacity handles visibility. But if autoPlay was blocked
+            // initially, the video may be paused — resume it now.
+            if (videoEl.paused) {
+                console.log('[PresenceVideoTile] Non-WebKit: video was paused when camera turned ON, resuming');
                 const promise = videoEl.play();
                 if (promise !== undefined) {
-                    promise.catch((err) => {
-                        console.warn("Autoplay blocked for remote stream. Registering interaction listener to play.", err);
-                        // If blocked and not local, we wait for user interaction to play unmuted.
-                        if (!isLocal) {
-                            const resumeAudio = () => {
-                                videoEl.play()
-                                    .then(() => {
-                                        console.log("Successfully started remote audio/video after user interaction.");
-                                        cleanup();
-                                    })
-                                    .catch((playErr) => {
-                                        console.error("Failed to play remote stream even after interaction:", playErr);
-                                    });
-                            };
-                            const cleanup = () => {
-                                window.removeEventListener('click', resumeAudio);
-                                window.removeEventListener('keydown', resumeAudio);
-                                window.removeEventListener('touchstart', resumeAudio);
-                            };
-                            window.addEventListener('click', resumeAudio);
-                            window.addEventListener('keydown', resumeAudio);
-                            window.addEventListener('touchstart', resumeAudio);
-                        }
-                    });
+                    promise.catch(err => console.warn('[PresenceVideoTile] play() blocked on camera toggle:', err));
                 }
-            };
-            // Small delay to let srcObject settle
-            playTimeout = setTimeout(tryPlay, 100);
-            return () => {
-                clearTimeout(playTimeout);
-            };
+            }
         }
-    }, [stream, isLocal, isVideoOn]);
+    }, [isVideoOn, isLocal, stream]);
 
     return (
         <div className="presence-tile">
