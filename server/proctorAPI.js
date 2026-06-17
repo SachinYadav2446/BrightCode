@@ -113,9 +113,18 @@ router.post('/create-session', auth, async (req, res) => {
     try {
         const sub = await getUserSubscription(req.user.id);
         if (sub === 'basic') {
-            return res.status(403).json({
-                error: 'Proctored sessions require a Pro Developer or Enterprise Elite subscription. Upgrade your account to activate exam surveillance.'
-            });
+            let createdCount = 0;
+            if (useMemoryDB) {
+                createdCount = memoryStore.sessions.filter(s => (s.creatorId || s.creator_id) === req.user.id).length;
+            } else {
+                const countRows = await sql`SELECT COUNT(*)::int as count FROM proctor_sessions WHERE creator_id = ${req.user.id}`;
+                createdCount = countRows[0]?.count || 0;
+            }
+            if (createdCount >= 3) {
+                return res.status(403).json({
+                    error: 'Basic tier accounts are limited to a maximum of 3 proctored sessions. Please upgrade your plan for unlimited sessions.'
+                });
+            }
         }
 
         const { title, mode, timeLimit, questions = [], participants = [], settings = {} } = req.body;

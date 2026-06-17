@@ -323,7 +323,7 @@ const ProctorPage = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (user && user.subscription !== 'basic') {
+    if (user) {
       loadSessions();
     } else {
       setLoading(false);
@@ -362,6 +362,14 @@ const ProctorPage = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const handleCreateClick = () => {
+    if (user && user.subscription === 'basic' && sessions.length >= 3) {
+      toast.error('Basic clearance is limited to a maximum of 3 proctored sessions. Upgrade your clearance in settings to host unlimited sessions!');
+      return;
+    }
+    setShowCreate(true);
+  };
+
   const filteredSessions = sessions.filter(s => {
     if (filterStatus !== 'all' && s.status !== filterStatus) return false;
     if (search && !s.title.toLowerCase().includes(search.toLowerCase())) return false;
@@ -371,8 +379,6 @@ const ProctorPage = () => {
   const activeSessions  = sessions.filter(s => s.status === 'active');
   const completedCount  = sessions.filter(s => s.status === 'completed').length;
   const totalCandidates = sessions.reduce((a, s) => a + (s.participants?.length || 0), 0);
-
-  const isBasic = !user || user.subscription === 'basic';
 
   if (authLoading) {
     return (
@@ -401,29 +407,8 @@ const ProctorPage = () => {
         </button>
       </div>
 
-      {isBasic ? (
-        <div className="proctor-lock-overlay">
-          <div className="proctor-lock-card">
-            <div className="lock-icon-glow">
-              <Lock size={32} />
-            </div>
-            <h2>PROCTOR SYSTEM LOCKED</h2>
-            <p className="clearance-notice">
-              Security level BASIC does not support exam/interview surveillance features. 
-              Upgrade clearance to PRO or ELITE to configure proctor lobbies.
-            </p>
-            <button 
-              className="upgrade-clearance-btn" 
-              onClick={() => navigate('/settings', { state: { activeTab: 'subscription' } })}
-            >
-              Upgrade Clearance Level
-            </button>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* ── HERO ── */}
-          <section className="pp-hero">
+        {/* ── HERO ── */}
+        <section className="pp-hero">
         <div className="pp-hero-bg">
           <div className="pp-hero-glow pp-hero-glow-1" />
           <div className="pp-hero-glow pp-hero-glow-2" />
@@ -474,7 +459,7 @@ const ProctorPage = () => {
                 className="pp-cta-primary"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                onClick={() => setShowCreate(true)}
+                onClick={handleCreateClick}
               >
                 <Plus size={18} />
                 Create Session
@@ -489,6 +474,13 @@ const ProctorPage = () => {
                 Join Session
               </motion.button>
             </div>
+
+            {user?.subscription === 'basic' && (
+              <div className="pp-basic-badge">
+                <Star size={12} style={{ color: '#f59e0b', marginRight: '6px' }} />
+                <span>Basic Account Limit: {sessions.length}/3 Proctor Sessions Used</span>
+              </div>
+            )}
           </motion.div>
 
           {/* Hero visual */}
@@ -604,7 +596,7 @@ const ProctorPage = () => {
                 <option value="completed">Completed</option>
                 <option value="terminated">Terminated</option>
               </select>
-              <button className="pp-btn-primary pp-new-btn" onClick={() => setShowCreate(true)}>
+              <button className="pp-btn-primary pp-new-btn" onClick={handleCreateClick}>
                 <Plus size={14} /> New Session
               </button>
             </div>
@@ -626,7 +618,7 @@ const ProctorPage = () => {
                   : 'Create your first interview session to get started'}
               </p>
               {!search && (
-                <button className="pp-btn-primary" onClick={() => setShowCreate(true)}>
+                <button className="pp-btn-primary" onClick={handleCreateClick}>
                   <Plus size={14} /> Create Session
                 </button>
               )}
@@ -749,9 +741,6 @@ const ProctorPage = () => {
           </div>
         </div>
       </section>
-
-        </>
-      )}
 
       {/* Modals */}
       <AnimatePresence>

@@ -63,6 +63,10 @@ const ProctorHub = () => {
 
     const createSession = async () => {
         if (!form.title.trim()) { toast.error('Session title is required'); return; }
+        if (user && user.subscription === 'basic' && sessions.length >= 3) {
+            toast.error('Basic clearance is limited to a maximum of 3 proctored sessions. Upgrade your clearance in settings to host unlimited sessions!');
+            return;
+        }
         setCreating(true);
         try {
             const res = await axios.post(`${API_URL}/api/proctor/create-session`, {
