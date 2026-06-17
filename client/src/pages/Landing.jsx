@@ -1,19 +1,203 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Code2, Users, Terminal, BookOpen, Brain, 
   Trophy, ArrowRight, Shield, Activity, ChevronRight, Play, CheckCircle,
-  GitBranch, Sparkles, Flame, Check, HelpCircle, Menu, X
+  GitBranch, Sparkles, Flame, Check, HelpCircle, Menu, X, ArrowUpRight, Cpu
 } from "lucide-react";
 import API_URL from "../config";
 import CodeBrightLogo from "../components/CodeBrightLogo";
 import "./Landing.css";
+
+// ── CODE SNIPPETS FOR HERO TYPING TERMINAL ────────────────────────────────
+const CODE_SNIPPETS = [
+  {
+    lang: "python",
+    file: "two_sum.py",
+    lines: [
+      "class Solution:",
+      "    def twoSum(self, nums: List[int], target: int) -> List[int]:",
+      "        seen = {}",
+      "        for i, num in enumerate(nums):",
+      "            remaining = target - num",
+      "            if remaining in seen:",
+      "                return [seen[remaining], i]",
+      "            seen[num] = i",
+      "        return []"
+    ],
+    console: "Test Cases Passed (3/3) | Runtime: 32 ms (Beats 98.4% of Python3)"
+  },
+  {
+    lang: "javascript",
+    file: "quick_sort.js",
+    lines: [
+      "function quickSort(arr) {",
+      "  if (arr.length <= 1) return arr;",
+      "  const pivot = arr[arr.length - 1];",
+      "  const left = [], right = [];",
+      "  for (let i = 0; i < arr.length - 1; i++) {",
+      "    if (arr[i] < pivot) left.push(arr[i]);",
+      "    else right.push(arr[i]);",
+      "  }",
+      "  return [...quickSort(left), pivot, ...quickSort(right)];",
+      "}"
+    ],
+    console: "Test Cases Passed (5/5) | Runtime: 48 ms (Beats 94.6% of Node.js)"
+  },
+  {
+    lang: "cpp",
+    file: "binary_search.cpp",
+    lines: [
+      "int binarySearch(vector<int>& nums, int target) {",
+      "    int left = 0, right = nums.size() - 1;",
+      "    while (left <= right) {",
+      "        int mid = left + (right - left) / 2;",
+      "        if (nums[mid] == target) return mid;",
+      "        if (nums[mid] < target) left = mid + 1;",
+      "        else right = mid - 1;",
+      "    }",
+      "    return -1;",
+      "}"
+    ],
+    console: "Test Cases Passed (4/4) | Runtime: 14 ms (Beats 97.2% of C++)"
+  }
+];
+
+// Typewriter Editor Component
+const TypewriterEditor = () => {
+  const [snippetIndex, setSnippetIndex] = useState(0);
+  const [typedLines, setTypedLines] = useState([]);
+  const [currentLineIndex, setCurrentLineIndex] = useState(0);
+  const [currentCharIndex, setCurrentCharIndex] = useState(0);
+  const [showConsole, setShowConsole] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const snippet = CODE_SNIPPETS[snippetIndex];
+
+  useEffect(() => {
+    let timer;
+    if (!isDeleting) {
+      if (currentLineIndex < snippet.lines.length) {
+        const targetLine = snippet.lines[currentLineIndex];
+        if (currentCharIndex < targetLine.length) {
+          timer = setTimeout(() => {
+            setTypedLines(prev => {
+              const next = [...prev];
+              if (!next[currentLineIndex]) {
+                next[currentLineIndex] = "";
+              }
+              next[currentLineIndex] += targetLine[currentCharIndex];
+              return next;
+            });
+            setCurrentCharIndex(prev => prev + 1);
+          }, 20);
+        } else {
+          timer = setTimeout(() => {
+            setCurrentLineIndex(prev => prev + 1);
+            setCurrentCharIndex(0);
+          }, 80);
+        }
+      } else {
+        setShowConsole(true);
+        timer = setTimeout(() => {
+          setIsDeleting(true);
+        }, 3200);
+      }
+    } else {
+      setShowConsole(false);
+      if (typedLines.length > 0) {
+        timer = setTimeout(() => {
+          setTypedLines(prev => {
+            const next = [...prev];
+            const lastLine = next[next.length - 1];
+            if (lastLine.length > 0) {
+              next[next.length - 1] = lastLine.slice(0, -1);
+            } else {
+              next.pop();
+            }
+            return next;
+          });
+          if (typedLines[typedLines.length - 1].length === 0) {
+            setCurrentLineIndex(prev => Math.max(0, prev - 1));
+          }
+        }, 8);
+      } else {
+        setIsDeleting(false);
+        setCurrentLineIndex(0);
+        setCurrentCharIndex(0);
+        setSnippetIndex(prev => (prev + 1) % CODE_SNIPPETS.length);
+      }
+    }
+    return () => clearTimeout(timer);
+  }, [currentLineIndex, currentCharIndex, isDeleting, snippetIndex, typedLines]);
+
+  return (
+    <div className="mock-workspace glassmorphic">
+      {/* Problem Statement side */}
+      <div className="mock-problem-panel">
+        <div className="mock-panel-header">
+          <span className="panel-title">Problem Statement</span>
+        </div>
+        <div className="mock-panel-body">
+          <h3 className="prob-title">Two Sum</h3>
+          <div className="prob-tags">
+            <span className="tag-easy">Easy</span>
+            <span className="tag-meta">Algorithms</span>
+          </div>
+          <p className="prob-desc">
+            Find indices of two numbers in an array that sum up to a specific target value.
+          </p>
+          <div className="prob-example">
+            <span className="ex-title">Example:</span>
+            <pre>
+              nums = [2, 7, 11, 15]{"\n"}
+              target = 9{"\n"}
+              Output: [0, 1]
+            </pre>
+          </div>
+        </div>
+      </div>
+
+      {/* Editor Mock side */}
+      <div className="mock-editor-panel">
+        <div className="mock-panel-header">
+          <span className="tab active">{snippet.file}</span>
+          <div className="run-controls">
+            <span className="btn-run-small"><Play size={10} fill="currentColor" /> Live Run</span>
+          </div>
+        </div>
+        <div className="mock-editor-body">
+          {typedLines.map((line, idx) => (
+            <div className="code-line" key={idx}>
+              <span className="ln">{idx + 1}</span>
+              <span className="code-text">{line}</span>
+            </div>
+          ))}
+          <span className="cursor">|</span>
+        </div>
+        <div className={`mock-console ${showConsole ? "show" : ""}`}>
+          <div className="console-header">
+            <CheckCircle size={12} className="success-icon" />
+            <span>Success</span>
+          </div>
+          <div className="console-result">{snippet.console}</div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function Landing() {
   const navigate = useNavigate();
   const [leaderboard, setLeaderboard] = useState([]);
   const [lbLoading, setLbLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Interactive states for playgrounds
+  const [logicLabNode, setLogicLabNode] = useState(3);
+  const [warpCheckpoint, setWarpCheckpoint] = useState(3);
+  const [sentinelOptimized, setSentinelOptimized] = useState(false);
 
   useEffect(() => {
     fetch(`${API_URL}/leaderboard`)
@@ -31,432 +215,497 @@ export default function Landing() {
   const handleAuth = (mode) => navigate('/auth', { state: { mode } });
   const handleHub = () => navigate('/hub');
 
+  // Animation configurations
+  const pageTransition = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.5 }
+  };
+
+  const containerVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 24 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+  };
+
   return (
-    <div className="landing-root">
-      {/* ══ NAV ══ */}
-      <nav className="nav">
+    <div className="landing-root grid-bg-effect">
+      {/* Ambient background glows */}
+      <div className="bg-glow bg-glow-1"></div>
+      <div className="bg-glow bg-glow-2"></div>
+
+      {/* ══ NAV BAR ══ */}
+      <nav className="nav glassmorphic">
         <div className="nav-inner">
-          {/* Logo */}
-          <a className="nav-logo" href="#" onClick={e => e.preventDefault()} style={{ textDecoration: 'none' }}>
+          <a className="nav-logo" href="#" onClick={e => e.preventDefault()}>
             <CodeBrightLogo size="small" />
           </a>
 
-          {/* Center Links */}
           <div className="nav-links">
             <a href="#features" className="nav-link">Features</a>
-            <a href="#modules" className="nav-link">Modules</a>
+            <a href="#modules" className="nav-link">Ecosystem</a>
             <a href="#workflow" className="nav-link">How it Works</a>
             <a href="#arena" className="nav-link">Leaderboard</a>
           </div>
 
-          {/* Actions */}
           <div className="nav-actions">
             <button className="nav-btn-ghost" onClick={() => handleAuth('login')}>Sign In</button>
             <button className="nav-btn-primary" onClick={() => handleAuth('register')}>Get Started</button>
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <button 
-            className="nav-mobile-toggle"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
+          <button className="nav-mobile-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="nav-mobile-menu">
-            <a href="#features" className="nav-mobile-link" onClick={() => setMobileMenuOpen(false)}>Features</a>
-            <a href="#modules" className="nav-mobile-link" onClick={() => setMobileMenuOpen(false)}>Modules</a>
-            <a href="#workflow" className="nav-mobile-link" onClick={() => setMobileMenuOpen(false)}>How it Works</a>
-            <a href="#arena" className="nav-mobile-link" onClick={() => setMobileMenuOpen(false)}>Leaderboard</a>
-            <hr className="nav-mobile-divider" />
-            <button className="nav-mobile-btn-ghost" onClick={() => { handleAuth('login'); setMobileMenuOpen(false); }}>Sign In</button>
-            <button className="nav-mobile-btn-primary" onClick={() => { handleAuth('register'); setMobileMenuOpen(false); }}>Get Started</button>
-          </div>
-        )}
+        {/* Mobile Navigation Drawer */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div 
+              className="nav-mobile-menu glassmorphic"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <a href="#features" className="nav-mobile-link" onClick={() => setMobileMenuOpen(false)}>Features</a>
+              <a href="#modules" className="nav-mobile-link" onClick={() => setMobileMenuOpen(false)}>Ecosystem</a>
+              <a href="#workflow" className="nav-mobile-link" onClick={() => setMobileMenuOpen(false)}>How it Works</a>
+              <a href="#arena" className="nav-mobile-link" onClick={() => setMobileMenuOpen(false)}>Leaderboard</a>
+              <hr className="nav-mobile-divider" />
+              <button className="nav-mobile-btn-ghost" onClick={() => { handleAuth('login'); setMobileMenuOpen(false); }}>Sign In</button>
+              <button className="nav-mobile-btn-primary" onClick={() => { handleAuth('register'); setMobileMenuOpen(false); }}>Get Started</button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
-      {/* ══ HERO ══ */}
+      {/* ══ HERO SECTION ══ */}
       <header className="hero">
         <div className="hero-inner">
-          {/* Left Column */}
-          <div className="hero-left">
-            <div className="hero-badge">
+          <motion.div 
+            className="hero-left"
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="hero-badge animate-pulse-border">
               <span className="badge-dot"></span>
-              <span className="badge-text">✨ New Features Released</span>
+              <span className="badge-text">✨ Redesigned for High Fidelity</span>
             </div>
+            
             <h1 className="hero-h1">
-              Code, Collaborate, <br />
-              <span>Conquer Challenges</span>.
+              Elevate Your Code.<br />
+              <span>Conquer Technical Challenges</span>.
             </h1>
 
             <p className="hero-sub">
-              BrightCode is your all-in-one platform for mastering programming. Practice with thousands of questions, join competitive factions, collaborate in real-time, and get AI-powered assistance to level up your coding skills.
+              An all-in-one dark workspace built for developers. Speed-run competitive programming tracks, collaborate via WebRTC visual streams, version check via Warp Drive snapshots, and optimize code utilizing Sentinel AI diagnostics.
             </p>
 
             <div className="hero-actions">
-              <button className="btn-primary" onClick={() => handleAuth('register')}>
+              <button className="btn-primary glow-red-hover" onClick={() => handleAuth('register')}>
                 Start Coding for Free <ArrowRight size={18} />
               </button>
               <button className="btn-secondary" onClick={handleHub}>
-                <Play size={18} fill="currentColor" /> Watch Demo
+                <Play size={16} fill="currentColor" /> Sandbox Demo
               </button>
             </div>
 
             <div className="hero-stats">
               <div className="h-stat">
                 <span className="h-stat-val">2,500+</span>
-                <span className="h-stat-lbl">Coding Problems</span>
+                <span className="h-stat-lbl">Coding Levels</span>
               </div>
               <div className="h-stat">
-                <span className="h-stat-val">15+</span>
-                <span className="h-stat-lbl">Active Factions</span>
+                <span className="h-stat-val">10+</span>
+                <span className="h-stat-lbl">Core Languages</span>
               </div>
               <div className="h-stat">
-                <span className="h-stat-val">&lt;30ms</span>
-                <span className="h-stat-lbl">Real-time Sync</span>
+                <span className="h-stat-val">Real-Time</span>
+                <span className="h-stat-lbl">Sync Engine</span>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Right Column: Code Mockup Panel */}
-          <div className="hero-right">
-            <div className="mock-workspace">
-              {/* Left Mock Panel: Problem Statement */}
-              <div className="mock-problem-panel">
-                <div className="mock-panel-header">
-                  <span className="panel-title">Problem Description</span>
-                </div>
-                <div className="mock-panel-body">
-                  <h3 className="prob-title">1. Two Sum</h3>
-                  <div className="prob-tags">
-                    <span className="tag-easy">Easy</span>
-                    <span className="tag-meta">Algorithms</span>
-                  </div>
-                  <p className="prob-desc">
-                    Given an array of integers <code>nums</code> and an integer <code>target</code>, return indices of the two numbers such that they add up to <code>target</code>.
-                  </p>
-                  <p className="prob-desc text-muted">
-                    You may assume that each input would have exactly one solution, and you may not use the same element twice.
-                  </p>
-                  <div className="prob-example">
-                    <span className="ex-title">Example 1:</span>
-                    <pre>
-                      <strong>Input:</strong> nums = [2,7,11,15], target = 9{"\n"}
-                      <strong>Output:</strong> [0,1]{"\n"}
-                      <strong>Explanation:</strong> nums[0] + nums[1] == 9, we return [0, 1].
-                    </pre>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Mock Panel: Code Editor */}
-              <div className="mock-editor-panel">
-                <div className="mock-panel-header">
-                  <span className="tab active">solution.py</span>
-                  <span className="tab">solution.js</span>
-                  <div className="run-controls">
-                    <button className="btn-run-small"><Play size={10} fill="currentColor" /> Run</button>
-                  </div>
-                </div>
-                <div className="mock-editor-body">
-                  <div className="code-line"><span className="ln">1</span><span className="ck">class</span> <span className="cf">Solution</span>:</div>
-                  <div className="code-line"><span className="ln">2</span>    <span className="ck">def</span> <span className="cf">twoSum</span>(self, nums: List[int], target: int) -&gt; List[int]:</div>
-                  <div className="code-line"><span className="ln">3</span>        seen = {}</div>
-                  <div className="code-line"><span className="ln">4</span>        <span className="ck">for</span> i, num <span className="ck">in</span> enumerate(nums):</div>
-                  <div className="code-line"><span className="ln">5</span>            remaining = target - num</div>
-                  <div className="code-line"><span className="ln">6</span>            <span className="ck">if</span> remaining <span className="ck">in</span> seen:</div>
-                  <div className="code-line"><span className="ln">7</span>                <span className="ck">return</span> [seen[remaining], i]</div>
-                  <div className="code-line"><span className="ln">8</span>            seen[num] = i</div>
-                  <div className="code-line"><span className="ln">9</span>        <span className="ck">return</span> []</div>
-                </div>
-                <div className="mock-console">
-                  <div className="console-header">
-                    <CheckCircle size={12} className="success-icon" />
-                    <span>Test Cases Passed (3/3)</span>
-                  </div>
-                  <div className="console-result">
-                    Runtime: 38 ms (Beats 94.2% of Python3 submissions)
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <motion.div 
+            className="hero-right"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
+            <TypewriterEditor />
+          </motion.div>
         </div>
       </header>
 
-      {/* ══ CORE FEATURES ══ */}
+      {/* ══ BENTO FEATURES SECTION ══ */}
       <section className="section" id="features">
         <div className="section-inner">
           <div className="section-header">
-            <span className="section-tag">💪 Powerful Features</span>
-            <h2 className="section-heading">Everything a Developer Needs</h2>
-            <p className="section-subtext">From coding practice to competitive programming, BrightCode has you covered with all the tools you need to succeed.</p>
+            <span className="section-tag"><Cpu size={14} /> Power Grid</span>
+            <h2 className="section-heading">Designed for Peak Engineering</h2>
+            <p className="section-subtext">A high-performance environment loaded with state-of-the-art diagnostic and collaboration utilities.</p>
           </div>
 
-          <div className="features-grid">
-            <div className="feature-card">
-              <div className="feat-icon-box blue-box">
-                <Code2 size={24} />
+          <motion.div 
+            className="bento-grid"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            {/* Bento Box 1 - Smart Editor (Double size) */}
+            <motion.div className="bento-card bento-w2" variants={cardVariants}>
+              <div className="bento-glow bg-blue-glow"></div>
+              <div className="bento-content">
+                <div className="bento-icon blue-box"><Code2 size={24} /></div>
+                <h3 className="bento-title">Smart Code Editor</h3>
+                <p className="bento-desc">Write structured code with instant syntax highlights, custom tabs, auto-saving buffers, and split-pane output panels.</p>
+                <div className="bento-visual mock-editor-preview">
+                  <div className="editor-dots"><span className="dot"></span><span className="dot"></span><span className="dot"></span></div>
+                  <pre className="syntax-code">
+                    <code><span className="c-blue">const</span> bubbleSort = (arr) =&gt; {"{"}</code>{"\n"}
+                    <code>  <span className="c-red">let</span> swapped;</code>{"\n"}
+                    <code>  <span className="c-blue">do</span> {"{"} swapped = <span className="c-red">false</span>; ...</code>
+                  </pre>
+                </div>
               </div>
-              <h3 className="feat-title">Smart Code Editor</h3>
-              <p className="feat-desc">
-                Practice coding in our feature-rich editor with support for 10+ languages, syntax highlighting, and instant test case validation.
-              </p>
-            </div>
+            </motion.div>
 
-            <div className="feature-card">
-              <div className="feat-icon-box orange-box">
-                <Trophy size={24} />
+            {/* Bento Box 2 - Arenas */}
+            <motion.div className="bento-card" variants={cardVariants}>
+              <div className="bento-glow bg-red-glow"></div>
+              <div className="bento-content">
+                <div className="bento-icon orange-box"><Trophy size={24} /></div>
+                <h3 className="bento-title">Speed Arenas</h3>
+                <p className="bento-desc">Go head-to-head in synchronized fast-solve coding duels against developers worldwide.</p>
+                <div className="bento-visual mock-arena-preview">
+                  <div className="arena-timer"><Flame size={12} /><span>02:14.50</span></div>
+                  <div className="arena-opponent"><span>Opponent Score:</span><strong>120 XP</strong></div>
+                </div>
               </div>
-              <h3 className="feat-title">Competitive Arenas</h3>
-              <p className="feat-desc">
-                Join live speed-coding battles, compete against other developers, and climb the global leaderboards to prove your skills.
-              </p>
-            </div>
+            </motion.div>
 
-            <div className="feature-card">
-              <div className="feat-icon-box green-box">
-                <Brain size={24} />
+            {/* Bento Box 3 - Sentinel AI */}
+            <motion.div className="bento-card" variants={cardVariants}>
+              <div className="bento-glow bg-green-glow"></div>
+              <div className="bento-content">
+                <div className="bento-icon green-box"><Brain size={24} /></div>
+                <h3 className="bento-title">Sentinel AI</h3>
+                <p className="bento-desc">Identify Big-O scaling, loops constraints, and compile glitches in real-time.</p>
+                <div className="bento-visual mock-ai-preview">
+                  <div className="complexity-badge">O(N log N)</div>
+                  <div className="badge-glow"></div>
+                </div>
               </div>
-              <h3 className="feat-title">AI-Powered Help</h3>
-              <p className="feat-desc">
-                Get instant code suggestions, complexity analysis (Big-O), and debugging assistance from our AI assistant, Sentinel.
-              </p>
-            </div>
+            </motion.div>
 
-            <div className="feature-card">
-              <div className="feat-icon-box purple-box">
-                <BookOpen size={24} />
+            {/* Bento Box 4 - Collab Rooms (Double size) */}
+            <motion.div className="bento-card bento-w2" variants={cardVariants}>
+              <div className="bento-glow bg-purple-glow"></div>
+              <div className="bento-content">
+                <div className="bento-icon purple-box"><Users size={24} /></div>
+                <h3 className="bento-title">WebRTC Collab Rooms</h3>
+                <p className="bento-desc">Share code workspace states, drawing canvas panels, and clear voice/video feeds with zero configuration.</p>
+                <div className="bento-visual mock-collab-preview">
+                  <div className="video-tile active">
+                    <span className="dot-live"></span>
+                    <span className="tile-name">You (Camera)</span>
+                  </div>
+                  <div className="video-tile">
+                    <span className="tile-name">Peer #1</span>
+                  </div>
+                </div>
               </div>
-              <h3 className="feat-title">Study & Notes</h3>
-              <p className="feat-desc">
-                Keep your knowledge organized with our built-in note vault, markdown editor, and Excalidraw whiteboard for diagrams.
-              </p>
-            </div>
+            </motion.div>
 
-            <div className="feature-card">
-              <div className="feat-icon-box red-box">
-                <Users size={24} />
+            {/* Bento Box 5 - Note Vault */}
+            <motion.div className="bento-card" variants={cardVariants}>
+              <div className="bento-glow bg-gold-glow"></div>
+              <div className="bento-content">
+                <div className="bento-icon purple-box"><BookOpen size={24} /></div>
+                <h3 className="bento-title">Note Vault</h3>
+                <p className="bento-desc">Export formatted study sheets and draw diagrams on responsive infinite whiteboards.</p>
+                <div className="bento-visual mock-vault-preview">
+                  <div className="vault-check"><CheckCircle size={12} /><span>System Design.md</span></div>
+                  <div className="vault-check"><CheckCircle size={12} /><span>DSA Graphs.draw</span></div>
+                </div>
               </div>
-              <h3 className="feat-title">Team Collaboration</h3>
-              <p className="feat-desc">
-                Code together in real-time with shared workspaces, collaborative whiteboards, and integrated voice and video calls.
-              </p>
-            </div>
+            </motion.div>
 
-            <div className="feature-card">
-              <div className="feat-icon-box gold-box">
-                <Shield size={24} />
+            {/* Bento Box 6 - Proctoring */}
+            <motion.div className="bento-card" variants={cardVariants}>
+              <div className="bento-glow bg-red-glow"></div>
+              <div className="bento-content">
+                <div className="bento-icon gold-box"><Shield size={24} /></div>
+                <h3 className="bento-title">Smart Proctoring</h3>
+                <p className="bento-desc">Lock screens, check focus tabs, and audit camera metrics for tests.</p>
+                <div className="bento-visual mock-proctor-preview">
+                  <div className="proctor-bar"><span className="lbl">Focus:</span><strong>98%</strong></div>
+                  <div className="proctor-bar"><span className="lbl">Face:</span><strong className="c-green">Detected</strong></div>
+                </div>
               </div>
-              <h3 className="feat-title">Secure Proctoring</h3>
-              <p className="feat-desc">
-                Host or take secure coding assessments with screen monitoring, tab tracking, and detailed event logging.
-              </p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* ══ INTERACTIVE WORKSPACE (ECOSYSTEM) ══ */}
+      {/* ══ INTERACTIVE ECOSYSTEM SECTION ══ */}
       <section className="section bg-alt" id="modules">
         <div className="section-inner">
           <div className="section-header">
-            <span className="section-tag">Interactive Workspace</span>
-            <h2 className="section-heading">Built-in Developer Tools</h2>
-            <p className="section-subtext">Powerful workflows built into a single, clean workspace deck.</p>
+            <span className="section-tag"><Sparkles size={14} /> Interactive Deck</span>
+            <h2 className="section-heading">Experience the Workspace</h2>
+            <p className="section-subtext">Click on the visualizers below to interact with our three core developer workspace modules.</p>
           </div>
 
           <div className="modules-list">
+            
+            {/* Interactive Module 1: Logic Lab Node Navigator */}
             <div className="module-item">
-              <div className="module-info">
+              <motion.div 
+                className="module-info"
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
                 <div className="module-badge-box">
                   <Terminal size={18} />
-                  <span>Logic Lab Path</span>
+                  <span>Logic Lab Paths</span>
                 </div>
-                <h3 className="module-title">Structured learning campaigns</h3>
+                <h3 className="module-title">Structured Algorithmic Levels</h3>
                 <p className="module-desc">
-                  Our curriculum consists of successive operational levels, ranging from basic control structures to advanced graph theory. Complete linear campaigns with immediate, automated feedback on every test case.
+                  Climb progressive levels tailored to evaluate data structures, flow conditions, and dynamic algorithms. Run test sequences and get instant analytical feedback.
                 </p>
-                <ul className="module-bullets">
-                  <li><Check size={14} className="bullet-check" /> 10+ progressive learning levels</li>
-                  <li><Check size={14} className="bullet-check" /> Immediate test case execution feedback</li>
-                  <li><Check size={14} className="bullet-check" /> Detailed algorithm breakdown analytics</li>
-                </ul>
-              </div>
+                <div className="interactive-hint">👉 Click any node in the panel to inspect active challenges!</div>
+              </motion.div>
+
               <div className="module-visual">
-                <div className="mock-visual-box">
-                  <div className="box-header">Logic Lab: Array Structures</div>
+                <div className="mock-visual-box glassmorphic">
+                  <div className="box-header">Logic Lab: Tree Structures</div>
                   <div className="box-progress">
-                    <span className="prog-label">Level Completion: 78%</span>
-                    <div className="prog-bar"><div className="prog-fill" style={{width: "78%"}} /></div>
+                    <span className="prog-label">Nodes Completion: {logicLabNode >= 4 ? "100%" : `${logicLabNode * 25}%`}</span>
+                    <div className="prog-bar">
+                      <div className="prog-fill" style={{ width: logicLabNode >= 4 ? "100%" : `${logicLabNode * 25}%` }}></div>
+                    </div>
                   </div>
                   <div className="box-nodes">
-                    <div className="node active"><span>01</span><span>Find Min/Max</span></div>
-                    <div className="node active"><span>02</span><span>Reverse Array</span></div>
-                    <div className="node active current"><span>03</span><span>Rotate Matrix</span></div>
-                    <div className="node"><span>04</span><span>Merge Intervals</span></div>
+                    {[
+                      { id: 1, title: "01: BST Insertion" },
+                      { id: 2, title: "02: Lowest Common Ancestor" },
+                      { id: 3, title: "03: Level Order Traversal" },
+                      { id: 4, title: "04: Invert Binary Tree" }
+                    ].map(node => (
+                      <button 
+                        key={node.id} 
+                        className={`node-interactive ${logicLabNode >= node.id ? "active" : ""} ${logicLabNode === node.id ? "current" : ""}`}
+                        onClick={() => setLogicLabNode(node.id)}
+                      >
+                        <span>{node.title}</span>
+                        {logicLabNode >= node.id ? <Check size={14} className="c-green" /> : <HelpCircle size={14} className="c-muted" />}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* Interactive Module 2: Warp Drive Time Machine */}
             <div className="module-item reverse">
-              <div className="module-info">
+              <motion.div 
+                className="module-info"
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
                 <div className="module-badge-box">
                   <GitBranch size={18} />
-                  <span>Warp Drive Snapshots</span>
+                  <span>Warp Drive Checkpoints</span>
                 </div>
-                <h3 className="module-title">Time-travel code timeline</h3>
+                <h3 className="module-title">Local Version Time-Travel</h3>
                 <p className="module-desc">
-                  Warp Drive dynamically captures code milestones as you edit. Roll back, compare code diffs side-by-side, or restore previous versions in one click without git overhead.
+                  Compare visual code changes side-by-side or rollback snapshots without typing Git push commands. Snapshots are auto-buffered as you construct files.
                 </p>
-                <ul className="module-bullets">
-                  <li><Check size={14} className="bullet-check" /> Instant version checkpoints in one click</li>
-                  <li><Check size={14} className="bullet-check" /> Split-screen visual code comparisons</li>
-                  <li><Check size={14} className="bullet-check" /> Local storage backup redundancy</li>
-                </ul>
-              </div>
+                <div className="interactive-hint">👉 Hover/Click checkpoint nodes below to see previous changes!</div>
+              </motion.div>
+
               <div className="module-visual">
-                <div className="mock-visual-box warp-visual">
-                  <div className="box-header">Warp Drive Checkpoints</div>
+                <div className="mock-visual-box warp-visual glassmorphic">
+                  <div className="box-header">Time Machine timeline</div>
                   <div className="timeline-trail">
-                    <div className="timeline-node solved">
-                      <span className="time-lbl">09:12 PM</span>
-                      <span className="desc-lbl">First compiled version</span>
-                    </div>
-                    <div className="timeline-node solved">
-                      <span className="time-lbl">09:20 PM</span>
-                      <span className="desc-lbl">Refactored lookup loop</span>
-                    </div>
-                    <div className="timeline-node current">
-                      <span className="time-lbl">09:26 PM</span>
-                      <span className="desc-lbl">Current editor checkpoint</span>
-                    </div>
+                    {[
+                      { id: 1, time: "10:14 PM", desc: "Base iterative function initialized." },
+                      { id: 2, time: "10:22 PM", desc: "Refactored lookup keys to hashmap." },
+                      { id: 3, time: "10:30 PM", desc: "Sentinel optimizations successfully applied." }
+                    ].map(node => (
+                      <button 
+                        key={node.id} 
+                        className={`timeline-node-btn ${warpCheckpoint >= node.id ? "solved" : ""} ${warpCheckpoint === node.id ? "current" : ""}`}
+                        onClick={() => setWarpCheckpoint(node.id)}
+                      >
+                        <div className="tl-badge"></div>
+                        <div className="tl-content">
+                          <span className="time-lbl">{node.time}</span>
+                          <span className="desc-lbl">{node.desc}</span>
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* Interactive Module 3: Sentinel Code Refactoring */}
             <div className="module-item">
-              <div className="module-info">
+              <motion.div 
+                className="module-info"
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
                 <div className="module-badge-box">
                   <Sparkles size={18} />
-                  <span>Sentinel AI Assistant</span>
+                  <span>Sentinel AI Diagnostician</span>
                 </div>
-                <h3 className="module-title">Contextual runtime optimization</h3>
+                <h3 className="module-title">Contextual Big-O Repairs</h3>
                 <p className="module-desc">
-                  Identify nested loop performance bottlenecks, resolve runtime compiler crashes, and apply recommended optimizations immediately to make your code run faster.
+                  Identify nested loop performance bottlenecks and apply instant code optimization proposals to save processor execution cycles.
                 </p>
-                <ul className="module-bullets">
-                  <li><Check size={14} className="bullet-check" /> AI-powered syntax repairs</li>
-                  <li><Check size={14} className="bullet-check" /> Time/Space Big-O complexity diagnostics</li>
-                  <li><Check size={14} className="bullet-check" /> Dynamic prompt customization options</li>
-                </ul>
-              </div>
+                <div className="interactive-hint">👉 Click "Optimize" in the panel below to refactor the code in real-time!</div>
+              </motion.div>
+
               <div className="module-visual">
-                <div className="mock-visual-box sentinel-visual">
+                <div className="mock-visual-box sentinel-visual glassmorphic">
                   <div className="box-header">Sentinel Diagnostics</div>
                   <div className="suggestion-card">
                     <span className="sug-header">Complexity Alert</span>
+                    <pre className="sug-code">
+                      {sentinelOptimized ? (
+                        <code>
+                          <span className="c-blue">def</span> find_dup(nums):{"\n"}
+                          {"    "}seen = set(){"\n"}
+                          {"    "}<span className="c-blue">for</span> n <span className="c-blue">in</span> nums:{"\n"}
+                          {"        "}<span className="c-blue">if</span> n <span className="c-blue">in</span> seen: <span className="c-blue">return</span> n{"\n"}
+                          {"        "}seen.add(n)
+                        </code>
+                      ) : (
+                        <code>
+                          <span className="c-blue">def</span> find_dup(nums):{"\n"}
+                          {"    "}<span className="c-blue">for</span> i <span className="c-blue">in</span> range(len(nums)):{"\n"}
+                          {"        "}<span className="c-blue">for</span> j <span className="c-blue">in</span> range(i+1, len(nums)):{"\n"}
+                          {"            "}<span className="c-blue">if</span> nums[i] == nums[j]:{"\n"}
+                          {"                "}<span className="c-blue">return</span> nums[i]
+                        </code>
+                      )}
+                    </pre>
                     <p className="sug-body">
-                      Your solution runs in <code className="complexity">O(N²)</code> time complexity due to nested loops. We suggest refactoring with a Hash Map to run in <code className="complexity success">O(N)</code>.
+                      Complexity:{" "}
+                      <strong className={`complexity-tag ${sentinelOptimized ? "optimized" : "slow"}`}>
+                        {sentinelOptimized ? "O(N) - Linear" : "O(N²) - Quadratic"}
+                      </strong>
                     </p>
-                    <button className="sug-action-btn">Apply Suggestion</button>
+                    <button 
+                      className="sug-action-btn glow-red-hover"
+                      onClick={() => setSentinelOptimized(!sentinelOptimized)}
+                    >
+                      {sentinelOptimized ? "Reset Code" : "Optimize Code"}
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </section>
 
-      {/* ══ HOW IT WORKS ══ */}
+      {/* ══ HOW IT WORKS SECTION ══ */}
       <section className="section" id="workflow">
         <div className="section-inner">
           <div className="section-header">
-            <span className="section-tag">Workflow</span>
+            <span className="section-tag"><Activity size={14} /> Path Mechanics</span>
             <h2 className="section-heading">How BrightCode Works</h2>
-            <p className="section-subtext">Three simple steps to start sharpening your engineering edge.</p>
+            <p className="section-subtext">Start leveling up your coding skills in three simple steps.</p>
           </div>
 
           <div className="workflow-steps">
-            <div className="step-card">
-              <span className="step-num">1</span>
-              <h4 className="step-title">Select your quest</h4>
-              <p className="step-desc">
-                Choose from algorithmic problems, join speed-coding arenas, or launch collaborative rooms.
-              </p>
+            <div className="step-card glassmorphic">
+              <span className="step-num">01</span>
+              <h4 className="step-title">Select Your Path</h4>
+              <p className="step-desc">Pick algorithm skill tracks, register for live speed challenges, or create collaborative team workspaces.</p>
             </div>
-            <div className="step-card">
-              <span className="step-num">2</span>
-              <h4 className="step-title">Write and debug</h4>
-              <p className="step-desc">
-                Write solutions, get suggestions from Sentinel AI, and roll back code using Warp Drive checkpoints.
-              </p>
+            <div className="step-card glassmorphic">
+              <span className="step-num">02</span>
+              <h4 className="step-title">Solve & Optimize</h4>
+              <p className="step-desc">Write clean answers using help from Sentinel AI diagnostics, comparing history changes with Warp Drive.</p>
             </div>
-            <div className="step-card">
-              <span className="step-num">3</span>
-              <h4 className="step-title">Climb the ranks</h4>
-              <p className="step-desc">
-                Pass test cases to earn XP, maintain daily streaks, and lead your faction to the top.
-              </p>
+            <div className="step-card glassmorphic">
+              <span className="step-num">03</span>
+              <h4 className="step-title">Climb Ranks</h4>
+              <p className="step-desc">Pass automated code compile tests to score XP, maintain daily streaks, and secure top global ranks.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ══ COMPETITIVE LEADERBOARD SECTION ══ */}
+      {/* ══ LEADERBOARD SECTION ══ */}
       <section className="section bg-alt" id="arena">
         <div className="section-inner">
           <div className="arena-grid">
             <div className="arena-left">
-              <span className="section-tag">Competitive</span>
-              <h2 className="section-heading">Rise on the Leaderboard</h2>
-              <p className="section-subtext" style={{maxWidth: "100%"}}>
-                Track your progress, earn experience points, and compare ranks against other software engineers on the platform.
-              </p>
+              <span className="section-tag"><Trophy size={14} /> Competitive</span>
+              <h2 className="section-heading">Operative Rankings</h2>
+              <p className="section-subtext">Join active factions, compete in global speed-coding rounds, and rank up through the Leaderboard tiers.</p>
+              
               <div className="arena-features">
                 <div className="arena-feat-item">
-                  <div className="item-dot" />
-                  <span>Earn XP and rank up from Apprentice to Grandmaster.</span>
+                  <div className="item-dot"></div>
+                  <span>Scale operative brackets from Initiate up to Grandmaster.</span>
                 </div>
                 <div className="arena-feat-item">
-                  <div className="item-dot" />
-                  <span>Join Factions and compete in Faction Wars.</span>
+                  <div className="item-dot"></div>
+                  <span>Form factions to coordinate speed runs and secure rewards.</span>
                 </div>
                 <div className="arena-feat-item">
-                  <div className="item-dot" />
-                  <span>Gain multipliers for consistent daily streaks.</span>
+                  <div className="item-dot"></div>
+                  <span>Score score-multipliers by logging consecutive coding streaks.</span>
                 </div>
               </div>
-              <button className="btn-primary" style={{marginTop: "24px"}} onClick={() => handleAuth('register')}>
-                Join a Faction
+
+              <button className="btn-primary glow-red-hover" style={{ marginTop: "24px" }} onClick={() => handleAuth('register')}>
+                Register as Operative
               </button>
             </div>
 
             <div className="arena-right">
-              <div className="leaderboard-card">
+              <div className="leaderboard-card glassmorphic">
                 <div className="card-header">
                   <Trophy size={16} className="trophy-gold" />
-                  <span>Hall of Fame - Top Performers</span>
+                  <span>Operatives Hall of Fame</span>
                 </div>
                 <div className="leaderboard-list">
                   {lbLoading ? (
-                    <div className="leader-row" style={{justifyContent: "center", color: "var(--text-muted)", fontSize: "0.85rem", padding: "20px"}}>
-                      Loading operatives...
-                    </div>
+                    <div className="leader-row loading">Loading operatives leaderboard...</div>
                   ) : leaderboard.length > 0 ? (
                     leaderboard.map((user, idx) => {
-                      const colors = ["#ef4444", "#3b82f6", "#10b981", "#a78bfa", "#f59e0b"];
-                      const pillColor = colors[idx % colors.length];
+                      const rankColors = ["#f59e0b", "#94a3b8", "#b45309", "#a78bfa", "#ef4444"];
+                      const userColor = rankColors[idx] || "rgba(255,255,255,0.4)";
                       return (
                         <div className="leader-row" key={user.username || idx}>
-                          <span className="leader-rank">{idx + 1}</span>
+                          <span className="leader-rank" style={{ color: userColor }}>0{idx + 1}</span>
                           <span className="leader-name">{user.username}</span>
-                          <span className="leader-faction" style={{borderColor: pillColor, color: pillColor}}>
+                          <span className="leader-faction" style={{ borderColor: userColor, color: userColor }}>
                             {user.level || "Initiate"}
                           </span>
                           <span className="leader-xp">{(user.xp || 0).toLocaleString()} XP</span>
@@ -464,27 +713,23 @@ export default function Landing() {
                       );
                     })
                   ) : (
-                    <div className="leader-row" style={{justifyContent: "center", color: "var(--text-muted)", fontSize: "0.85rem", padding: "20px"}}>
-                      No operatives ranked yet.
-                    </div>
+                    <div className="leader-row empty">No operatives ranked in this bracket yet.</div>
                   )}
                 </div>
               </div>
             </div>
-          </div>        {/* end arena-grid */}
-        </div>          {/* end section-inner */}
+          </div>
+        </div>
       </section>
 
-      {/* ══ CTA ══ */}
+      {/* ══ CTA SECTION ══ */}
       <section className="cta-section">
-        <div className="cta-inner">
-          <h2 className="cta-title">Start practicing coding now</h2>
-          <p className="cta-desc">
-            Sign up to access over a thousand algorithm questions, join faction wars, and code interactively with your friends.
-          </p>
+        <div className="cta-inner glassmorphic">
+          <h2 className="cta-title">Ready to level up your engineering skills?</h2>
+          <p className="cta-desc">Join thousands of software engineers practice-solving DSA puzzles, competing in coding wars, and scaling collaborative networks.</p>
           <div className="cta-buttons">
-            <button className="btn-primary-large" onClick={() => handleAuth('register')}>Create Free Account</button>
-            <button className="btn-secondary-large" onClick={handleHub}>Browse Problems</button>
+            <button className="btn-primary glow-red-hover" onClick={() => handleAuth('register')}>Create Operative Account</button>
+            <button className="btn-secondary" onClick={handleHub}>Explore Sandbox Problems</button>
           </div>
         </div>
       </section>
@@ -494,16 +739,15 @@ export default function Landing() {
         <div className="footer-inner">
           <div className="footer-top">
             <div className="footer-brand">
-              <div className="nav-logo">
-                <div className="nav-logo-mark">
-                  <Code2 size={16} className="logo-icon" />
-                </div>
-                <span className="nav-logo-name">BRIGHT<span>CODE</span></span>
+              <div className="footer-logo">
+                <Code2 size={20} className="logo-icon-red" />
+                <span className="logo-text">BRIGHT<span>CODE</span></span>
               </div>
               <p className="footer-desc-text">
-                A premium, modern workspace for practicing programming, running algorithms, and collaborating live.
+                A high-fidelity developer workspace built for competitive programming, WebRTC team collaboration, and AI diagnostics.
               </p>
             </div>
+            
             <div className="footer-link-groups">
               <div className="footer-group">
                 <span className="group-title">Platform</span>
@@ -512,25 +756,27 @@ export default function Landing() {
                 <a href="#workflow">Workflow</a>
               </div>
               <div className="footer-group">
-                <span className="group-title">Community</span>
+                <span className="group-title">Operative</span>
                 <a href="#" onClick={e => e.preventDefault()}>Factions</a>
                 <a href="#" onClick={e => e.preventDefault()}>Leaderboard</a>
-                <a href="#" onClick={e => e.preventDefault()}>Bootcamp</a>
+                <a href="#" onClick={e => e.preventDefault()}>Arenas</a>
               </div>
               <div className="footer-group">
                 <span className="group-title">About</span>
-                <a href="#" onClick={e => e.preventDefault()}>Privacy Policy</a>
+                <a href="#" onClick={e => e.preventDefault()}>Privacy Agreement</a>
                 <a href="#" onClick={e => e.preventDefault()}>Terms of Service</a>
-                <a href="#" onClick={e => e.preventDefault()}>Contact Support</a>
+                <a href="#" onClick={e => e.preventDefault()}>Support Tickets</a>
               </div>
             </div>
           </div>
+
           <div className="footer-bottom">
-            <span>© 2026 BrightCode. All rights reserved.</span>
-            <span>Made with precision for the modern software engineer.</span>
+            <span>© 2026 BrightCode. Engineered for performance.</span>
+            <span>Zero dependencies compile target mode.</span>
           </div>
         </div>
       </footer>
+
     </div>
   );
 }
