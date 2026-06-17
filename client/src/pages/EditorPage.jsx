@@ -63,10 +63,15 @@ const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = fal
         const videoToggledOn = isVideoOn && !prevVideoOnRef.current;
         prevVideoOnRef.current = isVideoOn;
 
-        // Always set/reset srcObject if the stream changed, or if video was toggled ON.
-        // Re-assigning srcObject is a critical workaround for iOS Safari/WebKit where video tracks
-        // added/enabled later fail to render unless the pipeline is rebuild.
-        const needsSrcAssignment = videoEl.srcObject !== stream || videoToggledOn;
+        // CRITICAL: Only force re-assign srcObject on WebKit (Safari/iOS) browsers.
+        // On Desktop Chrome/Firefox, re-assigning srcObject resets the media player,
+        // which can trigger autoplay blocks if not accompanied by a user gesture.
+        // Chrome/Firefox can render newly enabled tracks dynamically without resetting srcObject.
+        const isWebKit = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+                         (/Safari/i.test(navigator.userAgent) && !/Chrome/i.test(navigator.userAgent));
+
+        const needsSrcAssignment = videoEl.srcObject !== stream || (videoToggledOn && isWebKit);
         if (needsSrcAssignment) {
             videoEl.srcObject = stream || null;
             console.log('[PresenceVideoTile - useEffect] Set videoEl.srcObject to:', videoEl.srcObject);
@@ -75,6 +80,10 @@ const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = fal
         if (stream) {
             let playTimeout;
             const tryPlay = () => {
+                // If it's already playing and we didn't reassign srcObject, don't interrupt it (prevents autoplay blocks)
+                if (!needsSrcAssignment && !videoEl.paused) {
+                    return;
+                }
                 const promise = videoEl.play();
                 if (promise !== undefined) {
                     promise.catch((err) => {
