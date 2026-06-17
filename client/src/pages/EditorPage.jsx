@@ -71,7 +71,7 @@ const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = fal
                          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
                          (/Safari/i.test(navigator.userAgent) && !/Chrome/i.test(navigator.userAgent));
 
-        const needsSrcAssignment = videoEl.srcObject !== stream || (videoToggledOn && isWebKit);
+        const needsSrcAssignment = videoEl.srcObject !== stream || (videoToggledOn && isWebKit && !isLocal);
         if (needsSrcAssignment) {
             videoEl.srcObject = stream || null;
             console.log('[PresenceVideoTile - useEffect] Set videoEl.srcObject to:', videoEl.srcObject);
@@ -80,6 +80,10 @@ const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = fal
         if (stream) {
             let playTimeout;
             const tryPlay = () => {
+                const needsPlay = needsSrcAssignment || videoToggledOn || videoEl.paused;
+                if (!needsPlay) {
+                    return;
+                }
                 const promise = videoEl.play();
                 if (promise !== undefined) {
                     promise.catch((err) => {
