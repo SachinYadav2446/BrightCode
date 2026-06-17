@@ -22,7 +22,7 @@
     font-family: 'Poppins', sans-serif;
     position: relative;
     overflow-x: hidden;
-    padding-top: 50px;
+    padding-top: 64px;
 }
 
 .fp-bg { display: none; }
@@ -36,7 +36,7 @@
 .fp-hero {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    min-height: calc(100vh - 50px);
+    min-height: calc(100vh - 64px);
     border-bottom: 1px solid var(--fp-border);
     overflow: hidden;
     position: relative;

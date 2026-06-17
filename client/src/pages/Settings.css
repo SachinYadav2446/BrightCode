@@ -3,12 +3,12 @@
   background: #000;
   color: #fff;
   font-family: var(--font-sans), sans-serif;
-  padding-top: 50px; /* match navbar height */
+  padding-top: 64px; /* match navbar height */
 }
 
 .settings-wrapper {
   display: flex;
-  height: calc(100vh - 50px);
+  height: calc(100vh - 64px);
 }
 
 /* ── Sidebar ── */
@@ -2913,4 +2913,142 @@
 .support-widget-success p {
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.6);
+}
+
+/* ================================================================
+   NEW MOBILE RESPONSIVENESS OVERRIDES (APPENDED FOR MAXIMUM PRIORITY)
+   ================================================================ */
+@media (max-width: 900px) {
+  .settings-wrapper {
+    flex-direction: column !important;
+    height: auto !important;
+  }
+
+  .settings-sidebar {
+    width: 100% !important;
+    height: auto !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    padding: 10px 14px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    position: sticky !important;
+    top: 64px !important;
+    z-index: 100 !important;
+    background: rgba(10, 10, 12, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+  }
+
+  .sidebar-nav {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 8px !important;
+    flex: 1 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .sidebar-nav::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .nav-item {
+    flex-shrink: 0 !important;
+    padding: 8px 12px !important;
+    font-size: 0.8rem !important;
+    border-bottom: none !important;
+  }
+
+  .nav-item::before {
+    display: none !important; /* Hide left border marker on horizontal tabs */
+  }
+
+  .sidebar-footer {
+    padding-top: 0 !important;
+    border-top: none !important;
+    flex-shrink: 0 !important;
+  }
+
+  .logout-trigger {
+    padding: 8px 12px !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+    border-radius: 8px !important;
+    color: #ef4444 !important;
+    width: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .settings-main {
+    padding: 16px 12px !important;
+  }
+
+  .premium-header {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 24px 16px !important;
+    gap: 20px !important;
+  }
+
+  .profile-info-group {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  .profile-text {
+    align-items: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .profile-text .name-row {
+    justify-content: center !important;
+  }
+
+  .premium-stats-row {
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+  }
+
+  .premium-header .profile-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .premium-header .action-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .premium-details-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .nav-item span {
+    display: inline-block !important; /* Keep text labels on mobile for readability, horizontal scroll handles overflow */
+  }
+
+  .logout-trigger span {
+    display: none !important; /* Hide sign out text on mobile screens */
+  }
+
+  .logout-trigger {
+    padding: 8px !important;
+  }
+
+  /* Support widgets / custom forms styling for mobile */
+  .support-widget-success {
+    padding: 24px 12px !important;
+  }
 }

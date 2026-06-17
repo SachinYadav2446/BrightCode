@@ -6,7 +6,7 @@
     position: relative;
     overflow: hidden;
     font-family: var(--font-sans), 'Outfit', sans-serif;
-    padding-top: 50px; /* Matched to Navbar height */
+    padding-top: 64px; /* Matched to Navbar height */
 }
 
 .arcade-page.no-navbar {

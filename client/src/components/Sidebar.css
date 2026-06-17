@@ -2,8 +2,8 @@
 .sidebar {
   position: fixed;
   left: 0;
-  top: 56px;
-  height: calc(100vh - 56px);
+  top: 64px;
+  height: calc(100vh - 64px);
   width: 240px;
   background: rgba(10, 2, 2, 0.95);
   backdrop-filter: blur(20px);
@@ -219,8 +219,8 @@
 @media (max-width: 480px) {
   .sidebar {
     width: 50px;
-    top: 50px;
-    height: calc(100vh - 50px);
+    top: 64px;
+    height: calc(100vh - 64px);
   }
 
   .sidebar-header {

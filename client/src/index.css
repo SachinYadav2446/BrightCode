@@ -34,6 +34,13 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* Mobile screens (600px and below) */
+@media (max-width: 600px) {
+  html {
+    font-size: 75%;
+  }
+}
+
 /* Large screens (1280px and above) */
 @media (min-width: 1280px) {
   html {
