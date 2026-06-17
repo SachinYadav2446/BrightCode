@@ -2262,6 +2262,31 @@
     font-size: 1.8rem;
     margin-bottom: 24px;
   }
+  .profile-card-row {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    gap: 32px;
+  }
+  .profile-col-avatar {
+    padding: 0;
+  }
+  .profile-col-info {
+    align-items: center;
+  }
+  .profile-name-row {
+    justify-content: center;
+  }
+  .profile-stack-row {
+    justify-content: center;
+  }
+  .profile-stats-grid {
+    justify-content: center;
+  }
+  .profile-col-ring {
+    padding-left: 0;
+    min-width: auto;
+  }
   .profile-details-row {
     flex-direction: column;
     align-items: flex-start;

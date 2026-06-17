@@ -7,7 +7,9 @@ import FriendsDrawer from './FriendsDrawer';
 import axios from 'axios';
 import { 
   Users, 
-  Shield
+  Shield,
+  Menu,
+  X
 } from 'lucide-react';
 import './Navbar.css';
 import './FriendsDrawer.css';
@@ -19,6 +21,11 @@ const Navbar = () => {
   const location = useLocation();
   const [pendingCount, setPendingCount] = useState(0);
   const [hasUnread, setHasUnread] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     sessionStorage.setItem('drawerOpen', friendsDrawerOpen);
@@ -100,9 +107,33 @@ const Navbar = () => {
             ) : (
               <Link to="/auth" className="shiny-btn">Join Now</Link>
             )}
+
+            {/* Mobile Hamburger toggle */}
+            <button
+              className="nav-mobile-toggle"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="Toggle menu"
+            >
+              {menuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
           </div>
 
         </div>
+
+        {/* Mobile menu dropdown drawer */}
+        {menuOpen && (
+          <div className="nav-mobile-menu">
+            <Link to="/hub"       className={`nav-mobile-link ${currentPage === 'home'      ? 'active' : ''}`}>Home</Link>
+            <Link to="/library"   className={`nav-mobile-link ${currentPage === 'library'   ? 'active' : ''}`}>Library</Link>
+            <Link to="/workspace" className={`nav-mobile-link ${currentPage === 'workspace' ? 'active' : ''}`}>Workspace</Link>
+            <Link to="/codevault" className={`nav-mobile-link ${currentPage === 'codevault' ? 'active' : ''}`}>Vault</Link>
+            <Link to="/factions"  className={`nav-mobile-link ${currentPage === 'factions'  ? 'active' : ''}`}>Factions</Link>
+            <Link to="/contribute" className={`nav-mobile-link mobile-link-contribute ${currentPage === 'contribute' ? 'active' : ''}`}>
+              Contribute
+              <span className="nav-new-badge">NEW</span>
+            </Link>
+          </div>
+        )}
       </nav>
 
       <FriendsDrawer open={friendsDrawerOpen} onClose={() => setFriendsDrawerOpen(false)} onUnread={() => { if (!friendsDrawerOpen) setHasUnread(true); }} />

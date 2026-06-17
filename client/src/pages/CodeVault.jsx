@@ -54,6 +54,7 @@ const CodeVault = () => {
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [modalConfig, setModalConfig] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
 
   useEffect(() => {
@@ -350,10 +351,24 @@ const CodeVault = () => {
 
   return (
     <div className="codevault-container">
+      {/* Mobile Sidebar Toggle Button */}
+      <button 
+        className={`vault-sidebar-toggle-btn ${sidebarOpen ? 'open' : ''}`}
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        aria-label="Toggle Sidebar"
+      >
+        {sidebarOpen ? <XIcon size={18} /> : <SlidersHorizontal size={18} />}
+      </button>
 
       <div className="codevault-layout">
+        {sidebarOpen && (
+          <div 
+            className="vault-sidebar-overlay" 
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
         {/* Left Sidebar - Folder Tree */}
-        <aside className="vault-sidebar">
+        <aside className={`vault-sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
           <Link to="/hub" className="vault-sidebar-header">
             <h1 className="vault-logo">CODE VAULT</h1>
           </Link>
@@ -480,7 +495,10 @@ const CodeVault = () => {
                               <div key={note.id} className="file-item-wrapper">
                                 <button
                                   className={`file-item ${activeNote?.id === note.id ? 'active' : ''}`}
-                                  onClick={() => setActiveNote(note)}
+                                  onClick={() => {
+                                    setActiveNote(note);
+                                    setSidebarOpen(false);
+                                  }}
                                 >
                                   <File size={14} className="file-icon" />
                                   <span>{note.title || 'Untitled'}</span>
@@ -626,6 +644,7 @@ const CodeVault = () => {
           setActiveNote(note);
           setSelectedFolder(note.folder_id);
           setExpandedFolders(prev => ({ ...prev, [note.folder_id]: true }));
+          setSidebarOpen(false);
         }}
         onAction={handleCommandAction}
       />
