@@ -304,6 +304,48 @@ const EditorPage = () => {
     const [undoStack, setUndoStack] = useState([]);
     const [redoStack, setRedoStack] = useState([]);
 
+    const saveWorkspaceToHistory = (workspaceId, wsName, owner) => {
+        if (!workspaceId) return;
+        const isAdmin = user?.username === owner;
+        const newEntry = { 
+            id: workspaceId, 
+            name: wsName || `Workspace ${workspaceId.slice(0, 12)}...`, 
+            lastVisited: new Date().toISOString(), 
+            isAdmin, 
+            visitCount: 1 
+        };
+        const usernameKey = user?.username || 'guest';
+        const historyKey  = `workspaceHistory_${usernameKey}`;
+        const statsKey    = `workspaceStats_${usernameKey}`;
+        const existing    = JSON.parse(localStorage.getItem(historyKey) || '[]');
+
+        // Check if this is a brand-new workspace (not already in history)
+        const isNew = !existing.find(item => item.id === workspaceId);
+
+        const filtered    = existing.filter(item => item.id !== workspaceId);
+        const updated     = [newEntry, ...filtered].slice(0, 10);
+
+        // Any IDs that got pushed out of the recent-10 window → auto-terminate
+        const kept        = new Set(updated.map(w => w.id));
+        const pushedOut   = filtered.filter(w => !kept.has(w.id)).map(w => w.id);
+        if (pushedOut.length > 0) {
+            const terminated = JSON.parse(localStorage.getItem('terminatedSessions') || '[]');
+            const merged     = [...new Set([...terminated, ...pushedOut])];
+            localStorage.setItem('terminatedSessions', JSON.stringify(merged));
+        }
+
+        // Persist running total independently (never trimmed)
+        if (isNew) {
+            const stats = JSON.parse(localStorage.getItem(statsKey) || '{"total":0,"asAdmin":0,"asMember":0}');
+            stats.total  += 1;
+            if (isAdmin) stats.asAdmin  += 1;
+            else         stats.asMember += 1;
+            localStorage.setItem(statsKey, JSON.stringify(stats));
+        }
+
+        localStorage.setItem(historyKey, JSON.stringify(updated));
+    };
+
     // Text tool states
     const [isAddingText, setIsAddingText] = useState(false);
     const [textInput, setTextInput] = useState('');
@@ -573,6 +615,7 @@ const EditorPage = () => {
                     setSnapshots(snapshots || []);
                     if (workspaceOwner) setWorkspaceOwner(workspaceOwner);
                     if (workspaceName) setWorkspaceName(workspaceName);
+                    saveWorkspaceToHistory(roomId, workspaceName, workspaceOwner);
                     // Don't auto-open any file — let user pick from tree
                 });
 
