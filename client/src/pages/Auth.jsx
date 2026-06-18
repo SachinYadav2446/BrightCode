@@ -88,10 +88,6 @@ const Auth = () => {
             <div className="auth-glow auth-glow-2"></div>
             <div className="auth-glow auth-glow-3"></div>
           </div>
-          <div className="auth-brand">
-            <div className="auth-brand-name">Bright<span>Code</span></div>
-            <div className="auth-brand-tag">Developer Platform</div>
-          </div>
 
           <div className="auth-left-headline">
             <h1>
@@ -131,6 +127,11 @@ const Auth = () => {
         {/* ── Right form panel ── */}
         <div className="auth-form-side">
           <motion.div layout className="form-content">
+            <div className="auth-brand">
+              <div className="auth-brand-name">Bright<span>Code</span></div>
+              <div className="auth-brand-tag">Developer Platform</div>
+            </div>
+
             <div className="form-header">
               <motion.h2
                 initial={{ opacity: 0, y: 10 }}
