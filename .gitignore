@@ -11,6 +11,8 @@ server/logs/
 
 # Database files (local development data)
 server/*_db.json
+server/users.json
+server/contributed_db.json
 
 # Video files
 *.mp4

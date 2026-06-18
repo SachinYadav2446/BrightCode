@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "build": "cd client && npm install && npm run build"
+  },
   "dependencies": {
     "nodemailer": "^8.0.6"
   }
