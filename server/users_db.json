@@ -51,7 +51,7 @@
       "created_at": "2026-06-15T10:07:28.134Z",
       "subscription": "basic",
       "google_id": "111913696525529518289",
-      "session_id": "c4857840-4238-4f9b-a0b2-dc51bea8bdbf",
+      "session_id": "d8f58e00-b5f4-4924-9207-9e356861073b",
       "cpp_level": 2
     },
     {
@@ -82,6 +82,25 @@
       "project2": "",
       "cpp_level": 50,
       "python_level": 2
+    },
+    {
+      "id": "b8522f53-80f1-4d76-a3d6-d27e480d86c0",
+      "username": "demandsightsupport",
+      "email": "demandsightsupport@gmail.com",
+      "password": "$2b$10$ZTPubD5WfqzW5TQgEIEn6OzkAx8t0YDGuaRuMvYgTVhtwXxyUP6JC",
+      "xp": 0,
+      "css_level": 0,
+      "logic_level": 0,
+      "react_level": 0,
+      "mern_level": 0,
+      "activity": {},
+      "bio": "",
+      "stack": [],
+      "joinedAt": "2026-06-18T19:25:08.531Z",
+      "google_id": "115717204472683984470",
+      "created_at": "2026-06-18T19:25:08.531Z",
+      "subscription": "basic",
+      "session_id": "6f30d5f5-0c48-42ea-a9a8-82e361ed1a25"
     }
   ]
 }

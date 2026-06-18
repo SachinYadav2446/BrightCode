@@ -805,7 +805,7 @@ const MODULES_DATA = [
     title: "Collab Workspace",
     subtitle: "Real-time Pair Programming",
     icon: Terminal,
-    color: "blue",
+    color: "orange",
     desc: "Launch collaborative code rooms in seconds. Write, run, and debug code with team members simultaneously with sub-30ms typing synchronization.",
     perks: ["Shared code terminals", "Interactive cursor paths", "Built-in voice channels"],
     previewType: "workspace",
@@ -901,7 +901,7 @@ function ModuleVisualPreview({ type, color }) {
           <div className="vp-ws-line"><span className="vp-ws-ln">2</span>&nbsp;&nbsp;visited = <span className="vp-ws-fn">set</span>()</div>
           <div className="vp-ws-line" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
             <span className="vp-ws-ln">3</span>&nbsp;&nbsp;<span className="vp-ws-kw">for</span> edge <span className="vp-ws-op">in</span> graph.edges:
-            <span className="vp-ws-cursor blue">
+            <span className="vp-ws-cursor orange">
               <span className="vp-ws-cursor-lbl">Alex</span>
             </span>
           </div>

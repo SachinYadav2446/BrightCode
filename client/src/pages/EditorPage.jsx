@@ -18,7 +18,7 @@ import {
     Users, FileCode, Play, LogOut, FilePlus, Terminal as TerminalIcon,
     Monitor, Link as LinkIcon, Trash2, Edit2, Sparkles, Bot, Send,
     PenTool, Eraser, Layout as WhiteboardIcon, Zap, Languages,
-    Mic, MicOff, Video, VideoOff, PhoneOff, Phone, Plus,
+    Mic, MicOff, PhoneOff, Phone, Plus,
     ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Share2, Download,
     Folder, FolderOpen, FolderPlus, File as FileIcon, X, MessageSquare, ShieldAlert, User,
     GitBranch
@@ -33,145 +33,22 @@ import { useAuth } from '../context/AuthContext';
 import CodeBrightLogo from '../components/CodeBrightLogo';
 import GitPanel from '../components/GitPanel';
 
-// ── PresenceVideoTile: renders a participant's video (local or remote) ──
-const PresenceVideoTile = ({ username, stream, isMuted, isVideoOn, isLocal = false }) => {
-    const videoRef = useRef(null);
-    const prevVideoOnRef = useRef(isVideoOn);
-    console.log('[PresenceVideoTile - DEBUG] Rendering:', { username, stream, isMuted, isVideoOn, isLocal });
-    
-    // Log stream tracks
-    useEffect(() => {
-        if (isLocal && stream) {
-            const audioTracks = stream.getAudioTracks();
-            const videoTracks = stream.getVideoTracks();
-            console.log('[PresenceVideoTile - DEBUG] Local stream tracks:', {
-                isVideoOn,
-                audioTracks: audioTracks.map(t => ({ id: t.id, enabled: t.enabled, kind: t.kind })),
-                videoTracks: videoTracks.map(t => ({ id: t.id, enabled: t.enabled, kind: t.kind })),
-            });
-        }
-    }, [stream, isLocal, isVideoOn]);
-
-    // EFFECT 1: Runs when the stream itself changes (new peer connected / disconnected).
-    // This handles the initial srcObject assignment and triggers play() for the first time.
-    // Both Chrome and Safari need this.
-    useEffect(() => {
-        const videoEl = videoRef.current;
-        if (!videoEl) return;
-
-        videoEl.srcObject = stream || null;
-
-        if (!stream) return;
-
-        let playTimeout;
-        const tryPlay = () => {
-            const promise = videoEl.play();
-            if (promise !== undefined) {
-                promise.catch((err) => {
-                    console.warn('[PresenceVideoTile] Autoplay blocked, waiting for user interaction:', err);
-                    if (!isLocal) {
-                        const resume = () => {
-                            videoEl.play()
-                                .then(() => { cleanup(); })
-                                .catch(() => {});
-                        };
-                        const cleanup = () => {
-                            window.removeEventListener('click', resume);
-                            window.removeEventListener('keydown', resume);
-                            window.removeEventListener('touchstart', resume);
-                        };
-                        window.addEventListener('click', resume);
-                        window.addEventListener('keydown', resume);
-                        window.addEventListener('touchstart', resume);
-                    }
-                });
-            }
-        };
-        playTimeout = setTimeout(tryPlay, 100);
-        return () => clearTimeout(playTimeout);
-    }, [stream, isLocal]);
-
-    // EFFECT 2: Runs when isVideoOn changes for a REMOTE participant.
-    // Only needed on WebKit (Safari/iOS) where the video pipeline freezes when the
-    // stream was hidden and a video track is enabled later.
-    // Chrome handles this automatically via CSS opacity change — no play() needed.
-    useEffect(() => {
-        if (isLocal) return; // local video never needs this
-        const videoEl = videoRef.current;
-        if (!videoEl || !stream) return;
-
-        const videoToggledOn = isVideoOn && !prevVideoOnRef.current;
-        prevVideoOnRef.current = isVideoOn;
-
-        if (!videoToggledOn) return; // only act when transitioning OFF -> ON
-
-        // Detect WebKit (Safari on iOS/desktop)
-        const isWebKit = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
-                         (/Safari/i.test(navigator.userAgent) && !/Chrome/i.test(navigator.userAgent));
-
-        if (isWebKit) {
-            // On Safari: force-rebuild the media pipeline by reassigning srcObject, then play.
-            // Safari freezes when a stream goes from no-video-track to having one.
-            console.log('[PresenceVideoTile] WebKit video toggle ON detected, rebuilding pipeline');
-            const newStream = new MediaStream(stream.getTracks());
-            videoEl.srcObject = newStream;
-            const promise = videoEl.play();
-            if (promise !== undefined) {
-                promise.catch(err => console.warn('[PresenceVideoTile] WebKit play() blocked after toggle:', err));
-            }
-        } else {
-            // On Chrome/Firefox: CSS opacity handles visibility. But if autoPlay was blocked
-            // initially, the video may be paused — resume it now.
-            if (videoEl.paused) {
-                console.log('[PresenceVideoTile] Non-WebKit: video was paused when camera turned ON, resuming');
-                const promise = videoEl.play();
-                if (promise !== undefined) {
-                    promise.catch(err => console.warn('[PresenceVideoTile] play() blocked on camera toggle:', err));
-                }
-            }
-        }
-    }, [isVideoOn, isLocal, stream]);
-
+// ── PresenceAudioTile: renders a participant's audio status (no video) ──
+const PresenceAudioTile = ({ username, isMuted, isLocal = false }) => {
     return (
         <div className="presence-tile">
-            <div className="presence-video-container">
-                {/* Always render video element — removing it from DOM resets srcObject */}
-                {/* Keep position: 'absolute' to avoid iOS Safari compositing/layout bugs during toggles */}
-                <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted={isLocal}
-                    className="presence-video"
-                    style={{
-                        display: stream ? 'block' : 'none',
-                        opacity: isVideoOn ? 1 : 0,
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        zIndex: isVideoOn ? 1 : 0
-                    }}
-                />
-                {(!stream || !isVideoOn) && (
-                    <div className="presence-avatar" style={{ zIndex: isVideoOn ? 0 : 2 }}>
-                        <span>{username?.charAt(0).toUpperCase()}</span>
-                    </div>
-                )}
-                <div className={`presence-status-badge ${stream ? 'online' : 'offline'}`} style={{ zIndex: 3 }} />
-                {isMuted && (
-                    <div className="presence-muted-badge" style={{ zIndex: 3 }}>
-                        <MicOff size={10} />
-                    </div>
-                )}
+            <div className="presence-avatar">
+                <span>{username?.charAt(0).toUpperCase()}</span>
             </div>
             <div className="presence-info">
                 <span className="presence-name">{username}</span>
                 {isLocal && <span className="presence-you-tag">You</span>}
             </div>
+            {isMuted && (
+                <div className="presence-muted-badge">
+                    <MicOff size={10} />
+                </div>
+            )}
         </div>
     );
 };
@@ -405,25 +282,18 @@ const EditorPage = () => {
     const [isVideoCallOpen, setIsVideoCallOpen] = useState(true); // Always open by default
     const [isCallActive, setIsCallActive] = useState(false);
     const [isMuted, setIsMuted] = useState(true); // Mic off by default
-    const [isVideoOn, setIsVideoOn] = useState(false); // Camera off by default
-    const [callParticipants, setCallParticipants] = useState({}); // socketId -> { username, stream, isMuted, isVideoOn }
+    const [callParticipants, setCallParticipants] = useState({}); // socketId -> { username, stream, isMuted }
     const [localStream, setLocalStream] = useState(null); // Track local stream in state for re-renders
-    const localVideoRef = useRef(null);
     const localStreamRef = useRef(null);
     const localStreamPromiseRef = useRef(null);
     const peerConnectionsRef = useRef({}); // socketId -> RTCPeerConnection
     const myIdRef = useRef(null); // Keep myId accessible in stale socket closures
     const pendingIceCandidatesRef = useRef({}); // socketId -> ICE candidate[]
     const isMutedRef = useRef(isMuted);
-    const isVideoOnRef = useRef(isVideoOn);
 
     useEffect(() => {
         isMutedRef.current = isMuted;
     }, [isMuted]);
-
-    useEffect(() => {
-        isVideoOnRef.current = isVideoOn;
-    }, [isVideoOn]);
 
     // Keep legacy refs for backward compat
     const remoteVideoRef = useRef(null);
@@ -441,12 +311,6 @@ const EditorPage = () => {
 
 
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-    const [isPresencePanelCollapsed, setIsPresencePanelCollapsed] = useState(false);
-
-    // Debug: log changes to localStream and isVideoOn
-    useEffect(() => {
-        console.log('[EditorPage - DEBUG] localStream or isVideoOn changed:', { localStream, isVideoOn });
-    }, [localStream, isVideoOn]);
 
     const [isTerminalCollapsed, setIsTerminalCollapsed] = useState(false);
     const [isRightChatOpen, setIsRightChatOpen] = useState(false);
@@ -605,7 +469,7 @@ const EditorPage = () => {
                     const initialParticipants = {};
                     users.forEach(user => {
                         if (user.id !== yourId) {
-                            initialParticipants[user.id] = { username: user.username, isMuted: true, isVideoOn: false };
+                            initialParticipants[user.id] = { username: user.username, isMuted: true };
                         }
                     });
                     setCallParticipants(initialParticipants);
@@ -695,7 +559,7 @@ const EditorPage = () => {
                     // Add to call participants
                     setCallParticipants(prev => ({
                         ...prev,
-                        [socketId]: { username, isMuted: true, isVideoOn: false }
+                        [socketId]: { username, isMuted: true }
                     }));
 
                 });
@@ -950,11 +814,10 @@ const EditorPage = () => {
                     console.log(`[WebRTC] Socket received video-call-user-joined: socketId=${socketId}, username=${username}`);
                     
                     // Share our current video/audio state with the new joiner so their UI updates
-                    socketRef.current?.emit('video-call-state', { 
-                        roomId, 
-                        isMuted: isMutedRef.current, 
-                        isVideoOn: isVideoOnRef.current, 
-                        username: user?.username 
+                    socketRef.current?.emit('video-call-state', {
+                        roomId,
+                        isMuted: isMutedRef.current,
+                        username: user?.username
                     });
 
                     const myCurrentId = myIdRef.current;
@@ -970,7 +833,7 @@ const EditorPage = () => {
                         console.log(`[WebRTC] I am polite peer (${myCurrentId} <= ${socketId}), waiting for their offer`);
                         setCallParticipants(prev => ({
                             ...prev,
-                            [socketId]: prev[socketId] || { username, stream: null, isMuted: true, isVideoOn: false }
+                            [socketId]: prev[socketId] || { username, stream: null, isMuted: true }
                         }));
                     }
                 });
@@ -982,12 +845,12 @@ const EditorPage = () => {
                     closePeerConnection(socketId);
                 });
 
-                // Peer toggled mute/video
-                socket.on('video-call-peer-state', ({ socketId, isMuted, isVideoOn, username }) => {
-                    console.log(`[WebRTC] Socket received video-call-peer-state: socketId=${socketId}, isMuted=${isMuted}, isVideoOn=${isVideoOn}, username=${username}`);
+                // Peer toggled mute
+                socket.on('video-call-peer-state', ({ socketId, isMuted, username }) => {
+                    console.log(`[WebRTC] Socket received video-call-peer-state: socketId=${socketId}, isMuted=${isMuted}, username=${username}`);
                     setCallParticipants(prev => ({
                         ...prev,
-                        [socketId]: { ...prev[socketId], isMuted, isVideoOn, username }
+                        [socketId]: { ...prev[socketId], isMuted, username }
                     }));
                 });
 
@@ -1745,9 +1608,8 @@ const EditorPage = () => {
             pc._isNegotiating = true;
             console.log(`[WebRTC] onnegotiationneeded for ${targetId}`);
             try {
-                const offer = await pc.createOffer({ 
-                    offerToReceiveAudio: true, 
-                    offerToReceiveVideo: true 
+                const offer = await pc.createOffer({
+                    offerToReceiveAudio: true
                 });
 
                 console.log(`[WebRTC] Created offer for ${targetId}. M-lines:`, 
@@ -1834,9 +1696,9 @@ const EditorPage = () => {
         }
     };
 
-    // Get local media stream (audio + optional video)
-    const getLocalStream = async (withVideo = true) => {
-        console.log(`[WebRTC] getLocalStream called with withVideo=${withVideo}`);
+    // Get local media stream (audio only)
+    const getLocalStream = async () => {
+        console.log(`[WebRTC] getLocalStream called`);
         if (localStreamPromiseRef.current) {
             console.log(`[WebRTC] Returning existing local stream promise`);
             return localStreamPromiseRef.current;
@@ -1845,55 +1707,32 @@ const EditorPage = () => {
         // Note: browsers require HTTPS in production for getUserMedia.
         // We allow it to proceed and let the browser handle permission errors.
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            toast.error('Your browser does not support camera/microphone access.', { duration: 5000 });
+            toast.error('Your browser does not support microphone access.', { duration: 5000 });
             return null;
         }
 
         const acquire = async () => {
             try {
-                console.log(`[WebRTC - AUDIO DEBUG] Requesting user media... (audio: true, video: true)`);
-                let stream;
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-                } catch (videoErr) {
-                    console.log(`[WebRTC - AUDIO DEBUG] Video request failed, falling back to audio only:`, videoErr);
-                    stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                }
+                console.log(`[WebRTC - AUDIO DEBUG] Requesting user media... (audio: true)`);
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 console.log(`[WebRTC - AUDIO DEBUG] Got local stream:`, stream);
                 console.log(`[WebRTC - AUDIO DEBUG] Local audio tracks:`, stream.getAudioTracks());
                 console.log(`[WebRTC - AUDIO DEBUG] Local audio track enabled state:`, stream.getAudioTracks()[0]?.enabled);
-                console.log(`[WebRTC - AUDIO DEBUG] Local video tracks:`, stream.getVideoTracks());
 
                 localStreamRef.current = stream;
                 setLocalStream(stream);
-                console.log('[WebRTC - DEBUG: getLocalStream (video on)] set localStream, tracks:', stream.getTracks(), 'set localStreamRef:', localStreamRef.current);
-                if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+                console.log('[WebRTC] getLocalStream: set localStream, tracks:', stream.getTracks());
                 return stream;
             } catch (err) {
                 console.error('[WebRTC - AUDIO DEBUG] Media access error:', err);
-                // Try audio only if video fails
-                try {
-                    console.log(`[WebRTC - AUDIO DEBUG] Trying audio only...`);
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                    console.log(`[WebRTC - AUDIO DEBUG] Got local audio stream:`, stream);
-                    console.log(`[WebRTC - AUDIO DEBUG] Local audio tracks (audio only):`, stream.getAudioTracks());
-                    console.log(`[WebRTC - AUDIO DEBUG] Local audio track enabled state (audio only):`, stream.getAudioTracks()[0]?.enabled);
-                    localStreamRef.current = stream;
-                    setLocalStream(stream);
-                    if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-                    toast('Camera not available, using audio only', { icon: '🎤' });
-                    return stream;
-                } catch (audioErr) {
-                    console.error('[WebRTC - AUDIO DEBUG] Audio access error:', audioErr);
-                    if (audioErr.name === 'NotAllowedError') {
-                        toast.error('Permission denied. Please allow mic/camera in browser settings.', { duration: 5000 });
-                    } else if (audioErr.name === 'NotFoundError') {
-                        toast.error('No microphone found. Please connect a mic and try again.', { duration: 5000 });
-                    } else {
-                        toast.error('Could not access microphone: ' + audioErr.message, { duration: 5000 });
-                    }
-                    return null;
+                if (err.name === 'NotAllowedError') {
+                    toast.error('Permission denied. Please allow microphone in browser settings.', { duration: 5000 });
+                } else if (err.name === 'NotFoundError') {
+                    toast.error('No microphone found. Please connect a mic and try again.', { duration: 5000 });
+                } else {
+                    toast.error('Could not access microphone: ' + err.message, { duration: 5000 });
                 }
+                return null;
             } finally {
                 localStreamPromiseRef.current = null;
             }
@@ -1908,31 +1747,28 @@ const EditorPage = () => {
         console.log(`[WebRTC] autoJoinCall. myId=${myId}, clients.length=${clients.length}`);
         if (!myId || !socketRef.current) return;
 
-        const stream = await getLocalStream(true);
+        const stream = await getLocalStream();
         if (!stream) {
             setIsCallActive(true);
             return;
         }
 
-        // Start muted, video off — matches the default state flags (isMuted=true, isVideoOn=false)
+        // Start muted — matches the default state flags (isMuted=true)
         console.log(`[WebRTC - AUDIO DEBUG] autoJoinCall: Disabling audio tracks initially`);
         stream.getAudioTracks().forEach(t => {
             console.log(`[WebRTC - AUDIO DEBUG] Setting audio track ${t.id} enabled: false`);
             t.enabled = false;
         });
-        stream.getVideoTracks().forEach(t => { t.enabled = false; });
 
-        console.log(`[WebRTC - AUDIO DEBUG] autoJoinCall: Setting isCallActive=true, isMuted=true, isVideoOn=false`);
+        console.log(`[WebRTC - AUDIO DEBUG] autoJoinCall: Setting isCallActive=true, isMuted=true`);
         setIsCallActive(true);
         setIsMuted(true);
-        setIsVideoOn(false);
 
         socketRef.current?.emit('video-call-join', { roomId, username: user?.username });
-        socketRef.current?.emit('video-call-state', { 
-            roomId, 
-            isMuted: true, 
-            isVideoOn: false, 
-            username: user?.username 
+        socketRef.current?.emit('video-call-state', {
+            roomId,
+            isMuted: true,
+            username: user?.username
         });
 
         // Connect to all existing participants — only if we are the higher socket ID (avoid glare)
@@ -1947,7 +1783,7 @@ const EditorPage = () => {
                 console.log(`[WebRTC] I am polite peer for ${client.id}, waiting for their offer`);
                 setCallParticipants(prev => ({
                     ...prev,
-                    [client.id]: prev[client.id] || { username: client.username, stream: null, isMuted: true, isVideoOn: false }
+                    [client.id]: prev[client.id] || { username: client.username, stream: null, isMuted: true }
                 }));
             }
         }
@@ -1978,30 +1814,19 @@ const EditorPage = () => {
             return {
                 ...prev,
                 [targetId]: { 
-                    username: targetUsername, 
-                    stream: existing.stream || null, 
-                    isMuted: existing.isMuted !== undefined ? existing.isMuted : true, 
-                    isVideoOn: existing.isVideoOn !== undefined ? existing.isVideoOn : false 
+                    username: targetUsername,
+                    stream: existing.stream || null,
+                    isMuted: existing.isMuted !== undefined ? existing.isMuted : true
                 }
             };
         });
 
-        // ALWAYS add both transceivers (audio first, then video) to ensure m-line order is fixed!
+        // Add audio transceiver
         const audioTrack = localStreamRef.current.getAudioTracks()[0];
-        const videoTrack = localStreamRef.current.getVideoTracks()[0];
-
-        // Add audio transceiver first
         if (audioTrack) {
             pc.addTransceiver(audioTrack, { direction: 'sendrecv', streams: [localStreamRef.current] });
         } else {
             pc.addTransceiver('audio', { direction: 'recvonly' });
-        }
-        
-        // Add video transceiver second
-        if (videoTrack) {
-            pc.addTransceiver(videoTrack, { direction: 'sendrecv', streams: [localStreamRef.current] });
-        } else {
-            pc.addTransceiver('video', { direction: 'recvonly' });
         }
         // Offer will be sent automatically via onnegotiationneeded
     };
@@ -2012,21 +1837,18 @@ const EditorPage = () => {
 
         let stream = localStreamRef.current;
         if (!stream) {
-            stream = await getLocalStream(true);
+            stream = await getLocalStream();
             if (!stream) return;
-            // New joiner: start muted and video off
+            // New joiner: start muted
             stream.getAudioTracks().forEach(t => { t.enabled = false; });
-            stream.getVideoTracks().forEach(t => { t.enabled = false; });
             setIsCallActive(true);
             setIsMuted(true);
-            setIsVideoOn(false);
             setIsVideoCallOpen(true);
             socketRef.current?.emit('video-call-join', { roomId, username: user?.username });
-            socketRef.current?.emit('video-call-state', { 
-                roomId, 
-                isMuted: true, 
-                isVideoOn: false, 
-                username: user?.username 
+            socketRef.current?.emit('video-call-state', {
+                roomId,
+                isMuted: true,
+                username: user?.username
             });
         }
 
@@ -2056,10 +1878,9 @@ const EditorPage = () => {
                 return {
                     ...prev,
                     [from]: { 
-                        username: callerInfo?.username || 'Peer', 
-                        stream: existing.stream || null, 
-                        isMuted: existing.isMuted !== undefined ? existing.isMuted : false, 
-                        isVideoOn: existing.isVideoOn !== undefined ? existing.isVideoOn : false 
+                        username: callerInfo?.username || 'Peer',
+                        stream: existing.stream || null,
+                        isMuted: existing.isMuted !== undefined ? existing.isMuted : false
                     }
                 };
             });
@@ -2083,7 +1904,6 @@ const EditorPage = () => {
             // ALWAYS associate local tracks with existing transceivers created by setRemoteDescription
             const transceivers = pc.getTransceivers();
             const answerAudioTrack = stream.getAudioTracks()[0];
-            const answerVideoTrack = stream.getVideoTracks()[0];
 
             if (transceivers[0]) {
                 if (answerAudioTrack) {
@@ -2091,14 +1911,6 @@ const EditorPage = () => {
                     transceivers[0].direction = 'sendrecv';
                 } else {
                     transceivers[0].direction = 'recvonly';
-                }
-            }
-            if (transceivers[1]) {
-                if (answerVideoTrack) {
-                    await transceivers[1].sender.replaceTrack(answerVideoTrack);
-                    transceivers[1].direction = 'sendrecv';
-                } else {
-                    transceivers[1].direction = 'recvonly';
                 }
             }
 
@@ -2131,7 +1943,6 @@ const EditorPage = () => {
             localStreamRef.current = null;
         }
         setLocalStream(null);
-        if (localVideoRef.current) localVideoRef.current.srcObject = null;
 
         // Close all peer connections
         Object.keys(peerConnectionsRef.current).forEach(id => {
@@ -2145,7 +1956,6 @@ const EditorPage = () => {
         setCallParticipants({});
         setIsCallActive(false);
         setIsMuted(true);
-        setIsVideoOn(false);
 
         socketRef.current?.emit('video-call-leave', { roomId, username: user?.username });
     };
@@ -2156,15 +1966,14 @@ const EditorPage = () => {
         if (!localStreamRef.current) {
             // No stream yet — acquire one first, then unmute
             console.log(`[WebRTC - AUDIO DEBUG] No local stream, acquiring one first...`);
-            const stream = await getLocalStream(true);
+            const stream = await getLocalStream();
             if (!stream) return;
-            // Start video off, audio enabled
-            stream.getVideoTracks().forEach(t => { t.enabled = false; });
+            // Start audio enabled
             stream.getAudioTracks().forEach(t => { t.enabled = true; });
             setIsMuted(false);
             setIsCallActive(true);
             socketRef.current?.emit('video-call-join', { roomId, username: user?.username });
-            socketRef.current?.emit('video-call-state', { roomId, isMuted: false, isVideoOn, username: user?.username });
+            socketRef.current?.emit('video-call-state', { roomId, isMuted: false, username: user?.username });
             // Connect to any peers we aren't connected to yet
             await ensurePeerConnections();
             return;
@@ -2192,7 +2001,7 @@ const EditorPage = () => {
                 }
                 micTrack.enabled = true;
                 setIsMuted(false);
-                socketRef.current?.emit('video-call-state', { roomId, isMuted: false, isVideoOn, username: user?.username });
+                socketRef.current?.emit('video-call-state', { roomId, isMuted: false, username: user?.username });
             } catch (err) {
                 console.error('[WebRTC - AUDIO DEBUG] Failed to acquire mic:', err);
                 toast.error('Could not access microphone. Please allow mic permissions.');
@@ -2206,10 +2015,10 @@ const EditorPage = () => {
             t.enabled = !newMuted;
             console.log(`[WebRTC - AUDIO DEBUG] Audio track ${t.id} enabled state:`, t.enabled);
         });
-        
+
         setIsMuted(newMuted);
-        console.log(`[WebRTC - AUDIO DEBUG] Emitting video-call-state: isMuted=${newMuted}, isVideoOn=${isVideoOn}`);
-        socketRef.current?.emit('video-call-state', { roomId, isMuted: newMuted, isVideoOn, username: user?.username });
+        console.log(`[WebRTC - AUDIO DEBUG] Emitting video-call-state: isMuted=${newMuted}`);
+        socketRef.current?.emit('video-call-state', { roomId, isMuted: newMuted, username: user?.username });
     };
 
     const renegotiateWithPeer = async (targetId, pc) => {
@@ -2217,9 +2026,8 @@ const EditorPage = () => {
         if (pc.signalingState !== 'stable' || pc._isNegotiating) return;
         pc._isNegotiating = true;
         try {
-            const offer = await pc.createOffer({ 
-                offerToReceiveAudio: true, 
-                offerToReceiveVideo: true 
+            const offer = await pc.createOffer({
+                offerToReceiveAudio: true
             });
             await pc.setLocalDescription(offer);
             socketRef.current?.emit('webrtc-offer', { roomId, offer, targetId });
@@ -2230,98 +2038,6 @@ const EditorPage = () => {
         }
     };
 
-    const toggleVideo = async () => {
-        console.log('[toggleVideo - DEBUG] Called, current state:', { localStreamRef: localStreamRef.current, isVideoOn, localStream });
-        if (!localStreamRef.current) {
-            // No stream at all — get one with video
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-                localStreamRef.current = stream;
-                setLocalStream(stream);
-                if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-
-                // Respect current mute state
-                stream.getAudioTracks().forEach(t => { t.enabled = !isMuted; });
-                stream.getVideoTracks().forEach(t => { t.enabled = true; });
-
-                // For each peer connection, replace tracks on the EXISTING transceivers (audio first, then video)!
-                const newAudioTrack = stream.getAudioTracks()[0];
-                const newVideoTrack = stream.getVideoTracks()[0];
-                
-                for (const [peerId, pc] of Object.entries(peerConnectionsRef.current)) {
-                    const transceivers = pc.getTransceivers();
-                    // First transceiver should always be audio, second should always be video!
-                    if (transceivers[0]?.sender && newAudioTrack) {
-                        await transceivers[0].sender.replaceTrack(newAudioTrack);
-                        transceivers[0].direction = 'sendrecv';
-                    }
-                    if (transceivers[1]?.sender && newVideoTrack) {
-                        await transceivers[1].sender.replaceTrack(newVideoTrack);
-                        transceivers[1].direction = 'sendrecv';
-                    }
-                    await renegotiateWithPeer(peerId, pc);
-                }
-
-                setIsVideoOn(true);
-                socketRef.current?.emit('video-call-state', { 
-                    roomId, 
-                    isMuted, 
-                    isVideoOn: true, 
-                    username: user?.username 
-                });
-            } catch (err) {
-                toast.error('Camera access denied');
-            }
-            return;
-        }
-
-        const videoTracks = localStreamRef.current.getVideoTracks();
-
-        if (videoTracks.length > 0) {
-            // We already have a video track — just toggle it (no renegotiation needed!)
-            const newVideoOn = !isVideoOn;
-            console.log('[toggleVideo - DEBUG] Toggling existing video track:', { videoTracks, newVideoOn });
-            videoTracks.forEach(t => { t.enabled = newVideoOn; });
-            setIsVideoOn(newVideoOn);
-            socketRef.current?.emit('video-call-state', { 
-                roomId, 
-                isMuted, 
-                isVideoOn: newVideoOn, 
-                username: user?.username 
-            });
-        } else {
-            // We have a stream but no video track — get one and replace on existing transceivers!
-            try {
-                const videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                const videoTrack = videoStream.getVideoTracks()[0];
-
-                localStreamRef.current.addTrack(videoTrack);
-                setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
-                if (localVideoRef.current) localVideoRef.current.srcObject = localStreamRef.current;
-
-                // Replace track on EXISTING video transceivers (second transceiver in each pc)!
-                for (const [peerId, pc] of Object.entries(peerConnectionsRef.current)) {
-                    const transceivers = pc.getTransceivers();
-                    // Second transceiver should always be video!
-                    if (transceivers[1]?.sender) {
-                        await transceivers[1].sender.replaceTrack(videoTrack);
-                        transceivers[1].direction = 'sendrecv';
-                    }
-                    await renegotiateWithPeer(peerId, pc);
-                }
-
-                setIsVideoOn(true);
-                socketRef.current?.emit('video-call-state', { 
-                    roomId, 
-                    isMuted, 
-                    isVideoOn: true, 
-                    username: user?.username 
-                });
-            } catch (err) {
-                toast.error('Camera access denied');
-            }
-        }
-    };
 
 
 
@@ -2848,16 +2564,6 @@ const EditorPage = () => {
 
             {/* â”€â”€ PRESENCE PANEL (Always Visible) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {/* Collapsible Right Presence Panel Toggle */}
-            <button
-                className={`presence-panel-toggle ${isPresencePanelCollapsed ? 'collapsed' : ''}`}
-                onClick={() => setIsPresencePanelCollapsed(p => !p)}
-                title={isPresencePanelCollapsed ? 'Expand Workspace' : 'Collapse Workspace'}
-            >
-                {isPresencePanelCollapsed && <span className="handle-text">WORKSPACE</span>}
-                <div className="handle-icon">
-                    {isPresencePanelCollapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-                </div>
-            </button>
 
             {/* ── SESSION ENDED NOTIFICATION MODAL ──────────────────────────────────────── */}
             <AnimatePresence>
@@ -2897,71 +2603,6 @@ const EditorPage = () => {
                     </div>
                 )}
             </AnimatePresence>
-            <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-                className="presence-panel"
-                style={{
-                    width: isPresencePanelCollapsed ? 0 : undefined,
-                    minWidth: isPresencePanelCollapsed ? 0 : undefined,
-                    overflow: isPresencePanelCollapsed ? 'hidden' : undefined,
-                    padding: isPresencePanelCollapsed ? 0 : undefined,
-                }}
-            >
-                {/* Header */}
-                <div className="presence-header">
-                    <div className="presence-title">
-                        <Users size={14} />
-                        <span>Workspace</span>
-                        <span className="presence-count">{clients.length}</span>
-                    </div>
-                </div>
-
-                {/* Participants Grid */}
-                <div className="presence-grid">
-                    {/* Local user tile */}
-                    <PresenceVideoTile
-                        username={user?.username}
-                        stream={localStream}
-                        isMuted={isMuted}
-                        isVideoOn={isVideoOn}
-                        isLocal={true}
-                    />
-
-                    {/* Remote participants */}
-                    {clients.filter(c => c.id !== myId).map(client => {
-                        const participant = callParticipants[client.id];
-                        return (
-                            <PresenceVideoTile
-                                key={client.id}
-                                username={client.username}
-                                stream={participant?.stream}
-                                isMuted={participant?.isMuted}
-                                isVideoOn={participant?.isVideoOn}
-                            />
-                        );
-                    })}
-                </div>
-
-                {/* Quick Controls */}
-                <div className="presence-controls">
-                    <button
-                        className={`presence-control-btn ${isMuted ? 'muted' : ''}`}
-                        onClick={toggleMute}
-                        title={isMuted ? 'Unmute' : 'Mute'}
-                    >
-                        {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
-                    </button>
-                    <button
-                        className={`presence-control-btn ${!isVideoOn ? 'off' : ''}`}
-                        onClick={toggleVideo}
-                        title={isVideoOn ? 'Turn off camera' : 'Turn on camera'}
-                    >
-                        {isVideoOn ? <Video size={16} /> : <VideoOff size={16} />}
-                    </button>
-                </div>
-            </motion.div>
 
 
 
@@ -3103,6 +2744,13 @@ const EditorPage = () => {
                                 title="Chat"
                             >
                                 <MessageSquare size={18} />
+                            </button>
+                            <button
+                                className={`nav-icon-btn ${isMuted ? 'muted' : ''}`}
+                                onClick={toggleMute}
+                                title={isMuted ? 'Unmute' : 'Mute'}
+                            >
+                                {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
                             </button>
                             <button className="export-btn" onClick={exportFile} disabled={!activeFile}>
                                 <Download size={16} /> Export
@@ -3303,9 +2951,9 @@ const EditorPage = () => {
 
 
 
-                    <main className="main-content" style={{ 
+                    <main className="main-content" style={{
                         gridTemplateRows: `1fr ${isTerminalCollapsed ? 0 : 2}px ${terminalHeight}px`,
-                        marginRight: `${(isRightChatOpen ? 300 : 0) + (isPresencePanelCollapsed ? 0 : 240)}px`
+                        marginRight: `${isRightChatOpen ? 300 : 0}px`
                     }}>
 
 
@@ -3578,7 +3226,7 @@ const EditorPage = () => {
                     </main>
 
                     {/* Right Chat Panel */}
-                    <aside className={`right-chat-panel ${isRightChatOpen ? 'open' : ''} ${isPresencePanelCollapsed ? 'collapsed-presence' : ''}`}>
+                    <aside className={`right-chat-panel ${isRightChatOpen ? 'open' : ''}`}>
                         <div className="right-chat-header">
                             <span className="right-chat-title">TEAM CHAT</span>
                             <button
