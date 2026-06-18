@@ -2860,6 +2860,8 @@ const EditorPage = () => {
                                     <div className="user-list-full">
                                         {clients.map(c => {
                                             const userRole = c?.id === adminId ? 'admin' : (c?.permission || 'viewer');
+                                            const isUserInCall = c?.id === myId ? isCallActive : !!callParticipants[c?.id];
+                                            const isUserMuted = c?.id === myId ? isMuted : (callParticipants[c?.id]?.isMuted ?? true);
                                             return (
                                                 <div key={c?.id} className="user-item-full">
                                                     <div className="user-info-group">
@@ -2868,6 +2870,11 @@ const EditorPage = () => {
                                                             {c?.username}
                                                             {c?.id === myId && <span className="you-tag"> (You)</span>}
                                                         </span>
+                                                        {isUserInCall && (
+                                                            <span className={`voice-indicator ${isUserMuted ? 'muted' : 'active'}`} title={isUserMuted ? 'Muted' : 'Speaking'} style={{ display: 'inline-flex', alignItems: 'center', marginLeft: 6 }}>
+                                                                {isUserMuted ? <MicOff size={12} style={{ color: '#ef4444' }} /> : <Mic size={12} style={{ color: '#10b981' }} />}
+                                                            </span>
+                                                        )}
                                                         <span className={`role-badge ${userRole}`}>
                                                             {userRole === 'admin' ? 'ADMIN' : userRole === 'writer' ? 'WRITER' : 'VIEWER'}
                                                         </span>
@@ -3275,6 +3282,25 @@ const EditorPage = () => {
                             </button>
                         </div>
                     </aside>
+
+                    {/* Hidden audio elements for WebRTC audio call */}
+                    <div style={{ display: 'none' }}>
+                        {Object.entries(callParticipants).map(([id, participant]) => {
+                            if (!participant.stream || id === myId) return null;
+                            return (
+                                <audio
+                                    key={id}
+                                    autoPlay
+                                    playsInline
+                                    ref={el => {
+                                        if (el && el.srcObject !== participant.stream) {
+                                            el.srcObject = participant.stream;
+                                        }
+                                    }}
+                                />
+                            );
+                        })}
+                    </div>
 
                 </div>
 
