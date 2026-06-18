@@ -107,7 +107,7 @@
 .right-chat-panel {
     position: fixed;
     top: 52px;
-    right: 240px; /* Offset to the left of presence panel */
+    right: 0;
     width: 0;
     height: calc(100vh - 52px);
     overflow: hidden;
