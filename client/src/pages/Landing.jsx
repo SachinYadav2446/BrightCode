@@ -80,7 +80,7 @@ function Nav({ handleAuth }) {
           <CodeBrightLogo size="small" />
         </a>
         <div className="lnav-links">
-          {["Features","Modules","Workflow","Arena"].map(l => (
+          {["Features","Workflow","Modules","Arena"].map(l => (
             <a key={l} href={`#${l.toLowerCase()}`} className="lnav-link">{l}</a>
           ))}
         </div>
@@ -101,7 +101,7 @@ function Nav({ handleAuth }) {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            {["Features","Modules","Workflow","Arena"].map(l => (
+            {["Features","Workflow","Modules","Arena"].map(l => (
               <a key={l} href={`#${l.toLowerCase()}`} className="lnav-drawer-link" onClick={() => setOpen(false)}>{l}</a>
             ))}
             <div className="lnav-drawer-ctas">
@@ -116,49 +116,289 @@ function Nav({ handleAuth }) {
 }
 
 /* ────────────────────────────────────────────────────────────
-   HERO
+   HERO – BRIGHTCODE PIXEL REVEAL CANVAS
 ──────────────────────────────────────────────────────────── */
-function HeroSection({ handleAuth, handleHub }) {
-  const [visibleLines, setVisibleLines] = useState(0);
-  const [consoleShow, setConsoleShow] = useState(false);
+function BrightCodeCanvas() {
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
+  const rafRef = useRef(null);
 
   useEffect(() => {
-    if (visibleLines < CODE_LINES.length) {
-      const t = setTimeout(() => setVisibleLines(v => v + 1), 280);
-      return () => clearTimeout(t);
-    } else {
-      const t = setTimeout(() => setConsoleShow(true), 400);
-      return () => clearTimeout(t);
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+    const ctx = canvas.getContext('2d');
+
+    // The canvas ignores pointer events, so track movement on the hero section.
+    const section = container.parentElement;
+
+    // ── Pixel font for "BRIGHTCODE" ──────────────────────────
+    // Each letter is a 5×7 pixel bitmap (1=on, 0=off)
+    const FONT = {
+      B: [
+        [1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],
+        [1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0]
+      ],
+      R: [
+        [1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],
+        [1,0,1,0,0],[1,0,0,1,0],[1,0,0,0,1]
+      ],
+      I: [
+        [1,1,1],[0,1,0],[0,1,0],[0,1,0],[0,1,0],[0,1,0],[1,1,1]
+      ],
+      G: [
+        [0,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,1,1,1],
+        [1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]
+      ],
+      H: [
+        [1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],
+        [1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]
+      ],
+      T: [
+        [1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],
+        [0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0]
+      ],
+      C: [
+        [0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,0],[1,0,0,0,0],
+        [1,0,0,0,0],[1,0,0,0,1],[0,1,1,1,0]
+      ],
+      O: [
+        [0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],
+        [1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]
+      ],
+      D: [
+        [1,1,1,0,0],[1,0,0,1,0],[1,0,0,0,1],[1,0,0,0,1],
+        [1,0,0,0,1],[1,0,0,1,0],[1,1,1,0,0]
+      ],
+      E: [
+        [1,1,1,1,1],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,0],
+        [1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,1]
+      ],
+    };
+
+    const TEXT = ['B','R','I','G','H','T','C','O','D','E'];
+
+    // Build flat list of "letter pixels" with canvas coords
+    function buildLetterPixels(canvasW, canvasH) {
+      const px = [];
+      const gap = 2;
+      const scale = Math.max(6, Math.floor(Math.min(canvasW / 68, canvasH / 16)));
+      const cellSize = scale + gap;
+
+      let totalCols = 0;
+      TEXT.forEach(ch => { totalCols += (FONT[ch][0].length) + 1; });
+      totalCols--;
+
+      const textW = totalCols * cellSize;
+      const textH = 7 * cellSize;
+
+      const startX = (canvasW - textW) / 2;
+      const startY = (canvasH - textH) / 2 + Math.min(70, canvasH * 0.08);
+
+      let cx = startX;
+      TEXT.forEach((ch, li) => {
+        const bitmap = FONT[ch];
+        for (let r = 0; r < bitmap.length; r++) {
+          for (let c = 0; c < bitmap[r].length; c++) {
+            if (bitmap[r][c]) {
+              px.push({
+                x: cx + c * cellSize,
+                y: startY + r * cellSize,
+                s: scale,
+                letterIdx: li,
+              });
+            }
+          }
+        }
+        cx += (bitmap[0].length + 1) * cellSize;
+      });
+      return px;
     }
-  }, [visibleLines]);
+
+    // Color palette for letters (red shades)
+    const LETTER_COLORS = [
+      '#ef4444','#f87171','#fca5a5','#dc2626',
+      '#ef4444','#f87171','#fca5a5','#dc2626',
+      '#ef4444','#f87171',
+    ];
+
+    let cells = [];
+    let bgBlocks = [];
+    let W = 0, H = 0;
+    const mouse = { x: -9999, y: -9999, active: false };
+
+    function init() {
+      const rect = container.getBoundingClientRect();
+      W = rect.width;
+      H = rect.height;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      cells = [];
+
+      // Build background grid of small blocks
+      bgBlocks = [];
+      const bSize = 18;
+      const bGap = 3;
+      const step = bSize + bGap;
+      for (let bx = 0; bx < W + step; bx += step) {
+        for (let by = 0; by < H + step; by += step) {
+          bgBlocks.push({
+            x: bx, y: by, s: bSize,
+            brightness: 0,
+            trailEnergy: 0,
+            isLetter: false,
+            letterIdx: -1,
+            baseAlpha: 0.01 + Math.random() * 0.01,
+          });
+        }
+      }
+
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      // Draw all blocks
+      bgBlocks.forEach(b => {
+        b.trailEnergy *= 0.965;
+        if (b.trailEnergy < 0.008) b.trailEnergy = 0;
+
+        const targetBrightness = b.trailEnergy;
+        b.brightness += (targetBrightness - b.brightness) * 0.14;
+
+        const bmin = b.baseAlpha;
+        const totalAlpha = bmin + b.brightness * (b.isLetter ? 0.9 : 0.12);
+
+        if (totalAlpha < 0.005) return;
+
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, totalAlpha);
+
+        if (b.isLetter && b.brightness > 0.02) {
+          const col = LETTER_COLORS[b.letterIdx] || '#ef4444';
+          ctx.fillStyle = col;
+          ctx.shadowBlur = 20 * b.brightness;
+          ctx.shadowColor = col;
+          // Rounded rect
+          const rr = 2;
+          const x = b.x, y = b.y, s = b.s;
+          ctx.beginPath();
+          ctx.moveTo(x + rr, y);
+          ctx.lineTo(x + s - rr, y);
+          ctx.arcTo(x + s, y, x + s, y + rr, rr);
+          ctx.lineTo(x + s, y + s - rr);
+          ctx.arcTo(x + s, y + s, x + s - rr, y + s, rr);
+          ctx.lineTo(x + rr, y + s);
+          ctx.arcTo(x, y + s, x, y + s - rr, rr);
+          ctx.lineTo(x, y + rr);
+          ctx.arcTo(x, y, x + rr, y, rr);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          const col = b.brightness > 0.02 ? '#ef4444' : '#ffffff';
+          ctx.fillStyle = col;
+          if (b.brightness > 0.45) {
+            ctx.shadowBlur = 8 * b.brightness;
+            ctx.shadowColor = '#ef4444';
+          }
+          ctx.fillRect(b.x, b.y, b.s, b.s);
+        }
+        ctx.restore();
+      });
+
+      rafRef.current = requestAnimationFrame(draw);
+    }
+
+    init();
+    rafRef.current = requestAnimationFrame(draw);
+
+    const onMove = e => {
+      if (!section) return;
+      const rect = section.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+      mouse.active = true;
+
+      const TRAIL_RADIUS = 105;
+      bgBlocks.forEach(b => {
+        const dx = b.x + b.s / 2 - mouse.x;
+        const dy = b.y + b.s / 2 - mouse.y;
+        const distance = Math.hypot(dx, dy);
+        if (distance >= TRAIL_RADIUS) return;
+
+        const proximity = 1 - distance / TRAIL_RADIUS;
+        const lightChance = 0.1 + proximity * 0.48;
+        if (Math.random() < lightChance) {
+          b.trailEnergy = Math.max(
+            b.trailEnergy,
+            0.35 + proximity * 0.5 + Math.random() * 0.25
+          );
+        }
+      });
+    };
+    const onLeave = () => { mouse.active = false; };
+    const onResize = () => { init(); };
+
+    if (section) {
+      section.addEventListener('mousemove', onMove);
+      section.addEventListener('mouseleave', onLeave);
+    }
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      if (section) {
+        section.removeEventListener('mousemove', onMove);
+        section.removeEventListener('mouseleave', onLeave);
+      }
+      window.removeEventListener('resize', onResize);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
 
   return (
+    <div ref={containerRef} className="brightcode-canvas-wrap">
+      <canvas ref={canvasRef} className="brightcode-canvas" />
+    </div>
+  );
+}
+
+
+function HeroSection({ handleAuth, handleHub }) {
+  return (
     <section className="hero-section" id="home">
-      {/* Animated background */}
+      {/* Full-bg pixel reveal canvas */}
+      <BrightCodeCanvas />
+
+      {/* Gradient overlays */}
       <div className="hero-bg">
         <div className="hero-orb hero-orb-1" />
         <div className="hero-orb hero-orb-2" />
-        <div className="hero-orb hero-orb-3" />
         <div className="hero-noise" />
-        <div className="hero-grid" />
       </div>
 
-      <div className="hero-inner">
-        {/* Left: Copy */}
+      <div className="hero-inner hero-inner-centered">
         <motion.div
-          className="hero-left"
-          initial={{ opacity: 0, y: 30 }}
+          className="hero-left hero-left-centered"
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-
-          <h1 className="hero-h1">
+          <h1 className="hero-h1" style={{ textAlign: 'center', alignItems: 'center' }}>
             <span className="hero-h1-line">Code Harder.</span>
             <span className="hero-h1-line hero-h1-gradient">Compete Smarter.</span>
           </h1>
 
-          <div className="hero-actions">
-            <button className="btn-clay" onClick={() => handleAuth("register")}>
+          <p className="hero-p" style={{ textAlign: 'center', maxWidth: '540px', margin: '0 auto 32px' }}>
+            The ultimate competitive coding arena — real-time collaboration, AI-powered proctoring, faction wars &amp; more.
+          </p>
+
+          <div className="hero-actions" style={{ justifyContent: 'center' }}>
+            <button className="btn-clay" onClick={() => handleAuth('register')}>
               Start Building for Free
             </button>
             <button className="btn-ghost-hero" onClick={handleHub}>
@@ -167,7 +407,7 @@ function HeroSection({ handleAuth, handleHub }) {
             </button>
           </div>
 
-          <div className="hero-proof">
+          <div className="hero-proof" style={{ justifyContent: 'center' }}>
             <div className="proof-item">
               <AnimCounter target={2500} suffix="+" />
               <span>Challenges</span>
@@ -179,126 +419,20 @@ function HeroSection({ handleAuth, handleHub }) {
             </div>
             <div className="proof-sep" />
             <div className="proof-item">
-              <span>{"<30ms"}</span>
+              <span>{'<30ms'}</span>
               <span>Sync Speed</span>
             </div>
           </div>
         </motion.div>
+      </div>
 
-        {/* Right: IDE card */}
-        <motion.div
-          className="hero-right"
-          initial={{ opacity: 0, x: 40, rotateY: 10 }}
-          animate={{ opacity: 1, x: 0, rotateY: -5 }}
-          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
-          style={{ perspective: "1000px" }}
-        >
-          <div className="ide-card">
-            {/* Glow rings */}
-            <div className="ide-glow" />
-
-            {/* Title bar */}
-            <div className="ide-titlebar">
-              <div className="ide-dots">
-                <span className="ide-dot red" />
-                <span className="ide-dot yellow" />
-                <span className="ide-dot green" />
-              </div>
-              <div className="ide-title-center">
-                <span className="ide-filename">solution.py</span>
-              </div>
-              <div className="ide-lang-tabs">
-                <span className="ide-lang active">Python</span>
-                <span className="ide-lang">JavaScript</span>
-              </div>
-            </div>
-
-            {/* Problem bar */}
-            <div className="ide-problem-bar">
-              <span className="ide-prob-num">1.</span>
-              <span className="ide-prob-name">Two Sum</span>
-              <span className="ide-prob-diff easy">Easy</span>
-              <div className="ide-sentinel-chip">
-                <Sparkles size={10} />
-                Sentinel Active
-              </div>
-            </div>
-
-            {/* Code body */}
-            <div className="ide-code-body">
-              {CODE_LINES.slice(0, visibleLines).map((line, i) => (
-                <motion.div
-                  key={i}
-                  className="ide-code-line"
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <span className="ide-ln">{line.num}</span>
-                  <span className="ide-code-text">{line.text}</span>
-                </motion.div>
-              ))}
-              {visibleLines < CODE_LINES.length && (
-                <span className="ide-cursor blink">_</span>
-              )}
-            </div>
-
-            {/* Console */}
-            <AnimatePresence>
-              {consoleShow && (
-                <motion.div
-                  className="ide-console"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <div className="ide-console-inner">
-                    <CheckCircle size={12} className="ide-console-icon" />
-                    <span className="ide-console-text">All 3 test cases passed</span>
-                    <span className="ide-console-meta">· 38ms · Beats 94.2%</span>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Complexity badge */}
-            <div className="ide-complexity-badge">
-              <Activity size={11} />
-              O(N) · Hash Map optimized
-            </div>
-          </div>
-
-          {/* Floating achievement card */}
-          <motion.div
-            className="hero-float-card"
-            animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <Trophy size={16} className="float-card-icon" />
-            <div className="float-card-text">
-              <span>Rank #1 in Faction</span>
-              <span>Iron Wolves</span>
-            </div>
-          </motion.div>
-
-          {/* Floating XP card */}
-          <motion.div
-            className="hero-float-card hero-float-card-2"
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-          >
-            <Zap size={14} className="float-card-icon gold" />
-            <div className="float-card-text">
-              <span>+150 XP earned</span>
-              <span>5 day streak</span>
-            </div>
-          </motion.div>
-        </motion.div>
+      {/* Scroll hint */}
+      <div className="hero-scroll-hint">
+        <span />
       </div>
     </section>
   );
 }
-
 /* ────────────────────────────────────────────────────────────
    TICKER
 ──────────────────────────────────────────────────────────── */
