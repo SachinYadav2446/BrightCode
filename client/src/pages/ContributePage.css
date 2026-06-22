@@ -182,6 +182,179 @@
 /* ── Dashboard ── */
 .cp-dashboard { display: flex; flex-direction: column; gap: 28px; }
 
+/* Submit studio */
+.cp-submit-studio {
+  scroll-margin-top: 92px;
+  display: grid;
+  grid-template-columns: minmax(260px, 0.78fr) minmax(0, 1.35fr);
+  gap: 24px;
+  align-items: start;
+  padding: 28px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(239,68,68,0.08), transparent 34%),
+    rgba(14,14,18,0.76);
+  box-shadow: 0 24px 70px rgba(0,0,0,0.32);
+  backdrop-filter: blur(14px);
+}
+
+.cp-submit-copy {
+  position: sticky;
+  top: 88px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 8px 18px 4px;
+}
+
+.cp-section-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  color: #f87171;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cp-submit-copy h2 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.55rem, 3vw, 2.25rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.cp-submit-copy p {
+  margin: 0;
+  color: #8f929b;
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.cp-submit-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.cp-submit-checklist span {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #c8c8ce;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.cp-submit-checklist svg {
+  color: #4ade80;
+  flex-shrink: 0;
+}
+
+.cp-submit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.cp-form-section {
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  background: rgba(7,7,9,0.52);
+}
+
+.cp-form-section-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.cp-form-section-head.compact {
+  margin-bottom: 0;
+}
+
+.cp-form-section-head > span {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.25);
+  color: #f87171;
+  font-size: 0.78rem;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+.cp-form-section-head h3 {
+  margin: 0 0 3px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.cp-form-section-head p {
+  margin: 0;
+  color: #6f727b;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.cp-statement-box {
+  min-height: 180px;
+}
+
+.cp-code-box {
+  min-height: 240px;
+}
+
+.cp-studio-tc-row {
+  background: rgba(255,255,255,0.025);
+}
+
+.cp-submit-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+  border: 1px solid rgba(239,68,68,0.16);
+  border-radius: 14px;
+  background: rgba(239,68,68,0.07);
+}
+
+.cp-submit-footer div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cp-submit-footer strong {
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.cp-submit-footer span {
+  color: #8f929b;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
 /* Stat cards */
 .cp-stats-row {
   display: grid;
@@ -703,6 +876,8 @@ select.cp-input option { background: #1a1a1e; }
 @media (max-width: 900px) {
   .cp-hero-pills { display: none; }
   .cp-hero { padding: 48px 24px 56px; }
+  .cp-submit-studio { grid-template-columns: 1fr; }
+  .cp-submit-copy { position: relative; top: auto; padding: 0; }
 }
 
 @media (max-width: 640px) {
@@ -713,6 +888,12 @@ select.cp-input option { background: #1a1a1e; }
   .cp-table-row span:nth-child(5) { display: none; }
 
   .cp-form-row { flex-direction: column; }
+  .cp-submit-studio { padding: 18px; border-radius: 14px; }
+  .cp-form-section { padding: 16px; }
+  .cp-submit-footer { flex-direction: column; align-items: stretch; }
+  .cp-submit-footer .cp-btn-primary { width: 100%; justify-content: center; }
+  .cp-studio-tc-row { flex-direction: column; }
+  .cp-studio-tc-row .cp-del-btn { margin-top: 0; align-self: flex-start; }
   .cp-modal { max-height: calc(100vh - 16px); border-radius: 14px; }
   .cp-stats-row { grid-template-columns: 1fr 1fr; }
 }

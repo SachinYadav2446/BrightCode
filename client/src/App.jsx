@@ -20,6 +20,7 @@ import BattleArena from './pages/BattleArena';
 import UserModule from './pages/UserModule';
 import UserProfile from './pages/UserProfile';
 import ContributePage from './pages/ContributePage';
+import CodeFeed from './pages/CodeFeed';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
@@ -413,6 +414,14 @@ function App() {
                     <ContributePage />
                   </ProtectedRoute>
                 } 
+              />
+              <Route
+                path="/feed"
+                element={
+                  <ProtectedRoute>
+                    <CodeFeed />
+                  </ProtectedRoute>
+                }
               />
               {/* Catch-all: redirect any unknown path to landing */}
               <Route path="*" element={<Navigate to="/" replace />} />

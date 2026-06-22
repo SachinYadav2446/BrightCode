@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, User, Settings as SettingsIcon, Save, Plus, X, LogOut, Shield, Info, Globe, Terminal, Mail, Calendar, ShieldCheck, ChevronRight, Layers, Zap, Users, Activity, Lock, MessageSquare, GitBranch, Link2, Unplug, CheckCircle2, CreditCard } from 'lucide-react';
+import { ArrowLeft, User, Settings as SettingsIcon, Save, Plus, X, LogOut, Shield, Info, Globe, Terminal, Mail, Calendar, ShieldCheck, ChevronRight, Layers, Zap, Users, Activity, Lock, MessageSquare, GitBranch, Link2, Unplug, CheckCircle2, CreditCard, GitPullRequest } from 'lucide-react';
 import { getOAuthStatus, getOAuthUrl, disconnectGitHub } from '../services/gitService';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -502,6 +502,13 @@ const Settings = () => {
             >
               <CreditCard size={20} />
               <span>Billing</span>
+            </button>
+            <button
+              className={`nav-item ${activeTab === 'contribute' ? 'active' : ''}`}
+              onClick={() => setActiveTab('contribute')}
+            >
+              <GitPullRequest size={20} />
+              <span>Contribute</span>
             </button>
           </nav>
 
@@ -1079,6 +1086,74 @@ const Settings = () => {
                           <button className="pricing-action-btn primary" onClick={() => handleUpgrade('elite')}>Upgrade Clearance</button>
                         )}
                       </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ) : activeTab === 'contribute' ? (
+              <motion.div
+                key="contribute"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="dashboard-content"
+              >
+                <div className="system-section">
+                  <div className="section-header">
+                    <h2>Contribute</h2>
+                    <p style={{ color: '#71717a', fontSize: '0.85rem', marginTop: '4px' }}>
+                      Help grow the BrightCode question bank. Submit problems, review submissions, and earn XP.
+                    </p>
+                  </div>
+
+                  <div className="dashboard-card identity-card" style={{ marginTop: '24px' }}>
+                    <div className="card-header">
+                      <div className="header-icon"><GitPullRequest size={18} /></div>
+                      <h3>Question Contributions</h3>
+                    </div>
+                    <div className="card-body">
+                      <p style={{ color: '#a1a1aa', fontSize: '0.88rem', lineHeight: 1.7, marginBottom: '20px' }}>
+                        Submit new coding questions to the BrightCode library. Accepted questions earn you XP and appear for all users in the Library.
+                      </p>
+
+                      <div className="contribute-feature-grid">
+                        <div className="contribute-feature-item">
+                          <div className="feature-icon-wrap" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}>
+                            <CheckCircle2 size={18} color="#22c55e" />
+                          </div>
+                          <div>
+                            <strong>Submit Problems</strong>
+                            <p>Write question titles, descriptions, examples, and test cases.</p>
+                          </div>
+                        </div>
+                        <div className="contribute-feature-item">
+                          <div className="feature-icon-wrap" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.2)' }}>
+                            <Zap size={18} color="#eab308" />
+                          </div>
+                          <div>
+                            <strong>Earn XP</strong>
+                            <p>Every accepted question rewards you with bonus XP.</p>
+                          </div>
+                        </div>
+                        <div className="contribute-feature-item">
+                          <div className="feature-icon-wrap" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                            <Users size={18} color="#ef4444" />
+                          </div>
+                          <div>
+                            <strong>Help the Community</strong>
+                            <p>Your questions are reviewed and added to the shared library.</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        className="premium-save-btn"
+                        style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', padding: '12px 28px' }}
+                        onClick={() => navigate('/contribute')}
+                      >
+                        <GitPullRequest size={16} />
+                        Open Contribution Panel
+                      </button>
                     </div>
                   </div>
                 </div>

@@ -1,0 +1,94 @@
+<svg width="760" height="560" viewBox="0 0 760 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="panel" x1="82" y1="60" x2="680" y2="488" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#141414"/>
+      <stop offset="1" stop-color="#090909"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="118" y1="426" x2="652" y2="426" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EF4444"/>
+      <stop offset="0.52" stop-color="#F97316"/>
+      <stop offset="1" stop-color="#22C55E"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="760" height="560" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="28"/>
+      <feGaussianBlur stdDeviation="34"/>
+      <feComposite in2="hardAlpha" operator="out"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.02 0 0 0 0 0.02 0 0 0 0 0.02 0 0 0 0.72 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
+    </filter>
+  </defs>
+  <rect width="760" height="560" fill="transparent"/>
+  <g filter="url(#shadow)">
+    <rect x="76" y="54" width="608" height="448" rx="22" fill="url(#panel)"/>
+    <rect x="76.75" y="54.75" width="606.5" height="446.5" rx="21.25" stroke="white" stroke-opacity="0.12" stroke-width="1.5"/>
+    <rect x="76" y="54" width="608" height="54" rx="22" fill="#111111"/>
+    <path d="M76 86H684" stroke="white" stroke-opacity="0.08"/>
+    <circle cx="111" cy="81" r="7" fill="#FF5F57"/>
+    <circle cx="135" cy="81" r="7" fill="#FEBC2E"/>
+    <circle cx="159" cy="81" r="7" fill="#28C840"/>
+    <rect x="285" y="70" width="190" height="22" rx="11" fill="white" fill-opacity="0.045"/>
+    <text x="321" y="85" fill="white" fill-opacity="0.44" font-family="Consolas, monospace" font-size="13">workspace/main.py</text>
+    <rect x="574" y="69" width="72" height="24" rx="12" fill="#28C840" fill-opacity="0.12" stroke="#28C840" stroke-opacity="0.28"/>
+    <circle cx="591" cy="81" r="4" fill="#28C840"/>
+    <text x="603" y="86" fill="#28C840" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700">LIVE</text>
+    <rect x="76" y="108" width="150" height="338" fill="#0A0A0A"/>
+    <path d="M226 108V446" stroke="white" stroke-opacity="0.07"/>
+    <text x="108" y="142" fill="white" fill-opacity="0.38" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700">FILES</text>
+    <rect x="98" y="162" width="106" height="30" rx="7" fill="#EF4444" fill-opacity="0.13"/>
+    <rect x="98" y="162" width="3" height="30" rx="1.5" fill="#EF4444"/>
+    <text x="115" y="182" fill="white" fill-opacity="0.9" font-family="Consolas, monospace" font-size="13">main.py</text>
+    <text x="115" y="221" fill="white" fill-opacity="0.4" font-family="Consolas, monospace" font-size="13">utils.js</text>
+    <text x="115" y="258" fill="white" fill-opacity="0.4" font-family="Consolas, monospace" font-size="13">README.md</text>
+    <text x="115" y="295" fill="white" fill-opacity="0.4" font-family="Consolas, monospace" font-size="13">config.json</text>
+    <text x="115" y="332" fill="white" fill-opacity="0.4" font-family="Consolas, monospace" font-size="13">tests.py</text>
+    <rect x="252" y="138" width="384" height="252" rx="14" fill="#0D0D0D" stroke="white" stroke-opacity="0.07"/>
+    <rect x="252" y="239" width="384" height="32" fill="#EF4444" fill-opacity="0.09"/>
+    <g font-family="Consolas, monospace" font-size="16">
+      <text x="276" y="170" fill="white" fill-opacity="0.22">1</text>
+      <text x="314" y="170" fill="#C792EA">def</text>
+      <text x="348" y="170" fill="#82AAFF"> solve</text>
+      <text x="406" y="170" fill="white" fill-opacity="0.58">(nums):</text>
+      <text x="276" y="204" fill="white" fill-opacity="0.22">2</text>
+      <text x="314" y="204" fill="#EEFFFF">seen</text>
+      <text x="360" y="204" fill="white" fill-opacity="0.58"> = </text>
+      <text x="390" y="204" fill="#C792EA">set</text>
+      <text x="424" y="204" fill="white" fill-opacity="0.58">()</text>
+      <text x="276" y="238" fill="white" fill-opacity="0.22">3</text>
+      <text x="314" y="238" fill="#C792EA">for</text>
+      <text x="348" y="238" fill="#EEFFFF"> n</text>
+      <text x="374" y="238" fill="#C792EA"> in</text>
+      <text x="406" y="238" fill="#EEFFFF"> nums</text>
+      <text x="456" y="238" fill="white" fill-opacity="0.58">:</text>
+      <text x="276" y="262" fill="white" fill-opacity="0.22">4</text>
+      <text x="334" y="262" fill="#C792EA">if</text>
+      <text x="358" y="262" fill="#EEFFFF"> n</text>
+      <text x="382" y="262" fill="#C792EA"> in</text>
+      <text x="416" y="262" fill="#EEFFFF"> seen</text>
+      <text x="464" y="262" fill="white" fill-opacity="0.58">:</text>
+      <text x="276" y="306" fill="white" fill-opacity="0.22">5</text>
+      <text x="354" y="306" fill="#C792EA">return</text>
+      <text x="416" y="306" fill="#EEFFFF"> n</text>
+      <text x="276" y="340" fill="white" fill-opacity="0.22">6</text>
+      <text x="334" y="340" fill="#EEFFFF">seen</text>
+      <text x="378" y="340" fill="white" fill-opacity="0.58">.</text>
+      <text x="390" y="340" fill="#82AAFF">add</text>
+      <text x="424" y="340" fill="white" fill-opacity="0.58">(n)</text>
+      <text x="276" y="374" fill="white" fill-opacity="0.22">7</text>
+      <text x="314" y="374" fill="#C792EA">return</text>
+      <text x="376" y="374" fill="#F78C6C"> -1</text>
+    </g>
+    <rect x="426" y="248" width="2" height="18" rx="1" fill="#EF4444"/>
+    <rect x="118" y="418" width="534" height="18" rx="9" fill="url(#accent)" fill-opacity="0.9"/>
+    <circle cx="536" cy="438" r="18" fill="#E74C3C" stroke="#0D0D0D" stroke-width="3"/>
+    <circle cx="570" cy="438" r="18" fill="#3498DB" stroke="#0D0D0D" stroke-width="3"/>
+    <circle cx="604" cy="438" r="18" fill="#2ECC71" stroke="#0D0D0D" stroke-width="3"/>
+    <text x="530" y="443" fill="white" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="800">A</text>
+    <text x="565" y="443" fill="white" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="800">K</text>
+    <text x="599" y="443" fill="white" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="800">S</text>
+    <text x="118" y="467" fill="white" fill-opacity="0.48" font-family="Inter, Arial, sans-serif" font-size="13">3 collaborators editing</text>
+    <text x="540" y="467" fill="white" fill-opacity="0.42" font-family="Consolas, monospace" font-size="13">branch: main</text>
+  </g>
+</svg>

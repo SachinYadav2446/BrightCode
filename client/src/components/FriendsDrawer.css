@@ -255,8 +255,6 @@
 .fd-btn.add:hover { background: #ef4444; color: #fff; border-color: #ef4444; }
 .fd-btn.whisper { background: rgba(245, 240, 220, 0.1); border-color: rgba(245, 240, 220, 0.25); color: #f5f0dc; }
 .fd-btn.whisper:hover { background: #f5f0dc; color: #1a1a1a; border-color: #f5f0dc; }
-.fd-btn.challenge { background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.25); color: #a855f7; }
-.fd-btn.challenge:hover { background: #9333ea; color: #fff; border-color: #9333ea; }
 
 .fd-status-chip {
     display: flex;
@@ -277,19 +275,14 @@
     height: 100%;
 }
 
-.fd-chat-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    background: rgba(10,10,15,0.6);
-}
-
-.fd-chat-header span {
+.fd-offline-label {
+    font-size: 0.68rem;
+    color: rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.06);
+    border-radius: 999px;
+    padding: 2px 8px;
     font-weight: 600;
-    font-size: 0.9rem;
-    color: #fff;
+    margin-left: 2px;
 }
 
 .fd-btn-icon {
@@ -298,6 +291,9 @@
     color: rgba(255,255,255,0.5);
     cursor: pointer;
     padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: 0.2s;
 }
 .fd-btn-icon:hover {
@@ -307,11 +303,14 @@
 .fd-chat-history {
     flex: 1;
     overflow-y: auto;
-    padding: 20px;
+    padding: 16px 12px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 4px;
 }
+.fd-chat-history::-webkit-scrollbar { width: 4px; }
+.fd-chat-history::-webkit-scrollbar-track { background: transparent; }
+.fd-chat-history::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
 
 .fd-chat-empty {
     margin: auto;
@@ -322,37 +321,53 @@
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    padding: 40px 20px;
 }
+
+/* Message wrappers for alignment + timestamp */
+.fd-msg-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 4px;
+}
+.fd-msg-wrap.sent { align-items: flex-end; }
+.fd-msg-wrap.received { align-items: flex-start; }
 
 .fd-msg-bubble {
-    max-width: 85%;
-    padding: 10px 14px;
-    border-radius: 12px;
+    max-width: 82%;
+    padding: 9px 13px;
+    border-radius: 14px;
     font-size: 0.85rem;
-    line-height: 1.4;
+    line-height: 1.45;
     word-break: break-word;
 }
-
 .fd-msg-bubble.sent {
-    align-self: flex-end;
     background: #f5f0dc;
     color: #1a1a1a;
-    border-bottom-right-radius: 2px;
+    border-bottom-right-radius: 3px;
+}
+.fd-msg-bubble.received {
+    background: rgba(255,255,255,0.09);
+    color: #eee;
+    border-bottom-left-radius: 3px;
 }
 
-.fd-msg-bubble.received {
-    align-self: flex-start;
-    background: rgba(255,255,255,0.1);
-    color: #eee;
-    border-bottom-left-radius: 2px;
+.fd-msg-time {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.22);
+    padding: 0 4px;
 }
+
+/* Challenge message — kept for any legacy stored messages */
 
 .fd-chat-input {
     display: flex;
     gap: 8px;
-    padding: 16px;
-    background: rgba(0,0,0,0.2);
+    padding: 12px 14px;
+    background: rgba(0,0,0,0.25);
     border-top: 1px solid rgba(255,255,255,0.05);
+    flex-shrink: 0;
 }
 
 .fd-chat-input input {
@@ -360,38 +375,51 @@
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.1);
     color: #fff;
-    border-radius: 8px;
-    padding: 8px 12px;
+    border-radius: 10px;
+    padding: 9px 13px;
     font-size: 0.85rem;
     outline: none;
     transition: 0.2s;
 }
 .fd-chat-input input:focus {
-    border-color: rgba(245, 240, 220, 0.5);
-    background: rgba(255,255,255,0.1);
+    border-color: rgba(245, 240, 220, 0.45);
+    background: rgba(255,255,255,0.08);
 }
+.fd-chat-input input::placeholder { color: rgba(255,255,255,0.25); }
 
 .fd-chat-input button {
     background: #f5f0dc;
     color: #1a1a1a;
     border: none;
-    border-radius: 8px;
-    width: 36px;
-    height: 36px;
+    border-radius: 10px;
+    width: 38px;
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: 0.2s;
+    flex-shrink: 0;
 }
-.fd-chat-input button:hover:not(:disabled) {
-    background: #ede8d0;
-}
+.fd-chat-input button:hover:not(:disabled) { background: #ede8d0; }
 .fd-chat-input button:disabled {
-    background: rgba(255,255,255,0.1);
-    color: rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.25);
     cursor: not-allowed;
 }
+
+/* Unread dot on whisper button */
+.fd-unread-dot {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 7px;
+    height: 7px;
+    background: #ef4444;
+    border: 1.5px solid #0d0d0d;
+    border-radius: 50%;
+}
+.fd-btn { position: relative; }
 
 /* Search */
 .fd-search-tab {
@@ -529,12 +557,22 @@
     50% { transform: scale(1.2); opacity: 0.8; }
 }
 
-/* Unread Indicator */
+/* Hover action buttons on friend rows */
+.fd-actions-hover {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+}
+
+/* Unread indicator on friend row (when not hovering) */
 .fd-unread-indicator {
     width: 8px;
     height: 8px;
-    background-color: #ef4444;
+    flex-shrink: 0;
+    background: #ef4444;
     border-radius: 50%;
-    margin-right: 15px;
-    box-shadow: 0 0 5px #ef4444;
+    margin-left: auto;
+    margin-right: 8px;
+    box-shadow: 0 0 6px rgba(239,68,68,0.6);
+    animation: fd-pulse 1.5s ease infinite;
 }

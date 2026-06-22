@@ -1083,6 +1083,45 @@ const authenticateToken = async (req, res, next) => {
 let friendsMemoryStore = []; // { id, requester_id, recipient_id, status, created_at }
 const FRIENDS_FILE = path.join(__dirname, 'friends_db.json');
 
+// ── DM MESSAGES STORE ──────────────────────────────────────────────────────
+// Each message: { id, from_id, to_id, message, timestamp, read }
+let messagesMemoryStore = [];
+const MESSAGES_FILE = path.join(__dirname, 'messages_db.json');
+
+const loadMessagesStore = () => {
+    if (fs.existsSync(MESSAGES_FILE)) {
+        try {
+            messagesMemoryStore = JSON.parse(fs.readFileSync(MESSAGES_FILE, 'utf8')) || [];
+        } catch (e) { messagesMemoryStore = []; }
+    }
+};
+const saveMessagesStore = () => {
+    try { fs.writeFileSync(MESSAGES_FILE, JSON.stringify(messagesMemoryStore, null, 2)); } catch (e) {}
+};
+loadMessagesStore();
+
+const initMessagesTable = async () => {
+    if (useMemoryDB) return;
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS dm_messages (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                from_id TEXT NOT NULL,
+                to_id TEXT NOT NULL,
+                message TEXT NOT NULL,
+                timestamp BIGINT NOT NULL,
+                read BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS dm_messages_pair ON dm_messages (from_id, to_id);
+        `);
+        logger.info('[DM] dm_messages table ready');
+    } catch (e) {
+        logger.error('[DM] Table init error:', e.message);
+    }
+};
+initMessagesTable();
+
 const loadFriendsStore = () => {
     if (fs.existsSync(FRIENDS_FILE)) {
         try {
@@ -1299,6 +1338,364 @@ app.get('/friends', authenticateToken, async (req, res) => {
         logger.error('[FRIENDS] Get error:', e.message);
         res.status(500).json({ error: 'Failed to get friends' });
     }
+});
+
+// Fix: also support DELETE /friends/:id (old client call compat)
+app.delete('/friends/:id', authenticateToken, async (req, res) => {
+    const otherId = req.params.id;
+    const myId = req.user.id;
+    try {
+        if (useMemoryDB) {
+            friendsMemoryStore = friendsMemoryStore.filter(f =>
+                !((f.requester_id === myId && f.recipient_id === otherId) ||
+                  (f.requester_id === otherId && f.recipient_id === myId))
+            );
+            saveFriendsStore();
+            return res.json({ success: true });
+        }
+        await pool.query(
+            `DELETE FROM friends WHERE (requester_id=$1 AND recipient_id=$2) OR (requester_id=$2 AND recipient_id=$1)`,
+            [myId, otherId]
+        );
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to remove' });
+    }
+});
+
+// ── DM MESSAGE HISTORY ─────────────────────────────────────────────────────
+
+// GET /messages/:friendId  — last 100 messages between me and friendId
+app.get('/messages/:friendId', authenticateToken, async (req, res) => {
+    const myId = req.user.id;
+    const friendId = req.params.friendId;
+    try {
+        if (useMemoryDB) {
+            const msgs = messagesMemoryStore
+                .filter(m =>
+                    (m.from_id === myId && m.to_id === friendId) ||
+                    (m.from_id === friendId && m.to_id === myId)
+                )
+                .sort((a, b) => a.timestamp - b.timestamp)
+                .slice(-100);
+            // Mark messages to me as read
+            messagesMemoryStore = messagesMemoryStore.map(m =>
+                (m.from_id === friendId && m.to_id === myId) ? { ...m, read: true } : m
+            );
+            saveMessagesStore();
+            return res.json(msgs);
+        }
+        const { rows } = await pool.query(
+            `SELECT * FROM dm_messages
+             WHERE (from_id=$1 AND to_id=$2) OR (from_id=$2 AND to_id=$1)
+             ORDER BY timestamp ASC
+             LIMIT 100`,
+            [myId, friendId]
+        );
+        // Mark as read
+        await pool.query(
+            `UPDATE dm_messages SET read=TRUE WHERE from_id=$1 AND to_id=$2 AND read=FALSE`,
+            [friendId, myId]
+        );
+        res.json(rows);
+    } catch (e) {
+        logger.error('[DM] History fetch error:', e.message);
+        res.status(500).json({ error: 'Failed to fetch messages' });
+    }
+});
+
+// GET /messages/unread/counts — how many unread messages per sender
+app.get('/messages/unread/counts', authenticateToken, async (req, res) => {
+    const myId = req.user.id;
+    try {
+        if (useMemoryDB) {
+            const unread = {};
+            messagesMemoryStore
+                .filter(m => m.to_id === myId && !m.read)
+                .forEach(m => { unread[m.from_id] = (unread[m.from_id] || 0) + 1; });
+            return res.json(unread);
+        }
+        const { rows } = await pool.query(
+            `SELECT from_id, COUNT(*) as count FROM dm_messages
+             WHERE to_id=$1 AND read=FALSE
+             GROUP BY from_id`,
+            [myId]
+        );
+        const unread = {};
+        rows.forEach(r => { unread[r.from_id] = parseInt(r.count); });
+        res.json(unread);
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to fetch unread counts' });
+    }
+});
+
+// ── CODE FEED SYSTEM ──────────────────────────────────────────────────────
+
+// Post types: 'til' | 'roast' | 'challenge' | 'flex' | 'ask'
+// Reactions: 'clever' | 'brute' | 'bigbrain' | 'cursed' | 'fire'
+
+let feedMemoryStore = []; // { id, author_id, author_username, type, title, body, code, lang, xp_at_post, reactions:{}, comment_count, created_at }
+const FEED_FILE = path.join(__dirname, 'feed_db.json');
+
+const loadFeedStore = () => {
+    if (fs.existsSync(FEED_FILE)) {
+        try { feedMemoryStore = JSON.parse(fs.readFileSync(FEED_FILE, 'utf8')) || []; } catch (e) { feedMemoryStore = []; }
+    }
+};
+const saveFeedStore = () => {
+    try { fs.writeFileSync(FEED_FILE, JSON.stringify(feedMemoryStore, null, 2)); } catch (e) {}
+};
+loadFeedStore();
+
+let feedCommentsStore = []; // { id, post_id, author_id, author_username, body, created_at }
+const FEED_COMMENTS_FILE = path.join(__dirname, 'feed_comments_db.json');
+const loadFeedCommentsStore = () => {
+    if (fs.existsSync(FEED_COMMENTS_FILE)) {
+        try { feedCommentsStore = JSON.parse(fs.readFileSync(FEED_COMMENTS_FILE, 'utf8')) || []; } catch (e) { feedCommentsStore = []; }
+    }
+};
+const saveFeedCommentsStore = () => {
+    try { fs.writeFileSync(FEED_COMMENTS_FILE, JSON.stringify(feedCommentsStore, null, 2)); } catch (e) {}
+};
+loadFeedCommentsStore();
+
+const initFeedTables = async () => {
+    if (useMemoryDB) return;
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS feed_posts (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                author_id TEXT NOT NULL,
+                author_username TEXT NOT NULL,
+                type TEXT NOT NULL DEFAULT 'til',
+                title TEXT,
+                body TEXT NOT NULL,
+                code TEXT,
+                lang TEXT DEFAULT 'javascript',
+                xp_at_post INT DEFAULT 0,
+                reactions JSONB DEFAULT '{}',
+                comment_count INT DEFAULT 0,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE TABLE IF NOT EXISTS feed_comments (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                post_id UUID NOT NULL REFERENCES feed_posts(id) ON DELETE CASCADE,
+                author_id TEXT NOT NULL,
+                author_username TEXT NOT NULL,
+                body TEXT NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS feed_posts_created ON feed_posts (created_at DESC);
+            CREATE INDEX IF NOT EXISTS feed_comments_post ON feed_comments (post_id);
+        `);
+        logger.info('[FEED] Tables ready');
+    } catch (e) { logger.error('[FEED] Table init error:', e.message); }
+};
+initFeedTables();
+
+const VALID_TYPES = ['til', 'roast', 'challenge', 'flex', 'ask'];
+const VALID_REACTIONS = ['clever', 'brute', 'bigbrain', 'cursed', 'fire'];
+const FEED_XP_REWARD = 10;
+
+// GET /feed?cursor=<timestamp>&limit=20
+app.get('/feed', authenticateToken, async (req, res) => {
+    const myId = req.user.id;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+    const cursor = req.query.cursor ? parseInt(req.query.cursor) : null;
+    try {
+        let posts;
+        if (useMemoryDB) {
+            posts = [...feedMemoryStore]
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                .filter(p => !cursor || new Date(p.created_at).getTime() < cursor)
+                .slice(0, limit)
+                .map(p => ({ ...p, my_reactions: Object.keys(p.my_reactions_map?.[myId] || {}) }));
+        } else {
+            const { rows } = await pool.query(
+                `SELECT p.*,
+                    COALESCE(p.reactions->'_user_map'->$1, '{}') as my_reactions_raw
+                 FROM feed_posts p
+                 WHERE ($2::bigint IS NULL OR EXTRACT(EPOCH FROM p.created_at)*1000 < $2)
+                 ORDER BY p.created_at DESC LIMIT $3`,
+                [myId, cursor, limit]
+            );
+            posts = rows.map(p => {
+                const reacts = { ...p.reactions };
+                delete reacts._user_map;
+                return { ...p, reactions: reacts, my_reactions: Object.keys(p.my_reactions_raw || {}) };
+            });
+        }
+        res.json(posts);
+    } catch (e) {
+        logger.error('[FEED] List error:', e.message);
+        res.status(500).json({ error: 'Failed to load feed' });
+    }
+});
+
+// POST /feed — create a post
+app.post('/feed', authenticateToken, async (req, res) => {
+    const { type, title, body, code, lang } = req.body;
+    const myId = req.user.id;
+    const myUsername = req.user.username;
+    if (!body?.trim()) return res.status(400).json({ error: 'Body is required' });
+    if (!VALID_TYPES.includes(type)) return res.status(400).json({ error: 'Invalid post type' });
+
+    let xpAtPost = 0;
+    try {
+        if (useMemoryDB) {
+            const u = memoryStore.users.find(u => u.id === myId);
+            xpAtPost = u?.xp || 0;
+        } else {
+            const { rows } = await pool.query('SELECT xp FROM users WHERE id=$1', [myId]);
+            xpAtPost = rows[0]?.xp || 0;
+        }
+    } catch (e) {}
+
+    const newPost = {
+        id: uuidV4(),
+        author_id: myId,
+        author_username: myUsername,
+        type: type || 'til',
+        title: title?.trim() || null,
+        body: body.trim(),
+        code: code?.trim() || null,
+        lang: lang || 'javascript',
+        xp_at_post: xpAtPost,
+        reactions: {},
+        my_reactions_map: {},
+        comment_count: 0,
+        created_at: new Date().toISOString()
+    };
+
+    try {
+        if (useMemoryDB) {
+            feedMemoryStore.unshift(newPost);
+            saveFeedStore();
+            // Award XP for posting
+            const u = memoryStore.users.find(u => u.id === myId);
+            if (u) { u.xp = (u.xp || 0) + FEED_XP_REWARD; saveStore(); }
+        } else {
+            await pool.query(
+                `INSERT INTO feed_posts (id, author_id, author_username, type, title, body, code, lang, xp_at_post, reactions, comment_count)
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,0)`,
+                [newPost.id, myId, myUsername, newPost.type, newPost.title, newPost.body, newPost.code, newPost.lang, xpAtPost, JSON.stringify({})]
+            );
+            await pool.query(`UPDATE users SET xp = xp + $1 WHERE id = $2`, [FEED_XP_REWARD, myId]);
+        }
+        // Broadcast to all connected users
+        io.emit('feed:new_post', { ...newPost, my_reactions: [] });
+        res.json({ ...newPost, my_reactions: [] });
+    } catch (e) {
+        logger.error('[FEED] Create error:', e.message);
+        res.status(500).json({ error: 'Failed to create post' });
+    }
+});
+
+// POST /feed/:postId/react
+app.post('/feed/:postId/react', authenticateToken, async (req, res) => {
+    const { reaction } = req.body;
+    const postId = req.params.postId;
+    const myId = req.user.id;
+    if (!VALID_REACTIONS.includes(reaction)) return res.status(400).json({ error: 'Invalid reaction' });
+
+    try {
+        if (useMemoryDB) {
+            const post = feedMemoryStore.find(p => p.id === postId);
+            if (!post) return res.status(404).json({ error: 'Post not found' });
+            if (!post.my_reactions_map) post.my_reactions_map = {};
+            if (!post.my_reactions_map[myId]) post.my_reactions_map[myId] = {};
+            const alreadyReacted = post.my_reactions_map[myId][reaction];
+            if (alreadyReacted) {
+                delete post.my_reactions_map[myId][reaction];
+                post.reactions[reaction] = Math.max(0, (post.reactions[reaction] || 0) - 1);
+                if (post.reactions[reaction] === 0) delete post.reactions[reaction];
+            } else {
+                post.my_reactions_map[myId][reaction] = true;
+                post.reactions[reaction] = (post.reactions[reaction] || 0) + 1;
+            }
+            saveFeedStore();
+            io.emit('feed:reaction', { postId, reactions: post.reactions });
+            return res.json({ reactions: post.reactions, my_reactions: Object.keys(post.my_reactions_map[myId]) });
+        }
+        // Postgres: store user reactions in reactions->'_user_map'->{userId}
+        const { rows } = await pool.query(`SELECT reactions FROM feed_posts WHERE id=$1`, [postId]);
+        if (!rows[0]) return res.status(404).json({ error: 'Post not found' });
+        let reacts = rows[0].reactions || {};
+        if (!reacts._user_map) reacts._user_map = {};
+        if (!reacts._user_map[myId]) reacts._user_map[myId] = {};
+        const alreadyReacted = reacts._user_map[myId][reaction];
+        if (alreadyReacted) {
+            delete reacts._user_map[myId][reaction];
+            reacts[reaction] = Math.max(0, (reacts[reaction] || 0) - 1);
+            if (reacts[reaction] === 0) delete reacts[reaction];
+        } else {
+            reacts._user_map[myId][reaction] = true;
+            reacts[reaction] = (reacts[reaction] || 0) + 1;
+        }
+        await pool.query(`UPDATE feed_posts SET reactions=$1 WHERE id=$2`, [JSON.stringify(reacts), postId]);
+        const publicReacts = { ...reacts }; delete publicReacts._user_map;
+        io.emit('feed:reaction', { postId, reactions: publicReacts });
+        res.json({ reactions: publicReacts, my_reactions: Object.keys(reacts._user_map[myId]) });
+    } catch (e) {
+        logger.error('[FEED] React error:', e.message);
+        res.status(500).json({ error: 'Failed to react' });
+    }
+});
+
+// GET /feed/:postId/comments
+app.get('/feed/:postId/comments', authenticateToken, async (req, res) => {
+    const postId = req.params.postId;
+    try {
+        if (useMemoryDB) {
+            const comments = feedCommentsStore.filter(c => c.post_id === postId).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            return res.json(comments);
+        }
+        const { rows } = await pool.query(`SELECT * FROM feed_comments WHERE post_id=$1 ORDER BY created_at ASC`, [postId]);
+        res.json(rows);
+    } catch (e) { res.status(500).json({ error: 'Failed to load comments' }); }
+});
+
+// POST /feed/:postId/comments
+app.post('/feed/:postId/comments', authenticateToken, async (req, res) => {
+    const postId = req.params.postId;
+    const { body } = req.body;
+    const myId = req.user.id;
+    const myUsername = req.user.username;
+    if (!body?.trim()) return res.status(400).json({ error: 'Comment cannot be empty' });
+    const comment = { id: uuidV4(), post_id: postId, author_id: myId, author_username: myUsername, body: body.trim(), created_at: new Date().toISOString() };
+    try {
+        if (useMemoryDB) {
+            feedCommentsStore.push(comment);
+            saveFeedCommentsStore();
+            const post = feedMemoryStore.find(p => p.id === postId);
+            if (post) { post.comment_count = (post.comment_count || 0) + 1; saveFeedStore(); }
+        } else {
+            await pool.query(`INSERT INTO feed_comments (id,post_id,author_id,author_username,body) VALUES ($1,$2,$3,$4,$5)`, [comment.id, postId, myId, myUsername, comment.body]);
+            await pool.query(`UPDATE feed_posts SET comment_count = comment_count + 1 WHERE id=$1`, [postId]);
+        }
+        io.emit('feed:new_comment', { postId, comment });
+        res.json(comment);
+    } catch (e) { res.status(500).json({ error: 'Failed to comment' }); }
+});
+
+// DELETE /feed/:postId — only author can delete
+app.delete('/feed/:postId', authenticateToken, async (req, res) => {
+    const postId = req.params.postId;
+    const myId = req.user.id;
+    try {
+        if (useMemoryDB) {
+            const idx = feedMemoryStore.findIndex(p => p.id === postId && p.author_id === myId);
+            if (idx === -1) return res.status(403).json({ error: 'Not allowed' });
+            feedMemoryStore.splice(idx, 1);
+            feedCommentsStore = feedCommentsStore.filter(c => c.post_id !== postId);
+            saveFeedStore(); saveFeedCommentsStore();
+        } else {
+            const { rows } = await pool.query(`DELETE FROM feed_posts WHERE id=$1 AND author_id=$2 RETURNING id`, [postId, myId]);
+            if (!rows[0]) return res.status(403).json({ error: 'Not allowed' });
+        }
+        io.emit('feed:delete_post', { postId });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: 'Failed to delete' }); }
 });
 
 app.post('/update-profile', authenticateToken, async (req, res) => {
@@ -2867,9 +3264,8 @@ function hydrateRoomFromDisk(room) {
 }
 
 io.on('connection', (socket) => {
-    // ── Presence tracking ──────────────────────────────────────────────
-    socket.on('presence:join', (userId) => {
-        console.log(`[SOCKET] presence:join for userId: ${userId}, socket.id: ${socket.id}`);
+    // ── Presence tracking + unread DM delivery ─────────────────────────
+    socket.on('presence:join', async (userId) => {
         if (!userId) return;
         socket.data.userId = userId;
         socket.join(`user:${userId}`);
@@ -2877,13 +3273,56 @@ io.on('connection', (socket) => {
         onlineUsers.get(userId).add(socket.id);
         // Broadcast to all friends of this user that they are now online
         io.emit('friend:online', { userId });
+
+        // Notify about any unread messages received while offline
+        try {
+            let unreadSenderIds = [];
+            if (useMemoryDB) {
+                const undelivered = messagesMemoryStore.filter(m => m.to_id === userId && !m.read);
+                if (undelivered.length > 0) {
+                    unreadSenderIds = [...new Set(undelivered.map(m => m.from_id))];
+                }
+            } else {
+                const { rows } = await pool.query(
+                    `SELECT DISTINCT from_id FROM dm_messages WHERE to_id=$1 AND read=FALSE`,
+                    [userId]
+                );
+                unreadSenderIds = rows.map(r => r.from_id);
+            }
+            if (unreadSenderIds.length > 0) {
+                socket.emit('dm:unread', { senderIds: unreadSenderIds });
+            }
+        } catch (e) {
+            logger.error('[DM] Unread notify error:', e.message);
+        }
     });
 
     // ── Advanced Allies Systems (Whisper & Arena) ──────────────────────
-    socket.on('dm:send', ({ toId, fromId, fromUsername, message }) => {
-        console.log(`[SOCKET] dm:send from ${fromUsername}(${fromId}) to user:${toId} | msg: ${message}`);
-        console.log(`Rooms available:`, io.sockets.adapter.rooms);
-        io.to(`user:${toId}`).emit('dm:receive', { fromId, fromUsername, message, timestamp: Date.now() });
+    socket.on('dm:send', async ({ toId, fromId, fromUsername, message }) => {
+        if (!toId || !fromId || !message?.trim()) return;
+        const timestamp = Date.now();
+        const msgId = uuidV4();
+        const msgObj = { id: msgId, from_id: fromId, to_id: toId, message: message.trim(), timestamp, read: false };
+
+        // Persist the message
+        if (useMemoryDB) {
+            messagesMemoryStore.push(msgObj);
+            saveMessagesStore();
+        } else {
+            try {
+                await pool.query(
+                    `INSERT INTO dm_messages (id, from_id, to_id, message, timestamp, read) VALUES ($1,$2,$3,$4,$5,FALSE)`,
+                    [msgId, fromId, toId, message.trim(), timestamp]
+                );
+            } catch (e) {
+                logger.error('[DM] Persist error:', e.message);
+            }
+        }
+
+        // Deliver to recipient if online
+        io.to(`user:${toId}`).emit('dm:receive', { id: msgId, fromId, fromUsername, message: message.trim(), timestamp });
+        // Echo back to sender (for multi-tab sync)
+        socket.emit('dm:sent', { id: msgId, toId, message: message.trim(), timestamp });
     });
 
     socket.on('arena:challenge', ({ toId, fromId, fromUsername }) => {

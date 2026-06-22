@@ -531,43 +531,13 @@ const Workspace = () => {
           </div>
 
           <div className="hero-right">
-            <div className="editor-mockup">
-              <div className="mockup-bar">
-                <span className="dot red"></span><span className="dot yellow"></span><span className="dot green"></span>
-                <span className="mockup-title">main.py — BrightCode</span>
-                <span className="mockup-live"><span className="live-dot"></span> 3 live</span>
-              </div>
-              <div className="mockup-body">
-                <div className="mockup-sidebar">
-                  <span className="sb-item active">main.py</span>
-                  <span className="sb-item">utils.js</span>
-                  <span className="sb-item">README.md</span>
-                  <span className="sb-item">config.json</span>
-                </div>
-                <div className="mockup-code">
-                  <div className="code-line"><span className="ln">1</span><span className="kw">def </span><span className="fn">solve</span><span className="pu">(</span><span className="va">nums</span><span className="pu">):</span></div>
-                  <div className="code-line"><span className="ln">2</span><span className="ind"></span><span className="va">seen</span><span className="pu"> = </span><span className="kw">set</span><span className="pu">()</span></div>
-                  <div className="code-line"><span className="ln">3</span><span className="ind"></span><span className="kw">for </span><span className="va">n</span><span className="kw"> in </span><span className="va">nums</span><span className="pu">:</span></div>
-                  <div className="code-line active-line"><span className="ln">4</span><span className="ind"></span><span className="ind"></span><span className="kw">if </span><span className="va">n</span><span className="kw"> in </span><span className="va">seen</span><span className="pu">:</span></div>
-                  <div className="code-line"><span className="ln">5</span><span className="ind"></span><span className="ind"></span><span className="ind"></span><span className="kw">return </span><span className="va">n</span></div>
-                  <div className="code-line"><span className="ln">6</span><span className="ind"></span><span className="ind"></span><span className="va">seen</span><span className="pu">.</span><span className="fn">add</span><span className="pu">(</span><span className="va">n</span><span className="pu">)</span></div>
-                  <div className="code-line"><span className="ln">7</span><span className="ind"></span><span className="kw">return </span><span className="st">-1</span></div>
-                  <div className="code-line empty"><span className="ln">8</span></div>
-                  <div className="cursor-blink"></div>
-                </div>
-              </div>
-              <div className="mockup-footer">
-                <div className="avatar-stack">
-                  <span className="av" style={{ background: '#e74c3c' }}>A</span>
-                  <span className="av" style={{ background: '#3498db' }}>K</span>
-                  <span className="av" style={{ background: '#2ecc71' }}>S</span>
-                </div>
-                <span className="footer-status">3 collaborators editing</span>
-                <span className="footer-branch"><GitBranch size={12} /> main</span>
-              </div>
+            <div className="editor-image-frame">
+              <img
+                className="editor-hero-image"
+                src="/code-editor-preview.svg"
+                alt="BrightCode collaborative code editor preview"
+              />
             </div>
-            
-
           </div>
         </div>
       </section>

@@ -3052,3 +3052,43 @@
     padding: 24px 12px !important;
   }
 }
+
+
+/* ── Contribute tab ── */
+.contribute-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 4px;
+}
+.contribute-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+}
+.feature-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.contribute-feature-item strong {
+  display: block;
+  font-size: 0.87rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin-bottom: 4px;
+}
+.contribute-feature-item p {
+  font-size: 0.78rem;
+  color: #555;
+  margin: 0;
+  line-height: 1.5;
+}

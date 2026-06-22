@@ -1,6 +1,6 @@
 ﻿import API_URL from '../config';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +8,7 @@ import { initSocket } from '../socket';
 import {
     Users, Search, UserPlus, UserCheck, UserX, X,
     Clock, Zap, Check, ChevronDown, ChevronUp,
-    MessageSquare, Swords, Send, ArrowLeft
+    MessageSquare, Send, ArrowLeft
 } from 'lucide-react';
 import './FriendsDrawer.css';
 
@@ -22,6 +22,16 @@ const XP_LEVEL = (xp) => {
     return 'Novice';
 };
 
+const formatTime = (ts) => {
+    if (!ts) return '';
+    const d = new Date(ts);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    if (isToday) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' +
+        d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
 const Avatar = ({ username, size = 36, online }) => (
     <div className="fd-avatar" style={{ width: size, height: size, fontSize: size * 0.4 }}>
         {username?.charAt(0).toUpperCase() || '?'}
@@ -33,10 +43,9 @@ const Avatar = ({ username, size = 36, online }) => (
 
 export default function FriendsDrawer({ open, onClose, onUnread }) {
     const { user } = useAuth();
-    const navigate = useNavigate();
     const socketRef = useRef(null);
 
-    const [tab, setTab] = useState('friends'); // 'friends' | 'search'
+    const [tab, setTab] = useState('friends'); // 'friends' | 'search' | 'chat'
     const [friends, setFriends] = useState([]);
     const [incoming, setIncoming] = useState([]);
     const [outgoing, setOutgoing] = useState([]);
@@ -47,43 +56,30 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
     const [notification, setNotification] = useState(null);
     const [showIncoming, setShowIncoming] = useState(true);
     const searchTimeout = useRef(null);
-    
-    // Whisper / Challenge State
+
+    // Chat state
     const [chatTarget, setChatTarget] = useState(null);
-    const [chatHistory, setChatHistory] = useState({});
-    const chatHistoryLoaded = useRef(false);
-
-    useEffect(() => {
-        if (user?.id && !chatHistoryLoaded.current) {
-            try {
-                const saved = localStorage.getItem(`fd_chat_${user.id}`);
-                if (saved) setChatHistory(JSON.parse(saved));
-            } catch (e) {}
-            chatHistoryLoaded.current = true;
-        }
-    }, [user?.id]);
-
-    useEffect(() => {
-        if (user?.id && chatHistoryLoaded.current) {
-            localStorage.setItem(`fd_chat_${user.id}`, JSON.stringify(chatHistory));
-        }
-    }, [chatHistory, user?.id]);
+    const [chatMessages, setChatMessages] = useState([]); // messages for current chat
     const [chatMsg, setChatMsg] = useState('');
-    const [unreadDms, setUnreadDms] = useState(new Set());
+    const [chatLoading, setChatLoading] = useState(false);
+    const [unreadDms, setUnreadDms] = useState(new Set()); // set of fromIds with unread msgs
+    const chatBottomRef = useRef(null);
 
     const chatTargetRef = useRef(chatTarget);
     useEffect(() => { chatTargetRef.current = chatTarget; }, [chatTarget]);
     const openRef = useRef(open);
     useEffect(() => { openRef.current = open; }, [open]);
 
-    const authHeader = { headers: { Authorization: `Bearer ${user?.token}` } };
+    const authHeader = useCallback(() => ({
+        headers: { Authorization: `Bearer ${user?.token || localStorage.getItem('token')}` }
+    }), [user?.token]);
 
     // Load friends list
     const loadFriends = useCallback(async () => {
         if (!user?.token) return;
         setLoading(true);
         try {
-            const { data } = await axios.get(`${API}/friends`, authHeader);
+            const { data } = await axios.get(`${API}/friends`, authHeader());
             setFriends(data.friends || []);
             setIncoming(data.incoming || []);
             setOutgoing(data.outgoing || []);
@@ -94,23 +90,47 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
         }
     }, [user?.token]);
 
-    // Socket presence setup
+    // Fetch message history for a conversation
+    const loadChatHistory = useCallback(async (friendId) => {
+        if (!friendId) return;
+        setChatLoading(true);
+        try {
+            const { data } = await axios.get(`${API}/messages/${friendId}`, authHeader());
+            // Normalize server format { from_id, to_id } to component format { fromId, toId }
+            const normalized = data.map(m => ({
+                id: m.id,
+                fromId: m.from_id || m.fromId,
+                toId: m.to_id || m.toId,
+                fromUsername: m.fromUsername || '',
+                message: m.message,
+                timestamp: m.timestamp,
+                type: m.type || 'text'
+            }));
+            setChatMessages(normalized);
+        } catch (e) {
+            console.error('[FriendsDrawer] Chat history error:', e.message);
+        } finally {
+            setChatLoading(false);
+        }
+    }, [authHeader]);
+
+    // Scroll to bottom of chat
+    useEffect(() => {
+        if (tab === 'chat') {
+            chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [chatMessages, tab]);
+
+    // Socket setup
     useEffect(() => {
         if (!user?.id) return;
         const socket = initSocket();
         socketRef.current = socket;
-        
+
         const joinPresence = () => {
-            console.log("Emitting presence:join for", user.id);
             socket.emit('presence:join', user.id);
         };
-
-        // If already connected, join immediately
-        if (socket.connected) {
-            joinPresence();
-        }
-        
-        // Always join on (re)connect
+        if (socket.connected) joinPresence();
         socket.on('connect', joinPresence);
 
         const handleFriendOnline = ({ userId }) => {
@@ -127,43 +147,48 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
             setNotification({ msg: `${by.username} accepted your request!`, type: 'success' });
             loadFriends();
         };
+
+        // Real-time incoming DM
         const handleDmReceive = (msg) => {
-            console.log("DM Received:", msg);
-            setChatHistory(prev => ({
-                ...prev,
-                [msg.fromId]: [...(prev[msg.fromId] || []), msg]
-            }));
-            
-            if (!openRef.current || chatTargetRef.current?.id !== msg.fromId) {
+            const senderId = msg.fromId || msg.from_id;
+            const normalized = {
+                id: msg.id,
+                fromId: senderId,
+                fromUsername: msg.fromUsername,
+                message: msg.message,
+                timestamp: msg.timestamp,
+                type: 'text'
+            };
+            // If chat is open with this sender, append directly
+            if (chatTargetRef.current?.id === senderId) {
+                setChatMessages(prev => [...prev, normalized]);
+            }
+            // Mark unread if chat not focused on sender
+            if (!openRef.current || chatTargetRef.current?.id !== senderId) {
                 if (onUnread) onUnread();
-                setUnreadDms(prev => {
-                    const next = new Set(prev);
-                    next.add(msg.fromId);
-                    return next;
-                });
+                setUnreadDms(prev => { const n = new Set(prev); n.add(senderId); return n; });
             }
         };
+
+        // Server tells us we have unread messages from these senders (offline delivery)
+        const handleDmUnread = ({ senderIds }) => {
+            if (!senderIds?.length) return;
+            if (onUnread) onUnread();
+            setUnreadDms(prev => {
+                const n = new Set(prev);
+                senderIds.forEach(id => {
+                    // Only mark unread if we are not currently chatting with that person
+                    if (chatTargetRef.current?.id !== id) n.add(id);
+                });
+                return n;
+            });
+        };
+
         const handleArenaChallengeReceived = (data) => {
-            // Inject a system challenge message into the chat so user can accept/decline inline
-            setChatHistory(prev => ({
-                ...prev,
-                [data.fromId]: [...(prev[data.fromId] || []), {
-                    type: 'challenge',
-                    fromId: data.fromId,
-                    fromUsername: data.fromUsername,
-                    roomId: data.roomId,
-                    timestamp: data.timestamp
-                }]
-            }));
-            // Also notify if drawer is not focused on this chat
-            if (!openRef.current || chatTargetRef.current?.id !== data.fromId) {
-                if (onUnread) onUnread();
-                setUnreadDms(prev => { const n = new Set(prev); n.add(data.fromId); return n; });
-            }
+            // challenge feature removed
         };
         const handleArenaChallengeAccepted = (data) => {
-            setNotification({ msg: `${data.fromUsername} accepted! Warping to Arena...`, type: 'success' });
-            setTimeout(() => navigate(`/workspace/${data.roomId}`), 1000);
+            // challenge feature removed
         };
 
         socket.on('friend:online', handleFriendOnline);
@@ -171,6 +196,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
         socket.on('friend:request', handleFriendRequest);
         socket.on('friend:accepted', handleFriendAccepted);
         socket.on('dm:receive', handleDmReceive);
+        socket.on('dm:unread', handleDmUnread);
         socket.on('arena:challenge_received', handleArenaChallengeReceived);
         socket.on('arena:challenge_accepted', handleArenaChallengeAccepted);
 
@@ -181,17 +207,16 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
             socket.off('friend:request', handleFriendRequest);
             socket.off('friend:accepted', handleFriendAccepted);
             socket.off('dm:receive', handleDmReceive);
+            socket.off('dm:unread', handleDmUnread);
             socket.off('arena:challenge_received', handleArenaChallengeReceived);
             socket.off('arena:challenge_accepted', handleArenaChallengeAccepted);
         };
     }, [user?.id]);
 
-    // Load on open or when user token becomes available (e.g. after refresh)
-    useEffect(() => { 
-        if (open && user?.token) loadFriends(); 
+    useEffect(() => {
+        if (open && user?.token) loadFriends();
     }, [open, user?.token, loadFriends]);
 
-    // Auto-dismiss notification
     useEffect(() => {
         if (notification) {
             const t = setTimeout(() => setNotification(null), 3500);
@@ -212,7 +237,6 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                 });
                 setSearchResults(Array.isArray(data) ? data : []);
             } catch (e) {
-                console.error('[FriendsDrawer] Search error:', e.response?.data || e.message);
                 setSearchResults([]);
             } finally {
                 setSearching(false);
@@ -222,77 +246,56 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
 
     const sendRequest = async (recipientId) => {
         try {
-            await axios.post(`${API}/friends/request`, { recipientId }, authHeader);
+            await axios.post(`${API}/friends/request`, { recipientId }, authHeader());
             setSearchResults(prev => prev.map(u => u.id === recipientId ? { ...u, friendStatus: 'pending' } : u));
         } catch (e) {}
     };
 
     const acceptRequest = async (requesterId) => {
-        await axios.post(`${API}/friends/accept`, { requesterId }, authHeader);
+        await axios.post(`${API}/friends/accept`, { requesterId }, authHeader());
         loadFriends();
     };
 
     const removeOrReject = async (id) => {
         try {
-            await axios.delete(`${API}/friends/${id}`, authHeader);
+            await axios.post(`${API}/friends/remove`, { otherId: id }, authHeader());
             loadFriends();
         } catch (e) {
             console.error('Remove error', e);
         }
     };
 
-    // Send Whisper
+    // Open chat with a friend
+    const openChat = (target) => {
+        setChatTarget(target);
+        setChatMessages([]);
+        setTab('chat');
+        setUnreadDms(prev => { const n = new Set(prev); n.delete(target.id); return n; });
+        loadChatHistory(target.id);
+    };
+
+    // Send a message (works for both online and offline friends)
     const sendWhisper = (e) => {
         e.preventDefault();
         if (!chatMsg.trim() || !chatTarget || !socketRef.current) return;
-        
         const msgObj = {
             toId: chatTarget.id,
             fromId: user.id,
             fromUsername: user.username,
-            message: chatMsg
+            message: chatMsg.trim()
         };
         socketRef.current.emit('dm:send', msgObj);
-        
-        // Add to our own history
-        setChatHistory(prev => ({
-            ...prev,
-            [chatTarget.id]: [...(prev[chatTarget.id] || []), { ...msgObj, timestamp: Date.now() }]
-        }));
-        setChatMsg('');
-    };
-
-    // Send Challenge
-    const sendChallenge = (target) => {
-        if (!socketRef.current || !target) return;
-        const roomId = `arena_${user.id}_${target.id}_${Date.now()}`;
-        socketRef.current.emit('arena:challenge', {
-            toId: target.id,
+        // Optimistically add to local chat
+        setChatMessages(prev => [...prev, {
+            id: `local_${Date.now()}`,
             fromId: user.id,
             fromUsername: user.username,
-            roomId
-        });
-        // Inject a system challenge message into our own chat
-        setChatHistory(prev => ({
-            ...prev,
-            [target.id]: [...(prev[target.id] || []), {
-                type: 'challenge',
-                fromId: user.id,
-                fromUsername: user.username,
-                roomId,
-                timestamp: Date.now()
-            }]
-        }));
-    };
-
-    const openChat = (target) => {
-        setChatTarget(target);
-        setTab('chat');
-        setUnreadDms(prev => {
-            const next = new Set(prev);
-            next.delete(target.id);
-            return next;
-        });
+            toId: chatTarget.id,
+            message: chatMsg.trim(),
+            timestamp: Date.now(),
+            type: 'text'
+        }]);
+        setChatMsg('');
     };
 
     const onlineFriends = friends.filter(f => f.online);
@@ -302,7 +305,6 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
         <AnimatePresence>
             {open && (
                 <>
-                    {/* Backdrop */}
                     <motion.div
                         className="fd-backdrop"
                         initial={{ opacity: 0 }}
@@ -310,8 +312,6 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                         exit={{ opacity: 0 }}
                         onClick={onClose}
                     />
-
-                    {/* Drawer */}
                     <motion.aside
                         className="fd-drawer"
                         initial={{ x: '100%' }}
@@ -322,13 +322,28 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                         {/* Header */}
                         <div className="fd-header">
                             <div className="fd-header-left">
-                                <Users size={18} color="var(--primary)" />
-                                <span>Allies</span>
-                                {friends.length > 0 && (
-                                    <span className="fd-count">{friends.length}</span>
+                                {tab === 'chat' && chatTarget ? (
+                                    <>
+                                        <button className="fd-btn-icon" onClick={() => { setTab('friends'); setChatTarget(null); }}>
+                                            <ArrowLeft size={16} />
+                                        </button>
+                                        <Avatar username={chatTarget.username} size={26} online={chatTarget.online} />
+                                        <span style={{ fontSize: '0.9rem' }}>{chatTarget.username}</span>
+                                        {!chatTarget.online && (
+                                            <span className="fd-offline-label">offline</span>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        <Users size={18} color="var(--primary)" />
+                                        <span>Allies</span>
+                                        {friends.length > 0 && <span className="fd-count">{friends.length}</span>}
+                                    </>
                                 )}
                             </div>
-                            <button className="fd-close" onClick={onClose}><X size={18} /></button>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <button className="fd-close" onClick={onClose}><X size={18} /></button>
+                            </div>
                         </div>
 
                         {/* Notification Toast */}
@@ -346,7 +361,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                             )}
                         </AnimatePresence>
 
-                        {/* Tabs */}
+                        {/* Tabs — hidden in chat view */}
                         {tab !== 'chat' && (
                             <div className="fd-tabs">
                                 <button
@@ -366,10 +381,9 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                         )}
 
                         <div className="fd-body">
-                            {/* â”€â”€ FRIENDS TAB â”€â”€ */}
+                            {/* ── FRIENDS TAB ── */}
                             {tab === 'friends' && (
                                 <>
-                                    {/* Incoming Requests */}
                                     {incoming.length > 0 && (
                                         <div className="fd-section">
                                             <button
@@ -391,19 +405,11 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                                         <Avatar username={req.username} />
                                                         <div className="fd-user-info">
                                                             <Link to={`/u/${req.username}`} className="fd-username">{req.username}</Link>
-                                                            <span className="fd-level">{XP_LEVEL(req.xp)} Â· {req.xp} XP</span>
+                                                            <span className="fd-level">{XP_LEVEL(req.xp)} · {req.xp} XP</span>
                                                         </div>
                                                         <div className="fd-actions">
-                                                            <button
-                                                                className="fd-btn accept"
-                                                                title="Accept"
-                                                                onClick={() => acceptRequest(req.requesterId)}
-                                                            ><Check size={14} /></button>
-                                                            <button
-                                                                className="fd-btn reject"
-                                                                title="Reject"
-                                                                onClick={() => removeOrReject(req.id)}
-                                                            ><X size={14} /></button>
+                                                            <button className="fd-btn accept" title="Accept" onClick={() => acceptRequest(req.requesterId)}><Check size={14} /></button>
+                                                            <button className="fd-btn reject" title="Reject" onClick={() => removeOrReject(req.id)}><X size={14} /></button>
                                                         </div>
                                                     </motion.div>
                                                 ))}
@@ -411,49 +417,32 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                         </div>
                                     )}
 
-                                    {/* Online Friends */}
                                     {onlineFriends.length > 0 && (
                                         <div className="fd-section">
                                             <div className="fd-section-hdr static">
                                                 <span className="fd-dot online-dot" />
-                                                Online ” {onlineFriends.length}
+                                                Online — {onlineFriends.length}
                                             </div>
                                             {onlineFriends.map(f => (
-                                                <FriendRow 
-                                                    key={f.id} 
-                                                    friend={f} 
-                                                    onRemove={removeOrReject} 
-                                                    onClose={onClose}
-                                                    onWhisper={openChat}
-                                                    onChallenge={sendChallenge}
-                                                    unread={unreadDms.has(f.id)}
-                                                />
+                                                <FriendRow key={f.id} friend={f} onRemove={removeOrReject} onClose={onClose}
+                                                    onWhisper={openChat} unread={unreadDms.has(f.id)} />
                                             ))}
                                         </div>
                                     )}
 
-                                    {/* Offline Friends */}
                                     {offlineFriends.length > 0 && (
                                         <div className="fd-section">
                                             <div className="fd-section-hdr static">
                                                 <span className="fd-dot offline-dot" />
-                                                Offline ” {offlineFriends.length}
+                                                Offline — {offlineFriends.length}
                                             </div>
                                             {offlineFriends.map(f => (
-                                                <FriendRow 
-                                                    key={f.id} 
-                                                    friend={f} 
-                                                    onRemove={removeOrReject} 
-                                                    onClose={onClose}
-                                                    onWhisper={openChat}
-                                                    onChallenge={sendChallenge}
-                                                    unread={unreadDms.has(f.id)}
-                                                />
+                                                <FriendRow key={f.id} friend={f} onRemove={removeOrReject} onClose={onClose}
+                                                    onWhisper={openChat} unread={unreadDms.has(f.id)} />
                                             ))}
                                         </div>
                                     )}
 
-                                    {/* Empty */}
                                     {!loading && friends.length === 0 && incoming.length === 0 && (
                                         <div className="fd-empty">
                                             <Users size={40} color="rgba(255,255,255,0.1)" />
@@ -468,7 +457,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                 </>
                             )}
 
-                            {/* â”€â”€ SEARCH TAB â”€â”€ */}
+                            {/* ── SEARCH TAB ── */}
                             {tab === 'search' && (
                                 <div className="fd-search-tab">
                                     <div className="fd-search-box">
@@ -486,29 +475,23 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                             </button>
                                         )}
                                     </div>
-
                                     {searching && <div className="fd-loading"><div className="fd-spinner" /></div>}
-
                                     {searchResults.map(u => (
                                         <div key={u.id} className="fd-user-row">
                                             <Avatar username={u.username} online={u.online} />
                                             <div className="fd-user-info">
                                                 <Link to={`/u/${u.username}`} className="fd-username">{u.username}</Link>
-                                                <span className="fd-level">{XP_LEVEL(u.xp)} Â· {u.xp} XP</span>
+                                                <span className="fd-level">{XP_LEVEL(u.xp)} · {u.xp} XP</span>
                                             </div>
                                             <div className="fd-actions">
                                                 {u.friendStatus === 'none' && (
-                                                    <button className="fd-btn add" onClick={() => sendRequest(u.id)} title="Add friend">
-                                                        <UserPlus size={14} />
-                                                    </button>
+                                                    <button className="fd-btn add" onClick={() => sendRequest(u.id)} title="Add friend"><UserPlus size={14} /></button>
                                                 )}
                                                 {u.friendStatus === 'pending' && (
                                                     <span className="fd-status-chip pending"><Clock size={11} /> Sent</span>
                                                 )}
                                                 {u.friendStatus === 'incoming' && (
-                                                    <button className="fd-btn accept" onClick={() => acceptRequest(u.id)} title="Accept">
-                                                        <Check size={14} />
-                                                    </button>
+                                                    <button className="fd-btn accept" onClick={() => acceptRequest(u.id)} title="Accept"><Check size={14} /></button>
                                                 )}
                                                 {u.friendStatus === 'accepted' && (
                                                     <span className="fd-status-chip friends"><UserCheck size={11} /> Allies</span>
@@ -516,14 +499,12 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                             </div>
                                         </div>
                                     ))}
-
                                     {searchQ.length >= 2 && !searching && searchResults.length === 0 && (
                                         <div className="fd-empty">
                                             <p>No users found</p>
                                             <span>Try a different username</span>
                                         </div>
                                     )}
-
                                     {!searchQ && (
                                         <div className="fd-search-hint">
                                             <Search size={36} color="rgba(255,255,255,0.07)" />
@@ -533,77 +514,39 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                 </div>
                             )}
 
-                            {/* â–  CHAT TAB â–  */}
+                            {/* ── CHAT TAB ── */}
                             {tab === 'chat' && chatTarget && (
                                 <div className="fd-chat-tab">
-                                    <div className="fd-chat-header">
-                                        <button className="fd-btn-icon" onClick={() => setTab('friends')}>
-                                            <ArrowLeft size={16} />
-                                        </button>
-                                        <Avatar username={chatTarget.username} size={28} online={chatTarget.online} />
-                                        <span>{chatTarget.username}</span>
-                                        {chatTarget.online && (
-                                            <button
-                                                className="fd-duel-btn"
-                                                title="Challenge to Duel"
-                                                onClick={() => sendChallenge(chatTarget)}
-                                            >
-                                                <Swords size={13} /> Duel
-                                            </button>
-                                        )}
-                                    </div>
-                                    
                                     <div className="fd-chat-history">
-                                        {!(chatHistory[chatTarget.id]?.length) ? (
+                                        {chatLoading ? (
+                                            <div className="fd-loading"><div className="fd-spinner" /></div>
+                                        ) : chatMessages.length === 0 ? (
                                             <div className="fd-chat-empty">
                                                 <MessageSquare size={30} opacity={0.2} />
                                                 <p>Secure Comm-Link Established</p>
-                                                <span>Send a whisper to begin.</span>
+                                                <span>Send a message to begin.</span>
                                             </div>
                                         ) : (
-                                            chatHistory[chatTarget.id].map((m, i) => {
-                                                if (m.type === 'challenge') {
-                                                    const isMine = String(m.fromId) === String(user.id);
-                                                    return (
-                                                        <div key={i} className="fd-challenge-msg">
-                                                            <Swords size={16} />
-                                                            {isMine
-                                                                ? <span>You challenged <b>{chatTarget.username}</b> to a duel!</span>
-                                                                : <span><b>{m.fromUsername}</b> challenged you to a duel!</span>
-                                                            }
-                                                            {!isMine && (
-                                                                <button
-                                                                    className="fd-accept-duel-btn"
-                                                                    onClick={() => {
-                                                                        socketRef.current.emit('arena:accept', {
-                                                                            toId: m.fromId,
-                                                                            fromId: user.id,
-                                                                            fromUsername: user.username,
-                                                                            roomId: m.roomId
-                                                                        });
-                                                                        navigate(`/workspace/${m.roomId}`);
-                                                                    }}
-                                                                >
-                                                                    âš”ï¸ Accept Duel
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                }
+                                            chatMessages.map((m, i) => {
+                                                const isMine = String(m.fromId) === String(user.id);
                                                 return (
-                                                    <div key={i} className={`fd-msg-bubble ${String(m.fromId) === String(user.id) ? 'sent' : 'received'}`}>
-                                                        {m.message}
+                                                    <div key={m.id || i} className={`fd-msg-wrap ${isMine ? 'sent' : 'received'}`}>
+                                                        <div className={`fd-msg-bubble ${isMine ? 'sent' : 'received'}`}>
+                                                            {m.message}
+                                                        </div>
+                                                        <span className="fd-msg-time">{formatTime(m.timestamp)}</span>
                                                     </div>
                                                 );
                                             })
                                         )}
+                                        <div ref={chatBottomRef} />
                                     </div>
-                                    
+
                                     <form className="fd-chat-input" onSubmit={sendWhisper}>
-                                        <input 
+                                        <input
                                             autoFocus
-                                            type="text" 
-                                            placeholder={`Whisper to ${chatTarget.username}...`}
+                                            type="text"
+                                            placeholder={`Message ${chatTarget.username}...`}
                                             value={chatMsg}
                                             onChange={e => setChatMsg(e.target.value)}
                                         />
@@ -621,7 +564,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
     );
 }
 
-const FriendRow = ({ friend, onRemove, onClose, onWhisper, onChallenge, unread }) => {
+const FriendRow = ({ friend, onRemove, onClose, onWhisper, unread }) => {
     const [hovering, setHovering] = useState(false);
     return (
         <div
@@ -631,26 +574,25 @@ const FriendRow = ({ friend, onRemove, onClose, onWhisper, onChallenge, unread }
         >
             <Avatar username={friend.username} online={friend.online} />
             <div className="fd-user-info">
-                <Link to={`/u/${friend.username}`} className="fd-username">{friend.username}</Link>
-                <span className="fd-level">{XP_LEVEL(friend.xp)} Â· {friend.xp} XP</span>
+                <Link to={`/u/${friend.username}`} className="fd-username" onClick={onClose}>
+                    {friend.username}
+                </Link>
+                <span className="fd-level">{XP_LEVEL(friend.xp)} · {friend.xp} XP</span>
             </div>
-            {unread && <div className="fd-unread-indicator" style={{ marginLeft: 'auto', marginRight: '5px' }}></div>}
+            {unread && !hovering && (
+                <div className="fd-unread-indicator" title="Unread messages" />
+            )}
             {hovering && (
-                <div className="fd-actions-hover" style={{ display: 'flex', gap: '4px', marginLeft: unread ? '0' : 'auto' }}>
+                <div className="fd-actions-hover">
                     <button
                         className="fd-btn whisper"
-                        title={friend.online ? "Whisper" : "Ally is offline"}
-                        onClick={() => friend.online && onWhisper(friend)}
-                        style={{ opacity: friend.online ? 1 : 0.3, cursor: friend.online ? 'pointer' : 'not-allowed' }}
-                        disabled={!friend.online}
+                        title="Message"
+                        onClick={() => onWhisper(friend)}
                     >
                         <MessageSquare size={13} />
+                        {unread && <span className="fd-unread-dot" />}
                     </button>
-                    <button
-                        className="fd-btn reject"
-                        title="Remove ally"
-                        onClick={() => onRemove(friend.id)}
-                    >
+                    <button className="fd-btn reject" title="Remove ally" onClick={() => onRemove(friend.id)}>
                         <UserX size={13} />
                     </button>
                 </div>

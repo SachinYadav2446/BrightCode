@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -13,9 +13,10 @@ import {
 } from 'lucide-react';
 import './ContributePage.css';
 
-const ContributePage = () => {
+const ContributePage = ({ embedded = false }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const submitFormRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [contributions, setContributions] = useState([]);
@@ -51,7 +52,7 @@ const ContributePage = () => {
   });
 
   useEffect(() => {
-    if (!user) { navigate('/auth'); return; }
+    if (!user && !embedded) { navigate('/auth'); return; }
     fetchData();
   }, [user]);
 
@@ -171,6 +172,490 @@ const ContributePage = () => {
 
   const stepLabels = ['Problem Info', 'Starter Code', 'Test Cases'];
 
+  const focusSubmitForm = () => {
+    submitFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // ── Render Functions ──
+  const renderDashboard = () => (
+    <div className="cp-dashboard">
+      <section className="cp-submit-studio" ref={submitFormRef}>
+        <div className="cp-submit-copy">
+          <div className="cp-section-kicker">
+            <Sparkles size={14} />
+            Problem Studio
+          </div>
+          <h2>Submit a coding problem</h2>
+          <p>
+            Add a clear prompt, starter code, and sample tests. Approved problems are added to the BrightCode library with contributor credit.
+          </p>
+          <div className="cp-submit-checklist">
+            <span><CheckCircle2 size={15} /> Clear statement and constraints</span>
+            <span><Code2 size={15} /> Runnable starter template</span>
+            <span><Trophy size={15} /> Review-ready test cases</span>
+          </div>
+        </div>
+
+        <form className="cp-submit-form" onSubmit={handleSubmitContribution}>
+          <div className="cp-form-section">
+            <div className="cp-form-section-head">
+              <span>01</span>
+              <div>
+                <h3>Problem Details</h3>
+                <p>Name it, classify it, and explain exactly what solvers need to build.</p>
+              </div>
+            </div>
+
+            <div className="cp-form-row">
+              <div className="cp-form-group cp-flex1">
+                <label>Problem Title <span className="req">*</span></label>
+                <input
+                  type="text"
+                  className="cp-input"
+                  placeholder="e.g. Longest Balanced Subarray"
+                  value={form.title}
+                  onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="cp-form-group">
+                <label>Difficulty</label>
+                <select className="cp-input" value={form.difficulty} onChange={e => setForm(f => ({ ...f, difficulty: e.target.value }))}>
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="cp-form-row mt2">
+              <div className="cp-form-group cp-flex1">
+                <label>Category</label>
+                <select className="cp-input" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
+                  <option value="algorithms">Algorithms</option>
+                  <option value="data_structures">Data Structures</option>
+                  <option value="concurrency">Concurrency</option>
+                  <option value="database">Database</option>
+                  <option value="math">Math</option>
+                  <option value="strings">Strings</option>
+                </select>
+              </div>
+              <div className="cp-form-group cp-flex1">
+                <label>Tags</label>
+                <input
+                  type="text"
+                  className="cp-input"
+                  placeholder="arrays, hashing, prefix-sum"
+                  value={form.tags}
+                  onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="cp-form-group mt2">
+              <label>Problem Statement <span className="req">*</span></label>
+              <textarea
+                className="cp-textarea cp-statement-box"
+                placeholder="Describe the goal, input format, output format, constraints, and one example..."
+                value={form.description}
+                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="cp-form-section">
+            <div className="cp-form-section-head">
+              <span>02</span>
+              <div>
+                <h3>Starter Code</h3>
+                <p>Provide the function signature or template learners should start from.</p>
+              </div>
+            </div>
+            <textarea
+              className="cp-textarea cp-mono cp-code-box"
+              value={form.starterCode}
+              onChange={e => setForm(f => ({ ...f, starterCode: e.target.value }))}
+            />
+          </div>
+
+          <div className="cp-form-section">
+            <div className="cp-tc-header">
+              <div className="cp-form-section-head compact">
+                <span>03</span>
+                <div>
+                  <h3>Sample Tests</h3>
+                  <p>Add at least one input and expected output pair.</p>
+                </div>
+              </div>
+              <button type="button" className="cp-add-tc-btn" onClick={addTestCase}><Plus size={13}/> Add Case</button>
+            </div>
+
+            <div className="cp-tc-list">
+              {form.testCases.map((tc, idx) => (
+                <div key={idx} className="cp-tc-row cp-studio-tc-row">
+                  <div className="cp-tc-num">#{idx + 1}</div>
+                  <div className="cp-form-group cp-flex1">
+                    <label>Input</label>
+                    <textarea
+                      className="cp-textarea cp-mono sm"
+                      placeholder={'5\n1 2 3 4 5'}
+                      value={tc.input}
+                      onChange={e => updateTestCase(idx, 'input', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="cp-form-group cp-flex1">
+                    <label>Expected Output</label>
+                    <textarea
+                      className="cp-textarea cp-mono sm"
+                      placeholder="15"
+                      value={tc.expected}
+                      onChange={e => updateTestCase(idx, 'expected', e.target.value)}
+                      required
+                    />
+                  </div>
+                  {form.testCases.length > 1 && (
+                    <button type="button" className="cp-del-btn" onClick={() => removeTestCase(idx)}><Trash2 size={15}/></button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="cp-submit-footer">
+            <div>
+              <strong>Ready for review?</strong>
+              <span>Your problem will go to the moderation queue before it appears in the library.</span>
+            </div>
+            <button type="submit" className="cp-btn-primary submit-btn" disabled={submitting}>
+              {submitting ? <><Loader2 size={15} className="cp-spinner-sm"/> Submitting...</> : <><CheckCircle2 size={15}/> Submit Problem</>}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      {/* Stat cards */}
+      <div className="cp-stats-row">
+        {[
+          { label: 'Total Submitted', value: totalSubmissions, icon: <FileText size={20}/>, color: 'default' },
+          { label: 'Live & Approved', value: approvedCount, icon: <CheckCircle2 size={20}/>, color: 'green', sub: `+${approvedCount * 500} XP` },
+          { label: 'Pending Review', value: pendingCount, icon: <Clock size={20}/>, color: 'yellow' },
+          { label: 'Declined', value: rejectedCount, icon: <X size={20}/>, color: 'red' },
+        ].map((s, i) => (
+          <motion.div key={i} className={`cp-stat-card ${s.color}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
+            <div className="cp-stat-icon">{s.icon}</div>
+            <div className="cp-stat-val">{s.value}</div>
+            <div className="cp-stat-label">{s.label}</div>
+            {s.sub && <div className="cp-stat-sub">{s.sub}</div>}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Submissions panel */}
+      <div className="cp-panel">
+        <div className="cp-panel-header">
+          <div>
+            <h2>Your Submissions</h2>
+            <p>Track the status of every challenge you've contributed.</p>
+          </div>
+          <button className="cp-btn-primary sm" onClick={focusSubmitForm}>
+            <Plus size={15}/> New Problem
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="cp-loading">
+            <Loader2 className="cp-spinner" size={28}/>
+            <span>Loading your contributions…</span>
+          </div>
+        ) : loadError ? (
+          <div className="cp-error-state">
+            <AlertTriangle size={36}/>
+            <h3>Couldn't load data</h3>
+            <p>{loadError}</p>
+            <button className="cp-btn-ghost sm" onClick={fetchData}>Try Again</button>
+          </div>
+        ) : contributions.length === 0 ? (
+          <div className="cp-empty-state">
+            <div className="cp-empty-icon"><Sparkles size={32}/></div>
+            <h3>No Contributions Yet</h3>
+            <p>Be the first to shape the BrightCode challenge deck. Submit a problem and earn XP when it goes live!</p>
+            <button className="cp-btn-primary" onClick={focusSubmitForm}>
+              <Plus size={15}/> Create First Problem
+            </button>
+          </div>
+        ) : (
+          <div className="cp-table">
+            <div className="cp-table-head">
+              <span>Title</span>
+              <span>Category</span>
+              <span>Difficulty</span>
+              <span>Status</span>
+              <span>Submitted</span>
+            </div>
+            <div className="cp-table-body">
+              {contributions.map((c, i) => (
+                <motion.div key={c.id} className="cp-table-row" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
+                  <span className="cp-row-title">{c.title}</span>
+                  <span className="cp-row-cat">{c.category || '—'}</span>
+                  <span><span className={`cp-diff-badge ${c.difficulty}`}>{c.difficulty}</span></span>
+                  <span><span className={`cp-status-badge ${c.status}`}>{c.status}</span></span>
+                  <span className="cp-row-date">{new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* How it works */}
+      <div className="cp-how-it-works">
+        <h3><Sparkles size={16}/> How Contributions Work</h3>
+        <div className="cp-steps-row">
+          {['Design your coding problem with a clear statement & examples', 'Add a code template stub and define test cases', 'Submit for admin moderation review', 'Get approved → earn +500 XP and your problem goes live!'].map((text, i) => (
+            <div key={i} className="cp-how-step">
+              <div className="cp-how-num">{i + 1}</div>
+              <p>{text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAdmin = () => (
+    <div className="cp-admin-panel">
+      <div className="cp-panel-header">
+        <div>
+          <h2><Shield size={18}/> Moderation Queue</h2>
+          <p>Review community submissions, verify test suites, and deploy them live.</p>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="cp-loading"><Loader2 className="cp-spinner" size={28}/><span>Loading queue…</span></div>
+      ) : pendingReviews.length === 0 ? (
+        <div className="cp-empty-state clean">
+          <div className="cp-empty-icon green"><CheckCircle2 size={32}/></div>
+          <h3>Queue is clear!</h3>
+          <p>All submissions have been reviewed.</p>
+        </div>
+      ) : (
+        <div className="cp-queue-list">
+          {pendingReviews.map((problem, i) => (
+            <motion.div key={problem.id} className="cp-queue-card" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
+              <div className="cp-queue-left">
+                <div className="cp-queue-meta">
+                  <span className={`cp-diff-badge ${problem.difficulty}`}>{problem.difficulty}</span>
+                  <span className="cp-queue-cat">{problem.category}</span>
+                </div>
+                <h3 className="cp-queue-title">{problem.title}</h3>
+                <p className="cp-queue-by">by <strong>@{problem.contributor_username}</strong> · {new Date(problem.created_at).toLocaleDateString()}</p>
+                <p className="cp-queue-preview">{problem.description?.slice(0, 120)}{problem.description?.length > 120 ? '…' : ''}</p>
+              </div>
+              <button className="cp-review-btn" onClick={() => handleOpenReview(problem)}>
+                <Eye size={15}/> Inspect & Review
+              </button>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderReviewModal = () => (
+    <AnimatePresence>
+      {selectedReview && (
+        <>
+          <motion.div className="cp-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedReview(null)} />
+          <div className="cp-modal-centering">
+            <motion.div className="cp-modal cp-review-modal" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
+              <div className="cp-modal-header">
+                <div className="cp-modal-title">
+                  <Shield size={18} />
+                  <div>
+                    <h2>Review Contribution</h2>
+                    <p>@{selectedReview.contributor_username} · {new Date(selectedReview.created_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <button className="cp-close-btn" onClick={() => setSelectedReview(null)}><X size={18}/></button>
+              </div>
+
+              <div className="cp-review-body">
+                <div className="cp-form-row">
+                  <div className="cp-form-group cp-flex1">
+                    <label>Problem Title</label>
+                    <input
+                      type="text"
+                      className="cp-input"
+                      value={reviewForm.editTitle}
+                      onChange={e => setReviewForm(f => ({ ...f, editTitle: e.target.value }))}
+                    />
+                  </div>
+                  <div className="cp-form-group">
+                    <label>Difficulty</label>
+                    <select className="cp-input" value={reviewForm.editDifficulty} onChange={e => setReviewForm(f => ({ ...f, editDifficulty: e.target.value }))}>
+                      <option value="easy">Easy</option>
+                      <option value="medium">Medium</option>
+                      <option value="hard">Hard</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="cp-form-row mt2">
+                  <div className="cp-form-group cp-flex1">
+                    <label>Category</label>
+                    <select className="cp-input" value={reviewForm.editCategory} onChange={e => setReviewForm(f => ({ ...f, editCategory: e.target.value }))}>
+                      <option value="algorithms">Algorithms</option>
+                      <option value="data_structures">Data Structures</option>
+                      <option value="concurrency">Concurrency</option>
+                      <option value="database">Database</option>
+                      <option value="math">Math</option>
+                      <option value="strings">Strings</option>
+                    </select>
+                  </div>
+                  <div className="cp-form-group cp-flex1">
+                    <label>Tags</label>
+                    <input
+                      type="text"
+                      className="cp-input"
+                      value={reviewForm.editTags}
+                      onChange={e => setReviewForm(f => ({ ...f, editTags: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="cp-form-group mt2">
+                  <label>Problem Statement</label>
+                  <textarea
+                    className="cp-textarea cp-statement-box"
+                    value={reviewForm.editDescription}
+                    onChange={e => setReviewForm(f => ({ ...f, editDescription: e.target.value }))}
+                  />
+                </div>
+
+                <div className="cp-form-group mt2">
+                  <label>Starter Code</label>
+                  <textarea
+                    className="cp-textarea cp-mono cp-code-box"
+                    value={reviewForm.editStarterCode}
+                    onChange={e => setReviewForm(f => ({ ...f, editStarterCode: e.target.value }))}
+                  />
+                </div>
+
+                <div className="cp-form-section mt2">
+                  <div className="cp-tc-header">
+                    <label>Test Cases</label>
+                    <button type="button" className="cp-add-tc-btn sm" onClick={addReviewTestCase}><Plus size={13}/> Add</button>
+                  </div>
+
+                  <div className="cp-tc-list">
+                    {reviewForm.editTestCases.map((tc, idx) => (
+                      <div key={idx} className="cp-tc-row">
+                        <div className="cp-tc-num">#{idx + 1}</div>
+                        <div className="cp-form-group cp-flex1">
+                          <label>Input</label>
+                          <textarea
+                            className="cp-textarea cp-mono sm"
+                            value={tc.input}
+                            onChange={e => updateReviewTestCase(idx, 'input', e.target.value)}
+                          />
+                        </div>
+                        <div className="cp-form-group cp-flex1">
+                          <label>Expected</label>
+                          <textarea
+                            className="cp-textarea cp-mono sm"
+                            value={tc.expected}
+                            onChange={e => updateReviewTestCase(idx, 'expected', e.target.value)}
+                          />
+                        </div>
+                        {reviewForm.editTestCases.length > 1 && (
+                          <button type="button" className="cp-del-btn" onClick={() => removeReviewTestCase(idx)}><Trash2 size={15}/></button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="cp-form-row mt2">
+                  <div className="cp-form-group">
+                    <label>XP Points</label>
+                    <input
+                      type="number"
+                      className="cp-input"
+                      value={reviewForm.points}
+                      onChange={e => setReviewForm(f => ({ ...f, points: parseInt(e.target.value) || 0 }))}
+                    />
+                  </div>
+                  <div className="cp-form-group">
+                    <label>Time Limit (seconds)</label>
+                    <input
+                      type="number"
+                      className="cp-input"
+                      value={reviewForm.timeLimit}
+                      onChange={e => setReviewForm(f => ({ ...f, timeLimit: parseInt(e.target.value) || 300 }))}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="cp-review-footer">
+                <button className="cp-reject-btn" onClick={() => handleReviewAction('reject')}>
+                  <X size={15}/> Reject Submission
+                </button>
+                <button className="cp-approve-btn" onClick={() => handleReviewAction('approve')}>
+                  <CheckCircle2 size={15}/> Approve & Launch Live
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+
+  // ── When embedded in Settings, render only the body (no hero, no page shell) ──
+  if (embedded) {
+    return (
+      <div className="cp-embedded">
+        {/* Compact header with stat pills */}
+        <div className="cp-embedded-header">
+          <div className="cp-embedded-title">
+            <GitPullRequest size={16} />
+            <h2>Contribute a Problem</h2>
+          </div>
+          <div className="cp-embedded-pills">
+            <div className="cp-pill green"><CheckCircle2 size={12}/> {approvedCount} Live</div>
+            <div className="cp-pill yellow"><Clock size={12}/> {pendingCount} In Review</div>
+            <div className="cp-pill red"><Zap size={12}/> +{approvedCount * 500} XP earned</div>
+          </div>
+        </div>
+
+        {/* Tab bar */}
+        <div className="cp-tabs">
+          <button className={`cp-tab ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+            <Activity size={15} /> My Dashboard
+          </button>
+          {user?.username === 'admin' && (
+            <button className={`cp-tab admin-tab ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
+              <Shield size={15} /> Moderation Queue
+              {pendingReviews.length > 0 && <span className="cp-badge-count">{pendingReviews.length}</span>}
+            </button>
+          )}
+        </div>
+
+        {/* Reuse same dashboard/admin content */}
+        <div className="cp-embedded-body">
+          {activeTab === 'dashboard' && renderDashboard()}
+          {activeTab === 'admin' && user?.username === 'admin' && renderAdmin()}
+        </div>
+
+        {renderReviewModal()}
+      </div>
+    );
+  }
+
   return (
     <div className="cp-page">
       {/* ── Hero Banner ── */}
@@ -189,8 +674,8 @@ const ContributePage = () => {
             Design problems, craft test suites, and earn <strong>+500 XP</strong> when your challenge goes live.
           </p>
           <div className="cp-hero-actions">
-            <button className="cp-btn-primary" onClick={() => setShowWizard(true)}>
-              <Plus size={16} /> Submit a Challenge
+            <button className="cp-btn-primary" onClick={focusSubmitForm}>
+              <Plus size={16} /> Submit Problem
             </button>
             <button className="cp-btn-ghost" onClick={() => window.scrollTo({ top: 400, behavior: 'smooth' })}>
               View My Submissions <ArrowUpRight size={14} />
@@ -223,377 +708,13 @@ const ContributePage = () => {
         </div>
 
         {/* ── Dashboard Tab ── */}
-        {activeTab === 'dashboard' && (
-          <div className="cp-dashboard">
-            {/* Stat cards */}
-            <div className="cp-stats-row">
-              {[
-                { label: 'Total Submitted', value: totalSubmissions, icon: <FileText size={20}/>, color: 'default' },
-                { label: 'Live & Approved', value: approvedCount, icon: <CheckCircle2 size={20}/>, color: 'green', sub: `+${approvedCount * 500} XP` },
-                { label: 'Pending Review', value: pendingCount, icon: <Clock size={20}/>, color: 'yellow' },
-                { label: 'Declined', value: rejectedCount, icon: <X size={20}/>, color: 'red' },
-              ].map((s, i) => (
-                <motion.div key={i} className={`cp-stat-card ${s.color}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
-                  <div className="cp-stat-icon">{s.icon}</div>
-                  <div className="cp-stat-val">{s.value}</div>
-                  <div className="cp-stat-label">{s.label}</div>
-                  {s.sub && <div className="cp-stat-sub">{s.sub}</div>}
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Submissions panel */}
-            <div className="cp-panel">
-              <div className="cp-panel-header">
-                <div>
-                  <h2>Your Submissions</h2>
-                  <p>Track the status of every challenge you've contributed.</p>
-                </div>
-                <button className="cp-btn-primary sm" onClick={() => setShowWizard(true)}>
-                  <Plus size={15}/> New Challenge
-                </button>
-              </div>
-
-              {loading ? (
-                <div className="cp-loading">
-                  <Loader2 className="cp-spinner" size={28}/>
-                  <span>Loading your contributions…</span>
-                </div>
-              ) : loadError ? (
-                <div className="cp-error-state">
-                  <AlertTriangle size={36}/>
-                  <h3>Couldn't load data</h3>
-                  <p>{loadError}</p>
-                  <button className="cp-btn-ghost sm" onClick={fetchData}>Try Again</button>
-                </div>
-              ) : contributions.length === 0 ? (
-                <div className="cp-empty-state">
-                  <div className="cp-empty-icon"><Sparkles size={32}/></div>
-                  <h3>No Contributions Yet</h3>
-                  <p>Be the first to shape the BrightCode challenge deck. Submit a problem and earn XP when it goes live!</p>
-                  <button className="cp-btn-primary" onClick={() => setShowWizard(true)}>
-                    <Plus size={15}/> Create First Problem
-                  </button>
-                </div>
-              ) : (
-                <div className="cp-table">
-                  <div className="cp-table-head">
-                    <span>Title</span>
-                    <span>Category</span>
-                    <span>Difficulty</span>
-                    <span>Status</span>
-                    <span>Submitted</span>
-                  </div>
-                  <div className="cp-table-body">
-                    {contributions.map((c, i) => (
-                      <motion.div key={c.id} className="cp-table-row" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
-                        <span className="cp-row-title">{c.title}</span>
-                        <span className="cp-row-cat">{c.category || '—'}</span>
-                        <span><span className={`cp-diff-badge ${c.difficulty}`}>{c.difficulty}</span></span>
-                        <span><span className={`cp-status-badge ${c.status}`}>{c.status}</span></span>
-                        <span className="cp-row-date">{new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* How it works */}
-            <div className="cp-how-it-works">
-              <h3><Sparkles size={16}/> How Contributions Work</h3>
-              <div className="cp-steps-row">
-                {['Design your coding problem with a clear statement & examples', 'Add a code template stub and define test cases', 'Submit for admin moderation review', 'Get approved → earn +500 XP and your problem goes live!'].map((text, i) => (
-                  <div key={i} className="cp-how-step">
-                    <div className="cp-how-num">{i + 1}</div>
-                    <p>{text}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        {activeTab === 'dashboard' && renderDashboard()}
 
         {/* ── Admin Tab ── */}
-        {activeTab === 'admin' && user?.username === 'admin' && (
-          <div className="cp-admin-panel">
-            <div className="cp-panel-header">
-              <div>
-                <h2><Shield size={18}/> Moderation Queue</h2>
-                <p>Review community submissions, verify test suites, and deploy them live.</p>
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="cp-loading"><Loader2 className="cp-spinner" size={28}/><span>Loading queue…</span></div>
-            ) : pendingReviews.length === 0 ? (
-              <div className="cp-empty-state clean">
-                <div className="cp-empty-icon green"><CheckCircle2 size={32}/></div>
-                <h3>Queue is clear!</h3>
-                <p>All submissions have been reviewed.</p>
-              </div>
-            ) : (
-              <div className="cp-queue-list">
-                {pendingReviews.map((problem, i) => (
-                  <motion.div key={problem.id} className="cp-queue-card" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
-                    <div className="cp-queue-left">
-                      <div className="cp-queue-meta">
-                        <span className={`cp-diff-badge ${problem.difficulty}`}>{problem.difficulty}</span>
-                        <span className="cp-queue-cat">{problem.category}</span>
-                      </div>
-                      <h3 className="cp-queue-title">{problem.title}</h3>
-                      <p className="cp-queue-by">by <strong>@{problem.contributor_username}</strong> · {new Date(problem.created_at).toLocaleDateString()}</p>
-                      <p className="cp-queue-preview">{problem.description?.slice(0, 120)}{problem.description?.length > 120 ? '…' : ''}</p>
-                    </div>
-                    <button className="cp-review-btn" onClick={() => handleOpenReview(problem)}>
-                      <Eye size={15}/> Inspect & Review
-                    </button>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        {activeTab === 'admin' && user?.username === 'admin' && renderAdmin()}
       </div>
 
-      {/* ═══════════ WIZARD MODAL ═══════════ */}
-      <AnimatePresence>
-        {showWizard && (
-          <>
-            <motion.div className="cp-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowWizard(false)} />
-            <div className="cp-modal-centering">
-            <motion.div className="cp-modal" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }}>
-              {/* Modal header */}
-              <div className="cp-modal-header">
-                <div className="cp-modal-title">
-                  <div className="cp-modal-icon"><Plus size={18}/></div>
-                  <div>
-                    <h2>Submit a Challenge</h2>
-                    <p>Step {wizardStep} of 3 — {stepLabels[wizardStep - 1]}</p>
-                  </div>
-                </div>
-                <button className="cp-close-btn" onClick={() => setShowWizard(false)}><X size={18}/></button>
-              </div>
-
-              {/* Progress bar */}
-              <div className="cp-progress-bar">
-                {stepLabels.map((label, i) => (
-                  <React.Fragment key={i}>
-                    <div className={`cp-progress-step ${wizardStep > i ? 'done' : ''} ${wizardStep === i + 1 ? 'current' : ''}`}>
-                      <div className="cp-prog-circle">
-                        {wizardStep > i + 1 ? <Check size={12}/> : i + 1}
-                      </div>
-                      <span>{label}</span>
-                    </div>
-                    {i < stepLabels.length - 1 && <div className={`cp-prog-line ${wizardStep > i + 1 ? 'done' : ''}`} />}
-                  </React.Fragment>
-                ))}
-              </div>
-
-              {/* Form body */}
-              <form onSubmit={handleSubmitContribution} className="cp-modal-body">
-                <AnimatePresence mode="wait">
-                  {/* Step 1 */}
-                  {wizardStep === 1 && (
-                    <motion.div key="step1" className="cp-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                      <div className="cp-form-row">
-                        <div className="cp-form-group cp-flex1">
-                          <label>Problem Title <span className="req">*</span></label>
-                          <input type="text" className="cp-input" placeholder="e.g. Reverse a Linked List" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required />
-                        </div>
-                        <div className="cp-form-group">
-                          <label>Difficulty <span className="req">*</span></label>
-                          <select className="cp-input" value={form.difficulty} onChange={e => setForm(f => ({ ...f, difficulty: e.target.value }))}>
-                            <option value="easy">Easy</option>
-                            <option value="medium">Medium</option>
-                            <option value="hard">Hard</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div className="cp-form-row mt2">
-                        <div className="cp-form-group cp-flex1">
-                          <label>Category</label>
-                          <select className="cp-input" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
-                            <option value="algorithms">Algorithms</option>
-                            <option value="data_structures">Data Structures</option>
-                            <option value="concurrency">Concurrency</option>
-                            <option value="database">Database</option>
-                            <option value="math">Math</option>
-                            <option value="strings">Strings</option>
-                          </select>
-                        </div>
-                        <div className="cp-form-group cp-flex1">
-                          <label>Tags (comma separated)</label>
-                          <input type="text" className="cp-input" placeholder="e.g. arrays, two-pointers" value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} />
-                        </div>
-                      </div>
-                      <div className="cp-form-group mt2">
-                        <label>Problem Statement <span className="req">*</span></label>
-                        <p className="cp-input-tip">Describe the task clearly. Include constraints, input/output format, and at least one example.</p>
-                        <textarea className="cp-textarea" style={{ minHeight: '200px' }} placeholder="Given an array of integers, return the two numbers that add up to a target..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} required />
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Step 2 */}
-                  {wizardStep === 2 && (
-                    <motion.div key="step2" className="cp-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                      <div className="cp-form-group">
-                        <label>Starter Code / Boilerplate</label>
-                        <p className="cp-input-tip">Provide a code template that players will build their solution on. The function signature should be included.</p>
-                        <textarea className="cp-textarea cp-mono" style={{ minHeight: '320px' }} value={form.starterCode} onChange={e => setForm(f => ({ ...f, starterCode: e.target.value }))} />
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Step 3 */}
-                  {wizardStep === 3 && (
-                    <motion.div key="step3" className="cp-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                      <div className="cp-tc-header">
-                        <div>
-                          <h3>Test Cases</h3>
-                          <p className="cp-input-tip">Define at least one input/output pair that will be used to validate solutions.</p>
-                        </div>
-                        <button type="button" className="cp-add-tc-btn" onClick={addTestCase}><Plus size={13}/> Add Case</button>
-                      </div>
-                      <div className="cp-tc-list">
-                        {form.testCases.map((tc, idx) => (
-                          <div key={idx} className="cp-tc-row">
-                            <div className="cp-tc-num">#{idx + 1}</div>
-                            <div className="cp-form-group cp-flex1">
-                              <label>Input</label>
-                              <textarea className="cp-textarea cp-mono sm" placeholder="5\n[1,2,3,4,5]" value={tc.input} onChange={e => updateTestCase(idx, 'input', e.target.value)} required />
-                            </div>
-                            <div className="cp-form-group cp-flex1">
-                              <label>Expected Output</label>
-                              <textarea className="cp-textarea cp-mono sm" placeholder="15" value={tc.expected} onChange={e => updateTestCase(idx, 'expected', e.target.value)} required />
-                            </div>
-                            {form.testCases.length > 1 && (
-                              <button type="button" className="cp-del-btn" onClick={() => removeTestCase(idx)}><Trash2 size={15}/></button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Footer */}
-                <div className="cp-modal-footer">
-                  {wizardStep > 1 ? (
-                    <button type="button" className="cp-btn-secondary" onClick={() => setWizardStep(s => s - 1)}>
-                      <ChevronLeft size={16}/> Back
-                    </button>
-                  ) : (
-                    <button type="button" className="cp-btn-secondary" onClick={() => setShowWizard(false)}>Cancel</button>
-                  )}
-                  {wizardStep < 3 ? (
-                    <button type="button" className="cp-btn-primary" onClick={() => setWizardStep(s => s + 1)}>
-                      Continue <ChevronRight size={16}/>
-                    </button>
-                  ) : (
-                    <button type="submit" className="cp-btn-primary submit-btn" disabled={submitting}>
-                      {submitting ? <><Loader2 size={15} className="cp-spinner-sm"/> Submitting…</> : <><CheckCircle2 size={15}/> Submit Challenge</>}
-                    </button>
-                  )}
-                </div>
-              </form>
-            </motion.div>
-            </div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* ═══════════ ADMIN REVIEW MODAL ═══════════ */}
-      <AnimatePresence>
-        {selectedReview && (
-          <>
-            <motion.div className="cp-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedReview(null)} />
-            <div className="cp-modal-centering">
-            <motion.div className="cp-modal large" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }}>
-              <div className="cp-modal-header">
-                <div className="cp-modal-title">
-                  <div className="cp-modal-icon admin"><Shield size={18}/></div>
-                  <div>
-                    <h2>Moderate Submission</h2>
-                    <p>Review, edit, and deploy or reject this contribution</p>
-                  </div>
-                </div>
-                <button className="cp-close-btn" onClick={() => setSelectedReview(null)}><X size={18}/></button>
-              </div>
-
-              <div className="cp-modal-body review-body">
-                <div className="cp-form-row">
-                  <div className="cp-form-group cp-flex1">
-                    <label>Title</label>
-                    <input type="text" className="cp-input" value={reviewForm.editTitle} onChange={e => setReviewForm(f => ({ ...f, editTitle: e.target.value }))} />
-                  </div>
-                  <div className="cp-form-group">
-                    <label>Difficulty</label>
-                    <select className="cp-input" value={reviewForm.editDifficulty} onChange={e => setReviewForm(f => ({ ...f, editDifficulty: e.target.value }))}>
-                      <option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="cp-form-row mt2">
-                  <div className="cp-form-group">
-                    <label>Reward Points</label>
-                    <input type="number" className="cp-input" value={reviewForm.points} onChange={e => setReviewForm(f => ({ ...f, points: parseInt(e.target.value) || 80 }))} />
-                  </div>
-                  <div className="cp-form-group">
-                    <label>Time Limit (sec)</label>
-                    <input type="number" className="cp-input" value={reviewForm.timeLimit} onChange={e => setReviewForm(f => ({ ...f, timeLimit: parseInt(e.target.value) || 300 }))} />
-                  </div>
-                  <div className="cp-form-group cp-flex1">
-                    <label>Tags</label>
-                    <input type="text" className="cp-input" value={reviewForm.editTags} onChange={e => setReviewForm(f => ({ ...f, editTags: e.target.value }))} />
-                  </div>
-                </div>
-                <div className="cp-form-group mt2">
-                  <label>Description</label>
-                  <textarea className="cp-textarea" style={{ minHeight: '130px' }} value={reviewForm.editDescription} onChange={e => setReviewForm(f => ({ ...f, editDescription: e.target.value }))} />
-                </div>
-                <div className="cp-form-group mt2">
-                  <label>Starter Code</label>
-                  <textarea className="cp-textarea cp-mono" style={{ minHeight: '160px' }} value={reviewForm.editStarterCode} onChange={e => setReviewForm(f => ({ ...f, editStarterCode: e.target.value }))} />
-                </div>
-                <div className="cp-form-group mt2">
-                  <div className="cp-tc-header small">
-                    <label>Test Cases</label>
-                    <button type="button" className="cp-add-tc-btn xs" onClick={addReviewTestCase}><Plus size={12}/> Add</button>
-                  </div>
-                  <div className="cp-tc-list">
-                    {reviewForm.editTestCases.map((tc, idx) => (
-                      <div key={idx} className="cp-tc-row compact">
-                        <div className="cp-tc-num">#{idx + 1}</div>
-                        <div className="cp-form-group cp-flex1">
-                          <input type="text" className="cp-input cp-mono" placeholder="Input" value={tc.input} onChange={e => updateReviewTestCase(idx, 'input', e.target.value)} />
-                        </div>
-                        <div className="cp-form-group cp-flex1">
-                          <input type="text" className="cp-input cp-mono" placeholder="Expected" value={tc.expected} onChange={e => updateReviewTestCase(idx, 'expected', e.target.value)} />
-                        </div>
-                        {reviewForm.editTestCases.length > 1 && (
-                          <button type="button" className="cp-del-btn" onClick={() => removeReviewTestCase(idx)}><X size={14}/></button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="cp-review-footer">
-                <button className="cp-reject-btn" onClick={() => handleReviewAction('reject')}>
-                  <X size={15}/> Reject Submission
-                </button>
-                <button className="cp-approve-btn" onClick={() => handleReviewAction('approve')}>
-                  <CheckCircle2 size={15}/> Approve & Launch Live
-                </button>
-              </div>
-            </motion.div>
-            </div>
-          </>
-        )}
-      </AnimatePresence>
+      {renderReviewModal()}
     </div>
   );
 };

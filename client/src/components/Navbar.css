@@ -180,6 +180,17 @@
   gap: 5px;
 }
 
+/* Feed nav link */
+.nav-link-feed {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: rgba(255,255,255,0.55);
+}
+.nav-link-feed:hover, .nav-link-feed.active {
+  color: #ef4444 !important;
+}
+
 .nav-new-badge {
   display: inline-flex;
   align-items: center;
