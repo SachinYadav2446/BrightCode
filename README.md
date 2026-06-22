@@ -1,175 +1,232 @@
-# 🌐 BrightCode
+# BrightCode
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![React](https://img.shields.io/badge/React-19-61dafb.svg?logo=react)
+![React](https://img.shields.io/badge/React-19.2.4-61dafb.svg?logo=react)
 ![Node.js](https://img.shields.io/badge/Node.js-Backend-339933.svg?logo=nodedotjs)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1.svg?logo=postgresql)
+![Vite](https://img.shields.io/badge/Vite-8.0.4-646CFF.svg?logo=vite)
 
-> **The Ultimate Collaborative Coding Frontier.**  
-> BrightCode is a high-performance, real-time collaborative coding platform designed for the modern developer. It blends professional-grade IDE features with gamified learning experiences and competitive social layers, all wrapped in a premium cyberpunk-inspired operating command deck.
-
----
-
-## ✨ Features & Modules
-
-### 🏗️ Real-Time Collaborative Workspace
-The core terminal of BrightCode where developers collaborate.
-- **Tech Stack**: `Socket.io`, `Monaco Editor`, `UUID`.
-- **Details**: Utilizing a WebSocket event pipeline, keystrokes sync across participants instantly. Admins hold permissions for editor lockouts, user bans, and workspace settings.
-
-### 🧪 Logic Lab (100-Level Campaign)
-A progressive linear campaign designed to build algorithm mastery.
-- **Tech Stack**: `React`, `Framer Motion`, `PostgreSQL`.
-- **Details**: Levels are arranged in successive operational phases. Users solve syntax and algorithm quests to gain XP and proceed.
-
-### 🕹️ Code Arena (Arcade)
-Gamified, time-sensitive coding challenge arrays.
-- **Tech Stack**: `React`, `Custom Compiler Sandbox`.
-- **Details**: Developers select challenge suites (e.g., CSS Wizardry, Logic Engine) and solve problems under test execution timeouts.
-
-### 🤖 The Sentinel (AI Companion)
-An integrated AI assistant providing workspace code analyses.
-- **Tech Stack**: `Google Gemini / OpenAI API`, `React Context`.
-- **Details**: Sentinel reads the active buffer from Monaco and returns contextual syntax repairs, complexity diagnostics, and optimizations.
-
-### 🌀 Warp Drive (Temporal Versioning)
-A built-in time-travel debugging snapshot deck.
-- **Details**: Milestone revisions are cached as local snapshots, enabling developers to roll back to compilation checkpoints instantly.
-
-### 🏆 Factions & Hall of Fame
-Social guilds and high-performance competitive rankings.
-- **Details**: Users form factions, coordinate group PvPs, and top performers populate a premium Hall of Fame podium fetched from real-time database leaderboards.
+BrightCode is a high-performance, real-time collaborative coding platform designed for the modern developer. It integrates professional-grade IDE features, gamified learning experiences, and competitive social layers into a unified interface.
 
 ---
 
-## 🗺️ Consumer Flow (User Journey)
+## Project Overview
 
-1. **Onboarding & Authentication**
-   - User arrives at the BrightCode **Landing Page**, experiencing the premium Cyber-HUD aesthetics.
-   - User registers or logs in via the JWT-secured Authentication flow.
-   - Initial profile setup, selecting an avatar, and assigning a base rank.
-
-2. **The Hub (Dashboard Navigation)**
-   - Upon login, the user enters **The Hub**. Here, they see their personalized Welcome Banner, daily contribution heatmap, and current XP.
-   - The user views the **Hall of Fame** podium to check the top performers on the network.
-
-3. **Solo Progression (Logic Lab & Arcade)**
-   - To build skills, the user enters the **Logic Lab**, navigating through 100 progressively difficult syntax and algorithm modules.
-   - For a faster-paced challenge, the user enters the **Code Arena**, selecting a domain (e.g., CSS, Algorithms) and solving challenges against a timer.
-
-4. **Multiplayer Collaboration (Workspace)**
-   - The user creates a new room in the **Collaborative Workspace**.
-   - They share the unique `Room ID` with peers or invite friends from the **Allies Drawer**.
-   - Peers join the room. All users type in the Monaco Editor concurrently, with WebSockets syncing cursors and code changes instantly.
-   - The room admin controls execution, runs the code against the custom compiler sandbox, and uses **Warp Drive** to snapshot stable versions.
-
-5. **Social & Guild Expansion (Factions)**
-   - As the user gains XP, they can join or create **Factions**.
-   - They collaborate with faction members, share notes in the **CodeVault**, and climb the global leaderboards.
+BrightCode provides a comprehensive environment for developers to:
+- Collaborate in real-time on code
+- Practice coding challenges with progressive difficulty
+- Compete in timed contests
+- Manage and organize coding notes and resources
+- Learn through structured modules
+- Contribute to the platform's question library
 
 ---
 
-## 🏗️ High-Level Design (HLD)
+## Core Features
 
-At a macro level, BrightCode operates on a standard 3-tier web architecture, optimized for real-time bidirectional communication.
+### Collaborative Workspace
+- Real-time code synchronization using WebSockets
+- Integrated Monaco Editor with syntax highlighting for multiple languages
+- Shared terminal access
+- Teammate presence and cursor tracking
+- Workspace snapshot and version history
+- Git integration for version control
 
-1. **Presentation Layer (Client)**
-   - **React (Vite):** Handles DOM manipulation, routing, and complex state via Context API.
-   - **Socket.io Client:** Maintains a persistent WebSocket connection to the Node server for live cursor syncing, code execution, and chat.
+### Logic Lab
+- Progressive learning modules organized by difficulty
+- Structured curriculum covering algorithms, data structures, and programming languages
+- Interactive problem-solving interface
+- Instant feedback and test case validation
 
-2. **Application Layer (Server/Execution Engine)**
-   - **Express.js API:** Serves standard REST endpoints for authentication, profile fetching, and faction management.
-   - **Socket.io Server:** Acts as the real-time message broker, distributing events (code updates, chat) to specific `Room IDs`.
-   - **Compiler Sandbox:** A secure remote execution environment (or isolated Docker process) that securely compiles incoming code strings and returns stdout/stderr.
+### Code Arena
+- Timed coding challenges
+- Multiple difficulty levels
+- Leaderboard and ranking system
+- Contest history and performance analytics
 
-3. **Data Access Layer (Database)**
-   - **PostgreSQL:** Primary relational store. Stores persistent state such as User profiles, Faction schemas, XP ledgers, and saved CodeVault notes.
+### CodeVault
+- Rich-text note editor with Markdown support
+- Code block syntax highlighting
+- Diagram creation with Excalidraw
+- Folder organization for notes
+- Export functionality
 
----
+### AI Companion
+- Code analysis and suggestions
+- Syntax error detection and fixes
+- Complexity optimization recommendations
+- Contextual assistance based on active code
 
-## ⚙️ Low-Level Design (LLD)
-
-### WebSocket Room Architecture
-To enable scalable collaboration, Socket.io manages isolated channels called **Rooms**.
-1. Client generates a UUID to instantiate a room: `ws.emit('join-room', roomId, userId)`.
-2. Server registers the Socket FD to the specific `roomId` array.
-3. Upon typing, Monaco Editor's `onChange` event triggers a `code-update` payload carrying the delta.
-4. Server broadcasts the payload to all sockets in the room *except* the sender: `socket.to(roomId).emit('code-update', payload)`.
-
-### Compiler Execution Pipeline
-Code execution is decoupled from the main thread to prevent blocking.
-1. Code payload + selected language is shipped via `POST /api/execute`.
-2. Backend strips malicious `exec()` or `eval()` inputs via regex heuristics.
-3. Payload is handed to a background worker or external Judge0/Piston API.
-4. Worker returns raw JSON `stdout/stderr` back to the client.
-
-### State & Temporal Snapshots (Warp Drive)
-1. Frontend retains an array queue of `history = []`.
-2. Every X keystrokes (or upon pressing "Snapshot"), the current Monaco string state is pushed to `history`.
-3. Reverting triggers `editor.setValue(history[index])` and emits a room-wide override.
-
----
-
-## 🎨 Creative UI/UX Redesign System
-
-BrightCode employs an advanced **Cyber-Premium HUD User Interface**:
-- **Split-Panel Workspace Deck**: A sidebar identity console houses dynamic operative stats. A tabbed terminal deck switches panels seamlessly using sliding Framer Motion animations.
-- **Levitating Card Decks**: Skill proficiency cards and action badges levitate using organic CSS coordinates.
-- **Glow Highlight Spotlights**: Interactive mouse-coordinate variables dynamically illuminate container borders and background radial gradients.
+### Factions & Community
+- Team formation and collaboration
+- Group challenges and competitions
+- Global leaderboards
+- Social features and friend management
 
 ---
 
-## 🛠️ Technology Stack
+## System Architecture
 
-| Frontend | Backend | Infrastructure |
-|----------|---------|----------------|
-| React 19 | Node.js | PostgreSQL |
-| Vite 8 | Express | Socket.io |
-| Monaco Editor | JWT Auth | WebSockets |
-| Framer Motion | BcryptJS | REST APIs |
-| Tailwind / Vanilla CSS | | |
+BrightCode follows a 3-tier web architecture optimized for real-time communication:
+
+### Presentation Layer
+- React 19 with Vite for fast development and optimized builds
+- Client-side routing with React Router
+- State management using React Context API
+- Real-time communication via Socket.io Client
+- UI animations with Framer Motion
+
+### Application Layer
+- Express.js REST API for core backend functionality
+- Socket.io Server for real-time event broadcasting
+- JWT-based authentication system
+- Secure code execution sandbox
+- Background workers for resource-intensive tasks
+
+### Data Layer
+- PostgreSQL relational database for persistent storage
+- Neon serverless PostgreSQL integration
+- Socket.io Postgres Adapter for scaling real-time features
 
 ---
 
-## 🚀 Getting Started
+## Technology Stack
+
+| Layer | Technologies |
+|-------|--------------|
+| Frontend | React 19, Vite, Monaco Editor, Framer Motion, React Router, Socket.io Client, TipTap, Lucide React |
+| Backend | Node.js, Express, Socket.io, JWT, Bcrypt, Nodemailer, Winston |
+| Database | PostgreSQL, Neon Serverless |
+| DevOps | Docker, Docker Compose, Vercel |
+
+---
+
+## Project Structure
+
+```
+brightcode/
+├── client/                 # Frontend application
+│   ├── public/             # Static assets
+│   │   └── data/           # Question banks and resources
+│   ├── src/
+│   │   ├── assets/         # Images and media
+│   │   ├── components/     # Reusable UI components
+│   │   │   ├── codevault/  # CodeVault feature components
+│   │   │   └── codewars/   # CodeArena feature components
+│   │   ├── context/        # React Context providers
+│   │   ├── data/           # Static data files
+│   │   ├── pages/          # Page components
+│   │   ├── services/       # API service functions
+│   │   ├── App.jsx         # Main app component
+│   │   └── main.jsx        # Entry point
+│   ├── package.json
+│   └── vite.config.js
+├── server/                 # Backend application
+│   ├── index.js            # Server entry point
+│   └── package.json
+├── docs/                   # Project documentation
+│   ├── features/           # Feature specifications
+│   ├── guides/             # Setup and usage guides
+│   └── project_updates/    # Development updates
+└── docker-compose.yml      # Docker configuration
+```
+
+---
+
+## Getting Started
 
 ### Prerequisites
 - Node.js (v18 or higher)
-- PostgreSQL
+- PostgreSQL (v14 or higher)
+- npm or yarn package manager
 
 ### Installation
 
-1. **Clone the repository**
+1. Clone the repository
    ```bash
    git clone https://github.com/SachinYadav2446/BrightCode.git
    cd BrightCode
    ```
 
-2. **Setup Environment Variables**
-   Create a `.env` file in the `server` directory:
+2. Set up environment variables
+   Create a `.env` file in the `server` directory with the following variables:
    ```env
-   DATABASE_URL=your_postgresql_url
-   JWT_SECRET=your_jwt_secret
+   DATABASE_URL=your_postgresql_connection_string
+   JWT_SECRET=your_jwt_secret_key
+   PORT=5000
    ```
 
-3. **Install Dependencies & Start Backend**
+   Create a `.env` file in the `client` directory with:
+   ```env
+   VITE_API_URL=http://localhost:5000
+   VITE_SOCKET_URL=http://localhost:5000
+   ```
+
+3. Install server dependencies and start the backend
    ```bash
    cd server
    npm install
    npm start
    ```
 
-4. **Install Dependencies & Start Frontend**
+4. Install client dependencies and start the frontend
    ```bash
    cd ../client
    npm install
    npm run dev
    ```
 
+5. Access the application at `http://localhost:5173`
+
 ---
 
-## 🤝 Contributing
-Contributions are always welcome! Please open an issue first to discuss what you would like to change.
+## Configuration
 
-## 📄 License
-This project is licensed under the MIT License.
+### Server Configuration
+- `PORT`: Server port (default: 5000)
+- `DATABASE_URL`: PostgreSQL connection string
+- `JWT_SECRET`: Secret key for JWT token generation
+- `NODE_ENV`: Environment mode (development/production)
+
+### Client Configuration
+- `VITE_API_URL`: Backend API endpoint
+- `VITE_SOCKET_URL`: Socket.io server endpoint
+
+---
+
+## API Reference
+
+### Authentication
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - User login
+- `POST /api/auth/logout` - User logout
+
+### Users
+- `GET /api/users/profile` - Get user profile
+- `PUT /api/users/profile` - Update user profile
+- `GET /api/users/leaderboard` - Get user leaderboard
+
+### Questions
+- `GET /api/questions` - Get questions list
+- `GET /api/questions/:id` - Get question details
+- `POST /api/questions` - Submit a new question (Contribute feature)
+
+---
+
+## Contributing
+
+Contributions are welcome. Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Commit your changes (`git commit -m 'Add your feature'`)
+4. Push to the branch (`git push origin feature/your-feature`)
+5. Open a Pull Request
+
+Please ensure your code follows the project's coding standards and includes appropriate tests.
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
