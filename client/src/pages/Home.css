@@ -1715,6 +1715,107 @@
   display: block;
 }
 
+/* =============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================= */
+@media (max-width: 1024px) {
+  .profile-header-black {
+    padding: 2rem 1.5rem;
+  }
+
+  .profile-card-row {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .profile-col-avatar {
+    padding-right: 0;
+    justify-content: flex-start;
+  }
+
+  .profile-col-ring {
+    padding-left: 0;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 1rem;
+    min-width: unset;
+  }
+
+  .dashboard-content-area {
+    padding: 1.5rem 1rem;
+  }
+
+  .about-section-inner,
+  .fame-fullwidth-inner,
+  .progression-fullwidth-inner {
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-wrapper {
+    padding-bottom: 60px;
+  }
+
+  .welcome-banner-text {
+    font-size: 1.5rem;
+  }
+
+  .profile-username-text {
+    font-size: 1.2rem;
+  }
+
+  .profile-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .achievements-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .fame-layout-split {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .fame-podium-col {
+    flex: 1;
+    max-width: 100%;
+    padding-right: 0;
+  }
+
+  .fame-rankings-col {
+    padding-left: 0;
+  }
+
+  .about-content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about-main-title {
+    font-size: 1.8rem;
+  }
+
+  .module-progression-large-card {
+    flex: 0 0 90%;
+  }
+}
+
+@media (max-width: 480px) {
+  .achievements-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .heatmap-inner {
+    min-width: unset;
+  }
+}
+
 /* ══════════════════════════════════════════════
    ABOUT BRIGHTCODE SECTION
    ══════════════════════════════════════════════ */
