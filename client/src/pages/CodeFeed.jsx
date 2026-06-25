@@ -626,9 +626,9 @@ function Composer({ onPost, user, quotePost = null, onQuoteDone = null }) {
                         {/* Footer */}
                         <div className="df-composer-footer">
                             <div className="df-composer-actions">
-                                <span style={{ fontSize: '0.72rem', color: '#3b82f6', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    <Sparkles size={12} style={{ color: '#eab308' }} /> +10 XP
-                                </span>
+                                <span className="df-xp-badge-inline">
+                                <Sparkles size={12} style={{ color: '#c9a84c' }} /> +10 XP per post
+                            </span>
                             </div>
                             <div className="df-composer-right-actions">
                                 {body.length > 0 && (
@@ -853,7 +853,9 @@ export default function CodeFeed() {
                 {/* Left nav */}
                 <nav className="df-left-col">
                     <div className="df-nav-logo">
-                        <Hash size={22} color="#1d9bf0" />
+                        <div className="df-nav-logo-icon">
+                            <Hash size={16} color="#0a0d14" />
+                        </div>
                         DevFeed
                     </div>
                     {POST_TYPES.map(t => (
