@@ -1789,6 +1789,13 @@ const EditorPage = () => {
         }
     };
 
+    // Keep peer connections updated as clients list or local stream changes
+    useEffect(() => {
+        if (localStream && clients.length > 0) {
+            ensurePeerConnections();
+        }
+    }, [clients.map(c => c.id).join(','), localStream]);
+
 
     // Initiate a peer connection and send offer (called only by the lexicographically GREATER socket ID)
     const initiateCallToPeer = async (targetId, targetUsername) => {
@@ -3284,7 +3291,7 @@ const EditorPage = () => {
                     </aside>
 
                     {/* Hidden audio elements for WebRTC audio call */}
-                    <div style={{ display: 'none' }}>
+                    <div style={{ position: 'absolute', width: 0, height: 0, opacity: 0, pointerEvents: 'none', overflow: 'hidden' }}>
                         {Object.entries(callParticipants).map(([id, participant]) => {
                             if (!participant.stream || id === myId) return null;
                             return (
@@ -3293,8 +3300,14 @@ const EditorPage = () => {
                                     autoPlay
                                     playsInline
                                     ref={el => {
-                                        if (el && el.srcObject !== participant.stream) {
-                                            el.srcObject = participant.stream;
+                                        if (el) {
+                                            if (el.srcObject !== participant.stream) {
+                                                el.srcObject = participant.stream;
+                                            }
+                                            // Force play to ensure browser auto-play policy is satisfied
+                                            el.play().catch(err => {
+                                                console.error("[WebRTC] Error playing audio element:", err);
+                                            });
                                         }
                                     }}
                                 />
