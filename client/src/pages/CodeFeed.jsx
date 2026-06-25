@@ -7,11 +7,11 @@ import { initSocket } from '../socket';
 import { Link } from 'react-router-dom';
 import {
     Flame, Lightbulb, Code2, HelpCircle, Trophy,
-    Send, X, MessageSquare, Trash2,
-    RefreshCw, Sparkles, Zap, Star,
-    TrendingUp, Users, BookOpen, Search,
-    Quote, Heart, ArrowUp, Copy, Check,
-    Hash
+    X, MessageSquare, Trash2,
+    RefreshCw, Sparkles, Zap,
+    Users, BookOpen, Search,
+    Heart, Copy, Check,
+    Hash, Terminal
 } from 'lucide-react';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.min.css';
@@ -169,63 +169,6 @@ function CodeBlock({ code, lang }) {
     );
 }
 
-/* ── Reaction Drawer ── */
-function ReactionDrawer({ postId, reactions, myReactions, onReact }) {
-    const [open, setOpen] = useState(false);
-    const wrapRef = useRef(null);
-
-    useEffect(() => {
-        const handler = (e) => {
-            if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
-        };
-        if (open) document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
-    }, [open]);
-
-    const totalReactions = Object.values(reactions || {}).reduce((a, b) => a + b, 0);
-
-    return (
-        <div className="df-reaction-wrap" ref={wrapRef}>
-            <button
-                className={`df-action like ${myReactions?.length > 0 ? 'active' : ''}`}
-                onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
-                title="React"
-            >
-                <Heart size={17} style={myReactions?.includes('fire') ? { fill: '#f91880', color: '#f91880' } : {}} />
-                {totalReactions > 0 && <span>{totalReactions}</span>}
-            </button>
-
-            <AnimatePresence>
-                {open && (
-                    <motion.div
-                        className="df-reaction-drawer"
-                        initial={{ opacity: 0, scale: 0.85, y: 4 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.85, y: 4 }}
-                        transition={{ duration: 0.14 }}
-                    >
-                        {REACTIONS.map(r => {
-                            const isActive = myReactions?.includes(r.id);
-                            const count = reactions?.[r.id] || 0;
-                            return (
-                                <button
-                                    key={r.id}
-                                    className={`df-reaction-btn ${isActive ? 'active' : ''}`}
-                                    onClick={(e) => { e.stopPropagation(); onReact(r.id); setOpen(false); }}
-                                    title={r.title}
-                                    style={isActive ? { color: r.activeColor } : {}}
-                                >
-                                    <span style={{ fontSize: '1.1rem' }}>{r.label}</span>
-                                    {count > 0 && <span className="df-reaction-count">{count}</span>}
-                                </button>
-                            );
-                        })}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
-    );
-}
 
 /* ── Comments (Twitter thread style) ── */
 function Comments({ postId, count, user, isOpen, setIsOpen }) {
@@ -305,7 +248,7 @@ function Comments({ postId, count, user, isOpen, setIsOpen }) {
                         <div className="df-reply-input-wrap">
                             <input
                                 ref={inputRef}
-                                placeholder="Tweet your reply…"
+                                placeholder="Write a reply…"
                                 value={body}
                                 onChange={e => setBody(e.target.value)}
                                 maxLength={280}
@@ -392,58 +335,52 @@ function PostCard({ post, user, onDelete, onHashtagClick, showThread = false }) 
         try { quoteData = JSON.parse(post.body.slice('__QUOTE_BODY__'.length)); } catch (_) {}
     }
 
-    const activeReactionPills = REACTIONS.filter(r => (reactions[r.id] || 0) > 0);
+    const totalReactsCount = Object.keys(reactions)
+        .filter(k => k !== '_user_map')
+        .reduce((sum, k) => sum + (reactions[k] || 0), 0);
 
     return (
         <motion.article
             className="df-post"
-            initial={{ opacity: 0, y: 12 }}
+            data-type={post.type}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
+            exit={{ opacity: 0, y: -6 }}
             layout
         >
-            {/* Left column */}
-            <div className="df-post-left">
-                <Link to={`/u/${post.author_username}`} onClick={e => e.stopPropagation()}>
-                    <Avatar username={post.author_username} size={42} />
-                </Link>
-                {showThread && <div className="df-thread-line" />}
-            </div>
+            {/* Post inner — type header + content */}
+            <div className="df-post-inner">
 
-            {/* Right column */}
-            <div className="df-post-right">
-                {/* Header */}
-                <div className="df-post-header">
-                    <Link to={`/u/${post.author_username}`} className="df-post-author" onClick={e => e.stopPropagation()}>
-                        {post.author_username}
-                    </Link>
-                    <span className="df-post-handle">@{post.author_username}</span>
-                    <span className="df-post-dot">·</span>
-                    <span className="df-post-time">{timeAgo(post.created_at)}</span>
-                    <span className="df-post-badge" style={{ color: t.color, background: t.bg, borderColor: `${t.color}35` }}>
-                        <t.icon size={10} />
+                {/* ── Type badge row ── */}
+                <div className="df-post-type-row">
+                    <span
+                        className="df-post-type-badge"
+                        style={{ color: t.color, background: `${t.color}14`, borderLeft: `3px solid ${t.color}` }}
+                    >
+                        <t.icon size={11} />
                         {t.label}
                     </span>
-                    <span className="df-level-pill" style={{ color: level.color }}>
-                        {level.label}
-                    </span>
-                    {isOwn && (
-                        <button
-                            className={`df-delete-btn ${deleting ? 'deleting' : ''}`}
-                            onClick={handleDelete}
-                            disabled={deleting}
-                            title="Delete"
-                        >
-                            {deleting ? <RefreshCw size={13} className="df-spin-inline" /> : <Trash2 size={13} />}
-                        </button>
-                    )}
+                    <div className="df-post-meta-top">
+                        <span className="df-post-time-top">{timeAgo(post.created_at)}</span>
+                        {isOwn && (
+                            <button
+                                className="df-delete-btn"
+                                onClick={handleDelete}
+                                disabled={deleting}
+                                title="Delete post"
+                            >
+                                {deleting ? <RefreshCw size={12} className="df-spin-inline" /> : <Trash2 size={12} />}
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                {/* Content */}
+                {/* ── Title ── */}
                 {post.title && !post.title.startsWith('__QUOTE__') && (
                     <h3 className="df-post-title">{post.title}</h3>
                 )}
 
+                {/* ── Body ── */}
                 {quoteData ? (
                     <>
                         <p className="df-post-body">{post.body.split('\n')[0]}</p>
@@ -455,60 +392,61 @@ function PostCard({ post, user, onDelete, onHashtagClick, showThread = false }) 
                     </p>
                 )}
 
+                {/* ── Code block as hero ── */}
                 {post.code && <CodeBlock code={post.code} lang={post.lang || 'javascript'} />}
+            </div>
 
-                {/* Reaction pills */}
-                {activeReactionPills.length > 0 && (
-                    <div className="df-post-reactions">
-                        {activeReactionPills.map(r => (
-                            <button
-                                key={r.id}
-                                className={`df-reaction-pill ${myReactions.includes(r.id) ? 'active' : ''}`}
-                                onClick={(e) => { e.stopPropagation(); handleReact(r.id); }}
-                                style={myReactions.includes(r.id) ? { borderColor: r.activeColor, color: r.activeColor, background: `${r.activeColor}15` } : {}}
-                            >
-                                <span>{r.label}</span>
-                                <span>{reactions[r.id]}</span>
-                            </button>
-                        ))}
+            {/* ── Footer: author left · actions right ── */}
+            <div className="df-post-footer">
+                <Link
+                    to={`/u/${post.author_username}`}
+                    className="df-post-author-link"
+                    onClick={e => e.stopPropagation()}
+                >
+                    <Avatar username={post.author_username} size={30} />
+                    <div className="df-post-author-info">
+                        <span className="df-post-author-name">{post.author_username}</span>
+                        <div className="df-post-author-sub">
+                            <span className="df-post-level-dot" style={{ background: level.color }} />
+                            <span className="df-post-level-text" style={{ color: level.color }}>{level.label}</span>
+                            <span className="df-post-time-footer">· {post.xp_at_post} XP</span>
+                        </div>
                     </div>
-                )}
+                </Link>
 
-                {/* Action bar */}
                 <div className="df-actions">
-                    {/* Comment */}
                     <button
                         className={`df-action comment ${commentsOpen ? 'active' : ''}`}
                         onClick={(e) => { e.stopPropagation(); setCommentsOpen(v => !v); }}
+                        title="Discuss"
                     >
-                        <MessageSquare size={17} />
+                        <MessageSquare size={15} />
                         {commentCount > 0 && <span>{commentCount}</span>}
                     </button>
 
-                    {/* Reactions */}
-                    <ReactionDrawer
-                        postId={post.id}
-                        reactions={reactions}
-                        myReactions={myReactions}
-                        onReact={handleReact}
-                    />
+                    <button
+                        className={`df-action like ${myReactions.includes('clever') ? 'active' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); handleReact('clever'); }}
+                        title={myReactions.includes('clever') ? 'Unlike' : 'Like'}
+                    >
+                        <Terminal size={15} />
+                        {totalReactsCount > 0 && <span>{totalReactsCount}</span>}
+                    </button>
 
-                    {/* XP */}
-                    <button className="df-action xp" title={`Posted at ${post.xp_at_post} XP`}>
-                        <Zap size={15} />
-                        <span>{post.xp_at_post} XP</span>
+                    <button className="df-action xp" title="XP earned">
+                        <Zap size={14} />
                     </button>
                 </div>
-
-                {/* Comments */}
-                <Comments
-                    postId={post.id}
-                    count={commentCount}
-                    user={user}
-                    isOpen={commentsOpen}
-                    setIsOpen={setCommentsOpen}
-                />
             </div>
+
+            {/* ── Comments panel ── */}
+            <Comments
+                postId={post.id}
+                count={commentCount}
+                user={user}
+                isOpen={commentsOpen}
+                setIsOpen={setCommentsOpen}
+            />
         </motion.article>
     );
 }
@@ -560,97 +498,98 @@ function Composer({ onPost, user, quotePost = null, onQuoteDone = null }) {
 
     return (
         <div className="df-composer">
-            <div className="df-composer-row">
-                <Avatar username={user?.username} size={44} />
-                <div className="df-composer-right">
-                    <textarea
-                        ref={taRef}
-                        className="df-composer-ta"
-                        placeholder={quotePost ? 'Add a comment…' : `What's on your mind, ${user?.username?.split(' ')[0] || 'dev'}?`}
-                        value={body}
-                        onChange={e => setBody(e.target.value.slice(0, MAX_CHARS + 10))}
-                        rows={3}
-                    />
+            <div className="df-composer-header">
+                <Avatar username={user?.username} size={28} />
+                <span className="df-composer-username">{user?.username || 'dev'}</span>
+                <span className="df-composer-meta">is sharing a post</span>
+            </div>
 
-                    {/* Quote preview */}
-                    {quotePost && (
-                        <div style={{ marginBottom: 10 }}>
-                            <QuoteCard quote={quotePost} />
+            <textarea
+                ref={taRef}
+                className="df-composer-ta"
+                placeholder={quotePost ? 'Add a comment…' : `What's on your mind, ${user?.username?.split(' ')[0] || 'dev'}?`}
+                value={body}
+                onChange={e => setBody(e.target.value.slice(0, MAX_CHARS + 10))}
+                rows={3}
+            />
+
+            {/* Quote preview */}
+            {quotePost && (
+                <div style={{ marginBottom: 10 }}>
+                    <QuoteCard quote={quotePost} />
+                </div>
+            )}
+
+            <div className="df-composer-extras">
+                {/* Type chips */}
+                <div className="df-type-row">
+                    <span className="df-type-label">Post as</span>
+                    {POST_TYPES.map(t => (
+                        <button
+                            key={t.id}
+                            type="button"
+                            className={`df-type-chip ${type === t.id ? 'active' : ''}`}
+                            style={type === t.id ? { color: t.color, borderColor: t.color, background: t.bg } : {}}
+                            onClick={() => { setType(t.id); if (t.id === 'roast' || t.id === 'challenge') setShowCode(true); }}
+                        >
+                            <t.icon size={11} />
+                            {t.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Code */}
+                {showCode ? (
+                    <div className="df-snippet-wrap">
+                        <div className="df-snippet-header">
+                            <select className="df-lang-select" value={lang} onChange={e => setLang(e.target.value)}>
+                                {LANGS.map(l => <option key={l}>{l}</option>)}
+                            </select>
+                            <button className="df-snippet-remove" type="button" onClick={() => { setShowCode(false); setCode(''); }}>
+                                <X size={12} /> Remove
+                            </button>
                         </div>
-                    )}
+                        <textarea
+                            className="df-snippet-ta"
+                            placeholder="// paste your code here…"
+                            value={code}
+                            onChange={e => setCode(e.target.value)}
+                            rows={6}
+                            spellCheck={false}
+                        />
+                    </div>
+                ) : (
+                    <button type="button" className="df-add-snippet-btn" onClick={() => setShowCode(true)}>
+                        <Code2 size={13} /> Attach code
+                    </button>
+                )}
 
-                    <div className="df-composer-extras">
-                        {/* Type chips */}
-                        <div className="df-type-row">
-                            <span className="df-type-label">Post as</span>
-                            {POST_TYPES.map(t => (
-                                <button
-                                    key={t.id}
-                                    type="button"
-                                    className={`df-type-chip ${type === t.id ? 'active' : ''}`}
-                                    style={type === t.id ? { color: t.color, borderColor: t.color, background: t.bg } : {}}
-                                    onClick={() => { setType(t.id); if (t.id === 'roast' || t.id === 'challenge') setShowCode(true); }}
-                                >
-                                    <t.icon size={11} />
-                                    {t.label}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Code */}
-                        {showCode ? (
-                            <div className="df-snippet-wrap">
-                                <div className="df-snippet-header">
-                                    <select className="df-lang-select" value={lang} onChange={e => setLang(e.target.value)}>
-                                        {LANGS.map(l => <option key={l}>{l}</option>)}
-                                    </select>
-                                    <button className="df-snippet-remove" type="button" onClick={() => { setShowCode(false); setCode(''); }}>
-                                        <X size={12} /> Remove
-                                    </button>
-                                </div>
-                                <textarea
-                                    className="df-snippet-ta"
-                                    placeholder="// paste your code here…"
-                                    value={code}
-                                    onChange={e => setCode(e.target.value)}
-                                    rows={6}
-                                    spellCheck={false}
-                                />
-                            </div>
-                        ) : (
-                            <button type="button" className="df-add-snippet-btn" onClick={() => setShowCode(true)}>
-                                <Code2 size={13} /> Attach code
+                {/* Footer */}
+                <div className="df-composer-footer">
+                    <div className="df-composer-actions">
+                        <span className="df-xp-badge-inline">
+                            <Sparkles size={12} style={{ color: '#c9a84c' }} /> +10 XP per post
+                        </span>
+                    </div>
+                    <div className="df-composer-right-actions">
+                        {body.length > 0 && (
+                            <>
+                                <CharRing count={body.length} max={MAX_CHARS} />
+                                <div className="df-divider-v" />
+                            </>
+                        )}
+                        {quotePost && (
+                            <button className="df-post-btn" style={{ background: 'transparent', color: '#555', border: '1px solid #222' }} onClick={reset}>
+                                Cancel
                             </button>
                         )}
-
-                        {/* Footer */}
-                        <div className="df-composer-footer">
-                            <div className="df-composer-actions">
-                                <span className="df-xp-badge-inline">
-                                <Sparkles size={12} style={{ color: '#c9a84c' }} /> +10 XP per post
-                            </span>
-                            </div>
-                            <div className="df-composer-right-actions">
-                                {body.length > 0 && (
-                                    <>
-                                        <CharRing count={body.length} max={MAX_CHARS} />
-                                        <div className="df-divider-v" />
-                                    </>
-                                )}
-                                {quotePost && (
-                                    <button className="df-post-btn" style={{ background: 'transparent', color: '#555', border: '1px solid #222' }} onClick={reset}>
-                                        Cancel
-                                    </button>
-                                )}
-                                <button
-                                    className="df-post-btn"
-                                    disabled={posting || !body.trim() || overLimit}
-                                    onClick={submit}
-                                >
-                                    {posting ? <RefreshCw size={14} className="df-spin-inline" /> : 'Post'}
-                                </button>
-                            </div>
-                        </div>
+                        <button
+                            className="df-post-btn"
+                            disabled={posting || !body.trim() || overLimit}
+                            onClick={submit}
+                        >
+                            {posting ? <RefreshCw size={14} className="df-spin-inline" /> : 'Post'}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -850,40 +789,16 @@ export default function CodeFeed() {
         <div className="df-page">
             <div className="df-layout">
 
-                {/* Left nav */}
-                <nav className="df-left-col">
-                    <div className="df-nav-logo">
-                        <div className="df-nav-logo-icon">
-                            <Hash size={16} color="#0a0d14" />
-                        </div>
-                        DevFeed
-                    </div>
-                    {POST_TYPES.map(t => (
-                        <button
-                            key={t.id}
-                            className={`df-nav-btn ${activeFilter === t.id ? 'active' : ''}`}
-                            onClick={() => setActiveFilter(prev => prev === t.id ? 'all' : t.id)}
-                            style={activeFilter === t.id ? { color: t.color } : {}}
-                        >
-                            <t.icon size={20} className="df-nav-icon" />
-                            {t.label}
-                        </button>
-                    ))}
-                    <button className="df-nav-btn" style={{ marginTop: 'auto' }}>
-                        <Sparkles size={20} className="df-nav-icon" style={{ color: '#eab308' }} />
-                        +10 XP per post
-                    </button>
-                </nav>
-
-                {/* Center feed */}
+                {/* ── Center feed — 2-col layout, no left nav ── */}
                 <main className="df-center-col">
-                    {/* Tabs */}
+
+                    {/* Stream tabs */}
                     <div className="df-tabs">
                         <button className={`df-tab ${tab === 'foryou' ? 'active' : ''}`} onClick={() => setTab('foryou')}>
-                            For You
+                            All Posts
                         </button>
                         <button className={`df-tab ${tab === 'following' ? 'active' : ''}`} onClick={() => setTab('following')}>
-                            Following
+                            My Network
                         </button>
                     </div>
 
@@ -894,81 +809,80 @@ export default function CodeFeed() {
                         <Composer onPost={handlePost} user={user} />
                     )}
 
-                    {/* Filter / Search bar */}
-                    <div className="df-filter-bar">
+                    {/* IDE-style type switcher */}
+                    <div className="df-type-switcher">
                         <button
-                            className={`df-filter-pill ${activeFilter === 'all' ? 'active' : ''}`}
+                            className={`df-type-tab ${activeFilter === 'all' ? 'active' : ''}`}
                             onClick={() => setActiveFilter('all')}
+                            style={activeFilter === 'all' ? { borderBottomColor: 'var(--df-gold)', color: 'var(--df-gold)' } : {}}
                         >
-                            <Star size={11} /> All
+                            <span className="df-type-dot" style={{ background: activeFilter === 'all' ? 'var(--df-gold)' : 'var(--df-muted)' }} />
+                            All
                         </button>
                         {POST_TYPES.map(t => (
                             <button
                                 key={t.id}
-                                className={`df-filter-pill ${activeFilter === t.id ? 'active' : ''}`}
-                                style={activeFilter === t.id ? { color: t.color, borderColor: t.color, background: t.bg } : {}}
+                                className={`df-type-tab ${activeFilter === t.id ? 'active' : ''}`}
                                 onClick={() => setActiveFilter(prev => prev === t.id ? 'all' : t.id)}
+                                style={activeFilter === t.id ? { borderBottomColor: t.color, color: t.color } : {}}
                             >
-                                <t.icon size={11} /> {t.label}
+                                <span className="df-type-dot" style={{ background: activeFilter === t.id ? t.color : 'var(--df-muted)' }} />
+                                {t.label}
                             </button>
                         ))}
-                        {hashtagFilter && (
-                            <button
-                                className="df-filter-pill active"
-                                onClick={() => setHashtagFilter('')}
-                            >
-                                <Hash size={11} /> {hashtagFilter} <X size={10} />
-                            </button>
-                        )}
-                        <div className="df-search-wrap">
-                            <Search size={13} className="df-search-icon" />
+                        <div className="df-switcher-search">
+                            <Search size={12} className="df-switcher-search-icon" />
                             <input
                                 type="text"
-                                placeholder="Search…"
+                                placeholder="Search posts…"
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
                             />
                         </div>
                     </div>
 
+                    {/* Active hashtag filter */}
+                    {hashtagFilter && (
+                        <button className="df-hashtag-chip" onClick={() => setHashtagFilter('')}>
+                            <Hash size={11} /> {hashtagFilter} <X size={10} />
+                        </button>
+                    )}
+
                     {/* Posts */}
                     {loading ? (
                         <div className="df-skeleton-feed">
                             {[1, 2, 3].map(i => (
                                 <div key={i} className="df-skeleton-post">
-                                    <div className="df-skel" style={{ width: 42, height: 42, borderRadius: '50%', flexShrink: 0 }} />
-                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                        <div className="df-skel" style={{ height: 12, width: '40%', borderRadius: 6 }} />
-                                        <div className="df-skel" style={{ height: 14, width: '90%', borderRadius: 6 }} />
-                                        <div className="df-skel" style={{ height: 14, width: '70%', borderRadius: 6 }} />
-                                    </div>
+                                    <div className="df-skel" style={{ height: 11, width: '22%' }} />
+                                    <div className="df-skel" style={{ height: 16, width: '75%' }} />
+                                    <div className="df-skel" style={{ height: 13, width: '90%' }} />
+                                    <div className="df-skel" style={{ height: 13, width: '60%' }} />
                                 </div>
                             ))}
                         </div>
                     ) : filtered.length === 0 ? (
                         <div className="df-empty-state">
                             <div className="df-empty-icon">
-                                {tab === 'following' ? <Users size={30} /> : <BookOpen size={30} />}
+                                {tab === 'following' ? <Users size={26} /> : <BookOpen size={26} />}
                             </div>
                             <p className="df-empty-title">
                                 {tab === 'following' ? 'Nothing from your network yet' : 'No posts yet'}
                             </p>
                             <p className="df-empty-sub">
                                 {tab === 'following'
-                                    ? 'Add friends and their posts will appear here'
-                                    : 'Be the first to share something awesome'}
+                                    ? 'Connect with devs and their posts will appear here'
+                                    : 'Drop a TIL, challenge, or code snippet to get started'}
                             </p>
                         </div>
                     ) : (
                         <AnimatePresence mode="popLayout">
-                            {filtered.map((p, i) => (
+                            {filtered.map(p => (
                                 <PostCard
                                     key={p.id}
                                     post={p}
                                     user={user}
                                     onDelete={handleDelete}
                                     onHashtagClick={handleHashtagClick}
-                                    showThread={i < filtered.length - 1}
                                 />
                             ))}
                         </AnimatePresence>

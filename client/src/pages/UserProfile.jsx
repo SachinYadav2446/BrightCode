@@ -1,4 +1,4 @@
-﻿import API_URL from '../config';
+import API_URL from '../config';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -224,11 +224,11 @@ export default function UserProfile() {
     );
 
     const BANNERS = {
-        'crimson': 'linear-gradient(135deg, rgba(127, 29, 29, 0.8) 0%, rgba(10, 10, 12, 1) 100%)',
-        'cyber': 'linear-gradient(135deg, rgba(0, 217, 255, 0.6) 0%, rgba(10, 10, 12, 1) 100%)',
-        'toxic': 'linear-gradient(135deg, rgba(34, 197, 94, 0.6) 0%, rgba(10, 10, 12, 1) 100%)',
-        'void': 'linear-gradient(135deg, rgba(30, 27, 75, 0.8) 0%, rgba(5, 5, 5, 1) 100%)',
-        'gold': 'linear-gradient(135deg, rgba(245, 158, 11, 0.6) 0%, rgba(10, 10, 12, 1) 100%)',
+        'crimson': 'linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)',
+        'cyber': 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)',
+        'toxic': 'linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)',
+        'void': 'linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)',
+        'gold': 'linear-gradient(135deg, rgba(201, 168, 76, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)',
     };
     
     const bannerId = profile?.bannerId || 'crimson';
@@ -253,7 +253,6 @@ export default function UserProfile() {
                 >
                     <div className="up-hero-overlay" />
                     <div className="up-avatar-wrap">
-                        <div className="up-avatar-glow" style={{ background: levelCfg.color }} />
                         <div className="up-avatar-hex" style={{ borderColor: levelCfg.color }}>
                             <img src={avatarUrl} alt={profile.username} />
                         </div>

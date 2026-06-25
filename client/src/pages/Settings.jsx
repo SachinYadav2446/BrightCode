@@ -142,17 +142,17 @@ const Settings = () => {
 
   const AVATARS = [
     { seed: 'Sniper', rank: 1 }, { seed: 'Ghost', rank: 1 },
-    { seed: 'Ninja', rank: 2 }, { seed: 'Viper', rank: 2 },
-    { seed: 'Nova', rank: 3 }, { seed: 'Titan', rank: 3 },
-    { seed: 'Apex', rank: 4 }, { seed: 'Zero', rank: 4 },
-    { seed: 'Hunter', rank: 5 }, { seed: 'Reaper', rank: 5 }
+    { seed: 'Ninja', rank: 1 }, { seed: 'Viper', rank: 1 },
+    { seed: 'Nova', rank: 1 }, { seed: 'Titan', rank: 1 },
+    { seed: 'Apex', rank: 1 }, { seed: 'Zero', rank: 1 },
+    { seed: 'Hunter', rank: 1 }, { seed: 'Reaper', rank: 1 }
   ];
   const BANNERS = [
-    { id: 'crimson', name: 'Crimson Flare', css: 'linear-gradient(135deg, rgba(127, 29, 29, 0.8) 0%, rgba(10, 10, 12, 1) 100%)', rank: 1 },
-    { id: 'cyber', name: 'Cyber Neon', css: 'linear-gradient(135deg, rgba(0, 217, 255, 0.6) 0%, rgba(10, 10, 12, 1) 100%)', rank: 2 },
-    { id: 'toxic', name: 'Toxic Viper', css: 'linear-gradient(135deg, rgba(34, 197, 94, 0.6) 0%, rgba(10, 10, 12, 1) 100%)', rank: 3 },
-    { id: 'void', name: 'Void Phantom', css: 'linear-gradient(135deg, rgba(30, 27, 75, 0.8) 0%, rgba(5, 5, 5, 1) 100%)', rank: 4 },
-    { id: 'gold', name: 'Golden Crown', css: 'linear-gradient(135deg, rgba(245, 158, 11, 0.6) 0%, rgba(10, 10, 12, 1) 100%)', rank: 5 },
+    { id: 'crimson', name: 'Crimson Flare', css: 'linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)', rank: 1 },
+    { id: 'cyber', name: 'Cyber Neon', css: 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)', rank: 1 },
+    { id: 'toxic', name: 'Toxic Viper', css: 'linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)', rank: 1 },
+    { id: 'void', name: 'Void Phantom', css: 'linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)', rank: 1 },
+    { id: 'gold', name: 'Golden Crown', css: 'linear-gradient(135deg, rgba(201, 168, 76, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)', rank: 1 },
   ];
 
   const computeUserRank = (xp) => {
@@ -380,19 +380,11 @@ const Settings = () => {
   };
 
   const handleAvatarSelect = async (seed, reqRank) => {
-    if (userRank < reqRank) {
-      toast.error(`Reach Level ${reqRank} to unlock!`);
-      return;
-    }
     setFormData(prev => ({ ...prev, avatarId: seed }));
     await persistProfile({ avatarId: seed });
   };
 
   const handleBannerSelect = async (bannerId, reqRank) => {
-    if (userRank < reqRank) {
-      toast.error(`Reach Level ${reqRank} to unlock!`);
-      return;
-    }
     setFormData(prev => ({ ...prev, bannerId: bannerId }));
     await persistProfile({ bannerId: bannerId });
   };
