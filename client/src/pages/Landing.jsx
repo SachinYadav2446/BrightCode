@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import {
@@ -607,21 +607,21 @@ function AlumniNetwork() {
   const inView = useInView(ref, { once: true, margin: "-60px" });
 
   const logos = [
-    { name: "Google", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 1 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.986 0-.746-.08-1.32-.176-1.886H12.24z"/></svg>` },
-    { name: "Microsoft", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 1h10v10H1V1zm12 0h10v10H13V1zM1 13h10v10H1v-10zm12 0h10v10H13v-10z"/></svg>` },
-    { name: "Meta", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.2 3c-1.3 0-2.5.5-3.4 1.4L15.3 7H8.7L6.2 4.4c-.9-.9-2.1-1.4-3.4-1.4C1.2 3 0 4.2 0 5.8V18.2C0 19.8 1.2 21 2.8 21c1.3 0 2.5-.5 3.4-1.4l2.5-2.6h6.6l2.5 2.6c.9.9 2.1 1.4 3.4 1.4 1.6 0 2.8-1.2 2.8-2.8V5.8c0-1.6-1.2-2.8-2.8-2.8zm-7.6 11.2H10.4L8 11.8h8l-2.4 2.4z"/></svg>` },
-    { name: "Netflix", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5.6 22H2.8V2h2.8v20zm12.8 0H15.6V2h2.8v20zm-6.4 0H9.2V2h2.8v20z"/></svg>` },
-    { name: "Amazon", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 14.5c0 .3-.2.5-.5.5h-1c-.3 0-.5-.2-.5-.5v-4c0-.3.2-.5.5-.5h1c.3 0 .5.2.5.5v4zm0-6c0 .3-.2.5-.5.5h-1c-.3 0-.5-.2-.5-.5v-1c0-.3.2-.5.5-.5h1c.3 0 .5.2.5.5v1z"/></svg>` },
-    { name: "Stripe", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.9 11.9c0-1.1-.9-1.5-2.2-1.5-1.5 0-2.7.5-3.3.9l-.6-2.1c.9-.5 2.5-1.1 4.5-1.1 3 0 4.9 1.4 4.9 4.1 0 3.2-2.7 4.2-4.8 4.2-1.7 0-3.3-.4-4-.8l.6-2.1c.8.5 2.1.9 3.6.9 1.4-.1 1.3-1.1 1.3-1.5z"/></svg>` },
-    { name: "OpenAI", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.3 9.5c.2-.7.2-1.5-.1-2.2-.4-.9-1.2-1.5-2.2-1.7-.3-.6-.8-1.1-1.4-1.4-1-.5-2.2-.4-3.1.2-.5-.5-1.2-.8-1.9-.9-1.1-.1-2.1.4-2.8 1.2-.6-.3-1.3-.4-2-.3-1 .2-1.9.9-2.3 1.8-.7-.2-1.4-.1-2 .2-1 .5-1.7 1.5-1.9 2.6-.5.2-.9.5-1.2.9-.8.9-1 2.2-.6 3.3.2.7.6 1.3 1.1 1.7.1.6.4 1.1.8 1.5.8.8 2 1.2 3.1 1 .3.4.7.8 1.2 1 1 .5 2.2.4 3.1-.2.5.5 1.2.8 1.9.9 1.1.1 2.1-.4 2.8-1.2.6.3 1.3.4 2 .3 1-.2 1.9-.9 2.3-1.8.7.2 1.4.1 2-.2 1-.5 1.7-1.5 1.9-2.6.5-.2.9-.5 1.2-.9.8-.9 1-2.2.6-3.3-.2-.7-.6-1.3-1.1-1.7z"/></svg>` },
-    { name: "Vercel", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L24 21H0L12 1z"/></svg>` },
+    { name: "Python", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.25.18c.9 0 1.66.72 1.66 1.62v2.22h-1.66V2.36c0-.52-.39-.93-.89-.93h-4.3c-.5 0-.89.41-.89.93v2.04h1.7v1.72h-1.7V9c0 .52.39.93.89.93h4.3c.5 0 .89-.41.89-.93V6.78h1.66v2.22c0 .9-.76 1.62-1.66 1.62H9.95c-.9 0-1.66-.72-1.66-1.62V6.16H6.63V4.44h1.66V1.8c0-.9.76-1.62 1.66-1.62h4.3z"/></svg>` },
+    { name: "JavaScript", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 0h24v24H0V0zm20 17.8c-.8.5-1.8.8-2.9.8-2.2 0-3.4-1.2-3.4-3.4h2.4c0 .9.5 1.4 1.2 1.4.6 0 1-.3 1-.8 0-.5-.3-.7-.9-1l-.9-.4c-1.6-.7-2.4-1.5-2.4-3.2 0-2 1.5-3.2 3.4-3.2 1.2 0 2.2.4 2.8.9l-.7 1.8c-.5-.4-1.2-.7-2-.7-.7 0-1.1.4-1.1.9 0 .5.3.7.9.9l.7.3c1.9.8 2.6 1.7 2.6 3.4 0 2.1-1.4 3.4-3.4 3.4zm-7.6 0c-.8.5-1.8.8-2.9.8-2.2 0-3.4-1.2-3.4-3.4h2.4c0 .9.5 1.4 1.2 1.4.6 0 1-.3 1-.8v-7H13v10.1c0 1.2 0 2.1-.3 2.1z"/></svg>` },
+    { name: "TypeScript", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 0h24v24H0V0zm20 17.8c-.8.5-1.8.8-2.9.8-2.2 0-3.4-1.2-3.4-3.4h2.4c0 .9.5 1.4 1.2 1.4.6 0 1-.3 1-.8 0-.5-.3-.7-.9-1l-.9-.4c-1.6-.7-2.4-1.5-2.4-3.2 0-2 1.5-3.2 3.4-3.2 1.2 0 2.2.4 2.8.9l-.7 1.8c-.5-.4-1.2-.7-2-.7-.7 0-1.1.4-1.1.9 0 .5.3.7.9.9l.7.3c1.9.8 2.6 1.7 2.6 3.4 0 2.1-1.4 3.4-3.4 3.4zM9 8h6v2h-2v8H9v-8H7V8z"/></svg>` },
+    { name: "Go", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 10.5C2.5 6.4 5.9 3 10 3c3.6 0 6.6 2.5 7.3 5.9h-3.1C13.6 7.2 12 6 10 6c-2.5 0-4.5 2-4.5 4.5S7.5 15 10 15c2 0 3.6-1.2 4.2-2.9h-4.2V9.6h7.3v8c-1.3 2-3.6 3.4-6.3 3.4-4.1 0-7.5-3.4-7.5-7.5zm19 1.5v-2h-3v2h3zm0 4v-2h-3v2h3zm0-8V6h-3v2h3z"/></svg>` },
+    { name: "Rust", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>` },
+    { name: "C++", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 5.5c-3.6 0-6.5 2.9-6.5 6.5s2.9 6.5 6.5 6.5c2.7 0 5-1.6 6-4H12.4c-.6.8-1.7 1.4-2.9 1.4-2 0-3.6-1.6-3.6-3.6s1.6-3.6 3.6-3.6c1.2 0 2.3.6 2.9 1.4H15.5c-1-2.4-3.3-4-6-4zm9.5 4.5h-1.5v2H16v1.5h1.5v2H19v-1.5h2V12h-2V10zm-4.5 4.5H13v2h-1.5v1.5h1.5v2H14.5v-1.5h2v-1.5h-2v-2z"/></svg>` },
+    { name: "Java", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 19h16v2H2v-2zm14-11V6c0-2.2-1.8-4-4-4s-4 1.8-4 4v2h8zm-6 0V6c0-1.1.9-2 2-2s2 .9 2 2v2h-4zm11 1.5c-1.1 0-2 .9-2 2V12c0 2.2-1.8 4-4 4H5c-1.7 0-3-1.3-3-3v-1c0-.6.4-1 1-1s1 .4 1 1v1c0 .6.4 1 1 1h8c1.1 0 2-.9 2-2v-1.5c0-1.1.9-2 2-2s2 .9 2 2V12c0 .6-.4 1-1 1s-1-.4-1-1v-2.5c0-.6-.4-1-1-1z"/></svg>` },
+    { name: "React", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 8.5c-.8 0-1.5.7-1.5 1.5s.7 1.5 1.5 1.5 1.5-.7 1.5-1.5-.7-1.5-1.5-1.5zm6.7 1.5c0 .3-.1.6-.3.9-.9 1.4-2.8 2.7-4.9 3.5-.3.1-.7.2-1 .3-.3-.1-.7-.2-1-.3-2.1-.8-4-2.1-4.9-3.5-.2-.3-.3-.6-.3-.9s.1-.6.3-.9c.9-1.4 2.8-2.7 4.9-3.5.3-.1.7-.2 1-.3.3.1.7.2 1 .3 2.1.8 4 2.1 4.9 3.5.2.3.3.6.3.9z"/></svg>` },
   ];
 
   return (
     <section className="alumni-section" ref={ref}>
       <div className="alumni-container">
         
-        {/* UPPER ROW: Header + 3D-style dollar/currency symbol */}
+        {/* UPPER ROW: Header + 3D-style code tag bracket symbol */}
         <div className="alumni-header-row">
           <div className="alumni-header-left">
             <motion.h2 
@@ -630,8 +630,8 @@ function AlumniNetwork() {
               transition={{ duration: 0.5 }}
               className="alumni-h2"
             >
-              5,000+ Alumni. 50+ Global Tech Companies. <br />
-              <span className="alumni-highlight-text">Hired by the Industry's Best.</span>
+              15+ Supported Languages. Compile and Run. <br />
+              <span className="alumni-highlight-text">Compatible with Your Tech Stack.</span>
             </motion.h2>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
@@ -639,14 +639,14 @@ function AlumniNetwork() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="alumni-p"
             >
-              Top tech companies don't just recruit our users — they sponsor tournaments and trust our credentials. 
-              Our graduates are working at leading software companies globally, shaping what engineering looks like next.
+              Whether you write high-performance systems in Rust and C++ or build responsive frontend apps in JavaScript and React, 
+              BrightCode compiles, runs, and evaluates your code instantly with less than 30ms latency. No local environment configuration required.
             </motion.p>
           </div>
           
           <div className="alumni-header-right">
             <div className="currency-3d-wrap">
-              <div className="gold-currency-symbol">$</div>
+              <div className="gold-currency-symbol" style={{ fontSize: "4.5rem" }}>&lt;/&gt;</div>
               <div className="gold-currency-reflection" />
             </div>
           </div>
