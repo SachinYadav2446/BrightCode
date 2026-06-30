@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import {
@@ -729,7 +729,6 @@ function BentoFeatures() {
       </div>
     </section>
   );
-}
 }
 
 /* ────────────────────────────────────────────────────────────
