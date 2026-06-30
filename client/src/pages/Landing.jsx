@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+﻿import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import {
@@ -487,271 +487,180 @@ function BentoFeatures() {
   const inView = useInView(ref, { once: true, margin: "-80px" });
 
   const cardAnim = (delay = 0) => ({
-    initial: { opacity: 0, y: 24, scale: 0.97 },
-    animate: inView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 24, scale: 0.97 },
-    transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1], delay },
+    initial: { opacity: 0, y: 30, scale: 0.95 },
+    animate: inView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 30, scale: 0.95 },
+    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1], delay },
   });
+
+  const cardsData = [
+    {
+      stat: "2,500+",
+      label: "Algorithms & Quests",
+      desc: "Spanning dynamic programming, graphs, machine learning, and systems design.",
+      type: "image",
+      src: "/developers_coding.png",
+      alt: "Developers coding",
+      accent: "rust"
+    },
+    {
+      stat: "$10K+",
+      label: "Weekly Battle Prizes",
+      desc: "Won by developers in real-time speed coding arenas and faction tournaments.",
+      type: "image",
+      src: "/hackathon_team.png",
+      alt: "Hackathon tournament",
+      accent: "red"
+    },
+    {
+      stat: "15+",
+      label: "Supported Languages",
+      desc: "Fully optimized environment with auto-completion and instant runtimes.",
+      type: "ui-lang",
+      accent: "gold"
+    },
+    {
+      stat: "48K+",
+      label: "Global Engineers",
+      desc: "Collaborating, competing, scaling leaderboards, and building factions daily.",
+      type: "image",
+      src: "/global_community.png",
+      alt: "Global community",
+      accent: "sage"
+    },
+    {
+      stat: "99.8%",
+      label: "Assessment Integrity",
+      desc: "Trusted worldwide via screen tracking, AI behavior checks, and tab monitoring.",
+      type: "ui-proctor",
+      accent: "cream"
+    }
+  ];
 
   return (
     <section className="bento-section" id="features" ref={ref}>
       <div className="bento-section-header">
         <motion.div {...cardAnim(0)}>
-          <span className="section-pill">Powerful Features</span>
+          <span className="section-pill">Platform Stats</span>
           <h2 className="section-h2">Everything You Need to Dominate</h2>
-          <p className="section-sub">Six pillars that make BrightCode the platform serious engineers trust.</p>
+          <p className="section-sub">Empowering top-tier engineers to level up and verify their true skills.</p>
         </motion.div>
       </div>
 
-      <div className="bento-grid">
-
-        {/* ── CODE EDITOR ── LARGE LEFT */}
-        <motion.div {...cardAnim(0)} className="bento-card bento-editor accent-rust floating-card">
-          <div className="bc-glow-orb rust-orb" />
-          <div className="bcard-top">
-            <div className="bcard-icon-wrap rust"><Terminal size={16} /></div>
-            <span className="bcard-tag rust">Editor</span>
-            <div className="bc-live-status">
-              <span className="bc-status-dot green-dot" />
-              <span className="bc-status-text">Compiling…</span>
+      <div className="vertical-bento-row">
+        {cardsData.map((card, i) => (
+          <motion.div 
+            key={i} 
+            {...cardAnim(i * 0.08)} 
+            className={`vert-bento-card accent-${card.accent}`}
+          >
+            <div className="vert-bcard-top">
+              <span className="vert-bcard-stat">{card.stat}</span>
+              <h3 className="vert-bcard-title">{card.label}</h3>
+              <p className="vert-bcard-desc">{card.desc}</p>
             </div>
-          </div>
-          <h3 className="bcard-title">Smart Code Editor</h3>
-          <p className="bcard-desc">10+ languages · real-time syntax highlighting · instant test validation · AI hints</p>
-
-          <div className="bv-editor-langs">
-            {["Python","JavaScript","Go","Rust","C++","Java","TypeScript"].map((l,i) => (
-              <span key={l} className={`bv-lang-tab ${i===0 ? "active-rust" : ""}`}>{l}</span>
-            ))}
-          </div>
-
-          <div className="bv-mini-code">
-            <div className="bv-code-header">
-              <span className="bv-code-file">&#x1F4C4; solution.py</span>
-              <span className="bv-code-badge">&#10003; All 47 tests passed</span>
-            </div>
-            <div className="bv-code-body">
-              <div className="bv-code-line"><span className="bv-ln">1</span><span className="bv-mc-kw">def</span> <span className="bv-mc-fn">twoSum</span><span className="bv-mc-pl">(nums, target):</span></div>
-              <div className="bv-code-line"><span className="bv-ln">2</span><span className="bv-mc-in">  </span>seen <span className="bv-mc-op">=</span> <span className="bv-mc-br">{"{}"}</span></div>
-              <div className="bv-code-line"><span className="bv-ln">3</span><span className="bv-mc-in">  </span><span className="bv-mc-kw">for</span> i, n <span className="bv-mc-kw">in</span> <span className="bv-mc-fn">enumerate</span><span className="bv-mc-pl">(nums):</span></div>
-              <div className="bv-code-line"><span className="bv-ln">4</span><span className="bv-mc-in">    </span>comp <span className="bv-mc-op">=</span> target <span className="bv-mc-op">-</span> n</div>
-              <div className="bv-code-line"><span className="bv-ln">5</span><span className="bv-mc-in">    </span><span className="bv-mc-kw">if</span> comp <span className="bv-mc-kw">in</span> seen:</div>
-              <div className="bv-code-line"><span className="bv-ln">6</span><span className="bv-mc-in">      </span><span className="bv-mc-kw">return</span> [seen[comp], i]</div>
-              <div className="bv-code-line"><span className="bv-ln">7</span><span className="bv-mc-in">    </span>seen[n] <span className="bv-mc-op">=</span> i</div>
-            </div>
-          </div>
-
-          <div className="bv-editor-stats">
-            <div className="bv-estat"><span className="bv-estat-v orange">O(n)</span><span className="bv-estat-l">Time</span></div>
-            <div className="bv-estat"><span className="bv-estat-v orange">O(n)</span><span className="bv-estat-l">Space</span></div>
-            <div className="bv-estat"><span className="bv-estat-v green">98 ms</span><span className="bv-estat-l">Runtime</span></div>
-            <div className="bv-estat"><span className="bv-estat-v">Top 4%</span><span className="bv-estat-l">Rank</span></div>
-          </div>
-        </motion.div>
-
-        {/* ── BATTLE ARENA ── TOP CENTER */}
-        <motion.div {...cardAnim(0.08)} className="bento-card bento-battle accent-red floating-card">
-          <div className="bc-glow-orb red-orb" />
-          <div className="bcard-top">
-            <div className="bcard-icon-wrap red"><Trophy size={16} /></div>
-            <span className="bcard-live-badge"><span className="live-dot" />LIVE BATTLE</span>
-          </div>
-          <h3 className="bcard-title">Competitive Arenas</h3>
-          <p className="bcard-desc">Race against devs in real-time speed-coding battles. First to solve wins XP.</p>
-
-          <div className="bv-battle">
-            <div className="bv-battle-scoreboard">
-              <div className="bv-bs-player you">
-                <div className="bv-bs-avatar">S</div>
-                <div className="bv-bs-info">
-                  <span className="bv-bs-name">You</span>
-                  <span className="bv-bs-rank">&#x1F451; Rank #1,204</span>
-                </div>
-                <div className="bv-bs-score-col">
-                  <span className="bv-bs-pts red-text">3</span>
-                  <span className="bv-bs-sub">solved</span>
-                </div>
-              </div>
-              <div className="bv-vs-divider">VS</div>
-              <div className="bv-bs-player opp">
-                <div className="bv-bs-avatar opp-av">A</div>
-                <div className="bv-bs-info">
-                  <span className="bv-bs-name">algo_queen</span>
-                  <span className="bv-bs-rank">Rank #892</span>
-                </div>
-                <div className="bv-bs-score-col">
-                  <span className="bv-bs-pts">2</span>
-                  <span className="bv-bs-sub">solved</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bv-battle-progress">
-              <div className="bv-bp-meta">
-                <span>Problem 4 / 5</span>
-                <span className="bv-bp-timer">&#x23F1; 02:47 left</span>
-              </div>
-              <div className="bv-timer-bar"><div className="bv-timer-fill" /></div>
-            </div>
-
-            <div className="bv-battle-problems">
-              {["Two Sum","Valid Parens","Merge Lists","LRU Cache","Word Search"].map((p,i) => (
-                <span key={p} className={`bv-prob-chip ${i < 3 ? "solved" : i === 3 ? "active" : ""}`}>
-                  {i < 3 ? "✓" : i === 3 ? "●" : "○"} {p}
-                </span>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* ── PLATFORM STATS ── TOP RIGHT */}
-        <motion.div {...cardAnim(0.16)} className="bento-card bento-stats accent-gold floating-card">
-          <div className="bc-glow-orb gold-orb" />
-          <div className="bcard-top">
-            <div className="bcard-icon-wrap gold"><Activity size={16} /></div>
-            <span className="bcard-tag gold">Live Stats</span>
-          </div>
-          <h3 className="bcard-title">Growing Every Day</h3>
-
-          <div className="bv-stats-grid">
-            <div className="bv-stat-block">
-              <span className="bv-stat-num gold-text">48,291</span>
-              <span className="bv-stat-lbl">Active Users</span>
-              <span className="bv-stat-delta up">&#x2191; 12% this week</span>
-            </div>
-            <div className="bv-stat-block">
-              <span className="bv-stat-num">2,547</span>
-              <span className="bv-stat-lbl">Challenges</span>
-              <span className="bv-stat-delta up">&#x2191; 38 added</span>
-            </div>
-            <div className="bv-stat-block">
-              <span className="bv-stat-num red-text">1,024</span>
-              <span className="bv-stat-lbl">Live Battles</span>
-              <span className="bv-stat-delta live">&#x25CF; Right now</span>
-            </div>
-            <div className="bv-stat-block">
-              <span className="bv-stat-num sage-text">99.8%</span>
-              <span className="bv-stat-lbl">Uptime SLA</span>
-              <span className="bv-stat-delta up">30-day avg</span>
-            </div>
-          </div>
-
-          <div className="bv-activity-bars-wrap">
-            <span className="bv-ab-title">Weekly Submissions</span>
-            <div className="bv-activity-bars">
-              {[40,65,50,80,72,95,88].map((h,i) => (
-                <div key={i} className="bv-ab-col">
-                  <div className="bv-ab-bar" style={{ height: `${h}%` }} />
-                  <span className="bv-ab-day">{["M","T","W","T","F","S","S"][i]}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* ── WARP DRIVE ── BOTTOM LEFT */}
-        <motion.div {...cardAnim(0.24)} className="bento-card bento-warp accent-sage floating-card">
-          <div className="bc-glow-orb sage-orb" />
-          <div className="bcard-top">
-            <div className="bcard-icon-wrap sage"><GitBranch size={16} /></div>
-            <span className="bcard-tag sage">Version Control</span>
-          </div>
-          <h3 className="bcard-title">Warp Drive</h3>
-          <p className="bcard-desc">Instant code snapshots. Roll back, compare or restore any checkpoint in one click.</p>
-
-          <div className="bv-timeline">
-            {[
-              { time: "09:12", label: "Initial solution", sub: "O(n\xB2) brute force", done: true },
-              { time: "09:24", label: "HashMap optimization", sub: "O(n) — 60% faster", done: true },
-              { time: "09:31", label: "Edge cases fixed", sub: "Passes all 47 tests", done: true, current: true },
-            ].map((cp, i) => (
-              <div key={i} className={`bv-tl-node ${cp.done ? "done" : ""} ${cp.current ? "current" : ""}`}>
-                <div className="bv-tl-dot" />
-                <div className="bv-tl-body">
-                  <div className="bv-tl-top">
-                    <span className="bv-tl-time">{cp.time}</span>
-                    <span className="bv-tl-label">{cp.label}</span>
-                    {cp.current && <span className="bv-tl-head-badge">HEAD</span>}
+            
+            <div className="vert-bcard-visual">
+              {card.type === "image" && (
+                <img src={card.src} alt={card.alt} className="vert-bcard-img" />
+              )}
+              
+              {card.type === "ui-lang" && (
+                <div className="vert-ui-lang-wrap">
+                  <div className="vert-lang-chips">
+                    {["Python", "JS", "Go", "Rust", "C++", "Java"].map((l, idx) => (
+                      <span key={l} className={`vert-lang-chip ${idx === 0 ? "active" : ""}`}>
+                        {l}
+                      </span>
+                    ))}
                   </div>
-                  <span className="bv-tl-sub">{cp.sub}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* ── SECURE PROCTORING ── BOTTOM CENTER */}
-        <motion.div {...cardAnim(0.32)} className="bento-card bento-proctor accent-cream floating-card">
-          <div className="bc-glow-orb cream-orb" />
-          <div className="bcard-top">
-            <div className="bcard-icon-wrap cream"><Shield size={16} /></div>
-            <span className="bcard-tag cream">Security</span>
-          </div>
-          <h3 className="bcard-title">Secure Proctoring</h3>
-          <p className="bcard-desc">Tab tracking, screen monitoring & real-time violation detection for trusted assessments.</p>
-
-          <div className="bv-proctor-wrap">
-            <div className="bv-proctor-ring">
-              <svg viewBox="0 0 80 80" className="bv-ring-svg">
-                <circle cx="40" cy="40" r="32" className="bv-ring-bg" />
-                <circle cx="40" cy="40" r="32" className="bv-ring-fg"
-                  strokeDasharray="201" strokeDashoffset="4" />
-              </svg>
-              <div className="bv-ring-inner">
-                <span className="bv-ring-pct">98%</span>
-                <span className="bv-ring-lbl">Integrity</span>
-              </div>
-            </div>
-            <div className="bv-proctor-metrics">
-              {[
-                { dot: "green-dot", label: "Active Sessions", val: "142" },
-                { dot: "yellow-dot", label: "Warnings", val: "7" },
-                { dot: "red-dot2", label: "Violations", val: "2" },
-                { dot: "blue-dot", label: "Tab Switches", val: "14" },
-              ].map(m => (
-                <div key={m.label} className="bv-pm-row">
-                  <span className={`bv-pm-dot ${m.dot}`} />
-                  <span className="bv-pm-key">{m.label}</span>
-                  <span className="bv-pm-val">{m.val}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* ── FACTIONS ── BOTTOM RIGHT */}
-        <motion.div {...cardAnim(0.4)} className="bento-card bento-collab accent-gold floating-card">
-          <div className="bc-glow-orb purple-orb" />
-          <div className="bcard-top">
-            <div className="bcard-icon-wrap gold"><Users size={16} /></div>
-            <span className="bcard-tag gold">Community</span>
-          </div>
-          <h3 className="bcard-title">Factions &amp; Team Wars</h3>
-          <p className="bcard-desc">Join a faction, compete in weekly wars, and climb the global leaderboard as a team.</p>
-
-          <div className="bv-factions">
-            {[
-              { rank: 1, name: "Iron Wolves",  members: 284, xp: "84.2K", color: "#ef4444", pct: 84, trend: "+2.1K" },
-              { rank: 2, name: "Code Phoenix", members: 219, xp: "71.8K", color: "#8b5cf6", pct: 72, trend: "+1.7K" },
-              { rank: 3, name: "Silent Hash",  members: 196, xp: "68.1K", color: "#06b6d4", pct: 68, trend: "+980" },
-              { rank: 4, name: "ByteStorm",    members: 178, xp: "55.4K", color: "#f59e0b", pct: 55, trend: "+640" },
-            ].map(f => (
-              <div key={f.name} className="bv-faction-row">
-                <span className="bv-faction-rank">#{f.rank}</span>
-                <span className="bv-faction-dot" style={{ background: f.color }} />
-                <div className="bv-faction-mid">
-                  <span className="bv-faction-name">{f.name}</span>
-                  <div className="bv-faction-bar-track">
-                    <div className="bv-faction-bar-fill" style={{ width: `${f.pct}%`, background: f.color }} />
+                  <div className="vert-mini-console">
+                    <span className="c-green">✓</span> solve(nums) <span className="c-gray">in 4ms</span>
                   </div>
                 </div>
-                <div className="bv-faction-right">
-                  <span className="bv-faction-xp">{f.xp}</span>
-                  <span className="bv-faction-trend">{f.trend}</span>
+              )}
+              
+              {card.type === "ui-proctor" && (
+                <div className="vert-ui-proctor-wrap">
+                  <div className="vert-proctor-circle">
+                    <svg viewBox="0 0 36 36" className="vert-circular-chart">
+                      <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      <path className="circle-fg" strokeDasharray="98, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div className="vert-percentage">98%</div>
+                  </div>
+                  <div className="vert-proctor-tag">AI SECURE</div>
                 </div>
-              </div>
-            ))}
+              )}
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+   ALUMNI & PARTNERS BAND
+──────────────────────────────────────────────────────────── */
+function AlumniNetwork() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+
+  const logos = [
+    { name: "Google", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 1 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.986 0-.746-.08-1.32-.176-1.886H12.24z"/></svg>` },
+    { name: "Microsoft", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 1h10v10H1V1zm12 0h10v10H13V1zM1 13h10v10H1v-10zm12 0h10v10H13v-10z"/></svg>` },
+    { name: "Meta", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.2 3c-1.3 0-2.5.5-3.4 1.4L15.3 7H8.7L6.2 4.4c-.9-.9-2.1-1.4-3.4-1.4C1.2 3 0 4.2 0 5.8V18.2C0 19.8 1.2 21 2.8 21c1.3 0 2.5-.5 3.4-1.4l2.5-2.6h6.6l2.5 2.6c.9.9 2.1 1.4 3.4 1.4 1.6 0 2.8-1.2 2.8-2.8V5.8c0-1.6-1.2-2.8-2.8-2.8zm-7.6 11.2H10.4L8 11.8h8l-2.4 2.4z"/></svg>` },
+    { name: "Netflix", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5.6 22H2.8V2h2.8v20zm12.8 0H15.6V2h2.8v20zm-6.4 0H9.2V2h2.8v20z"/></svg>` },
+    { name: "Amazon", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 14.5c0 .3-.2.5-.5.5h-1c-.3 0-.5-.2-.5-.5v-4c0-.3.2-.5.5-.5h1c.3 0 .5.2.5.5v4zm0-6c0 .3-.2.5-.5.5h-1c-.3 0-.5-.2-.5-.5v-1c0-.3.2-.5.5-.5h1c.3 0 .5.2.5.5v1z"/></svg>` },
+    { name: "Stripe", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.9 11.9c0-1.1-.9-1.5-2.2-1.5-1.5 0-2.7.5-3.3.9l-.6-2.1c.9-.5 2.5-1.1 4.5-1.1 3 0 4.9 1.4 4.9 4.1 0 3.2-2.7 4.2-4.8 4.2-1.7 0-3.3-.4-4-.8l.6-2.1c.8.5 2.1.9 3.6.9 1.4-.1 1.3-1.1 1.3-1.5z"/></svg>` },
+    { name: "OpenAI", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.3 9.5c.2-.7.2-1.5-.1-2.2-.4-.9-1.2-1.5-2.2-1.7-.3-.6-.8-1.1-1.4-1.4-1-.5-2.2-.4-3.1.2-.5-.5-1.2-.8-1.9-.9-1.1-.1-2.1.4-2.8 1.2-.6-.3-1.3-.4-2-.3-1 .2-1.9.9-2.3 1.8-.7-.2-1.4-.1-2 .2-1 .5-1.7 1.5-1.9 2.6-.5.2-.9.5-1.2.9-.8.9-1 2.2-.6 3.3.2.7.6 1.3 1.1 1.7.1.6.4 1.1.8 1.5.8.8 2 1.2 3.1 1 .3.4.7.8 1.2 1 1 .5 2.2.4 3.1-.2.5.5 1.2.8 1.9.9 1.1.1 2.1-.4 2.8-1.2.6.3 1.3.4 2 .3 1-.2 1.9-.9 2.3-1.8.7.2 1.4.1 2-.2 1-.5 1.7-1.5 1.9-2.6.5-.2.9-.5 1.2-.9.8-.9 1-2.2.6-3.3-.2-.7-.6-1.3-1.1-1.7z"/></svg>` },
+    { name: "Vercel", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L24 21H0L12 1z"/></svg>` },
+  ];
+
+  return (
+    <section className="alumni-section" ref={ref}>
+      <div className="alumni-container">
+        
+        {/* UPPER ROW: Header + 3D-style dollar/currency symbol */}
+        <div className="alumni-header-row">
+          <div className="alumni-header-left">
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.5 }}
+              className="alumni-h2"
+            >
+              5,000+ Alumni. 50+ Global Tech Companies. <br />
+              <span className="alumni-highlight-text">Hired by the Industry's Best.</span>
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="alumni-p"
+            >
+              Top tech companies don't just recruit our users — they sponsor tournaments and trust our credentials. 
+              Our graduates are working at leading software companies globally, shaping what engineering looks like next.
+            </motion.p>
           </div>
-        </motion.div>
+          
+          <div className="alumni-header-right">
+            <div className="currency-3d-wrap">
+              <div className="gold-currency-symbol">$</div>
+              <div className="gold-currency-reflection" />
+            </div>
+          </div>
+        </div>
+
+        {/* LOWER ROW: Grayscale Partners Logo Grid */}
+        <div className="alumni-logos-grid">
+          {logos.map((logo, idx) => (
+            <div key={idx} className="alumni-logo-item" title={logo.name}>
+              <div className="logo-svg-wrap" dangerouslySetInnerHTML={{ __html: logo.svg }} />
+              <span className="logo-name">{logo.name}</span>
+            </div>
+          ))}
+        </div>
 
       </div>
     </section>
@@ -1507,6 +1416,7 @@ export default function Landing() {
       <HeroSection handleAuth={handleAuth} handleHub={handleHub} />
       <Ticker />
       <BentoFeatures />
+      <AlumniNetwork />
       <HowItWorks />
       <ModulesSection />
       <LeaderboardSection data={leaderboard} loading={lbLoading} handleAuth={handleAuth} />
