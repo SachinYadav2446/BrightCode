@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import API_URL from "../config";
 import CodeBrightLogo from "../components/CodeBrightLogo";
+import "../components/Navbar.css";
 import "./Landing.css";
 
 /* ────────────────────────────────────────────────────────────
@@ -65,53 +66,79 @@ function AnimCounter({ target, suffix = "", duration = 2000 }) {
 ──────────────────────────────────────────────────────────── */
 function Nav({ handleAuth }) {
   const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", fn, { passive: true });
-    return () => window.removeEventListener("scroll", fn);
-  }, []);
 
   return (
-    <nav className={`lnav ${scrolled ? "lnav-scrolled" : ""}`}>
-      <div className="lnav-inner">
-        <a className="lnav-logo" href="#" onClick={e => e.preventDefault()}>
-          <CodeBrightLogo size="small" />
-        </a>
-        <div className="lnav-links">
-          {["Features","Workflow","Modules","Arena"].map(l => (
-            <a key={l} href={`#${l.toLowerCase()}`} className="lnav-link">{l}</a>
-          ))}
-        </div>
-        <div className="lnav-ctas">
-          <button className="lnav-sign-in" onClick={() => handleAuth("login")}>Sign In</button>
-          <button className="lnav-get-started" onClick={() => handleAuth("register")}>Get Started</button>
-        </div>
-        <button className="lnav-burger" onClick={() => setOpen(p => !p)}>
-          {open ? <X size={22}/> : <Menu size={22}/>}
-        </button>
-      </div>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            className="lnav-drawer"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {["Features","Workflow","Modules","Arena"].map(l => (
-              <a key={l} href={`#${l.toLowerCase()}`} className="lnav-drawer-link" onClick={() => setOpen(false)}>{l}</a>
+    <>
+      <nav className="floating-nav">
+        <div className="nav-container">
+          {/* LEFT: Logo */}
+          <div className="nav-left">
+            <a className="lnav-logo" href="#" onClick={e => e.preventDefault()}>
+              <CodeBrightLogo size="small" />
+            </a>
+          </div>
+
+          {/* CENTER: Nav links (styled identically to Home/Library/etc but pointing to Landing hashes) */}
+          <div className="nav-center">
+            {["Features", "Workflow", "Modules", "Arena"].map(l => (
+              <a key={l} href={`#${l.toLowerCase()}`} className="nav-link-hover">
+                {l}
+              </a>
             ))}
-            <div className="lnav-drawer-ctas">
-              <button className="lnav-sign-in" onClick={() => { handleAuth("login"); setOpen(false); }}>Sign In</button>
-              <button className="lnav-get-started" onClick={() => { handleAuth("register"); setOpen(false); }}>Get Started</button>
+          </div>
+
+          {/* RIGHT: Actions / CTAs */}
+          <div className="nav-right">
+            <button 
+              className="nav-link-hover" 
+              onClick={() => handleAuth("login")}
+              style={{ background: "none", border: "none", cursor: "pointer", marginRight: "4px" }}
+            >
+              Sign In
+            </button>
+            <button className="shiny-btn" onClick={() => handleAuth("register")}>
+              Get Started
+            </button>
+
+            {/* Mobile Hamburger toggle */}
+            <button
+              className="nav-mobile-toggle"
+              onClick={() => setOpen(!open)}
+              aria-label="Toggle menu"
+            >
+              {open ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile menu dropdown drawer */}
+        {open && (
+          <div className="nav-mobile-menu">
+            {["Features", "Workflow", "Modules", "Arena"].map(l => (
+              <a key={l} href={`#${l.toLowerCase()}`} className="nav-mobile-link" onClick={() => setOpen(false)}>
+                {l}
+              </a>
+            ))}
+            <div style={{ display: "flex", gap: "8px", marginTop: "12px", padding: "0 16px" }}>
+              <button 
+                className="nav-mobile-link" 
+                onClick={() => { handleAuth("login"); setOpen(false); }}
+                style={{ flex: 1, justifyContent: "center", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer" }}
+              >
+                Sign In
+              </button>
+              <button 
+                className="shiny-btn" 
+                onClick={() => { handleAuth("register"); setOpen(false); }}
+                style={{ flex: 1, justifyContent: "center" }}
+              >
+                Get Started
+              </button>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
-    </nav>
+      </nav>
+    </>
   );
 }
 
