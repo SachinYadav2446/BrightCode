@@ -1,4 +1,4 @@
-﻿/* ══════════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════════
    BRIGHTCODE — GROUND-ZERO LANDING PAGE
    Design: Glassmorphism + Bento Grid + Claymorphism + Brutalism
    ══════════════════════════════════════════════════════════════════ */
@@ -101,75 +101,83 @@
    BUTTONS
 ──────────────────────────────────────────────────────────── */
 /* Claymorphism primary */
+/* Claymorphism primary */
 .btn-clay {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: linear-gradient(145deg, #ef4444, #dc2626);
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   color: #fff;
   border: none;
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 14px 28px;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 700;
   font-family: var(--font);
   cursor: pointer;
-  box-shadow:
-    0 6px 0 #991b1b,
-    0 10px 24px rgba(239, 68, 68, 0.28);
-  transition: all 0.12s ease;
+  box-shadow: 
+    0 4px 16px rgba(239, 68, 68, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
   position: relative;
 }
 .btn-clay:hover {
-  transform: translateY(2px);
-  box-shadow:
-    0 4px 0 #991b1b,
-    0 6px 16px rgba(239, 68, 68, 0.28);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 24px rgba(239, 68, 68, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .btn-clay:active {
-  transform: translateY(6px);
-  box-shadow:
-    0 0px 0 #991b1b,
-    0 2px 8px rgba(239, 68, 68, 0.2);
+  transform: translateY(0);
+  box-shadow: 
+    0 2px 8px rgba(239, 68, 68, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
-.btn-clay-large { padding: 16px 36px; font-size: 1.05rem; border-radius: 16px; }
+.btn-clay-large { padding: 16px 36px; font-size: 1.02rem; border-radius: 12px; }
 
 /* Ghost */
 .btn-ghost-hero {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: #ffffff;
-  border: 1px solid #ffffff;
-  color: #111116;
-  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f4f4f5;
+  border-radius: 12px;
   padding: 14px 24px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 0.92rem;
+  font-weight: 700;
   font-family: var(--font);
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.12);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 .btn-ghost-hero:hover {
-  background: #f4f4f5;
-  border-color: #f4f4f5;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(255, 255, 255, 0.18);
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.btn-ghost-hero:active {
+  transform: translateY(0);
 }
 .btn-ghost-play {
   width: 28px; height: 28px;
   background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.25);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--red);
+  color: #f87171;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.1);
 }
-.btn-ghost-large { padding: 16px 28px; font-size: 1.05rem; border-radius: 16px; }
+.btn-ghost-large { padding: 16px 28px; font-size: 1.02rem; border-radius: 12px; }
 
 /* ────────────────────────────────────────────────────────────
    FLOATING NAV
