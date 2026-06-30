@@ -25,6 +25,18 @@
   --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Level colors */
+  --lvl-grandmaster: #ef4444;
+  --lvl-grandmaster-glow: rgba(239,68,68,0.5);
+  --lvl-expert: #a855f7;
+  --lvl-expert-glow: rgba(168,85,247,0.5);
+  --lvl-advanced: #3b82f6;
+  --lvl-advanced-glow: rgba(59,130,246,0.5);
+  --lvl-apprentice: #22c55e;
+  --lvl-apprentice-glow: rgba(34,197,94,0.5);
+  --lvl-novice: #94a3b8;
+  --lvl-novice-glow: rgba(148,163,184,0.3);
 }
 
 
@@ -1105,6 +1117,18 @@ a {
   --cp-glow-cyan: 0 0 8px #00d9ff, 0 0 20px rgba(0,217,255,0.4);
   --cp-glow-pink: 0 0 8px #ff0080, 0 0 20px rgba(255,0,128,0.4);
   --cp-glow-yellow: 0 0 8px #f5ff00, 0 0 20px rgba(245,255,0,0.4);
+
+  /* Cyberpunk level colors */
+  --lvl-grandmaster: var(--cp-pink);
+  --lvl-grandmaster-glow: rgba(255,0,128,0.4);
+  --lvl-expert: var(--cp-purple);
+  --lvl-expert-glow: rgba(157,0,255,0.4);
+  --lvl-advanced: var(--cp-cyan);
+  --lvl-advanced-glow: rgba(0,217,255,0.4);
+  --lvl-apprentice: var(--cp-yellow);
+  --lvl-apprentice-glow: rgba(245,255,0,0.4);
+  --lvl-novice: #55627a;
+  --lvl-novice-glow: rgba(85,98,122,0.2);
 }
 
 /* ── Body: deep black + scanlines + grid ── */

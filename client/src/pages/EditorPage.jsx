@@ -1699,36 +1699,57 @@ const EditorPage = () => {
     // Get local media stream (audio only)
     const getLocalStream = async () => {
         console.log(`[WebRTC] getLocalStream called`);
+
+        // If stream already exists and is active, return it directly
+        if (localStreamRef.current && localStreamRef.current.active) {
+            return localStreamRef.current;
+        }
+
+        // Avoid concurrent acquisition
         if (localStreamPromiseRef.current) {
             console.log(`[WebRTC] Returning existing local stream promise`);
             return localStreamPromiseRef.current;
         }
 
-        // Note: browsers require HTTPS in production for getUserMedia.
-        // We allow it to proceed and let the browser handle permission errors.
+        // Browsers require HTTPS (or localhost) for getUserMedia
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            toast.error('Your browser does not support microphone access.', { duration: 5000 });
+            toast.error(
+                window.location.protocol === 'http:' && window.location.hostname !== 'localhost'
+                    ? 'Microphone requires HTTPS. Please use a secure connection.'
+                    : 'Your browser does not support microphone access.',
+                { duration: 6000 }
+            );
+            setMicPermission('denied');
             return null;
         }
 
         const acquire = async () => {
             try {
                 console.log(`[WebRTC - AUDIO DEBUG] Requesting user media... (audio: true)`);
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                    }
+                });
                 console.log(`[WebRTC - AUDIO DEBUG] Got local stream:`, stream);
                 console.log(`[WebRTC - AUDIO DEBUG] Local audio tracks:`, stream.getAudioTracks());
-                console.log(`[WebRTC - AUDIO DEBUG] Local audio track enabled state:`, stream.getAudioTracks()[0]?.enabled);
 
                 localStreamRef.current = stream;
                 setLocalStream(stream);
+                setMicPermission('granted');
                 console.log('[WebRTC] getLocalStream: set localStream, tracks:', stream.getTracks());
                 return stream;
             } catch (err) {
                 console.error('[WebRTC - AUDIO DEBUG] Media access error:', err);
-                if (err.name === 'NotAllowedError') {
-                    toast.error('Permission denied. Please allow microphone in browser settings.', { duration: 5000 });
-                } else if (err.name === 'NotFoundError') {
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    setMicPermission('denied');
+                    toast.error('Microphone blocked. Click the lock icon in your address bar to allow access.', { duration: 7000 });
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
                     toast.error('No microphone found. Please connect a mic and try again.', { duration: 5000 });
+                } else if (err.name === 'NotReadableError') {
+                    toast.error('Microphone is in use by another app. Please close other apps and try again.', { duration: 6000 });
                 } else {
                     toast.error('Could not access microphone: ' + err.message, { duration: 5000 });
                 }
@@ -1742,25 +1763,13 @@ const EditorPage = () => {
         return localStreamPromiseRef.current;
     };
 
-    // Auto-join the call when workspace loads
+    // Auto-join the WebRTC signaling room (WITHOUT requesting mic)
+    // Mic is only acquired when user explicitly clicks the mic/unmute button
     const autoJoinCall = async () => {
         console.log(`[WebRTC] autoJoinCall. myId=${myId}, clients.length=${clients.length}`);
         if (!myId || !socketRef.current) return;
 
-        const stream = await getLocalStream();
-        if (!stream) {
-            setIsCallActive(true);
-            return;
-        }
-
-        // Start muted — matches the default state flags (isMuted=true)
-        console.log(`[WebRTC - AUDIO DEBUG] autoJoinCall: Disabling audio tracks initially`);
-        stream.getAudioTracks().forEach(t => {
-            console.log(`[WebRTC - AUDIO DEBUG] Setting audio track ${t.id} enabled: false`);
-            t.enabled = false;
-        });
-
-        console.log(`[WebRTC - AUDIO DEBUG] autoJoinCall: Setting isCallActive=true, isMuted=true`);
+        // Mark as call-ready (joined signaling) but NOT acquiring mic yet
         setIsCallActive(true);
         setIsMuted(true);
 
@@ -1771,22 +1780,35 @@ const EditorPage = () => {
             username: user?.username
         });
 
-        // Connect to all existing participants — only if we are the higher socket ID (avoid glare)
+        // Prepare participant slots for existing clients (no stream yet)
         const otherClients = clients.filter(c => c.id !== myId);
-        console.log(`[WebRTC] Connecting to ${otherClients.length} existing peers (I am ${myId})`);
+        console.log(`[WebRTC] Preparing slots for ${otherClients.length} existing peers`);
+        otherClients.forEach(client => {
+            setCallParticipants(prev => ({
+                ...prev,
+                [client.id]: prev[client.id] || { username: client.username, stream: null, isMuted: true }
+            }));
+        });
+    };
+
+    // Actually acquire mic and establish peer connections
+    // Called when user explicitly enables the mic for the first time
+    const acquireMicAndConnect = async () => {
+        console.log(`[WebRTC] acquireMicAndConnect called`);
+        const stream = await getLocalStream();
+        if (!stream) return false;
+
+        // Disable audio by default (user will unmute via toggle)
+        stream.getAudioTracks().forEach(t => { t.enabled = false; });
+
+        // Now initiate connections to existing peers
+        const otherClients = clients.filter(c => c.id !== myId);
         for (const client of otherClients) {
             if (myId > client.id) {
-                // I have the higher ID — I initiate
                 await initiateCallToPeer(client.id, client.username);
-            } else {
-                // I have the lower ID — the other peer will initiate; just prepare participant slot
-                console.log(`[WebRTC] I am polite peer for ${client.id}, waiting for their offer`);
-                setCallParticipants(prev => ({
-                    ...prev,
-                    [client.id]: prev[client.id] || { username: client.username, stream: null, isMuted: true }
-                }));
             }
         }
+        return true;
     };
 
     // Keep peer connections updated as clients list or local stream changes
@@ -1970,18 +1992,27 @@ const EditorPage = () => {
     const toggleMute = async () => {
         console.log(`[WebRTC - AUDIO DEBUG] toggleMute called. Current isMuted: ${isMuted}`);
 
-        if (!localStreamRef.current) {
-            // No stream yet — acquire one first, then unmute
-            console.log(`[WebRTC - AUDIO DEBUG] No local stream, acquiring one first...`);
+        if (!localStreamRef.current || !localStreamRef.current.active) {
+            // No stream yet — first time clicking mic, acquire it and connect
+            console.log(`[WebRTC - AUDIO DEBUG] No local stream — acquiring mic for first time`);
             const stream = await getLocalStream();
-            if (!stream) return;
-            // Start audio enabled
+            if (!stream) {
+                // Permission denied or device not found — stay muted, show info
+                return;
+            }
+
+            // Enable audio immediately (user clicked unmute)
             stream.getAudioTracks().forEach(t => { t.enabled = true; });
             setIsMuted(false);
-            setIsCallActive(true);
-            socketRef.current?.emit('video-call-join', { roomId, username: user?.username });
+
+            // Ensure we're in the signaling room
+            if (!isCallActive) {
+                setIsCallActive(true);
+                socketRef.current?.emit('video-call-join', { roomId, username: user?.username });
+            }
             socketRef.current?.emit('video-call-state', { roomId, isMuted: false, username: user?.username });
-            // Connect to any peers we aren't connected to yet
+
+            // Now establish peer connections (stream is ready)
             await ensurePeerConnections();
             return;
         }
@@ -1990,37 +2021,52 @@ const EditorPage = () => {
         console.log(`[WebRTC - AUDIO DEBUG] Local audio tracks:`, audioTracks);
         
         if (audioTracks.length === 0) {
-            // Stream exists but no audio track — try to add one
+            // Stream exists but lost its audio track — request a new mic track
             try {
-                console.log(`[WebRTC - AUDIO DEBUG] No audio tracks in existing stream, requesting mic...`);
-                const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                console.log(`[WebRTC - AUDIO DEBUG] No audio tracks — requesting new mic track`);
+                const micStream = await navigator.mediaDevices.getUserMedia({
+                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+                });
                 const micTrack = micStream.getAudioTracks()[0];
                 localStreamRef.current.addTrack(micTrack);
                 setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
-                // Replace on existing peer connections
+
+                // Replace track on all active peer connections
                 for (const [peerId, pc] of Object.entries(peerConnectionsRef.current)) {
-                    const transceivers = pc.getTransceivers();
-                    if (transceivers[0]?.sender) {
-                        await transceivers[0].sender.replaceTrack(micTrack);
-                        transceivers[0].direction = 'sendrecv';
+                    const senders = pc.getSenders();
+                    const audioSender = senders.find(s => s.track?.kind === 'audio' || !s.track);
+                    if (audioSender) {
+                        await audioSender.replaceTrack(micTrack);
+                    } else {
+                        const transceivers = pc.getTransceivers();
+                        if (transceivers[0]?.sender) {
+                            await transceivers[0].sender.replaceTrack(micTrack);
+                            transceivers[0].direction = 'sendrecv';
+                        }
+                        await renegotiateWithPeer(peerId, pc);
                     }
-                    await renegotiateWithPeer(peerId, pc);
                 }
                 micTrack.enabled = true;
                 setIsMuted(false);
+                setMicPermission('granted');
                 socketRef.current?.emit('video-call-state', { roomId, isMuted: false, username: user?.username });
             } catch (err) {
                 console.error('[WebRTC - AUDIO DEBUG] Failed to acquire mic:', err);
-                toast.error('Could not access microphone. Please allow mic permissions.');
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    setMicPermission('denied');
+                    toast.error('Microphone blocked. Click the lock icon in your address bar to allow access.', { duration: 7000 });
+                } else {
+                    toast.error('Could not access microphone. Please check your device settings.', { duration: 5000 });
+                }
             }
             return;
         }
 
+        // Normal toggle: stream and tracks exist
         const newMuted = !isMuted;
         audioTracks.forEach(t => {
             console.log(`[WebRTC - AUDIO DEBUG] Setting audio track ${t.id} enabled: ${!newMuted}`);
             t.enabled = !newMuted;
-            console.log(`[WebRTC - AUDIO DEBUG] Audio track ${t.id} enabled state:`, t.enabled);
         });
 
         setIsMuted(newMuted);

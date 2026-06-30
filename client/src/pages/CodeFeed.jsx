@@ -50,11 +50,11 @@ const timeAgo = (ts) => {
 };
 
 const getLevel = (xp) => {
-    if (xp >= 10000) return { label: 'Grandmaster', color: '#ef4444' };
-    if (xp >= 5000)  return { label: 'Expert',      color: '#a855f7' };
-    if (xp >= 2000)  return { label: 'Advanced',    color: '#3b82f6' };
-    if (xp >= 500)   return { label: 'Apprentice',  color: '#22c55e' };
-    return                  { label: 'Novice',      color: '#6b7280' };
+    if (xp >= 10000) return { label: 'Grandmaster', color: 'var(--lvl-grandmaster)' };
+    if (xp >= 5000)  return { label: 'Expert',      color: 'var(--lvl-expert)' };
+    if (xp >= 2000)  return { label: 'Advanced',    color: 'var(--lvl-advanced)' };
+    if (xp >= 500)   return { label: 'Apprentice',  color: 'var(--lvl-apprentice)' };
+    return                  { label: 'Novice',      color: 'var(--lvl-novice)' };
 };
 
 // Parse hashtags from text

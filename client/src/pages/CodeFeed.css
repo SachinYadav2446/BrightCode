@@ -37,14 +37,37 @@
     --df-violet:      #a78bfa;
 
     /* Post type accent colors */
-    --type-til:       #22c55e;
-    --type-roast:     #f97316;
-    --type-challenge: #a855f7;
-    --type-flex:      #c9a84c;
-    --type-ask:       #38bdf8;
+    --type-til:           #22c55e;
+    --type-til-dim:       rgba(34,197,94,0.1);
+    --type-roast:         #f97316;
+    --type-roast-dim:     rgba(249,115,22,0.1);
+    --type-challenge:     #a855f7;
+    --type-challenge-dim: rgba(168,85,247,0.1);
+    --type-flex:          #c9a84c;
+    --type-flex-dim:      rgba(201,168,76,0.1);
+    --type-ask:           #38bdf8;
+    --type-ask-dim:       rgba(56,189,248,0.1);
 
     --font:      'Inter', -apple-system, system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+}
+
+/* Cyberpunk overrides for Post types in CodeFeed */
+.theme-cyberpunk {
+    --type-til:           #00d9ff; /* Cyber cyan */
+    --type-til-dim:       rgba(0,217,255,0.15);
+    --type-roast:         #ff0080; /* Cyber pink */
+    --type-roast-dim:     rgba(255,0,128,0.15);
+    --type-challenge:     #9d00ff; /* Cyber purple */
+    --type-challenge-dim: rgba(157,0,255,0.15);
+    --type-flex:          #f5ff00; /* Cyber yellow */
+    --type-flex-dim:      rgba(245,255,0,0.15);
+    --type-ask:           #00d9ff; /* Cyber cyan */
+    --type-ask-dim:       rgba(0,217,255,0.15);
+
+    --df-gold:            #f5ff00; /* Use yellow instead of gold */
+    --df-muted:           #55627a;
+    --df-border:          rgba(0, 217, 255, 0.15);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
