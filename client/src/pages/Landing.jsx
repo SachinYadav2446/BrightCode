@@ -74,7 +74,7 @@ function Nav({ handleAuth }) {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
 
-      const sections = ["features", "workflow", "modules", "arena"];
+      const sections = ["features", "modules", "arena"];
       const scrollPos = window.scrollY + 200;
 
       for (const sec of sections) {
@@ -106,7 +106,7 @@ function Nav({ handleAuth }) {
 
           {/* CENTER: Nav links (styled identically to Home/Library/etc but pointing to Landing hashes) */}
           <div className="nav-center">
-            {["Features", "Workflow", "Modules", "Arena"].map(l => {
+            {["Features", "Modules", "Arena"].map(l => {
               const id = l.toLowerCase();
               const isActive = activeLink === id;
               return (
@@ -567,13 +567,13 @@ function BentoFeatures() {
 }
 
 /* ────────────────────────────────────────────────────────────
-   ALUMNI & PARTNERS BAND
+   ALUMNI & PARTNERS BAND (Redesigned Light Theme Stack Marquee)
 ──────────────────────────────────────────────────────────── */
 function AlumniNetwork() {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
 
-  const logos = [
+  const row1Logos = [
     { name: "Python", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.25.18c.9 0 1.66.72 1.66 1.62v2.22h-1.66V2.36c0-.52-.39-.93-.89-.93h-4.3c-.5 0-.89.41-.89.93v2.04h1.7v1.72h-1.7V9c0 .52.39.93.89.93h4.3c.5 0 .89-.41.89-.93V6.78h1.66v2.22c0 .9-.76 1.62-1.66 1.62H9.95c-.9 0-1.66-.72-1.66-1.62V6.16H6.63V4.44h1.66V1.8c0-.9.76-1.62 1.66-1.62h4.3z"/></svg>` },
     { name: "JavaScript", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 0h24v24H0V0zm20 17.8c-.8.5-1.8.8-2.9.8-2.2 0-3.4-1.2-3.4-3.4h2.4c0 .9.5 1.4 1.2 1.4.6 0 1-.3 1-.8 0-.5-.3-.7-.9-1l-.9-.4c-1.6-.7-2.4-1.5-2.4-3.2 0-2 1.5-3.2 3.4-3.2 1.2 0 2.2.4 2.8.9l-.7 1.8c-.5-.4-1.2-.7-2-.7-.7 0-1.1.4-1.1.9 0 .5.3.7.9.9l.7.3c1.9.8 2.6 1.7 2.6 3.4 0 2.1-1.4 3.4-3.4 3.4zm-7.6 0c-.8.5-1.8.8-2.9.8-2.2 0-3.4-1.2-3.4-3.4h2.4c0 .9.5 1.4 1.2 1.4.6 0 1-.3 1-.8v-7H13v10.1c0 1.2 0 2.1-.3 2.1z"/></svg>` },
     { name: "TypeScript", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 0h24v24H0V0zm20 17.8c-.8.5-1.8.8-2.9.8-2.2 0-3.4-1.2-3.4-3.4h2.4c0 .9.5 1.4 1.2 1.4.6 0 1-.3 1-.8 0-.5-.3-.7-.9-1l-.9-.4c-1.6-.7-2.4-1.5-2.4-3.2 0-2 1.5-3.2 3.4-3.2 1.2 0 2.2.4 2.8.9l-.7 1.8c-.5-.4-1.2-.7-2-.7-.7 0-1.1.4-1.1.9 0 .5.3.7.9.9l.7.3c1.9.8 2.6 1.7 2.6 3.4 0 2.1-1.4 3.4-3.4 3.4zM9 8h6v2h-2v8H9v-8H7V8z"/></svg>` },
@@ -582,6 +582,17 @@ function AlumniNetwork() {
     { name: "C++", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 5.5c-3.6 0-6.5 2.9-6.5 6.5s2.9 6.5 6.5 6.5c2.7 0 5-1.6 6-4H12.4c-.6.8-1.7 1.4-2.9 1.4-2 0-3.6-1.6-3.6-3.6s1.6-3.6 3.6-3.6c1.2 0 2.3.6 2.9 1.4H15.5c-1-2.4-3.3-4-6-4zm9.5 4.5h-1.5v2H16v1.5h1.5v2H19v-1.5h2V12h-2V10zm-4.5 4.5H13v2h-1.5v1.5h1.5v2H14.5v-1.5h2v-1.5h-2v-2z"/></svg>` },
     { name: "Java", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 19h16v2H2v-2zm14-11V6c0-2.2-1.8-4-4-4s-4 1.8-4 4v2h8zm-6 0V6c0-1.1.9-2 2-2s2 .9 2 2v2h-4zm11 1.5c-1.1 0-2 .9-2 2V12c0 2.2-1.8 4-4 4H5c-1.7 0-3-1.3-3-3v-1c0-.6.4-1 1-1s1 .4 1 1v1c0 .6.4 1 1 1h8c1.1 0 2-.9 2-2v-1.5c0-1.1.9-2 2-2s2 .9 2 2V12c0 .6-.4 1-1 1s-1-.4-1-1v-2.5c0-.6-.4-1-1-1z"/></svg>` },
     { name: "React", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 8.5c-.8 0-1.5.7-1.5 1.5s.7 1.5 1.5 1.5 1.5-.7 1.5-1.5-.7-1.5-1.5-1.5zm6.7 1.5c0 .3-.1.6-.3.9-.9 1.4-2.8 2.7-4.9 3.5-.3.1-.7.2-1 .3-.3-.1-.7-.2-1-.3-2.1-.8-4-2.1-4.9-3.5-.2-.3-.3-.6-.3-.9s.1-.6.3-.9c.9-1.4 2.8-2.7 4.9-3.5.3-.1.7-.2 1-.3.3.1.7.2 1 .3 2.1.8 4 2.1 4.9 3.5.2.3.3.6.3.9z"/></svg>` },
+  ];
+
+  const row2Logos = [
+    { name: "HTML5", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M1.5 0h21l-1.9 21.2L12 24l-8.6-2.8L1.5 0zm15.4 6H7.1l.3 3h9.1l-.3 3.3-4.2 1.2-4.2-1.2-.3-2.6H4.7l.5 5.3 6.8 1.9 6.8-1.9.8-8.7.3-3z"/></svg>` },
+    { name: "CSS3", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M1.5 0h21l-1.9 21.2L12 24l-8.6-2.8L1.5 0zm15.8 5.7H6.7l.6 5.4h9.1c0 2-.6 4-2.4 4.5L12 16.2l-2-1c-.8-.4-1.2-1-1.3-1.8H5.9c.1 1.7 1.1 3 2.7 3.8l3.4 1.7 3.4-1.7c2.4-1.2 3.2-3.3 3.1-6.1l-.6-5.4z"/></svg>` },
+    { name: "Node.js", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4 6.5v9l8 4.5 8-4.5v-9L12 2zm6 12.7l-6 3.3-6-3.3v-6.5l6-3.3 6 3.3v6.5z"/></svg>` },
+    { name: "PostgreSQL", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 14h-2v-4h-3V9h5v7z"/></svg>` },
+    { name: "Docker", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.983 8.871h-1.996v1.996h1.996V8.871zM11.61 8.871H9.614v1.996H11.61V8.871zm-2.372 0h-1.996v1.996h1.996V8.871zM-2.372 0H4.87v1.996h1.996v-1.996zM13.983 6.499h-1.996v1.996h1.996V6.499zm-2.372 0H9.614v1.996H11.61V6.499zm-2.372 0h-1.996v1.996h1.996V6.499zm4.744-2.372h-1.996v1.996h1.996V4.127zM24 12.5c-.3 0-1.6 0-3 1.2-1.2-1-3-1-3.2-1-.2 0-.4-.1-.5-.3-.3-.4-1.2-2.1-3.4-2.1h-.2v2.4h-.2c-3.2 0-5.8 2.6-5.8 5.8 0 .2 0 .4.1.5-.1.1-.3.2-.5.2H.1v1.6h5.8c.8 0 1.5-.5 1.8-1.2.6.4 1.4.7 2.2.7h1.4c3.8 0 7-3 7.2-6.8 1.4-1.1 2.8-.7 3.2-.5.8.3 1.5.3 2.1 0 .2 0 .2-.1.2-.2v-1.6z"/></svg>` },
+    { name: "MongoDB", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5C9.2 4.4 7.6 7.6 7.6 11.2c0 4 2.2 6.8 4.4 9.3 2.2-2.5 4.4-5.3 4.4-9.3 0-3.6-1.6-6.8-4.4-9.7zm-.6 15.3v-4.5c0-.6.4-1 1-1s1 .4 1 1v4.5c0 .6-.4 1-1 1s-1-.4-1-1z"/></svg>` },
+    { name: "SQL", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c5.52 0 10 2.24 10 5s-4.48 5-10 5-10-2.24-10-5 4.48-5 10-5zm0 14c-5.52 0-10-2.24-10-5v3c0 2.76 4.48 5 10 5s10-2.24 10-5v-3c0 2.76-4.48 5-10 5z"/></svg>` },
+    { name: "Ruby", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.2 2l-5.2 6 10 14 10-14-5.2-6H7.2zm4.8 12.3L6.3 8.1l5.7-4 5.7 4-5.7 6.2z"/></svg>` },
   ];
 
   return (
@@ -606,7 +617,7 @@ function AlumniNetwork() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="alumni-p"
             >
-              Whether you write high-performance systems in Rust and C++ or build responsive frontend apps in JavaScript and React, 
+              Whether you write high-performance systems in Rust and C++ or build responsive web platforms, 
               BrightCode compiles, runs, and evaluates your code instantly with less than 30ms latency. No local environment configuration required.
             </motion.p>
           </div>
@@ -619,68 +630,33 @@ function AlumniNetwork() {
           </div>
         </div>
 
-        {/* LOWER ROW: Grayscale Partners Logo Grid */}
-        <div className="alumni-logos-grid">
-          {logos.map((logo, idx) => (
-            <div key={idx} className="alumni-logo-item" title={logo.name}>
-              <div className="logo-svg-wrap" dangerouslySetInnerHTML={{ __html: logo.svg }} />
-              <span className="logo-name">{logo.name}</span>
-            </div>
-          ))}
-        </div>
-
-      </div>
-    </section>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────
-   HOW IT WORKS
-──────────────────────────────────────────────────────────── */
-function HowItWorks() {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
-
-  const steps = [
-    { num: "01", icon: Star, title: "Pick Your Quest", desc: "Choose from 2,500+ algorithm challenges, join a live battle arena, or start a collaborative coding session with teammates." },
-    { num: "02", icon: Brain, title: "Write & Optimize", desc: "Code in our smart editor with Sentinel AI watching live — it detects inefficiencies, suggests fixes, and tracks your Warp Drive checkpoints." },
-    { num: "03", icon: TrendingUp, title: "Climb the Ranks", desc: "Earn XP, maintain streaks for multipliers, lead your faction to the top of the leaderboard, and become a Grandmaster." },
-  ];
-
-  return (
-    <section className="hiw-section" id="workflow" ref={ref}>
-      <div className="hiw-inner">
-        <motion.div
-          className="hiw-header"
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5 }}
-        >
-          <span className="section-pill">Workflow</span>
-          <h2 className="section-h2">Three Steps to the Top</h2>
-        </motion.div>
-
-        <div className="hiw-steps">
-          {steps.map((step, i) => {
-            const Icon = step.icon;
-            return (
-              <motion.div
-                key={i}
-                className="hiw-step"
-                initial={{ opacity: 0, y: 30 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.55, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <div className="hiw-step-icon-wrap">
-                  <Icon size={22} />
+        {/* LOWER ROW: Two infinite sliding marquee strips */}
+        <div className="alumni-marquees-wrap">
+          {/* Row 1: Left to Right */}
+          <div className="alumni-marquee-row">
+            <div className="marquee-track">
+              {[...row1Logos, ...row1Logos, ...row1Logos].map((logo, idx) => (
+                <div key={`r1-${idx}`} className="logo-strip-item" title={logo.name}>
+                  <div className="logo-svg-wrap" dangerouslySetInnerHTML={{ __html: logo.svg }} />
+                  <span className="logo-name">{logo.name}</span>
                 </div>
-                <h4 className="hiw-step-title">{step.title}</h4>
-                <p className="hiw-step-desc">{step.desc}</p>
-                {i < steps.length - 1 && <div className="hiw-connector" />}
-              </motion.div>
-            );
-          })}
+              ))}
+            </div>
+          </div>
+
+          {/* Row 2: Right to Left */}
+          <div className="alumni-marquee-row">
+            <div className="marquee-track reverse">
+              {[...row2Logos, ...row2Logos, ...row2Logos].map((logo, idx) => (
+                <div key={`r2-${idx}`} className="logo-strip-item" title={logo.name}>
+                  <div className="logo-svg-wrap" dangerouslySetInnerHTML={{ __html: logo.svg }} />
+                  <span className="logo-name">{logo.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
+
       </div>
     </section>
   );
@@ -1734,7 +1710,6 @@ export default function Landing() {
       <Ticker />
       <BentoFeatures />
       <AlumniNetwork />
-      <HowItWorks />
       <ModulesSection />
       <LeaderboardSection data={leaderboard} loading={lbLoading} handleAuth={handleAuth} />
       <CTASection handleAuth={handleAuth} handleHub={handleHub} />

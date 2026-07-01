@@ -1104,114 +1104,27 @@
   border-color: rgba(251,191,36,0.3);
   background: rgba(251,191,36,0.08);
 }
-.vert-mini-console {
-  font-family: var(--mono);
-  font-size: 0.62rem;
-  background: rgba(0,0,0,0.6);
-  padding: 8px 6px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.05);
-  color: #e4e4e7;
-  text-align: center;
-  white-space: nowrap;
-}
-.c-green { color: #22c55e; margin-right: 2px; }
-.c-gray { color: #71717a; margin-left: 2px; }
-
-/* Custom Interactive UI inside card 5 (Assessment Integrity) */
-.vert-ui-proctor-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  width: 100%;
-  height: 100%;
-  padding: 20px 0;
-}
-.vert-proctor-circle {
-  position: relative;
-  width: 76px; height: 76px;
-}
-.vert-circular-chart {
-  width: 100%; height: 100%;
-}
-.circle-bg {
-  fill: none;
-  stroke: rgba(254,243,199,0.04);
-  stroke-width: 3.5;
-}
-.circle-fg {
-  fill: none;
-  stroke: #fef3c7;
-  stroke-width: 3.5;
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 6px rgba(254,243,199,0.3));
-}
-.vert-percentage {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  font-family: var(--mono);
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: #fef3c7;
-  text-shadow: 0 0 10px rgba(254,243,199,0.3);
-}
-.vert-proctor-tag {
-  font-size: 0.58rem;
-  font-weight: 800;
-  color: #fbbf24;
-  border: 1px solid rgba(251,191,36,0.3);
-  background: rgba(251,191,36,0.06);
-  padding: 3px 10px;
-  border-radius: 20px;
-  letter-spacing: 0.8px;
-}
-
-/* ── Responsive adjustments for 5-column vertical row ── */
-@media (max-width: 1200px) {
-  .vertical-bento-row {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-@media (max-width: 800px) {
-  .vertical-bento-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-@media (max-width: 520px) {
-  .vertical-bento-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ────────────────────────────────────────────────────────────
-   ALUMNI & PARTNERS BAND
+.vert-mi/* ────────────────────────────────────────────────────────────
+   ALUMNI & PARTNERS BAND (Light Theme stack strips)
 ──────────────────────────────────────────────────────────── */
 .alumni-section {
-  padding: 90px 40px;
-  background: linear-gradient(180deg, rgba(8, 8, 12, 0.4) 0%, rgba(13, 13, 20, 0.85) 100%);
-  border-top: 1px solid rgba(239, 68, 68, 0.15);
-  border-bottom: 1px solid rgba(239, 68, 68, 0.15);
+  padding: 80px 40px;
+  background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%) !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
   width: 100%;
   position: relative;
   overflow: hidden;
 }
 .alumni-section::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 50%;
-  transform: translateX(-50%);
-  width: 70%; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(239,68,68,0.4), transparent);
+  display: none !important;
 }
 .alumni-container {
-  max-width: 1320px;
+  max-width: 1280px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 56px;
+  gap: 40px;
 }
 .alumni-header-row {
   display: flex;
@@ -1220,15 +1133,15 @@
   gap: 40px;
 }
 .alumni-header-left {
-  max-width: 840px;
+  max-width: 800px;
 }
 .alumni-h2 {
   font-family: var(--heading);
   font-size: 2.1rem;
   font-weight: 900;
   line-height: 1.35;
-  color: #fff;
-  letter-spacing: -0.02em;
+  color: #111827 !important;
+  letter-spacing: -0.025em;
 }
 .alumni-highlight-text {
   background: linear-gradient(135deg, #fbbf24, #ef4444);
@@ -1237,11 +1150,11 @@
   font-style: italic;
 }
 .alumni-p {
-  font-size: 0.88rem;
-  color: var(--t3);
+  font-size: 0.95rem;
+  color: #4b5563 !important;
   line-height: 1.6;
-  margin-top: 16px;
-  max-width: 780px;
+  margin-top: 12px;
+  max-width: 720px;
 }
 .alumni-header-right {
   flex-shrink: 0;
@@ -1257,10 +1170,10 @@
   justify-content: center;
 }
 .gold-currency-symbol {
-  font-size: 5.5rem;
+  font-size: 5rem;
   font-weight: 900;
-  color: #fbbf24;
-  text-shadow: 2px 2px 0px #b45309, 4px 4px 0px #78350f, 0 10px 30px rgba(251,191,36,0.35);
+  color: #ef4444;
+  text-shadow: 2px 2px 0px #b91c1c, 4px 4px 0px #7f1d1d, 0 10px 25px rgba(239,68,68,0.2);
   animation: float-symbol 4s ease-in-out infinite;
   user-select: none;
 }
@@ -1269,67 +1182,69 @@
   50% { transform: translateY(-8px); }
 }
 
-.alumni-logos-grid {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 20px;
-  align-items: center;
-}
-.alumni-logo-item {
+/* 2-Row Marquee Strips */
+.alumni-marquees-wrap {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 10px;
-  border-radius: 12px;
-  transition: background 0.3s;
+  gap: 16px;
+  width: 100%;
+  overflow: hidden;
+  padding: 10px 0;
+  position: relative;
 }
-.alumni-logo-item:hover {
-  background: rgba(255, 255, 255, 0.02);
+.alumni-marquee-row {
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 15%, #000 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 15%, #000 85%, transparent 100%);
 }
-.logo-svg-wrap svg {
-  height: 22px;
-  color: #52525b;
-  transition: color 0.3s, filter 0.3s;
+.marquee-track {
+  display: flex;
+  gap: 16px;
+  width: max-content;
+  animation: scroll-left 25s linear infinite;
 }
-.logo-name {
-  font-size: 0.62rem;
-  color: #3f3f46;
-  text-transform: uppercase;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  transition: color 0.3s;
-}
-.alumni-logo-item:hover .logo-svg-wrap svg {
-  color: #fff;
-  filter: drop-shadow(0 0 8px rgba(255,255,255,0.2));
-}
-.alumni-logo-item:hover .logo-name {
-  color: #a1a1aa;
+.marquee-track.reverse {
+  animation: scroll-right 25s linear infinite;
 }
 
-@media (max-width: 1024px) {
-  .alumni-logos-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  .alumni-header-row {
-    flex-direction: column;
-    text-align: center;
-    gap: 30px;
-  }
-  .alumni-p {
-    margin-left: auto;
-    margin-right: auto;
-  }
+@keyframes scroll-left {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-33.333%); }
 }
-@media (max-width: 600px) {
-  .alumni-logos-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .alumni-h2 {
-    font-size: 1.7rem;
-  }
+@keyframes scroll-right {
+  0% { transform: translateX(-33.333%); }
+  100% { transform: translateX(0); }
+}
+
+.logo-strip-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  padding: 12px 24px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.025);
+  color: #1f2937;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+.logo-svg-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.logo-svg-wrap svg {
+  width: 20px;
+  height: 20px;
+  color: #ef4444; /* Clean brand accent */
+}
+.logo-name {
+  color: #374151;
 }
 /* ────────────────────────────────────────────────────────────
    STATS BAND
