@@ -426,13 +426,11 @@ function BentoFeatures() {
       accent: "rust"
     },
     {
-      stat: "$10K+",
-      label: "Weekly Battle Prizes",
-      desc: "Won by developers in real-time speed coding arenas and faction tournaments.",
-      type: "image",
-      src: "/hackathon_team.png",
-      alt: "Hackathon tournament",
-      accent: "red"
+      stat: "99.8%",
+      label: "Assessment Integrity",
+      desc: "Trusted worldwide via screen tracking, AI behavior checks, and tab monitoring.",
+      type: "ui-proctor",
+      accent: "cream"
     },
     {
       stat: "15+",
@@ -451,11 +449,13 @@ function BentoFeatures() {
       accent: "sage"
     },
     {
-      stat: "99.8%",
-      label: "Assessment Integrity",
-      desc: "Trusted worldwide via screen tracking, AI behavior checks, and tab monitoring.",
-      type: "ui-proctor",
-      accent: "cream"
+      stat: "$10K+",
+      label: "Weekly Battle Prizes",
+      desc: "Won by developers in real-time speed coding arenas and faction tournaments.",
+      type: "image",
+      src: "/hackathon_team.png",
+      alt: "Hackathon tournament",
+      accent: "red"
     }
   ];
 

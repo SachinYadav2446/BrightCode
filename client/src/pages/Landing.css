@@ -1006,9 +1006,6 @@
   display: block;
 }
 
-.vert-bento-card:hover .vert-bcard-img {
-  transform: scale(1.06);
-}
 
 /* Custom Interactive UI inside card 3 (Supported Languages) */
 .vert-ui-lang-wrap {
