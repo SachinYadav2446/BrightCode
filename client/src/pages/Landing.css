@@ -915,7 +915,7 @@
    BENTO FEATURES — 5-column vertical cards
 ──────────────────────────────────────────────────────────── */
 .bento-section {
-  padding: 100px 40px 80px;
+  padding: 140px 40px 100px;
   max-width: 1380px;
   margin: 0 auto;
 }
@@ -1104,12 +1104,13 @@
   border-color: rgba(251,191,36,0.3);
   background: rgba(251,191,36,0.08);
 }
-.vert-mi/* ────────────────────────────────────────────────────────────
+
+/* ────────────────────────────────────────────────────────────
    ALUMNI & PARTNERS BAND (Light Theme stack strips)
 ──────────────────────────────────────────────────────────── */
 .alumni-section {
-  padding: 80px 40px;
-  background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%) !important;
+  padding: 140px 40px;
+  background: #ffffff !important;
   border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
   width: 100%;
@@ -1475,7 +1476,7 @@
    LEADERBOARD
 ──────────────────────────────────────────────────────────── */
 .lb-section {
-  padding: 80px 40px;
+  padding: 140px 40px;
   max-width: 1280px;
   margin: 0 auto;
 }
@@ -1875,7 +1876,7 @@
    MODULES ECOSYSTEM COLLAGE SECTION
 ──────────────────────────────────────────────────────────── */
 .collage-section {
-  padding: 100px 40px;
+  padding: 140px 40px;
   max-width: 1320px;
   margin: 0 auto;
   display: flex;
