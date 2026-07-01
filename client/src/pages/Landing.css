@@ -1233,6 +1233,14 @@
   font-size: 0.85rem;
   letter-spacing: 0.2px;
   white-space: nowrap;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.logo-strip-item:hover {
+  transform: translateY(-2.5px);
+  border-color: var(--brand-color) !important;
+  box-shadow: 0 8px 24px var(--brand-glow) !important;
 }
 .logo-svg-wrap {
   display: flex;
@@ -1242,7 +1250,7 @@
 .logo-svg-wrap svg {
   width: 20px;
   height: 20px;
-  color: #ef4444; /* Clean brand accent */
+  color: inherit !important;
 }
 .logo-name {
   color: #374151;
