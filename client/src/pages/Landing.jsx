@@ -571,7 +571,87 @@ function BentoFeatures() {
 ──────────────────────────────────────────────────────────── */
 function AlumniNetwork() {
   const ref = useRef(null);
+  const canvasRef = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let animationFrameId;
+
+    let W = canvas.offsetWidth;
+    let H = canvas.offsetHeight;
+
+    const handleResize = () => {
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      W = rect.width;
+      H = rect.height;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    const SYMBOLS = ["{", "}", "<", ">", "0", "1", "[]", "++", "code", "=>", "*", "sys"];
+    const particles = [];
+
+    const particleCount = 20;
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vy: -0.2 - Math.random() * 0.4,
+        vx: (Math.random() - 0.5) * 0.2,
+        char: SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
+        fontSize: 8 + Math.random() * 7,
+        alpha: Math.random() * 0.18 + 0.05,
+        waveSpeed: 0.01 + Math.random() * 0.02,
+        waveAmp: 0.1 + Math.random() * 0.3,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, W, H);
+
+      particles.forEach(p => {
+        p.y += p.vy;
+        p.x += p.vx + Math.sin(p.phase) * p.waveAmp;
+        p.phase += p.waveSpeed;
+
+        let currentAlpha = p.alpha;
+        if (p.y < H * 0.4) {
+          currentAlpha = p.alpha * (p.y / (H * 0.4));
+        }
+
+        ctx.fillStyle = `rgba(239, 68, 68, ${Math.max(0, currentAlpha)})`;
+        ctx.font = `600 ${p.fontSize}px monospace`;
+        ctx.fillText(p.char, p.x, p.y);
+
+        if (p.y < 0 || p.x < 0 || p.x > W) {
+          p.y = H + 10;
+          p.x = Math.random() * W;
+          p.alpha = Math.random() * 0.18 + 0.05;
+        }
+      });
+
+      animationFrameId = requestAnimationFrame(render);
+    }
+
+    render();
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
 
   const row1Logos = [
     { name: "Python", color: "#3776AB", svg: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.25.18c.9 0 1.66.72 1.66 1.62v2.22h-1.66V2.36c0-.52-.39-.93-.89-.93h-4.3c-.5 0-.89.41-.89.93v2.04h1.7v1.72h-1.7V9c0 .52.39.93.89.93h4.3c.5 0 .89-.41.89-.93V6.78h1.66v2.22c0 .9-.76 1.62-1.66 1.62H9.95c-.9 0-1.66-.72-1.66-1.62V6.16H6.63V4.44h1.66V1.8c0-.9.76-1.62 1.66-1.62h4.3z"/></svg>` },
@@ -596,8 +676,9 @@ function AlumniNetwork() {
   ];
 
   return (
-    <section className="alumni-section" ref={ref}>
-      <div className="alumni-container">
+    <section className="alumni-section" ref={ref} style={{ position: "relative", overflow: "hidden" }}>
+      <canvas ref={canvasRef} className="alumni-canvas" style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.5 }} />
+      <div className="alumni-container" style={{ position: "relative", zIndex: 1 }}>
         
         {/* UPPER ROW: Header + 3D-style code tag bracket symbol */}
         <div className="alumni-header-row">
