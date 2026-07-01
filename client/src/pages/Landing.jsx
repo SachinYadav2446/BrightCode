@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+﻿import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import {
@@ -143,7 +143,7 @@ function Nav({ handleAuth }) {
 }
 
 /* ────────────────────────────────────────────────────────────
-   HERO – BRIGHTCODE PIXEL REVEAL CANVAS
+   HERO – BRIGHTCODE PIXEL DATA DRIFT CANVAS
 ──────────────────────────────────────────────────────────── */
 function BrightCodeCanvas() {
   const canvasRef = useRef(null);
@@ -155,104 +155,23 @@ function BrightCodeCanvas() {
     const container = containerRef.current;
     if (!canvas || !container) return;
     const ctx = canvas.getContext('2d');
-
-    // The canvas ignores pointer events, so track movement on the hero section.
     const section = container.parentElement;
 
-    // ── Pixel font for "BRIGHTCODE" ──────────────────────────
-    // Each letter is a 5×7 pixel bitmap (1=on, 0=off)
-    const FONT = {
-      B: [
-        [1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],
-        [1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0]
-      ],
-      R: [
-        [1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],
-        [1,0,1,0,0],[1,0,0,1,0],[1,0,0,0,1]
-      ],
-      I: [
-        [1,1,1],[0,1,0],[0,1,0],[0,1,0],[0,1,0],[0,1,0],[1,1,1]
-      ],
-      G: [
-        [0,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,1,1,1],
-        [1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]
-      ],
-      H: [
-        [1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],
-        [1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]
-      ],
-      T: [
-        [1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],
-        [0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0]
-      ],
-      C: [
-        [0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,0],[1,0,0,0,0],
-        [1,0,0,0,0],[1,0,0,0,1],[0,1,1,1,0]
-      ],
-      O: [
-        [0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],
-        [1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]
-      ],
-      D: [
-        [1,1,1,0,0],[1,0,0,1,0],[1,0,0,0,1],[1,0,0,0,1],
-        [1,0,0,0,1],[1,0,0,1,0],[1,1,1,0,0]
-      ],
-      E: [
-        [1,1,1,1,1],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,0],
-        [1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,1]
-      ],
-    };
+    let W = 0, H = 0;
+    let particles = [];
+    const lastMouse = { x: -9999, y: -9999 };
+    let totalDist = 0;
 
-    const TEXT = ['B','R','I','G','H','T','C','O','D','E'];
-
-    // Build flat list of "letter pixels" with canvas coords
-    function buildLetterPixels(canvasW, canvasH) {
-      const px = [];
-      const gap = 2;
-      const scale = Math.max(6, Math.floor(Math.min(canvasW / 68, canvasH / 16)));
-      const cellSize = scale + gap;
-
-      let totalCols = 0;
-      TEXT.forEach(ch => { totalCols += (FONT[ch][0].length) + 1; });
-      totalCols--;
-
-      const textW = totalCols * cellSize;
-      const textH = 7 * cellSize;
-
-      const startX = (canvasW - textW) / 2;
-      const startY = (canvasH - textH) / 2 + Math.min(70, canvasH * 0.08);
-
-      let cx = startX;
-      TEXT.forEach((ch, li) => {
-        const bitmap = FONT[ch];
-        for (let r = 0; r < bitmap.length; r++) {
-          for (let c = 0; c < bitmap[r].length; c++) {
-            if (bitmap[r][c]) {
-              px.push({
-                x: cx + c * cellSize,
-                y: startY + r * cellSize,
-                s: scale,
-                letterIdx: li,
-              });
-            }
-          }
-        }
-        cx += (bitmap[0].length + 1) * cellSize;
-      });
-      return px;
-    }
-
-    // Color palette for letters (red shades)
-    const LETTER_COLORS = [
-      '#ef4444','#f87171','#fca5a5','#dc2626',
-      '#ef4444','#f87171','#fca5a5','#dc2626',
-      '#ef4444','#f87171',
+    const DATA_TERMS = [
+      "Python", "Rust", "Go", "TypeScript", "C++", "Java", "O(n)", "O(1)", "O(log n)",
+      "30ms", "Live Battle", "Factions", "CodeVault", "Proctor AI", "Allies", "1024 XP",
+      "{ }", "[ ]", "=>", "solve()", "compile", "heap", "stack", "BST", "DP", "Graph",
+      "✓ pass", "Apprentice", "Grandmaster", "Elo +24", "Streak x5", "Sentinel"
     ];
 
-    let cells = [];
-    let bgBlocks = [];
-    let W = 0, H = 0;
-    const mouse = { x: -9999, y: -9999, active: false };
+    const COLORS = [
+      '#ef4444', '#f87171', '#fbbf24', '#f59e0b', '#fb923c', '#a8a29e', '#cbd5e1'
+    ];
 
     function init() {
       const rect = container.getBoundingClientRect();
@@ -264,77 +183,82 @@ function BrightCodeCanvas() {
       canvas.style.width = W + 'px';
       canvas.style.height = H + 'px';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      particles = [];
+    }
 
-      cells = [];
-
-      // Build background grid of small blocks
-      bgBlocks = [];
-      const bSize = 18;
-      const bGap = 3;
-      const step = bSize + bGap;
-      for (let bx = 0; bx < W + step; bx += step) {
-        for (let by = 0; by < H + step; by += step) {
-          bgBlocks.push({
-            x: bx, y: by, s: bSize,
-            brightness: 0,
-            trailEnergy: 0,
-            isLetter: false,
-            letterIdx: -1,
-            baseAlpha: 0.01 + Math.random() * 0.01,
-          });
-        }
-      }
-
+    function spawnParticle(mx, my) {
+      const text = DATA_TERMS[Math.floor(Math.random() * DATA_TERMS.length)];
+      const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+      ctx.font = '10px monospace';
+      const textW = ctx.measureText(text).width;
+      
+      particles.push({
+        x: mx - textW / 2 - 8,
+        y: my - 10,
+        w: textW + 16,
+        h: 20,
+        text: text,
+        color: color,
+        vx: (Math.random() - 0.5) * 0.8,
+        vy: -0.5 - Math.random() * 0.8,
+        alpha: 1.0,
+        scale: 0.9 + Math.random() * 0.2,
+        life: 1.0,
+        decay: 0.008 + Math.random() * 0.008
+      });
     }
 
     function draw() {
       ctx.clearRect(0, 0, W, H);
 
-      // Draw all blocks
-      bgBlocks.forEach(b => {
-        b.trailEnergy *= 0.965;
-        if (b.trailEnergy < 0.008) b.trailEnergy = 0;
+      particles.forEach((p, idx) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= p.decay;
+        p.alpha = p.life;
 
-        const targetBrightness = b.trailEnergy;
-        b.brightness += (targetBrightness - b.brightness) * 0.14;
-
-        const bmin = b.baseAlpha;
-        const totalAlpha = bmin + b.brightness * (b.isLetter ? 0.9 : 0.12);
-
-        if (totalAlpha < 0.005) return;
+        if (p.life <= 0) {
+          particles.splice(idx, 1);
+          return;
+        }
 
         ctx.save();
-        ctx.globalAlpha = Math.min(1, totalAlpha);
+        ctx.globalAlpha = p.alpha;
+        ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+        ctx.scale(p.scale, p.scale);
+        ctx.translate(-p.w / 2, -p.h / 2);
 
-        if (b.isLetter && b.brightness > 0.02) {
-          const col = LETTER_COLORS[b.letterIdx] || '#ef4444';
-          ctx.fillStyle = col;
-          ctx.shadowBlur = 20 * b.brightness;
-          ctx.shadowColor = col;
-          // Rounded rect
-          const rr = 2;
-          const x = b.x, y = b.y, s = b.s;
-          ctx.beginPath();
-          ctx.moveTo(x + rr, y);
-          ctx.lineTo(x + s - rr, y);
-          ctx.arcTo(x + s, y, x + s, y + rr, rr);
-          ctx.lineTo(x + s, y + s - rr);
-          ctx.arcTo(x + s, y + s, x + s - rr, y + s, rr);
-          ctx.lineTo(x + rr, y + s);
-          ctx.arcTo(x, y + s, x, y + s - rr, rr);
-          ctx.lineTo(x, y + rr);
-          ctx.arcTo(x, y, x + rr, y, rr);
-          ctx.closePath();
-          ctx.fill();
-        } else {
-          const col = b.brightness > 0.02 ? '#ef4444' : '#ffffff';
-          ctx.fillStyle = col;
-          if (b.brightness > 0.45) {
-            ctx.shadowBlur = 8 * b.brightness;
-            ctx.shadowColor = '#ef4444';
-          }
-          ctx.fillRect(b.x, b.y, b.s, b.s);
-        }
+        // Glassmorphic rounded bubble outline
+        ctx.strokeStyle = p.color + '44'; // transparency
+        ctx.lineWidth = 1;
+        ctx.fillStyle = 'rgba(15, 15, 25, 0.4)';
+        
+        const rr = 6; // border radius
+        ctx.beginPath();
+        ctx.moveTo(rr, 0);
+        ctx.lineTo(p.w - rr, 0);
+        ctx.arcTo(p.w, 0, p.w, rr, rr);
+        ctx.lineTo(p.w, p.h - rr);
+        ctx.arcTo(p.w, p.h, p.w - rr, p.h, rr);
+        ctx.lineTo(rr, p.h);
+        ctx.arcTo(0, p.h, 0, p.h - rr, rr);
+        ctx.lineTo(0, rr);
+        ctx.arcTo(0, 0, rr, 0, rr);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Small indicator dot
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(8, p.h / 2, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Text label
+        ctx.fillStyle = '#f4f4f5';
+        ctx.font = '700 9px monospace';
+        ctx.fillText(p.text, 15, p.h / 2 + 3);
+
         ctx.restore();
       });
 
@@ -347,28 +271,26 @@ function BrightCodeCanvas() {
     const onMove = e => {
       if (!section) return;
       const rect = section.getBoundingClientRect();
-      mouse.x = e.clientX - rect.left;
-      mouse.y = e.clientY - rect.top;
-      mouse.active = true;
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
 
-      const TRAIL_RADIUS = 105;
-      bgBlocks.forEach(b => {
-        const dx = b.x + b.s / 2 - mouse.x;
-        const dy = b.y + b.s / 2 - mouse.y;
-        const distance = Math.hypot(dx, dy);
-        if (distance >= TRAIL_RADIUS) return;
-
-        const proximity = 1 - distance / TRAIL_RADIUS;
-        const lightChance = 0.1 + proximity * 0.48;
-        if (Math.random() < lightChance) {
-          b.trailEnergy = Math.max(
-            b.trailEnergy,
-            0.35 + proximity * 0.5 + Math.random() * 0.25
-          );
+      if (lastMouse.x !== -9999) {
+        const dist = Math.hypot(mx - lastMouse.x, my - lastMouse.y);
+        totalDist += dist;
+        if (totalDist > 24) {
+          spawnParticle(mx, my);
+          totalDist = 0;
         }
-      });
+      }
+      lastMouse.x = mx;
+      lastMouse.y = my;
     };
-    const onLeave = () => { mouse.active = false; };
+
+    const onLeave = () => {
+      lastMouse.x = -9999;
+      lastMouse.y = -9999;
+    };
+
     const onResize = () => { init(); };
 
     if (section) {
@@ -393,6 +315,7 @@ function BrightCodeCanvas() {
     </div>
   );
 }
+
 
 
 function HeroSection({ handleAuth, handleHub }) {
@@ -1278,115 +1201,383 @@ function ModuleVisualPreview({ type, color }) {
 }
 
 /* ────────────────────────────────────────────────────────────
-   MODULES SECTION
-   ──────────────────────────────────────────────────────────── */
+   MODULES ECOSYSTEM COLLAGE SECTION
+──────────────────────────────────────────────────────────── */
 function ModulesSection() {
-  const [activeIdx, setActiveIdx] = useState(0);
+  const [activeTab, setActiveTab] = useState("code");
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
 
-  const activeMod = MODULES_DATA[activeIdx];
+  const tabs = [
+    { id: "code", label: "Code & Arcade" },
+    { id: "workspace", label: "Workspace & Themes" },
+    { id: "vault", label: "CodeVault & Feed" },
+    { id: "allies", label: "Allies & Profiles" },
+    { id: "leaderboard", label: "Leaderboards & Factions" }
+  ];
+
+  const cardAnim = (delay = 0) => ({
+    initial: { opacity: 0, y: 20 },
+    animate: inView ? { opacity: 1, y: 0 } : {},
+    transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1], delay }
+  });
 
   return (
-    <section className="modules-section" id="modules" ref={ref}>
-      <div className="modules-inner">
-        <motion.div
-          className="modules-header"
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5 }}
-        >
+    <section className="collage-section" id="modules" ref={ref}>
+      <div className="modules-header">
+        <motion.div {...cardAnim(0)}>
           <span className="section-pill">Platform Ecosystem</span>
           <h2 className="section-h2">Core Platform Modules</h2>
           <p className="section-sub">
             BrightCode is an integrated ecosystem designed to support your growth from casual coder to competitive champion.
           </p>
         </motion.div>
+      </div>
 
-        <div className="modules-grid">
-          {/* Left: Module list selectors */}
-          <div className="modules-list">
-            {MODULES_DATA.map((mod, idx) => {
-              const Icon = mod.icon;
-              const isActive = idx === activeIdx;
-              return (
-                <motion.div
-                  key={mod.id}
-                  className={`module-tab-card ${isActive ? `active-${mod.color}` : ""}`}
-                  onClick={() => setActiveIdx(idx)}
-                  whileHover={{ x: isActive ? 0 : 4 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <div className={`module-tab-icon ${mod.color}`}>
-                    <Icon size={18} />
-                  </div>
-                  <div className="module-tab-info">
-                    <h4 className="module-tab-title">{mod.title}</h4>
-                    <span className="module-tab-sub">{mod.subtitle}</span>
-                  </div>
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTabIndicator"
-                      className={`module-tab-indicator ${mod.color}`}
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
+      {/* Tabs matching the screenshot (orange/gold active background) */}
+      <div className="collage-tabs">
+        {tabs.map((tab, idx) => (
+          <button
+            key={tab.id}
+            className={`collage-tab-btn ${activeTab === tab.id ? "active" : ""}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-          {/* Right: Rich Interactive Visual Preview */}
-          <div className="module-preview-panel">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeMod.id}
-                className="mock-frame"
-                initial={{ opacity: 0, y: 15, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -15, scale: 0.98 }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              >
-                {/* Header bar of the mock screen */}
-                <div className="mock-header">
-                  <div className="mock-dots">
-                    <span className="mock-dot red" />
-                    <span className="mock-dot yellow" />
-                    <span className="mock-dot green" />
-                  </div>
-                  <span className="mock-url">{`brightcode.io/hub/${activeMod.id}`}</span>
-                  <div className={`mock-status-chip ${activeMod.color}`}>
-                    <span className="mock-status-dot" />
-                    <span>Active Module</span>
+      {/* Collage Grid Layout below the tabs */}
+      <div className="collage-grid">
+        
+        {/* LEFT COLUMN: 2 Stacked Horizontal Cards */}
+        <div className="collage-col">
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={`${activeTab}-l1`}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="collage-card short"
+            >
+              {activeTab === "code" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge red">STREAKS</div>
+                  <div className="c-streak-val">🔥 5 Days</div>
+                  <p className="c-card-p">Maintain your daily multiplier and gain bonus XP on quests.</p>
+                </div>
+              )}
+              {activeTab === "workspace" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge green">AUDIO</div>
+                  <div className="c-voice-status">🎙 Voice Connected</div>
+                  <p className="c-card-p">Low-latency audio channel synced with editor sessions.</p>
+                </div>
+              )}
+              {activeTab === "vault" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge blue">GITHUB</div>
+                  <div className="c-git-status">🟢 Auto-Sync Active</div>
+                  <p className="c-card-p">Your solved solutions sync automatically to GitHub repositories.</p>
+                </div>
+              )}
+              {activeTab === "allies" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge purple">ALLIES</div>
+                  <div className="c-allies-status">👥 8 Friends Online</div>
+                  <p className="c-card-p">Connect, compare stats, and send instant room invitations.</p>
+                </div>
+              )}
+              {activeTab === "leaderboard" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge gold">GUILDS</div>
+                  <div className="c-wars-status">⚔ Season 4 Wars</div>
+                  <p className="c-card-p">Compete in weekly clan wars to secure ranking territory.</p>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={`${activeTab}-l2`}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, delay: 0.05 }}
+              className="collage-card short"
+            >
+              {activeTab === "code" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge gold">TOPICS</div>
+                  <div className="c-topic-chips">
+                    {["Graph", "Dynamic Prog", "Trees", "Sorting"].map(t => (
+                      <span key={t} className="c-chip">{t}</span>
+                    ))}
                   </div>
                 </div>
+              )}
+              {activeTab === "workspace" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge orange">CONFIG</div>
+                  <div className="c-config-chips">
+                    {["Vim Keybindings", "Font: Monospace", "Tab Size: 4"].map(t => (
+                      <span key={t} className="c-chip">{t}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {activeTab === "vault" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge">CATEGORIES</div>
+                  <div className="c-vault-tags">
+                    {["Algorithms", "Solved", "Favorites", "SQL"].map(t => (
+                      <span key={t} className="c-chip">{t}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {activeTab === "allies" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge green">INVITE</div>
+                  <div className="c-invite-code">CODE: <code>BRIGHT-CO-OP</code></div>
+                  <p className="c-card-p">Share invitation codes to start direct battles.</p>
+                </div>
+              )}
+              {activeTab === "leaderboard" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge red">ELO</div>
+                  <div className="c-elo-display">🏆 Grandmaster (2,400 Elo)</div>
+                  <p className="c-card-p">Top 0.8% of global competitive coding matches.</p>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
-                {/* Body of the mock screen */}
-                <div className="mock-body">
-                  <div className="mock-body-inner">
-                    <div className="mock-desc-section">
-                      <h3 className="mock-title">{activeMod.title}</h3>
-                      <p className="mock-desc">{activeMod.desc}</p>
-                      
-                      <div className="mock-perks-row">
-                        {activeMod.perks.map((perk, pi) => (
-                          <div key={pi} className="mock-perk-item">
-                            <Check size={12} className={`color-${activeMod.color}`} />
-                            <span>{perk}</span>
-                          </div>
-                        ))}
+        {/* CENTER COLUMN: 1 Tall Vertical Card (Main UI Collage Mockup) */}
+        <div className="collage-col">
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={`${activeTab}-center`}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="collage-card tall"
+            >
+              {activeTab === "code" && (
+                <div className="mock-editor-layout">
+                  <div className="mock-editor-top">
+                    <span className="me-file">📄 solve.py</span>
+                    <span className="me-test-result green">✓ 47/47 passed</span>
+                  </div>
+                  <div className="mock-editor-body">
+                    <code>
+                      <span className="me-kw">def</span> <span className="me-fn">twoSum</span>(nums, target):<br />
+                      &nbsp;&nbsp;seen = <span className="me-br">{"{}"}</span><br />
+                      &nbsp;&nbsp;<span className="me-kw">for</span> i, n <span className="me-kw">in</span> <span className="me-fn">enumerate</span>(nums):<br />
+                      &nbsp;&nbsp;&nbsp;&nbsp;comp = target - n<br />
+                      &nbsp;&nbsp;&nbsp;&nbsp;<span className="me-kw">if</span> comp <span className="me-kw">in</span> seen:<br />
+                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="me-kw">return</span> [seen[comp], i]<br />
+                      &nbsp;&nbsp;&nbsp;&nbsp;seen[n] = i
+                    </code>
+                  </div>
+                  <div className="mock-editor-bottom">
+                    <span className="me-stat-col">O(n) Time</span>
+                    <span className="me-stat-col">98ms Speed</span>
+                  </div>
+                </div>
+              )}
+              {activeTab === "workspace" && (
+                <div className="mock-collab-layout">
+                  <div className="mock-editor-top">
+                    <span className="me-file">👥 Room: #collab-392</span>
+                    <span className="me-test-result">Latency: 24ms</span>
+                  </div>
+                  <div className="mock-collab-body">
+                    <code>
+                      <span className="me-kw">import</span> socket<br />
+                      <span className="me-kw">def</span> <span className="me-fn">start_server</span>():<br />
+                      &nbsp;&nbsp;s = socket.socket()<br />
+                      &nbsp;&nbsp;<span className="cursor-indicator purple-bg">algo_queen typing…</span><br />
+                      &nbsp;&nbsp;s.bind((<span className="me-str">"localhost"</span>, 8080))<br />
+                      &nbsp;&nbsp;<span className="cursor-indicator red-bg">You editing…</span><br />
+                      &nbsp;&nbsp;s.listen()
+                    </code>
+                  </div>
+                </div>
+              )}
+              {activeTab === "vault" && (
+                <div className="mock-feed-layout">
+                  <div className="mock-feed-top">
+                    <span>CodeFeed Activity</span>
+                  </div>
+                  <div className="mock-feed-post">
+                    <div className="me-post-header">
+                      <span className="me-post-avatar">S</span>
+                      <div className="me-post-user">
+                        <span className="me-username">Sachin</span>
+                        <span className="me-post-time">2 mins ago</span>
                       </div>
                     </div>
-
-                    <div className="mock-visual-viewport">
-                      <ModuleVisualPreview type={activeMod.previewType} color={activeMod.color} />
+                    <p className="me-post-text">Just solved Median of Two Sorted Arrays in Rust! Dynamic programming is awesome 🚀</p>
+                    <div className="me-post-stats">
+                      <span>👍 14 Likes</span>
+                      <span>💬 3 Comments</span>
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
+              )}
+              {activeTab === "allies" && (
+                <div className="mock-profile-layout">
+                  <div className="mock-profile-avatar-wrap">
+                    <div className="mock-profile-avatar">S</div>
+                    <div className="mock-profile-name">
+                      <span className="me-username">Sachin</span>
+                      <span className="me-rank-tier">Grandmaster Elite</span>
+                    </div>
+                  </div>
+                  <div className="mock-profile-stats">
+                    <div className="me-stat-box">
+                      <span className="me-stat-label">Total XP</span>
+                      <span className="me-stat-val">84,200 XP</span>
+                    </div>
+                    <div className="me-stat-box">
+                      <span className="me-stat-label">Levels Solved</span>
+                      <span className="me-stat-val">142</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {activeTab === "leaderboard" && (
+                <div className="mock-factions-layout">
+                  <div className="mock-factions-header">
+                    <span>Faction Battle Arena</span>
+                  </div>
+                  <div className="mock-faction-comparison">
+                    <div className="me-faction-col red-theme">
+                      <span className="me-faction-icon">🐺</span>
+                      <span className="me-faction-name">Iron Wolves</span>
+                      <span className="me-faction-score">84.2K XP</span>
+                    </div>
+                    <div className="me-vs-text">VS</div>
+                    <div className="me-faction-col purple-theme">
+                      <span className="me-faction-icon">🦅</span>
+                      <span className="me-faction-name">Code Phoenix</span>
+                      <span className="me-faction-score">71.8K XP</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
+
+        {/* RIGHT COLUMN: 2 Stacked Horizontal Cards */}
+        <div className="collage-col">
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={`${activeTab}-r1`}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+              className="collage-card short"
+            >
+              {activeTab === "code" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge gold">LEVEL</div>
+                  <div className="c-rank-display">👑 Level 32</div>
+                  <p className="c-card-p">Grandmaster rank unlocked with exclusive theme skins.</p>
+                </div>
+              )}
+              {activeTab === "workspace" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge purple">THEMES</div>
+                  <div className="c-theme-preview">
+                    {["Midnight Red", "Cyber Gold", "Slate Grey"].map(t => (
+                      <span key={t} className="c-chip">{t}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {activeTab === "vault" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge green">RESTORE</div>
+                  <div className="c-restore-action">⏪ Rollback to v1.2</div>
+                  <p className="c-card-p">Roll back to any previous working commit checkpoint.</p>
+                </div>
+              )}
+              {activeTab === "allies" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge red">PENDING</div>
+                  <div className="c-requests-status">📩 2 Allies Requests</div>
+                  <p className="c-card-p">Approve or reject incoming invitations.</p>
+                </div>
+              )}
+              {activeTab === "leaderboard" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge orange">SOLO RANK</div>
+                  <div className="c-solo-rank">⭐ Rank #42</div>
+                  <p className="c-card-p">Out of 48,000 active developers worldwide.</p>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={`${activeTab}-r2`}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3, delay: 0.05 }}
+              className="collage-card short"
+            >
+              {activeTab === "code" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge purple">BADGES</div>
+                  <div className="c-badges-status">🏆 Apprentice Champion</div>
+                  <p className="c-card-p">Unlock more achievements in the quest lists.</p>
+                </div>
+              )}
+              {activeTab === "workspace" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge blue">LATENCY</div>
+                  <div className="c-latency-status">⚡ 24ms Sync Delay</div>
+                  <p className="c-card-p">Real-time collaboration across multiple editors.</p>
+                </div>
+              )}
+              {activeTab === "vault" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge red">HISTORY</div>
+                  <div className="c-history-preview">
+                    {["v1.0 (Init)", "v1.1 (HashMap)", "v1.2 (Solved)"].map(h => (
+                      <span key={h} className="c-chip">{h}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {activeTab === "allies" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge">NOTIFICATIONS</div>
+                  <div className="c-inbox-status">🔔 3 Unread Alerts</div>
+                  <p className="c-card-p">Check comments on your shared vault scripts.</p>
+                </div>
+              )}
+              {activeTab === "leaderboard" && (
+                <div className="c-card-content">
+                  <div className="c-card-badge purple">MULTIPLIER</div>
+                  <div className="c-mult-status">🔥 x1.5 active</div>
+                  <p className="c-card-p">Earn extra Elo for consecutive arena victories.</p>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
       </div>
     </section>
   );
