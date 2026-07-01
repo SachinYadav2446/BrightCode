@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import {
@@ -1277,14 +1277,14 @@ function ModulesSection() {
               )}
               {activeTab === "vault" && (
                 <div className="c-card-content">
-                  <div className="c-card-badge blue">GITHUB</div>
+                  <div className="c-card-badge gold">GITHUB</div>
                   <div className="c-git-status">🟢 Auto-Sync Active</div>
                   <p className="c-card-p">Your solved solutions sync automatically to GitHub repositories.</p>
                 </div>
               )}
               {activeTab === "allies" && (
                 <div className="c-card-content">
-                  <div className="c-card-badge purple">ALLIES</div>
+                  <div className="c-card-badge red">ALLIES</div>
                   <div className="c-allies-status">👥 8 Friends Online</div>
                   <p className="c-card-p">Connect, compare stats, and send instant room invitations.</p>
                 </div>
@@ -1401,7 +1401,7 @@ function ModulesSection() {
                       <span className="me-kw">import</span> socket<br />
                       <span className="me-kw">def</span> <span className="me-fn">start_server</span>():<br />
                       &nbsp;&nbsp;s = socket.socket()<br />
-                      &nbsp;&nbsp;<span className="cursor-indicator purple-bg">algo_queen typing…</span><br />
+                      &nbsp;&nbsp;<span className="cursor-indicator gold-bg">algo_queen typing…</span><br />
                       &nbsp;&nbsp;s.bind((<span className="me-str">"localhost"</span>, 8080))<br />
                       &nbsp;&nbsp;<span className="cursor-indicator red-bg">You editing…</span><br />
                       &nbsp;&nbsp;s.listen()
@@ -1463,7 +1463,7 @@ function ModulesSection() {
                       <span className="me-faction-score">84.2K XP</span>
                     </div>
                     <div className="me-vs-text">VS</div>
-                    <div className="me-faction-col purple-theme">
+                    <div className="me-faction-col gold-theme">
                       <span className="me-faction-icon">🦅</span>
                       <span className="me-faction-name">Code Phoenix</span>
                       <span className="me-faction-score">71.8K XP</span>
@@ -1495,7 +1495,7 @@ function ModulesSection() {
               )}
               {activeTab === "workspace" && (
                 <div className="c-card-content">
-                  <div className="c-card-badge purple">THEMES</div>
+                  <div className="c-card-badge red">THEMES</div>
                   <div className="c-theme-preview">
                     {["Midnight Red", "Cyber Gold", "Slate Grey"].map(t => (
                       <span key={t} className="c-chip">{t}</span>
@@ -1538,14 +1538,14 @@ function ModulesSection() {
             >
               {activeTab === "code" && (
                 <div className="c-card-content">
-                  <div className="c-card-badge purple">BADGES</div>
+                  <div className="c-card-badge red">BADGES</div>
                   <div className="c-badges-status">🏆 Apprentice Champion</div>
                   <p className="c-card-p">Unlock more achievements in the quest lists.</p>
                 </div>
               )}
               {activeTab === "workspace" && (
                 <div className="c-card-content">
-                  <div className="c-card-badge blue">LATENCY</div>
+                  <div className="c-card-badge gold">LATENCY</div>
                   <div className="c-latency-status">⚡ 24ms Sync Delay</div>
                   <p className="c-card-p">Real-time collaboration across multiple editors.</p>
                 </div>
@@ -1569,7 +1569,7 @@ function ModulesSection() {
               )}
               {activeTab === "leaderboard" && (
                 <div className="c-card-content">
-                  <div className="c-card-badge purple">MULTIPLIER</div>
+                  <div className="c-card-badge red">MULTIPLIER</div>
                   <div className="c-mult-status">🔥 x1.5 active</div>
                   <p className="c-card-p">Earn extra Elo for consecutive arena victories.</p>
                 </div>

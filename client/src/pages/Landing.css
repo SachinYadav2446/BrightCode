@@ -1,4 +1,4 @@
-﻿/* ══════════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════════
    BRIGHTCODE — GROUND-ZERO LANDING PAGE
    Design: Glassmorphism + Bento Grid + Claymorphism + Brutalism
    ══════════════════════════════════════════════════════════════════ */
@@ -1981,17 +1981,17 @@
 }
 .c-streak-val { color: #f87171; text-shadow: 0 0 10px rgba(248, 113, 113, 0.25); }
 .c-voice-status { color: #4ade80; }
-.c-git-status { color: #60a5fa; }
-.c-allies-status { color: #a78bfa; }
+.c-git-status { color: #fbbf24; }
+.c-allies-status { color: #f87171; }
 .c-wars-status { color: #fbbf24; }
 .c-rank-display { color: #fbbf24; }
 .c-restore-action { color: #4ade80; font-family: var(--mono); font-size: 1rem; }
 .c-requests-status { color: #f87171; }
 .c-solo-rank { color: #fb923c; }
-.c-badges-status { color: #a78bfa; }
-.c-latency-status { color: #60a5fa; font-family: var(--mono); font-size: 1rem; }
-.c-inbox-status { color: #a78bfa; }
-.c-mult-status { color: #a78bfa; }
+.c-badges-status { color: #fbbf24; }
+.c-latency-status { color: #fbbf24; font-family: var(--mono); font-size: 1rem; }
+.c-inbox-status { color: #f87171; }
+.c-mult-status { color: #fbbf24; }
 
 .c-card-p {
   font-size: 0.72rem;
@@ -2073,7 +2073,7 @@
   font-weight: 700;
   margin: 0 4px;
 }
-.cursor-indicator.purple-bg { background: #8b5cf6; }
+.cursor-indicator.gold-bg { background: #fbbf24; color: #0c0a09; }
 .cursor-indicator.red-bg { background: #ef4444; }
 
 .mock-feed-post {
