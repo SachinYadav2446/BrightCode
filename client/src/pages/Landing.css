@@ -922,6 +922,36 @@
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
 }
 
+.vert-bento-card:nth-child(2) {
+  height: 245px;
+}
+.vert-bento-card:nth-child(2) .vert-bcard-visual {
+  min-height: 100px;
+  margin-top: 10px;
+}
+.vert-bento-card:nth-child(2) .vert-ui-proctor-wrap {
+  padding: 10px 0;
+  gap: 8px;
+}
+.vert-bento-card:nth-child(2) .vert-proctor-circle {
+  width: 54px;
+  height: 54px;
+}
+.vert-bento-card:nth-child(2) .vert-percentage {
+  font-size: 0.9rem;
+}
+
+.vert-bento-card:nth-child(3) {
+  height: 294px;
+}
+.vert-bento-card:nth-child(3) .vert-bcard-visual {
+  min-height: 140px;
+  margin-top: 10px;
+}
+.vert-bento-card:nth-child(3) .vert-ui-lang-wrap {
+  padding: 10px 14px;
+}
+
 .vert-bcard-top {
   display: flex;
   flex-direction: column;
