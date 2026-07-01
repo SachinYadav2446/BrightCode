@@ -104,8 +104,8 @@ function Nav({ handleAuth }) {
             </a>
           </div>
 
-          {/* CENTER: Nav links (sliding capsule indicators) */}
-          <div className="nav-center" onMouseLeave={() => setHoveredLink(null)}>
+          {/* CENTER: Nav links (styled identically to Home/Library/etc but pointing to Landing hashes) */}
+          <div className="nav-center">
             {["Features", "Workflow", "Modules", "Arena"].map(l => {
               const id = l.toLowerCase();
               const isActive = activeLink === id;
@@ -114,24 +114,9 @@ function Nav({ handleAuth }) {
                   key={l}
                   href={`#${id}`}
                   className={`nav-link-hover ${isActive ? "active" : ""}`}
-                  onMouseEnter={() => setHoveredLink(l)}
                   onClick={() => setActiveLink(id)}
                 >
                   {l}
-                  {hoveredLink === l && (
-                    <motion.div
-                      layoutId="navHoverPill"
-                      className="nav-hover-pill"
-                      transition={{ type: "spring", stiffness: 350, damping: 26 }}
-                    />
-                  )}
-                  {isActive && (
-                    <motion.div
-                      layoutId="navActivePill"
-                      className="nav-active-pill"
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    />
-                  )}
                 </a>
               );
             })}
@@ -931,14 +916,99 @@ function CTASection({ handleAuth, handleHub }) {
    FOOTER
 ──────────────────────────────────────────────────────────── */
 function Footer() {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let animationFrameId;
+
+    let W = canvas.offsetWidth;
+    let H = canvas.offsetHeight;
+
+    const handleResize = () => {
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      W = rect.width;
+      H = rect.height;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    const SYMBOLS = ["{", "}", "<", ">", "0", "1", "[]", "++", "code", "=>", "*", "sys"];
+    const particles = [];
+
+    const particleCount = 20;
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vy: -0.2 - Math.random() * 0.4,
+        vx: (Math.random() - 0.5) * 0.2,
+        char: SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
+        fontSize: 7 + Math.random() * 6,
+        alpha: Math.random() * 0.3 + 0.1,
+        waveSpeed: 0.01 + Math.random() * 0.02,
+        waveAmp: 0.1 + Math.random() * 0.3,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, W, H);
+
+      particles.forEach(p => {
+        p.y += p.vy;
+        p.x += p.vx + Math.sin(p.phase) * p.waveAmp;
+        p.phase += p.waveSpeed;
+
+        let currentAlpha = p.alpha;
+        if (p.y < H * 0.4) {
+          currentAlpha = p.alpha * (p.y / (H * 0.4));
+        }
+
+        ctx.fillStyle = `rgba(239, 68, 68, ${Math.max(0, currentAlpha)})`;
+        ctx.font = `600 ${p.fontSize}px monospace`;
+        ctx.fillText(p.char, p.x, p.y);
+
+        if (p.y < 0 || p.x < 0 || p.x > W) {
+          p.y = H + 10;
+          p.x = Math.random() * W;
+          p.alpha = Math.random() * 0.3 + 0.1;
+        }
+      });
+
+      animationFrameId = requestAnimationFrame(render);
+    }
+
+    render();
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
   return (
-    <footer className="lp-footer">
-      <div className="lp-footer-inner">
+    <footer className="lp-footer" style={{ position: "relative", overflow: "hidden" }}>
+      <canvas ref={canvasRef} className="footer-canvas" style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.5 }} />
+      <div className="lp-footer-inner" style={{ position: "relative", zIndex: 1 }}>
         <div className="footer-brand">
           <div className="footer-logo">
             <Code2 size={20} />
             <span>BRIGHT<b>CODE</b></span>
           </div>
+        </div>
+        <div className="footer-bottom">
+          <span>© 2026 BrightCode</span>
         </div>
         <div className="footer-social">
           <a href="https://github.com/SachinYadav2446" target="_blank" rel="noopener noreferrer" className="footer-social-link" title="GitHub">
@@ -956,9 +1026,6 @@ function Footer() {
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
             </svg>
           </a>
-        </div>
-        <div className="footer-bottom">
-          <span>© 2026 BrightCode</span>
         </div>
       </div>
     </footer>
