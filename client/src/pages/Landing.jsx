@@ -66,10 +66,36 @@ function AnimCounter({ target, suffix = "", duration = 2000 }) {
 ──────────────────────────────────────────────────────────── */
 function Nav({ handleAuth }) {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [hoveredLink, setHoveredLink] = useState(null);
+  const [activeLink, setActiveLink] = useState("features");
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+
+      const sections = ["features", "workflow", "modules", "arena"];
+      const scrollPos = window.scrollY + 200;
+
+      for (const sec of sections) {
+        const el = document.getElementById(sec);
+        if (el) {
+          const top = el.offsetTop;
+          const height = el.offsetHeight;
+          if (scrollPos >= top && scrollPos < top + height) {
+            setActiveLink(sec);
+            break;
+          }
+        }
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <>
-      <nav className="floating-nav">
+      <nav className={`floating-nav ${scrolled ? "scrolled" : ""}`}>
         <div className="nav-container">
           {/* LEFT: Logo */}
           <div className="nav-left">
@@ -78,13 +104,37 @@ function Nav({ handleAuth }) {
             </a>
           </div>
 
-          {/* CENTER: Nav links (styled identically to Home/Library/etc but pointing to Landing hashes) */}
-          <div className="nav-center">
-            {["Features", "Workflow", "Modules", "Arena"].map(l => (
-              <a key={l} href={`#${l.toLowerCase()}`} className="nav-link-hover">
-                {l}
-              </a>
-            ))}
+          {/* CENTER: Nav links (sliding capsule indicators) */}
+          <div className="nav-center" onMouseLeave={() => setHoveredLink(null)}>
+            {["Features", "Workflow", "Modules", "Arena"].map(l => {
+              const id = l.toLowerCase();
+              const isActive = activeLink === id;
+              return (
+                <a
+                  key={l}
+                  href={`#${id}`}
+                  className={`nav-link-hover ${isActive ? "active" : ""}`}
+                  onMouseEnter={() => setHoveredLink(l)}
+                  onClick={() => setActiveLink(id)}
+                >
+                  {l}
+                  {hoveredLink === l && (
+                    <motion.div
+                      layoutId="navHoverPill"
+                      className="nav-hover-pill"
+                      transition={{ type: "spring", stiffness: 350, damping: 26 }}
+                    />
+                  )}
+                  {isActive && (
+                    <motion.div
+                      layoutId="navActivePill"
+                      className="nav-active-pill"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </a>
+              );
+            })}
           </div>
 
           {/* RIGHT: Actions / CTAs */}
@@ -114,11 +164,20 @@ function Nav({ handleAuth }) {
         {/* Mobile menu dropdown drawer */}
         {open && (
           <div className="nav-mobile-menu">
-            {["Features", "Workflow", "Modules", "Arena"].map(l => (
-              <a key={l} href={`#${l.toLowerCase()}`} className="nav-mobile-link" onClick={() => setOpen(false)}>
-                {l}
-              </a>
-            ))}
+            {["Features", "Workflow", "Modules", "Arena"].map(l => {
+              const id = l.toLowerCase();
+              const isActive = activeLink === id;
+              return (
+                <a
+                  key={l}
+                  href={`#${id}`}
+                  className={`nav-mobile-link ${isActive ? "active" : ""}`}
+                  onClick={() => { setOpen(false); setActiveLink(id); }}
+                >
+                  {l}
+                </a>
+              );
+            })}
             <div style={{ display: "flex", gap: "8px", marginTop: "12px", padding: "0 16px" }}>
               <button 
                 className="nav-mobile-link" 
