@@ -84,7 +84,7 @@ const Settings = () => {
           email: user.email
         },
         theme: {
-          color: "#ef4444"
+          color: "var(--primary)"
         },
         modal: {
           ondismiss: function() {
@@ -148,7 +148,7 @@ const Settings = () => {
     { seed: 'Hunter', rank: 1 }, { seed: 'Reaper', rank: 1 }
   ];
   const BANNERS = [
-    { id: 'crimson', name: 'Crimson Flare', css: 'linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)', rank: 1 },
+    { id: 'crimson', name: 'Crimson Flare', css: 'linear-gradient(135deg, rgba(249, 115, 22, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)', rank: 1 },
     { id: 'cyber', name: 'Cyber Neon', css: 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)', rank: 1 },
     { id: 'toxic', name: 'Toxic Viper', css: 'linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)', rank: 1 },
     { id: 'void', name: 'Void Phantom', css: 'linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)', rank: 1 },
@@ -177,6 +177,7 @@ const Settings = () => {
   const [useMemoryDB, setUseMemoryDB] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState('crimson');
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [accentColor, setAccentColor] = useState(() => localStorage.getItem('accent_color') || 'red');
   const [gitConnected, setGitConnected] = useState(false);
   const [gitUsername, setGitUsername] = useState(null);
 
@@ -290,14 +291,14 @@ const Settings = () => {
       root.style.setProperty('--font-sans', "'Orbitron', 'Share Tech Mono', sans-serif");
     } else {
       // ── Scarlet Flare theme (default) ──────────────────────────
-      root.style.setProperty('--primary', '#ef4444');
-      root.style.setProperty('--primary-rgb', '239, 68, 68');
-      root.style.setProperty('--primary-dark', '#dc2626');
-      root.style.setProperty('--primary-dark-rgb', '220, 38, 38');
-      root.style.setProperty('--primary-light', '#f87171');
+      root.style.setProperty('--primary', 'var(--primary)');
+      root.style.setProperty('--primary-rgb', '249, 115, 22');
+      root.style.setProperty('--primary-dark', 'var(--primary-dark)');
+      root.style.setProperty('--primary-dark-rgb', '234, 108, 10');
+      root.style.setProperty('--primary-light', 'var(--primary-light)');
       root.style.setProperty('--primary-light-rgb', '248, 113, 113');
-      root.style.setProperty('--primary-glow', 'rgba(239, 68, 68, 0.5)');
-      root.style.setProperty('--complementary', '#fdf5e6');
+      root.style.setProperty('--primary-glow', 'rgba(249, 115, 22, 0.5)');
+      root.style.setProperty('--complementary', '#fff9e6');
       root.style.setProperty('--text-complementary', '#1a1a1a');
       root.style.setProperty('--panel-text', '#1a1a1a');
       root.style.setProperty('--bg-dark', '#0f0f0f');
@@ -321,6 +322,52 @@ const Settings = () => {
       window.location.href = '/';
     }, 1000);
   };
+
+  const ACCENT_PALETTES = {
+    red: {
+      primary: '#ef4444', rgb: '239, 68, 68',
+      dark: '#dc2626',    darkRgb: '220, 38, 38',
+      light: '#f87171',   lightRgb: '248, 113, 113',
+    },
+    orange: {
+      primary: 'var(--primary)', rgb: '249, 115, 22',
+      dark: 'var(--primary-dark)',    darkRgb: '234, 108, 10',
+      light: 'var(--primary-light)',   lightRgb: '251, 146, 60',
+    },
+    espresso: {
+      primary: '#8B4513', rgb: '139, 69, 19',
+      dark: '#6B3410',    darkRgb: '107, 52, 16',
+      light: '#C08060',   lightRgb: '192, 128, 96',
+    },
+  };
+
+  const handleAccentChange = (accent, triggerTransition = true) => {
+    const p = ACCENT_PALETTES[accent];
+    if (!p) return;
+    const root = document.documentElement;
+    root.style.setProperty('--primary',           p.primary);
+    root.style.setProperty('--primary-rgb',       p.rgb);
+    root.style.setProperty('--primary-dark',      p.dark);
+    root.style.setProperty('--primary-dark-rgb',  p.darkRgb);
+    root.style.setProperty('--primary-light',     p.light);
+    root.style.setProperty('--primary-light-rgb', p.lightRgb);
+    root.style.setProperty('--primary-glow',      `rgba(${p.rgb}, 0.5)`);
+    setAccentColor(accent);
+    localStorage.setItem('accent_color', accent);
+
+    if (triggerTransition) {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
+    }
+  };
+
+  // Re-apply accent on mount (after theme apply) without triggering transitions
+  React.useEffect(() => {
+    const savedAccent = localStorage.getItem('accent_color') || 'red';
+    handleAccentChange(savedAccent, false);
+  }, []);
 
 
 
@@ -846,7 +893,34 @@ const Settings = () => {
                   </div>
                 </div>
 
-
+                {/* ── Primary Accent Color (Only for default Scarlet Flare theme) ── */}
+                {selectedTheme === 'crimson' && (
+                  <div className="system-section">
+                    <div className="section-header">
+                      <h2>Primary Accent Color</h2>
+                      <p className="section-desc">Changes the highlight color across the entire interface — instantly.</p>
+                    </div>
+                    <div className="accent-selector">
+                      {Object.entries(ACCENT_PALETTES).map(([key, p]) => (
+                        <div
+                          key={key}
+                          className={`accent-option ${accentColor === key ? 'active' : ''}`}
+                          onClick={() => handleAccentChange(key)}
+                        >
+                          <div className="accent-swatch" style={{ background: `linear-gradient(135deg, ${p.primary}, ${p.dark})` }}>
+                            {accentColor === key && (
+                              <span className="accent-check"><ShieldCheck size={16} /></span>
+                            )}
+                          </div>
+                          <div className="accent-info">
+                            <h3>{key === 'red' ? 'Scarlet Red' : key === 'orange' ? 'Ember Orange' : 'Dark Espresso'}</h3>
+                            <p>{p.primary}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Danger Zone */}
                 <div className="danger-zone">
@@ -886,7 +960,7 @@ const Settings = () => {
                         </p>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <Mail size={16} style={{ color: '#ef4444' }} />
+                            <Mail size={16} style={{ color: 'var(--primary)' }} />
                             <span style={{ color: '#fff' }}>codebrightlim@gmail.com</span>
                           </div>
                         </div>
@@ -942,7 +1016,7 @@ const Settings = () => {
                     <div className="card-body">
                       <div className="subscription-summary-layout">
                         <div className="summary-left">
-                          <h4 style={{ color: '#ef4444', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '1.2rem' }}>
+                          <h4 style={{ color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '1.2rem' }}>
                             {user.subscription || 'basic'} Plan
                           </h4>
                           <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginTop: '4px' }}>
@@ -1128,8 +1202,8 @@ const Settings = () => {
                           </div>
                         </div>
                         <div className="contribute-feature-item">
-                          <div className="feature-icon-wrap" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                            <Users size={18} color="#ef4444" />
+                          <div className="feature-icon-wrap" style={{ background: 'rgba(249, 115, 22,0.1)', border: '1px solid rgba(249, 115, 22,0.2)' }}>
+                            <Users size={18} color="var(--primary)" />
                           </div>
                           <div>
                             <strong>Help the Community</strong>

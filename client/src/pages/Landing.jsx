@@ -4,7 +4,8 @@ import { motion, useInView, AnimatePresence } from "framer-motion";
 import {
   Brain, Trophy, Shield, GitBranch, Users, Terminal,
   Sparkles, Check, Play, CheckCircle, ArrowUpRight,
-  Code2, Menu, X, Zap, Activity, Star, TrendingUp, Lock, Crown
+  Code2, Menu, X, Zap, Activity, Star, TrendingUp, Lock, Crown,
+  User, Settings
 } from "lucide-react";
 import API_URL from "../config";
 import CodeBrightLogo from "../components/CodeBrightLogo";
@@ -1396,17 +1397,704 @@ function ModuleVisualPreview({ type, color }) {
 /* ────────────────────────────────────────────────────────────
    MODULES ECOSYSTEM COLLAGE SECTION
 ──────────────────────────────────────────────────────────── */
+/* ────────────────────────────────────────────────────────────
+   MODULES ECOSYSTEM COLLAGE SECTION
+──────────────────────────────────────────────────────────── */
+function WorkspaceShowcase({ navigate }) {
+  const [subTab, setSubTab] = useState("editor");
+
+  const screenshots = {
+    editor: "/images/workspace_editor.png",
+    git: "/images/workspace_git.png",
+    chat: "/images/workspace_chat.png"
+  };
+
+  const titles = {
+    editor: "workspace/main.py",
+    git: "workspace/source-control",
+    chat: "workspace/team-chat"
+  };
+
+  return (
+    <div className="workspace-showcase-container">
+      {/* LEFT COLUMN */}
+      <div className="workspace-showcase-left">
+        <h3 className="w-title">Build Your Dream Project</h3>
+        <p className="w-desc">
+          A real-time collaborative workspace for developers. Write, run, and ship code together — instantly.
+        </p>
+
+        {/* Stats */}
+        <div className="w-stats-row">
+          <div className="w-stat-card">
+            <span className="w-stat-num text-red">99.9%</span>
+            <span className="w-stat-lbl">UPTIME</span>
+          </div>
+          <div className="w-stat-card">
+            <span className="w-stat-num text-red">&lt;50ms</span>
+            <span className="w-stat-lbl">LATENCY</span>
+          </div>
+          <div className="w-stat-card">
+            <span className="w-stat-num text-red">14+</span>
+            <span className="w-stat-lbl">LANGUAGES</span>
+          </div>
+        </div>
+
+        {/* Interactive Switcher Chips */}
+        <div className="w-chips-row">
+          <button 
+            className={`w-chip-btn ${subTab === "editor" ? "active" : ""}`}
+            onClick={() => setSubTab("editor")}
+          >
+            <Terminal size={14} /> Multi-language editor
+          </button>
+          <button 
+            className={`w-chip-btn ${subTab === "git" ? "active" : ""}`}
+            onClick={() => setSubTab("git")}
+          >
+            <GitBranch size={14} /> Git integration
+          </button>
+          <button 
+            className={`w-chip-btn ${subTab === "chat" ? "active" : ""}`}
+            onClick={() => setSubTab("chat")}
+          >
+            <Users size={14} /> Live chat & collaboration
+          </button>
+        </div>
+
+      </div>
+
+      {/* RIGHT COLUMN - BROWSER WINDOW MOCKUP */}
+      <div className="workspace-showcase-right">
+        <div className="w-browser">
+          <div className="w-browser-header">
+            <div className="w-dots">
+              <span className="w-dot red" />
+              <span className="w-dot yellow" />
+              <span className="w-dot green" />
+            </div>
+            <div className="w-address-bar">{titles[subTab]}</div>
+            <div className="w-live-badge">
+              <span className="w-live-pulse" /> LIVE
+            </div>
+          </div>
+          <div className="w-browser-content">
+            <AnimatePresence mode="wait">
+              <motion.img 
+                key={subTab}
+                src={screenshots[subTab]} 
+                alt="Workspace preview" 
+                className="w-preview-img"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.25 }}
+              />
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ThemesShowcase({ navigate }) {
+  const [selectedTheme, setSelectedTheme] = useState("crimson");
+
+  const themes = [
+    {
+      id: "crimson",
+      name: "Scarlet Flare",
+      tagline: "TACTICAL CRIMSON",
+      color: "#ef4444",
+      desc: "Sleek tactical dark theme with brand red accents. Engineered for high-intensity programming and deep focus sessions.",
+      image: "/images/theme_crimson.png",
+      address: "dashboard/theme?id=crimson",
+      palette: ["#ef4444", "#dc2626", "#0f0f0f", "#121214"]
+    },
+    {
+      id: "amber",
+      name: "Creeper Craft",
+      tagline: "RETRO SANDBOX",
+      color: "#FFD700",
+      desc: "A blocky sandbox theme inspired by retro crafting classics. Custom pixel-art fonts, solid borders, and earthy green highlights.",
+      image: "/images/theme_amber.png",
+      address: "dashboard/theme?id=amber",
+      palette: ["#FFD700", "#5D9E3F", "#111111", "#222222"]
+    },
+    {
+      id: "neo-noir",
+      name: "Night City",
+      tagline: "CYBERPUNK NEON",
+      color: "#00d9ff",
+      desc: "A neon-drenched cyberpunk aesthetic featuring glowing cyan interfaces, hot pink secondary highlights, and dark obsidian backdrops.",
+      image: "/images/theme_neon.png",
+      address: "dashboard/theme?id=neo-noir",
+      palette: ["#00d9ff", "#ff0080", "#050508", "#0b0b14"]
+    }
+  ];
+
+  const currentTheme = themes.find(t => t.id === selectedTheme);
+
+  return (
+    <div className="themes-showcase-container">
+      {/* LEFT COLUMN: Selectors */}
+      <div className="themes-showcase-left">
+        <div className="themes-list">
+          {themes.map((theme) => (
+            <div 
+              key={theme.id}
+              className={`theme-list-item ${selectedTheme === theme.id ? "active" : ""}`}
+              onClick={() => setSelectedTheme(theme.id)}
+              style={{ 
+                "--theme-color-glow": theme.color + "15",
+                "--theme-color-accent": theme.color
+              }}
+            >
+              <div className="theme-item-meta">
+                <span className="theme-item-tag">{theme.tagline}</span>
+                <h4 className="theme-item-name">{theme.name}</h4>
+                <p className="theme-item-desc">{theme.desc}</p>
+              </div>
+
+              {/* Color dots & Button */}
+              <div className="theme-item-footer">
+                <div className="theme-palette">
+                  {theme.palette.map((c, i) => (
+                    <span key={i} className="theme-palette-dot" style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+                <button 
+                  className="theme-activate-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate("/settings");
+                  }}
+                >
+                  Apply Theme
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* RIGHT COLUMN: Browser Mockup displaying the REAL theme screenshot! */}
+      <div className="themes-showcase-right">
+        <div className="w-browser themed-preview-border">
+          <div className="w-browser-header">
+            <div className="w-dots">
+              <span className="w-dot red" />
+              <span className="w-dot yellow" />
+              <span className="w-dot green" />
+            </div>
+            <div className="w-address-bar">{currentTheme.address}</div>
+            <div className="w-live-badge" style={{ color: currentTheme.color, borderColor: currentTheme.color + "30", background: currentTheme.color + "08" }}>
+              <span className="w-live-pulse" style={{ backgroundColor: currentTheme.color, boxShadow: `0 0 6px ${currentTheme.color}` }} /> APPLIED
+            </div>
+          </div>
+          <div className="w-browser-content themed-preview-bg">
+            <AnimatePresence mode="wait">
+              <motion.img 
+                key={selectedTheme}
+                src={currentTheme.image} 
+                alt={`${currentTheme.name} Theme Preview`} 
+                className="w-preview-img"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.25 }}
+              />
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VaultShowcase({ navigate }) {
+  const [subTab, setSubTab] = useState("editor");
+
+  const screenshots = {
+    editor: "/images/vault_note.png",
+    draw: "/images/vault_draw.png"
+  };
+
+  const titles = {
+    editor: "vault/notes/algorithm-notes.md",
+    draw: "vault/diagrams/system-architecture.excalidraw"
+  };
+
+  return (
+    <div className="workspace-showcase-container">
+      {/* LEFT COLUMN */}
+      <div className="workspace-showcase-left">
+        <h3 className="w-title">CodeVault & Documentation</h3>
+        <p className="w-desc">
+          Document your algorithms, map architectures with Excalidraw, and sync notebooks directly with your repositories.
+        </p>
+
+        {/* Features List */}
+        <div className="vault-features-list">
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>Export MD & PDF:</strong> Download notes instantly as standard Markdown (.md) or premium formatted PDF.
+            </div>
+          </div>
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>Smart Links:</strong> Insert clickable links to files, folders, or web pages and navigate with a single click.
+            </div>
+          </div>
+        </div>
+
+        {/* Interactive Switcher Chips */}
+        <div className="w-chips-row">
+          <button 
+            className={`w-chip-btn ${subTab === "editor" ? "active" : ""}`}
+            onClick={() => setSubTab("editor")}
+            style={subTab === "editor" ? { borderColor: "rgba(234, 179, 8, 0.35)", background: "rgba(234, 179, 8, 0.08)", color: "#ffffff" } : {}}
+          >
+            <Terminal size={14} /> Rich Markdown Editor
+          </button>
+          <button 
+            className={`w-chip-btn ${subTab === "draw" ? "active" : ""}`}
+            onClick={() => setSubTab("draw")}
+            style={subTab === "draw" ? { borderColor: "rgba(234, 179, 8, 0.35)", background: "rgba(234, 179, 8, 0.08)", color: "#ffffff" } : {}}
+          >
+            <GitBranch size={14} /> Integrated Excalidraw Canvas
+          </button>
+        </div>
+
+      </div>
+
+      {/* RIGHT COLUMN - BROWSER WINDOW MOCKUP */}
+      <div className="workspace-showcase-right">
+        <div className="w-browser">
+          <div className="w-browser-header">
+            <div className="w-dots">
+              <span className="w-dot red" />
+              <span className="w-dot yellow" />
+              <span className="w-dot green" />
+            </div>
+            <div className="w-address-bar">{titles[subTab]}</div>
+            <div className="w-live-badge" style={{ color: "#eab308", borderColor: "rgba(234, 179, 8, 0.2)", background: "rgba(234, 179, 8, 0.08)" }}>
+              <span className="w-live-pulse" style={{ backgroundColor: "#eab308", boxShadow: "0 0 6px #eab308" }} /> SAVED
+            </div>
+          </div>
+          <div className="w-browser-content">
+            <AnimatePresence mode="wait">
+              <motion.img 
+                key={subTab}
+                src={screenshots[subTab]} 
+                alt="Vault preview" 
+                className="w-preview-img"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.25 }}
+              />
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeedShowcase({ navigate }) {
+  return (
+    <div className="workspace-showcase-container">
+      {/* LEFT COLUMN */}
+      <div className="workspace-showcase-left">
+        <h3 className="w-title">CodeFeed Social Arena</h3>
+        <p className="w-desc">
+          Share your daily coding insights, learn from others, and interact with the community. Attach code blocks and earn XP for every post!
+        </p>
+
+        {/* Feature categories block representing the post types */}
+        <div className="vault-features-list">
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>TIL (Today I Learned):</strong> Share quick technical learnings, handy tips, or keyboard shortcuts you discovered.
+            </div>
+          </div>
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>Roast My Code:</strong> Request constructive, high-level feedback and optimization reviews from fellow expert engineers.
+            </div>
+          </div>
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>Challenge & Ask:</strong> Publish coding puzzles, request debugging help, or post questions with full IDE code snippets.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* RIGHT COLUMN - BROWSER WINDOW MOCKUP */}
+      <div className="workspace-showcase-right">
+        <div className="w-browser">
+          <div className="w-browser-header">
+            <div className="w-dots">
+              <span className="w-dot red" />
+              <span className="w-dot yellow" />
+              <span className="w-dot green" />
+            </div>
+            <div className="w-address-bar">vault/feed</div>
+            <div className="w-live-badge" style={{ color: "#22c55e", borderColor: "rgba(34, 197, 94, 0.2)", background: "rgba(34, 197, 94, 0.08)" }}>
+              <span className="w-live-pulse" style={{ backgroundColor: "#22c55e", boxShadow: "0 0 6px #22c55e" }} /> ONLINE
+            </div>
+          </div>
+          <div className="w-browser-content">
+            <motion.img 
+              src="/images/feed_page.png" 
+              alt="CodeFeed preview" 
+              className="w-preview-img"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AlliesShowcase({ navigate }) {
+  const [subTab, setSubTab] = useState("profile");
+
+  const screenshots = {
+    profile: "/images/allies_profile.png",
+    edit: "/images/allies_edit.png",
+    drawer: "/images/allies_list.png"
+  };
+
+  const titles = {
+    profile: "vault/profile/admin",
+    edit: "vault/profile/settings",
+    drawer: "vault/allies"
+  };
+
+  return (
+    <div className="workspace-showcase-container">
+      {/* LEFT COLUMN */}
+      <div className="workspace-showcase-left">
+        <h3 className="w-title">Developer Identity & Friends</h3>
+        <p className="w-desc">
+          Build your professional reputation, showcase achievements, connect with friends, and customize your look with unlocked items.
+        </p>
+
+        {/* Features List */}
+        <div className="vault-features-list">
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>Make Allies & Visit Profiles:</strong> Search for users, send friend requests, view their levels, total XP, challenge logs, and activity stats.
+            </div>
+          </div>
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>Real-time Chatting:</strong> Chat directly with your offline or online friends from the sliding Allies drawer.
+            </div>
+          </div>
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>Edit Avatars & Banners:</strong> Unlock premium operative avatars (Sniper, Ghost, Ninja, etc.) and profile banners (Crimson Flare, Cyber Neon, etc.) using your hard-earned XP.
+            </div>
+          </div>
+        </div>
+
+        {/* Interactive Switcher Chips */}
+        <div className="w-chips-row">
+          <button 
+            className={`w-chip-btn ${subTab === "profile" ? "active" : ""}`}
+            onClick={() => setSubTab("profile")}
+            style={subTab === "profile" ? { borderColor: "rgba(239, 68, 68, 0.35)", background: "rgba(239, 68, 68, 0.08)", color: "#ffffff" } : {}}
+          >
+            <User size={14} /> Visit Profiles
+          </button>
+          <button 
+            className={`w-chip-btn ${subTab === "edit" ? "active" : ""}`}
+            onClick={() => setSubTab("edit")}
+            style={subTab === "edit" ? { borderColor: "rgba(239, 68, 68, 0.35)", background: "rgba(239, 68, 68, 0.08)", color: "#ffffff" } : {}}
+          >
+            <Settings size={14} /> Customize Armory
+          </button>
+          <button 
+            className={`w-chip-btn ${subTab === "drawer" ? "active" : ""}`}
+            onClick={() => setSubTab("drawer")}
+            style={subTab === "drawer" ? { borderColor: "rgba(239, 68, 68, 0.35)", background: "rgba(239, 68, 68, 0.08)", color: "#ffffff" } : {}}
+          >
+            <Users size={14} /> Allies Drawer
+          </button>
+        </div>
+
+      </div>
+
+      {/* RIGHT COLUMN - BROWSER WINDOW MOCKUP */}
+      <div className="workspace-showcase-right">
+        <div className="w-browser">
+          <div className="w-browser-header">
+            <div className="w-dots">
+              <span className="w-dot red" />
+              <span className="w-dot yellow" />
+              <span className="w-dot green" />
+            </div>
+            <div className="w-address-bar">{titles[subTab]}</div>
+            <div className="w-live-badge" style={{ color: "#ef4444", borderColor: "rgba(239, 68, 68, 0.2)", background: "rgba(239, 68, 68, 0.08)" }}>
+              <span className="w-live-pulse" style={{ backgroundColor: "#ef4444", boxShadow: "0 0 6px #ef4444" }} /> PROFILE
+            </div>
+          </div>
+          <div className="w-browser-content">
+            <AnimatePresence mode="wait">
+              <motion.img 
+                key={subTab}
+                src={screenshots[subTab]} 
+                alt="Allies preview" 
+                className="w-preview-img"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.25 }}
+              />
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LeaderboardShowcase({ navigate }) {
+  const [subTab, setSubTab] = useState("podium");
+
+  const screenshots = {
+    podium: "/images/leaderboard_podium.png",
+    rank: "/images/leaderboard_rank.png"
+  };
+
+  const titles = {
+    podium: "vault/leaderboard/podium",
+    rank: "vault/leaderboard/standings"
+  };
+
+  return (
+    <div className="workspace-showcase-container">
+      {/* LEFT COLUMN */}
+      <div className="workspace-showcase-left">
+        <h3 className="w-title">Hall of Fame & XP Standings</h3>
+        <p className="w-desc">
+          Compete against the community, climb up the tiers, and claim your place on the 3D podium in our global standings hall of fame.
+        </p>
+
+        {/* Features List */}
+        <div className="vault-features-list">
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>XP Progression System:</strong> Gain XP points automatically by executing code, submitting notes, and participating in forum discussions.
+            </div>
+          </div>
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>Interactive 3D Podium:</strong> View top players dynamically arranged on 3D column stands with detailed rank tier cards.
+            </div>
+          </div>
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>Rank Tiers:</strong> Level up and unlock status badges from *Initiate* and *Novice* to *Apprentice*, *Grandmaster*, and *Elite*.
+            </div>
+          </div>
+        </div>
+
+        {/* Interactive Switcher Chips */}
+        <div className="w-chips-row">
+          <button 
+            className={`w-chip-btn ${subTab === "podium" ? "active" : ""}`}
+            onClick={() => setSubTab("podium")}
+            style={subTab === "podium" ? { borderColor: "rgba(245, 158, 11, 0.35)", background: "rgba(245, 158, 11, 0.08)", color: "#ffffff" } : {}}
+          >
+            <Trophy size={14} /> Hall of Fame Podium
+          </button>
+          <button 
+            className={`w-chip-btn ${subTab === "rank" ? "active" : ""}`}
+            onClick={() => setSubTab("rank")}
+            style={subTab === "rank" ? { borderColor: "rgba(245, 158, 11, 0.35)", background: "rgba(245, 158, 11, 0.08)", color: "#ffffff" } : {}}
+          >
+            <Users size={14} /> Full User Standings
+          </button>
+        </div>
+
+      </div>
+
+      {/* RIGHT COLUMN - BROWSER WINDOW MOCKUP */}
+      <div className="workspace-showcase-right">
+        <div className="w-browser">
+          <div className="w-browser-header">
+            <div className="w-dots">
+              <span className="w-dot red" />
+              <span className="w-dot yellow" />
+              <span className="w-dot green" />
+            </div>
+            <div className="w-address-bar">{titles[subTab]}</div>
+            <div className="w-live-badge" style={{ color: "#f59e0b", borderColor: "rgba(245, 158, 11, 0.2)", background: "rgba(245, 158, 11, 0.08)" }}>
+              <span className="w-live-pulse" style={{ backgroundColor: "#f59e0b", boxShadow: "0 0 6px #f59e0b" }} /> STANDINGS
+            </div>
+          </div>
+          <div className="w-browser-content">
+            <AnimatePresence mode="wait">
+              <motion.img 
+                key={subTab}
+                src={screenshots[subTab]} 
+                alt="Leaderboard standings preview" 
+                className="w-preview-img"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.25 }}
+              />
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FactionShowcase({ navigate }) {
+  const [subTab, setSubTab] = useState("directory");
+
+  const screenshots = {
+    directory: "/images/faction_directory.png",
+    roster: "/images/faction_roster.png",
+    settings: "/images/faction_settings.png"
+  };
+
+  const titles = {
+    directory: "vault/factions/directory",
+    roster: "vault/factions/roster",
+    settings: "vault/factions/settings"
+  };
+
+  return (
+    <div className="workspace-showcase-container">
+      {/* LEFT COLUMN */}
+      <div className="workspace-showcase-left">
+        <h3 className="w-title">Faction Command Center</h3>
+        <p className="w-desc">
+          Form code alliances, compete in seasonal league outposts, and coordinate team challenges with custom roster controls.
+        </p>
+
+        {/* Features List */}
+        <div className="vault-features-list">
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>Faction Directory:</strong> Join existing public/private developer factions or register a new one to compete this season.
+            </div>
+          </div>
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>1v1 & 2v2 Battles (Coming Soon):</strong> Competitive faction arena matches are in development to let factions fight directly for territory Elo.
+            </div>
+          </div>
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>Faction Chat & Settings:</strong> Chat live with members inside the command center, configure visibility, or manage faction settings.
+            </div>
+          </div>
+        </div>
+
+        {/* Interactive Switcher Chips */}
+        <div className="w-chips-row">
+          <button 
+            className={`w-chip-btn ${subTab === "directory" ? "active" : ""}`}
+            onClick={() => setSubTab("directory")}
+            style={subTab === "directory" ? { borderColor: "rgba(34, 197, 94, 0.35)", background: "rgba(34, 197, 94, 0.08)", color: "#ffffff" } : {}}
+          >
+            <Users size={14} /> Faction Directory
+          </button>
+          <button 
+            className={`w-chip-btn ${subTab === "roster" ? "active" : ""}`}
+            onClick={() => setSubTab("roster")}
+            style={subTab === "roster" ? { borderColor: "rgba(34, 197, 94, 0.35)", background: "rgba(34, 197, 94, 0.08)", color: "#ffffff" } : {}}
+          >
+            <Shield size={14} /> Command Roster
+          </button>
+          <button 
+            className={`w-chip-btn ${subTab === "settings" ? "active" : ""}`}
+            onClick={() => setSubTab("settings")}
+            style={subTab === "settings" ? { borderColor: "rgba(34, 197, 94, 0.35)", background: "rgba(34, 197, 94, 0.08)", color: "#ffffff" } : {}}
+          >
+            <Settings size={14} /> Manage Settings
+          </button>
+        </div>
+
+      </div>
+
+      {/* RIGHT COLUMN - BROWSER WINDOW MOCKUP */}
+      <div className="workspace-showcase-right">
+        <div className="w-browser">
+          <div className="w-browser-header">
+            <div className="w-dots">
+              <span className="w-dot red" />
+              <span className="w-dot yellow" />
+              <span className="w-dot green" />
+            </div>
+            <div className="w-address-bar">{titles[subTab]}</div>
+            <div className="w-live-badge" style={{ color: "#22c55e", borderColor: "rgba(34, 197, 94, 0.2)", background: "rgba(34, 197, 94, 0.08)" }}>
+              <span className="w-live-pulse" style={{ backgroundColor: "#22c55e", boxShadow: "0 0 6px #22c55e" }} /> COMMAND
+            </div>
+          </div>
+          <div className="w-browser-content">
+            <AnimatePresence mode="wait">
+              <motion.img 
+                key={subTab}
+                src={screenshots[subTab]} 
+                alt="Faction preview" 
+                className="w-preview-img"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.25 }}
+              />
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ModulesSection() {
-  const [activeTab, setActiveTab] = useState("code");
+  const [activeTab, setActiveTab] = useState("workspace");
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
+  const navigate = useNavigate();
 
   const tabs = [
-    { id: "code", label: "Code & Arcade" },
-    { id: "workspace", label: "Workspace & Themes" },
-    { id: "vault", label: "CodeVault & Feed" },
+    { id: "workspace", label: "Workspace & Collaboration" },
+    { id: "theme", label: "Themes" },
+    { id: "vault", label: "CodeVault" },
+    { id: "feed", label: "Feed" },
     { id: "allies", label: "Allies & Profiles" },
-    { id: "leaderboard", label: "Leaderboards & Factions" }
+    { id: "leaderboard", label: "Leaderboard" },
+    { id: "faction", label: "Factions" }
   ];
 
   const cardAnim = (delay = 0) => ({
@@ -1440,345 +2128,90 @@ function ModulesSection() {
         ))}
       </div>
 
-      {/* Collage Grid Layout below the tabs */}
-      <div className="collage-grid">
-        
-        {/* LEFT COLUMN: 2 Stacked Horizontal Cards */}
-        <div className="collage-col">
-          <AnimatePresence mode="wait">
-            <motion.div 
-              key={`${activeTab}-l1`}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-              className="collage-card short"
-            >
-              {activeTab === "code" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge red">STREAKS</div>
-                  <div className="c-streak-val">🔥 5 Days</div>
-                  <p className="c-card-p">Maintain your daily multiplier and gain bonus XP on quests.</p>
-                </div>
-              )}
-              {activeTab === "workspace" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge green">AUDIO</div>
-                  <div className="c-voice-status">🎙 Voice Connected</div>
-                  <p className="c-card-p">Low-latency audio channel synced with editor sessions.</p>
-                </div>
-              )}
-              {activeTab === "vault" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge gold">GITHUB</div>
-                  <div className="c-git-status">🟢 Auto-Sync Active</div>
-                  <p className="c-card-p">Your solved solutions sync automatically to GitHub repositories.</p>
-                </div>
-              )}
-              {activeTab === "allies" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge red">ALLIES</div>
-                  <div className="c-allies-status">👥 8 Friends Online</div>
-                  <p className="c-card-p">Connect, compare stats, and send instant room invitations.</p>
-                </div>
-              )}
-              {activeTab === "leaderboard" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge gold">GUILDS</div>
-                  <div className="c-wars-status">⚔ Season 4 Wars</div>
-                  <p className="c-card-p">Compete in weekly clan wars to secure ranking territory.</p>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-
-          <AnimatePresence mode="wait">
-            <motion.div 
-              key={`${activeTab}-l2`}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3, delay: 0.05 }}
-              className="collage-card short"
-            >
-              {activeTab === "code" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge gold">TOPICS</div>
-                  <div className="c-topic-chips">
-                    {["Graph", "Dynamic Prog", "Trees", "Sorting"].map(t => (
-                      <span key={t} className="c-chip">{t}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {activeTab === "workspace" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge orange">CONFIG</div>
-                  <div className="c-config-chips">
-                    {["Vim Keybindings", "Font: Monospace", "Tab Size: 4"].map(t => (
-                      <span key={t} className="c-chip">{t}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {activeTab === "vault" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge">CATEGORIES</div>
-                  <div className="c-vault-tags">
-                    {["Algorithms", "Solved", "Favorites", "SQL"].map(t => (
-                      <span key={t} className="c-chip">{t}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {activeTab === "allies" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge green">INVITE</div>
-                  <div className="c-invite-code">CODE: <code>BRIGHT-CO-OP</code></div>
-                  <p className="c-card-p">Share invitation codes to start direct battles.</p>
-                </div>
-              )}
-              {activeTab === "leaderboard" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge red">ELO</div>
-                  <div className="c-elo-display">🏆 Grandmaster (2,400 Elo)</div>
-                  <p className="c-card-p">Top 0.8% of global competitive coding matches.</p>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* CENTER COLUMN: 1 Tall Vertical Card (Main UI Collage Mockup) */}
-        <div className="collage-col">
-          <AnimatePresence mode="wait">
-            <motion.div 
-              key={`${activeTab}-center`}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className="collage-card tall"
-            >
-              {activeTab === "code" && (
-                <div className="mock-editor-layout">
-                  <div className="mock-editor-top">
-                    <span className="me-file">📄 solve.py</span>
-                    <span className="me-test-result green">✓ 47/47 passed</span>
-                  </div>
-                  <div className="mock-editor-body">
-                    <code>
-                      <span className="me-kw">def</span> <span className="me-fn">twoSum</span>(nums, target):<br />
-                      &nbsp;&nbsp;seen = <span className="me-br">{"{}"}</span><br />
-                      &nbsp;&nbsp;<span className="me-kw">for</span> i, n <span className="me-kw">in</span> <span className="me-fn">enumerate</span>(nums):<br />
-                      &nbsp;&nbsp;&nbsp;&nbsp;comp = target - n<br />
-                      &nbsp;&nbsp;&nbsp;&nbsp;<span className="me-kw">if</span> comp <span className="me-kw">in</span> seen:<br />
-                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="me-kw">return</span> [seen[comp], i]<br />
-                      &nbsp;&nbsp;&nbsp;&nbsp;seen[n] = i
-                    </code>
-                  </div>
-                  <div className="mock-editor-bottom">
-                    <span className="me-stat-col">O(n) Time</span>
-                    <span className="me-stat-col">98ms Speed</span>
-                  </div>
-                </div>
-              )}
-              {activeTab === "workspace" && (
-                <div className="mock-collab-layout">
-                  <div className="mock-editor-top">
-                    <span className="me-file">👥 Room: #collab-392</span>
-                    <span className="me-test-result">Latency: 24ms</span>
-                  </div>
-                  <div className="mock-collab-body">
-                    <code>
-                      <span className="me-kw">import</span> socket<br />
-                      <span className="me-kw">def</span> <span className="me-fn">start_server</span>():<br />
-                      &nbsp;&nbsp;s = socket.socket()<br />
-                      &nbsp;&nbsp;<span className="cursor-indicator gold-bg">algo_queen typing…</span><br />
-                      &nbsp;&nbsp;s.bind((<span className="me-str">"localhost"</span>, 8080))<br />
-                      &nbsp;&nbsp;<span className="cursor-indicator red-bg">You editing…</span><br />
-                      &nbsp;&nbsp;s.listen()
-                    </code>
-                  </div>
-                </div>
-              )}
-              {activeTab === "vault" && (
-                <div className="mock-feed-layout">
-                  <div className="mock-feed-top">
-                    <span>CodeFeed Activity</span>
-                  </div>
-                  <div className="mock-feed-post">
-                    <div className="me-post-header">
-                      <span className="me-post-avatar">S</span>
-                      <div className="me-post-user">
-                        <span className="me-username">Sachin</span>
-                        <span className="me-post-time">2 mins ago</span>
-                      </div>
-                    </div>
-                    <p className="me-post-text">Just solved Median of Two Sorted Arrays in Rust! Dynamic programming is awesome 🚀</p>
-                    <div className="me-post-stats">
-                      <span>👍 14 Likes</span>
-                      <span>💬 3 Comments</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {activeTab === "allies" && (
-                <div className="mock-profile-layout">
-                  <div className="mock-profile-avatar-wrap">
-                    <div className="mock-profile-avatar">S</div>
-                    <div className="mock-profile-name">
-                      <span className="me-username">Sachin</span>
-                      <span className="me-rank-tier">Grandmaster Elite</span>
-                    </div>
-                  </div>
-                  <div className="mock-profile-stats">
-                    <div className="me-stat-box">
-                      <span className="me-stat-label">Total XP</span>
-                      <span className="me-stat-val">84,200 XP</span>
-                    </div>
-                    <div className="me-stat-box">
-                      <span className="me-stat-label">Levels Solved</span>
-                      <span className="me-stat-val">142</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {activeTab === "leaderboard" && (
-                <div className="mock-factions-layout">
-                  <div className="mock-factions-header">
-                    <span>Faction Battle Arena</span>
-                  </div>
-                  <div className="mock-faction-comparison">
-                    <div className="me-faction-col red-theme">
-                      <span className="me-faction-icon">🐺</span>
-                      <span className="me-faction-name">Iron Wolves</span>
-                      <span className="me-faction-score">84.2K XP</span>
-                    </div>
-                    <div className="me-vs-text">VS</div>
-                    <div className="me-faction-col gold-theme">
-                      <span className="me-faction-icon">🦅</span>
-                      <span className="me-faction-name">Code Phoenix</span>
-                      <span className="me-faction-score">71.8K XP</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* RIGHT COLUMN: 2 Stacked Horizontal Cards */}
-        <div className="collage-col">
-          <AnimatePresence mode="wait">
-            <motion.div 
-              key={`${activeTab}-r1`}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.3 }}
-              className="collage-card short"
-            >
-              {activeTab === "code" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge gold">LEVEL</div>
-                  <div className="c-rank-display">👑 Level 32</div>
-                  <p className="c-card-p">Grandmaster rank unlocked with exclusive theme skins.</p>
-                </div>
-              )}
-              {activeTab === "workspace" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge red">THEMES</div>
-                  <div className="c-theme-preview">
-                    {["Midnight Red", "Cyber Gold", "Slate Grey"].map(t => (
-                      <span key={t} className="c-chip">{t}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {activeTab === "vault" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge green">RESTORE</div>
-                  <div className="c-restore-action">⏪ Rollback to v1.2</div>
-                  <p className="c-card-p">Roll back to any previous working commit checkpoint.</p>
-                </div>
-              )}
-              {activeTab === "allies" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge red">PENDING</div>
-                  <div className="c-requests-status">📩 2 Allies Requests</div>
-                  <p className="c-card-p">Approve or reject incoming invitations.</p>
-                </div>
-              )}
-              {activeTab === "leaderboard" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge orange">SOLO RANK</div>
-                  <div className="c-solo-rank">⭐ Rank #42</div>
-                  <p className="c-card-p">Out of 48,000 active developers worldwide.</p>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-
-          <AnimatePresence mode="wait">
-            <motion.div 
-              key={`${activeTab}-r2`}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.3, delay: 0.05 }}
-              className="collage-card short"
-            >
-              {activeTab === "code" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge red">BADGES</div>
-                  <div className="c-badges-status">🏆 Apprentice Champion</div>
-                  <p className="c-card-p">Unlock more achievements in the quest lists.</p>
-                </div>
-              )}
-              {activeTab === "workspace" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge gold">LATENCY</div>
-                  <div className="c-latency-status">⚡ 24ms Sync Delay</div>
-                  <p className="c-card-p">Real-time collaboration across multiple editors.</p>
-                </div>
-              )}
-              {activeTab === "vault" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge red">HISTORY</div>
-                  <div className="c-history-preview">
-                    {["v1.0 (Init)", "v1.1 (HashMap)", "v1.2 (Solved)"].map(h => (
-                      <span key={h} className="c-chip">{h}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {activeTab === "allies" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge">NOTIFICATIONS</div>
-                  <div className="c-inbox-status">🔔 3 Unread Alerts</div>
-                  <p className="c-card-p">Check comments on your shared vault scripts.</p>
-                </div>
-              )}
-              {activeTab === "leaderboard" && (
-                <div className="c-card-content">
-                  <div className="c-card-badge red">MULTIPLIER</div>
-                  <div className="c-mult-status">🔥 x1.5 active</div>
-                  <p className="c-card-p">Earn extra Elo for consecutive arena victories.</p>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-      </div>
+      {/* Tab contents */}
+      <AnimatePresence mode="wait">
+        {activeTab === "workspace" && (
+          <motion.div
+            key="workspace"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.35 }}
+          >
+            <WorkspaceShowcase navigate={navigate} />
+          </motion.div>
+        )}
+        {activeTab === "theme" && (
+          <motion.div
+            key="theme"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.35 }}
+          >
+            <ThemesShowcase navigate={navigate} />
+          </motion.div>
+        )}
+        {activeTab === "vault" && (
+          <motion.div
+            key="vault"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.35 }}
+          >
+            <VaultShowcase navigate={navigate} />
+          </motion.div>
+        )}
+        {activeTab === "feed" && (
+          <motion.div
+            key="feed"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.35 }}
+          >
+            <FeedShowcase navigate={navigate} />
+          </motion.div>
+        )}
+        {activeTab === "allies" && (
+          <motion.div
+            key="allies"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.35 }}
+          >
+            <AlliesShowcase navigate={navigate} />
+          </motion.div>
+        )}
+        {activeTab === "leaderboard" && (
+          <motion.div
+            key="leaderboard"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.35 }}
+          >
+            <LeaderboardShowcase navigate={navigate} />
+          </motion.div>
+        )}
+        {activeTab === "faction" && (
+          <motion.div
+            key="faction"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.35 }}
+          >
+            <FactionShowcase navigate={navigate} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
 
-/* ────────────────────────────────────────────────────────────
-   ROOT
-   ──────────────────────────────────────────────────────────── */
 export default function Landing() {
   const navigate = useNavigate();
   const [leaderboard, setLeaderboard] = useState([]);

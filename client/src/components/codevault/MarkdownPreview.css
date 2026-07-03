@@ -10,7 +10,7 @@
 .markdown-preview-container h1 {
   font-size: 36px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-main);
   margin-bottom: 24px;
   margin-top: 32px;
   border-bottom: 2px solid #333;
@@ -24,7 +24,7 @@
 .markdown-preview-container h2 {
   font-size: 28px;
   font-weight: 600;
-  color: #fff;
+  color: var(--text-main);
   margin-top: 32px;
   margin-bottom: 16px;
   border-bottom: 1px solid #222;
@@ -34,7 +34,7 @@
 .markdown-preview-container h3 {
   font-size: 22px;
   font-weight: 600;
-  color: #fff;
+  color: var(--text-main);
   margin-top: 28px;
   margin-bottom: 14px;
 }
@@ -42,7 +42,7 @@
 .markdown-preview-container h4 {
   font-size: 18px;
   font-weight: 600;
-  color: #fff;
+  color: var(--text-main);
   margin-top: 24px;
   margin-bottom: 12px;
 }
@@ -63,7 +63,7 @@
 }
 
 .markdown-preview-container code {
-  background: #111;
+  background: var(--bg-dark);
   padding: 3px 8px;
   border-radius: 4px;
   color: var(--primary);
@@ -110,8 +110,8 @@
 }
 
 .markdown-preview-container th {
-  background: #111;
-  color: #fff;
+  background: var(--bg-dark);
+  color: var(--text-main);
   font-weight: 600;
 }
 
@@ -131,7 +131,7 @@
 }
 
 .markdown-preview-container strong {
-  color: #fff;
+  color: var(--text-main);
   font-weight: 600;
 }
 
@@ -197,7 +197,7 @@
   top: 10px;
   right: 10px;
   padding: 6px 12px;
-  background: #222;
+  background: var(--bg-surface);
   border: 1px solid #333;
   border-radius: 4px;
   color: #ccc;

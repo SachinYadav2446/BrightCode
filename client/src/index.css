@@ -5,7 +5,7 @@
   --bg-surface: #1a1a1a;
   --bg-surface-lighter: #2a2a2a;
 
-  /* Primary Theme Colors (Red by default) */
+  /* Primary Theme Colors (Red) */
   --primary: #ef4444;
   --primary-rgb: 239, 68, 68;
   --primary-dark: #dc2626;
@@ -13,22 +13,23 @@
   --primary-light: #f87171;
   --primary-light-rgb: 248, 113, 113;
   --complementary: #fff9e6;
-  /* Balanced Cream accent */
   --text-complementary: var(--bg-surface);
 
   --primary-glow: rgba(var(--primary-rgb), 0.5);
   --secondary: var(--primary-dark);
   --text-main: #ffffff;
   --text-muted: #a0a0a0;
-  --border: rgba(var(--primary-rgb), 0.1);
+  --border: rgba(var(--primary-rgb), 0.15);
+  --border-subtle: var(--border-subtle);
+  --border-hi: var(--border-hi);
   --glass: rgba(15, 15, 15, 0.7);
   --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Level colors */
-  --lvl-grandmaster: #ef4444;
-  --lvl-grandmaster-glow: rgba(239,68,68,0.5);
+  --lvl-grandmaster: var(--primary);
+  --lvl-grandmaster-glow: rgba(var(--primary-rgb),0.5);
   --lvl-expert: #a855f7;
   --lvl-expert-glow: rgba(168,85,247,0.5);
   --lvl-advanced: #3b82f6;
@@ -239,7 +240,7 @@ a {
   color: #fff !important;
 }
 .theme-minecraft .toolbar-divider {
-  background: #2a2a2a !important;
+  background: var(--bg-surface-lighter) !important;
   width: 2px !important;
   height: 20px !important;
   margin: 0 3px !important;
@@ -465,9 +466,9 @@ a {
 .theme-minecraft select,
 .theme-minecraft .chatbot-input,
 .theme-minecraft .config-input-group input {
-  background: #1a1a1a !important;
+  background: var(--bg-surface) !important;
   border: 3px solid #2a2a2a !important;
-  color: #fff !important;
+  color: var(--text-main) !important;
   box-shadow: inset 2px 2px 0 #0a0a0a !important;
   font-size: 0.45rem !important;
 }
@@ -488,7 +489,7 @@ a {
 }
 .theme-minecraft .xp-progress-bar-bg,
 .theme-minecraft .skill-progress-bar {
-  background: #2a2a2a !important;
+  background: var(--bg-surface-lighter) !important;
   border: 4px solid #1a1a1a !important;
   box-shadow: inset 4px 4px 0 #0a0a0a !important;
 }
@@ -498,7 +499,7 @@ a {
   border-radius: 0 !important;
   border: 1px solid #1a1a1a !important;
 }
-.theme-minecraft .contribution-day.level-0 { background: #2a2a2a !important; }
+.theme-minecraft .contribution-day.level-0 { background: var(--bg-surface-lighter) !important; }
 .theme-minecraft .contribution-day.level-1 { background: #5D9E3F !important; }
 .theme-minecraft .contribution-day.level-2 { background: #4a8a2e !important; }
 .theme-minecraft .contribution-day.level-3 { background: #FFD700 !important; }
@@ -517,7 +518,7 @@ a {
 }
 
 /* ── Scrollbar: stone ── */
-.theme-minecraft ::-webkit-scrollbar-track { background: #2a2a2a !important; }
+.theme-minecraft ::-webkit-scrollbar-track { background: var(--bg-surface-lighter) !important; }
 .theme-minecraft ::-webkit-scrollbar-thumb {
   background: #5a5a5a !important;
   border: 2px solid #2a2a2a !important;
@@ -698,7 +699,7 @@ a {
   left: 3px;
   width: 6px;
   height: 4px;
-  background: #1a1a1a;
+  background: var(--bg-surface);
   box-shadow: 8px 0 0 #1a1a1a;
 }
 .theme-minecraft .bot .chatbot-message-avatar::after {
@@ -786,7 +787,7 @@ a {
 
 /* ── Scrollbar ── */
 .theme-minecraft ::-webkit-scrollbar { width: 12px; }
-.theme-minecraft ::-webkit-scrollbar-track { background: #2a2a2a; }
+.theme-minecraft ::-webkit-scrollbar-track { background: var(--bg-surface-lighter); }
 .theme-minecraft ::-webkit-scrollbar-thumb {
   background: #5a5a5a;
   border: 2px solid #2a2a2a;
@@ -841,7 +842,7 @@ a {
 
 /* ── Chatbot input form ── */
 .theme-minecraft .chatbot-input-form {
-  background: #2a2a2a !important;
+  background: var(--bg-surface-lighter) !important;
   border-top: 4px solid #1a1a1a !important;
 }
 
@@ -1133,7 +1134,7 @@ a {
 
 /* ── Body: deep black + scanlines + grid ── */
 .theme-cyberpunk body {
-  background-color: #050508 !important;
+  background-color: var(--bg-dark) !important;
   background-image:
     repeating-linear-gradient(
       0deg,
@@ -1487,7 +1488,7 @@ a {
 
 /* ── Scrollbar: neon cyan ── */
 .theme-cyberpunk ::-webkit-scrollbar { width: 6px !important; }
-.theme-cyberpunk ::-webkit-scrollbar-track { background: #050508 !important; }
+.theme-cyberpunk ::-webkit-scrollbar-track { background: var(--bg-dark) !important; }
 .theme-cyberpunk ::-webkit-scrollbar-thumb {
   background: rgba(0,217,255,0.3) !important;
   border: none !important;
@@ -1660,7 +1661,7 @@ a {
 .theme-cyberpunk .avatar-status-badge {
   border-color: var(--cp-cyan) !important;
   color: var(--cp-cyan) !important;
-  background: #050508 !important;
+  background: var(--bg-dark) !important;
 }
 
 /* ── Tier badge ── */
@@ -2156,12 +2157,12 @@ a {
 
 /* ── Factions page base ── */
 .theme-minecraft .factions-page {
-  background: #1a1a1a !important;
+  background: var(--bg-surface) !important;
 }
 
 /* ── Cream hero section override ── */
 .theme-minecraft .faction-cream-hero {
-  background: #2a2a2a !important;
+  background: var(--bg-surface-lighter) !important;
   background-image: 
     linear-gradient(#1a1a1a 4px, transparent 4px),
     linear-gradient(90deg, #1a1a1a 4px, transparent 4px) !important;
@@ -2234,13 +2235,13 @@ a {
   text-shadow: 0 0 8px rgba(255, 215, 0, 0.3) !important;
 }
 .theme-minecraft .b-stat strong {
-  color: #fff !important;
+  color: var(--text-main) !important;
 }
 .theme-minecraft .b-stat span {
   color: #7a7a7a !important;
 }
 .theme-minecraft .b-divider {
-  background: #2a2a2a !important;
+  background: var(--bg-surface-lighter) !important;
 }
 .theme-minecraft .badge-mini-stats {
   border-left-color: #2a2a2a !important;
@@ -2303,7 +2304,7 @@ a {
 
 /* ── Factions page base ── */
 .theme-cyberpunk .factions-page {
-  background: #050508 !important;
+  background: var(--bg-dark) !important;
 }
 
 /* ── FIX: cream hero was solid pink (used --complementary) ── */
@@ -2416,7 +2417,7 @@ a {
 .theme-cyberpunk .joined-emblem { filter: drop-shadow(0 0 6px var(--cp-cyan)) !important; }
 .theme-cyberpunk .joined-name { color: var(--cp-cyan) !important; text-shadow: 0 0 8px rgba(0,217,255,0.5) !important; }
 .theme-cyberpunk .b-stat strong {
-  color: #ffffff !important;
+  color: var(--text-main) !important;
   text-shadow: 0 0 8px rgba(255,255,255,0.3) !important;
 }
 .theme-cyberpunk .b-stat span {
@@ -2438,7 +2439,7 @@ a {
 
 /* ── Factions grid section ── */
 .theme-cyberpunk .factions-grid-section {
-  background: #050508 !important;
+  background: var(--bg-dark) !important;
 }
 .theme-cyberpunk .factions-hero h1 {
   color: #e0f7ff !important;

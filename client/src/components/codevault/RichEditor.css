@@ -41,9 +41,9 @@
 }
 
 .toolbar-btn:hover:not(.toolbar-btn-disabled) {
-  background: rgba(255,255,255,0.06);
+  background: var(--border-subtle);
   color: rgba(255,255,255,0.85);
-  border-color: rgba(255,255,255,0.08);
+  border-color: var(--border-subtle);
 }
 
 .toolbar-btn-active {
@@ -61,7 +61,7 @@
 .toolbar-divider {
   width: 1px;
   height: 16px;
-  background: rgba(255,255,255,0.07);
+  background: var(--border-subtle);
   margin: 0 3px;
   flex-shrink: 0;
 }
@@ -103,8 +103,8 @@
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  background: #111;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--bg-dark);
+  border: 1px solid var(--border-hi);
   border-radius: 10px;
   padding: 12px;
   z-index: 1000;
@@ -177,7 +177,7 @@
 }
 
 .rich-editor-scroll::-webkit-scrollbar-thumb {
-  background: #222;
+  background: var(--bg-surface);
   border-radius: 3px;
 }
 
@@ -285,7 +285,7 @@
 
 /* Bold, Italic, Underline, Strike */
 .rich-editor-content .ProseMirror strong {
-  color: #fff;
+  color: var(--text-main);
   font-weight: 700;
 }
 
@@ -316,7 +316,7 @@
 
 /* Code block */
 .rich-editor-content .ProseMirror pre {
-  background: #0d0d0d;
+  background: var(--bg-dark);
   border: 1px solid #222;
   border-radius: 10px;
   margin: 1.2rem 0;
@@ -419,7 +419,7 @@
   top: -2px;
   left: 2px;
   font-size: 11px;
-  color: #fff;
+  color: var(--text-main);
   font-weight: 900;
 }
 
@@ -566,8 +566,8 @@
   top: 20px;
   right: 24px;
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #fff;
+  border: 1px solid var(--border-hi);
+  color: var(--text-main);
   font-size: 18px;
   width: 36px;
   height: 36px;
@@ -615,14 +615,14 @@
   width: 100%;
   max-width: 420px;
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
   box-shadow: 0 32px 64px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
 
 .editor-modal-header {
   padding: 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-subtle);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -633,7 +633,7 @@
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-main);
   letter-spacing: -0.2px;
 }
 
@@ -649,7 +649,7 @@
 }
 
 .close-modal-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--border-subtle);
   color: #fff;
 }
 
@@ -659,11 +659,11 @@
 
 .editor-modal-input {
   width: 100%;
-  background: #151515;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-dark);
+  border: 1px solid var(--border-subtle);
   border-radius: 12px;
   padding: 14px 18px;
-  color: #fff;
+  color: var(--text-main);
   font-size: 15px;
   font-family: inherit;
   outline: none;
@@ -689,7 +689,7 @@
 .modal-btn-cancel {
   padding: 12px 20px;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   color: var(--cv-text-secondary);
   font-size: 14px;
@@ -699,7 +699,7 @@
 }
 
 .modal-btn-cancel:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--border-subtle);
   color: #fff;
   border-color: rgba(255, 255, 255, 0.2);
 }

@@ -4,7 +4,7 @@
 
 .csp-page {
   height: 100vh;
-  background: #0f0f0f;
+  background: var(--bg-dark);
   font-family: 'Poppins', sans-serif;
   position: relative;
   overflow: hidden;
@@ -34,8 +34,8 @@
 
 .csp-back-btn:hover {
   color: rgba(255, 255, 255, 0.95);
-  border-color: rgba(239, 68, 68, 0.3);
-  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(var(--primary-rgb), 0.3);
+  background: rgba(var(--primary-rgb), 0.1);
   transform: translateX(-4px);
 }
 
@@ -123,7 +123,7 @@
 /* ── Sections ── */
 .csp-section {
   background: rgba(26, 26, 26, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
   border-radius: 16px;
   padding: 20px;
 }
@@ -148,7 +148,7 @@
 }
 
 .csp-req {
-  color: #ef4444;
+  color: var(--primary);
 }
 
 .csp-opt {
@@ -170,9 +170,9 @@
 
 .csp-input:focus {
   outline: none;
-  border-color: rgba(239, 68, 68, 0.5);
-  background: rgba(239, 68, 68, 0.05);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  border-color: rgba(var(--primary-rgb), 0.5);
+  background: rgba(var(--primary-rgb), 0.05);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
 }
 
 .csp-input::placeholder {
@@ -190,7 +190,7 @@
   position: relative;
   padding: 16px;
   background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -198,7 +198,7 @@
 }
 
 .csp-mode-card:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--border-hi);
   background: rgba(255, 255, 255, 0.04);
 }
 
@@ -255,7 +255,7 @@
   justify-content: space-between;
   padding: 14px 16px;
   background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -263,12 +263,12 @@
 
 .csp-security-item:hover {
   background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: var(--border-hi);
 }
 
 .csp-security-item.on {
-  background: rgba(239, 68, 68, 0.05);
-  border-color: rgba(239, 68, 68, 0.2);
+  background: rgba(var(--primary-rgb), 0.05);
+  border-color: rgba(var(--primary-rgb), 0.2);
 }
 
 .csp-sec-left {
@@ -301,7 +301,7 @@
 }
 
 .csp-toggle.on {
-  background: rgba(239, 68, 68, 0.8);
+  background: rgba(var(--primary-rgb), 0.8);
 }
 
 .csp-toggle-knob {
@@ -335,7 +335,7 @@
   border-radius: 50px;
   font-size: 0.8rem;
   font-weight: 500;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--border-subtle);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.8);
 }
@@ -362,7 +362,7 @@
 }
 
 .csp-btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--border-subtle);
   border-color: rgba(255, 255, 255, 0.2);
   color: rgba(255, 255, 255, 0.95);
 }
@@ -374,7 +374,7 @@
   justify-content: center;
   gap: 8px;
   padding: 12px 20px;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   border: none;
   border-radius: 10px;
   color: white;
@@ -383,19 +383,19 @@
   font-family: 'Poppins', sans-serif;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.3);
 }
 
 .csp-btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 8px 28px rgba(var(--primary-rgb), 0.4);
 }
 
 .csp-btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
-  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.2);
 }
 
 /* ── Spinner ── */

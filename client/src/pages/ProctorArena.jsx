@@ -23,7 +23,7 @@ import './ProctorArena.css';
 const MODE_META = {
     INTERVIEW:  { label: 'Technical Interview', color: '#3b82f6' },
     ASSESSMENT: { label: 'Coding Assessment',   color: '#f59e0b' },
-    EXAM:       { label: 'Proctored Exam',       color: '#ef4444' },
+    EXAM:       { label: 'Proctored Exam',       color: 'var(--primary)' },
 };
 
 const LANGUAGES = ['javascript', 'python', 'java', 'cpp', 'typescript', 'go'];

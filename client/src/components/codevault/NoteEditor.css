@@ -49,7 +49,7 @@
 
 .btn-icon-back {
   background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid var(--border-subtle);
   color: rgba(255,255,255,0.4);
   cursor: pointer;
   width: 32px;
@@ -75,7 +75,7 @@
   background: transparent !important;
   border: none !important;
   outline: none !important;
-  color: #fff !important;
+  color: var(--text-main) !important;
   font-family: 'Poppins', sans-serif !important;
   font-size: 1.15rem !important;
   font-weight: 700 !important;
@@ -98,7 +98,7 @@
 .action-divider {
   width: 1px;
   height: 20px;
-  background: rgba(255,255,255,0.07);
+  background: var(--border-subtle);
   margin: 0 4px;
 }
 
@@ -114,7 +114,7 @@
   padding: 4px 10px;
   background: rgba(255,255,255,0.03);
   border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid var(--border-subtle);
 }
 
 .status-saving { color: #fbbf24; }
@@ -125,7 +125,7 @@
 .btn-action-icon {
   padding: 6px 13px;
   background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.07);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   color: rgba(255,255,255,0.55);
   font-family: 'Poppins', sans-serif;
@@ -142,15 +142,15 @@
 }
 
 .btn-action-icon:hover {
-  background: rgba(255,255,255,0.08);
-  border-color: rgba(255,255,255,0.12);
+  background: var(--border-subtle);
+  border-color: var(--border-hi);
   color: #fff;
   transform: translateY(-1px);
 }
 
 .btn-delete-note {
   background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   color: rgba(255,255,255,0.35);
   width: 32px;
@@ -191,7 +191,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255,255,255,0.15);
+  color: var(--border-hi);
   font-weight: 700;
   font-size: 0.75rem;
   letter-spacing: 2px;

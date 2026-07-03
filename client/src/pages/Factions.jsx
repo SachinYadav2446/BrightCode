@@ -20,9 +20,9 @@ import './Factions.css';
 
 /* ── Emblems ── */
 const EMBLEMS = [
-    { id: 'swords',    icon: Swords,       color: '#ef4444' },
+    { id: 'swords',    icon: Swords,       color: 'var(--primary)' },
     { id: 'shield',    icon: Shield,       color: '#3b82f6' },
-    { id: 'flame',     icon: Flame,        color: '#f97316' },
+    { id: 'flame',     icon: Flame,        color: 'var(--primary)' },
     { id: 'zap',       icon: Zap,          color: '#eab308' },
     { id: 'gem',       icon: Gem,          color: '#8b5cf6' },
     { id: 'crown',     icon: Crown,        color: '#f59e0b' },
@@ -32,11 +32,11 @@ const EMBLEMS = [
     { id: 'atom',      icon: Atom,         color: '#22d3ee' },
     { id: 'cpu',       icon: Cpu,          color: '#34d399' },
     { id: 'wand',      icon: Wand2,        color: '#f472b6' },
-    { id: 'crosshair', icon: Crosshair,    color: '#ef4444' },
+    { id: 'crosshair', icon: Crosshair,    color: 'var(--primary)' },
     { id: 'mountain',  icon: Mountain,     color: '#94a3b8' },
     { id: 'satellite', icon: Satellite,    color: '#38bdf8' },
     { id: 'flask',     icon: FlaskConical, color: '#4ade80' },
-    { id: 'radio',     icon: Radio,        color: '#fb923c' },
+    { id: 'radio',     icon: Radio,        color: 'var(--primary-light)' },
     { id: 'trophy',    icon: Trophy,       color: '#fbbf24' },
 ];
 
@@ -48,7 +48,7 @@ const EmblemIcon = ({ id, size = 20 }) => {
 
 /* ── Perks data ── */
 const PERKS = [
-    { icon: Trophy,    color: '#ef4444', title: 'Global Rankings',    desc: 'Your faction\'s combined XP earns you a slot on the global leaderboard. Every line of code counts.' },
+    { icon: Trophy,    color: 'var(--primary)', title: 'Global Rankings',    desc: 'Your faction\'s combined XP earns you a slot on the global leaderboard. Every line of code counts.' },
     { icon: Swords,    color: '#8b5cf6', title: 'Guild Wars',         desc: 'Weekly faction vs faction battles. Deploy your best coders, solve challenges, claim territory.' },
     { icon: GitBranch, color: '#3b82f6', title: 'Private Workspace',  desc: 'Shared collaborative editors, private vaults, and encrypted snippet repos for your faction only.' },
     { icon: TrendingUp,color: '#22c55e', title: 'XP Multipliers',    desc: 'Group activity unlocks faction-wide XP bonuses. The more your team codes, the faster everyone levels.' },
@@ -330,8 +330,8 @@ const Factions = () => {
                         {/* Main preview card */}
                         <div className="fp-preview-card fp-preview-card--main">
                             <div className="fp-pcard-head">
-                                <div className="fp-pcard-emblem" style={{ background: '#ef444416', border: '1px solid #ef444430' }}>
-                                    <Swords size={18} color="#ef4444" />
+                                <div className="fp-pcard-emblem" style={{ background: 'rgba(var(--primary-rgb), 0.09)', border: '1px solid rgba(var(--primary-rgb), 0.19)' }}>
+                                    <Swords size={18} color="var(--primary)" />
                                 </div>
                                 <div>
                                     <div className="fp-pcard-name">Crimson Protocol</div>
@@ -342,7 +342,7 @@ const Factions = () => {
 
                             <div className="fp-pcard-members">
                                 {['A','K','S','M','J'].map((l, i) => (
-                                    <div key={i} className="fp-pcard-av" style={{ background: ['#ef4444','#3b82f6','#22c55e','#f59e0b','#8b5cf6'][i] + '22', border: `1px solid ${['#ef4444','#3b82f6','#22c55e','#f59e0b','#8b5cf6'][i]}35`, color: ['#ef4444','#3b82f6','#22c55e','#f59e0b','#8b5cf6'][i] }}>{l}</div>
+                                    <div key={i} className="fp-pcard-av" style={{ background: ['var(--primary)','#3b82f6','#22c55e','#f59e0b','#8b5cf6'][i] + '22', border: `1px solid ${['var(--primary)','#3b82f6','#22c55e','#f59e0b','#8b5cf6'][i]}35`, color: ['var(--primary)','#3b82f6','#22c55e','#f59e0b','#8b5cf6'][i] }}>{l}</div>
                                 ))}
                                 <div className="fp-pcard-av fp-pcard-av--more">+12</div>
                             </div>

@@ -17,7 +17,7 @@ import './CreateSessionPage.css';
 const MODES = {
   INTERVIEW:  { label: 'Technical Interview', color: '#3b82f6', icon: Video,    desc: 'Live coding with real-time oversight' },
   ASSESSMENT: { label: 'Coding Assessment',   color: '#f59e0b', icon: Code2,    desc: 'Timed test with monitoring' },
-  EXAM:       { label: 'Proctored Exam',       color: '#ef4444', icon: Shield,   desc: 'Full surveillance lockdown' },
+  EXAM:       { label: 'Proctored Exam',       color: 'var(--primary)', icon: Shield,   desc: 'Full surveillance lockdown' },
 };
 
 /* ───────────────────────────────────────────────────────

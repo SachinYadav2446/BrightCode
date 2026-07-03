@@ -25,8 +25,8 @@ const SKILL_META = [
     { key: 'css',    label: 'CSS Forge',    icon: 'ðŸŽ¨', max: 50,  color: '#38bdf8' },
     { key: 'logic',  label: 'Logic Lab',    icon: 'âš¡', max: 150, color: '#a78bfa' },
     { key: 'react',  label: 'React Forge',  icon: 'âš›ï¸', max: 500, color: '#34d399' },
-    { key: 'mern',   label: 'MERN Stack',   icon: 'ðŸ”§', max: 100, color: '#f97316' },
-    { key: 'java',   label: 'Java Master',  icon: 'â˜•', max: 100, color: '#ef4444' },
+    { key: 'mern',   label: 'MERN Stack',   icon: 'ðŸ”§', max: 100, color: 'var(--primary)' },
+    { key: 'java',   label: 'Java Master',  icon: 'â˜•', max: 100, color: 'var(--primary)' },
     { key: 'cpp',    label: 'C++ Master',   icon: 'ðŸ”©', max: 100, color: '#64748b' },
     { key: 'python', label: 'Python',       icon: 'ðŸ', max: 100, color: '#facc15' },
     { key: 'go',     label: 'Go Master',    icon: 'ðŸ¹', max: 100, color: '#06b6d4' },
@@ -224,7 +224,7 @@ export default function UserProfile() {
     );
 
     const BANNERS = {
-        'crimson': 'linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)',
+        'crimson': 'linear-gradient(135deg, rgba(249, 115, 22, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)',
         'cyber': 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)',
         'toxic': 'linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)',
         'void': 'linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)',
@@ -337,7 +337,7 @@ export default function UserProfile() {
                     {[
                         { id: 'xp', icon: <Zap size={20} />, label: 'Total XP', value: profile.xp.toLocaleString(), color: '#f59e0b' },
                         { id: 'challenges', icon: <Trophy size={20} />, label: 'Challenges', value: profile.totalSolved, color: '#a855f7' },
-                        { id: 'streak', icon: <Flame size={20} />, label: 'Day Streak', value: `${profile.streak}d`, color: '#ef4444' },
+                        { id: 'streak', icon: <Flame size={20} />, label: 'Day Streak', value: `${profile.streak}d`, color: 'var(--primary)' },
                         { id: 'rank', icon: <Shield size={20} />, label: 'Rank', value: profile.level, color: levelCfg.color },
                     ].map((stat, i) => (
                         <motion.div

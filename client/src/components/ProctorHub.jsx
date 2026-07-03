@@ -17,7 +17,7 @@ import './ProctorHub.css';
 const MODES = {
     INTERVIEW:  { label: 'Technical Interview', color: '#3b82f6', icon: Video,    desc: 'Live coding with real-time oversight' },
     ASSESSMENT: { label: 'Coding Assessment',   color: '#f59e0b', icon: FileText, desc: 'Timed test with monitoring' },
-    EXAM:       { label: 'Proctored Exam',       color: '#ef4444', icon: Shield,   desc: 'Full surveillance lockdown' },
+    EXAM:       { label: 'Proctored Exam',       color: 'var(--primary)', icon: Shield,   desc: 'Full surveillance lockdown' },
 };
 
 const STATUS_MAP = {
@@ -26,7 +26,7 @@ const STATUS_MAP = {
     active:     { label: 'Live',       color: '#22c55e', pulse: true },
     paused:     { label: 'Paused',     color: '#f59e0b', pulse: false },
     completed:  { label: 'Completed',  color: '#8b5cf6', pulse: false },
-    terminated: { label: 'Terminated', color: '#ef4444', pulse: false },
+    terminated: { label: 'Terminated', color: 'var(--primary)', pulse: false },
 };
 
 const ProctorHub = () => {

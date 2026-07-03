@@ -436,7 +436,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                                                 <span>Notes + MCQs + Resources</span>
                                             </div>
                                             <div className="lib-progress-bar">
-                                                <div className="lib-progress-fill" style={{ width: '100%', background: 'var(--primary)', boxShadow: '0 0 10px rgba(239,68,68,0.3)' }} />
+                                                <div className="lib-progress-fill" style={{ width: '100%', background: 'var(--primary)', boxShadow: '0 0 10px rgba(249, 115, 22,0.3)' }} />
                                             </div>
                                         </div>
                                         <button className="lib-enter-btn">Open</button>
@@ -509,7 +509,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                                                         transition={{ duration: 1, ease: 'easeOut' }}
                                                         style={{ 
                                                             background: pct >= 100 ? '#10b981' : 'var(--primary)',
-                                                            boxShadow: pct >= 100 ? '0 0 10px rgba(16, 185, 129, 0.4)' : '0 0 10px rgba(239, 68, 68, 0.3)'
+                                                            boxShadow: pct >= 100 ? '0 0 10px rgba(16, 185, 129, 0.4)' : '0 0 10px rgba(249, 115, 22, 0.3)'
                                                         }}
                                                     />
                                                 </div>

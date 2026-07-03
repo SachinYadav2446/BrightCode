@@ -1,6 +1,6 @@
 .workspace-feature-grid {
   padding: 100px 20px;
-  background: #050505;
+  background: var(--bg-dark);
   position: relative;
   overflow: hidden;
 }
@@ -33,7 +33,7 @@
 
 .feature-box {
   background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
   border-radius: 20px;
   padding: 28px;
   display: flex;
@@ -110,7 +110,7 @@
 .feature-title {
   font-size: 1rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-main);
   margin-bottom: 6px;
 }
 
@@ -141,7 +141,7 @@
 .center-title {
   font-size: 2.5rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--text-main);
   letter-spacing: -0.02em;
   margin-bottom: 8px;
 }

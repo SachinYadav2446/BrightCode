@@ -30,7 +30,7 @@ import './RichEditor.css';
 const TEXT_COLORS = [
   { label: 'Default', value: 'inherit' },
   { label: 'Red', value: 'var(--primary)' },
-  { label: 'Orange', value: '#f97316' },
+  { label: 'Orange', value: 'var(--primary)' },
   { label: 'Yellow', value: '#eab308' },
   { label: 'Green', value: '#22c55e' },
   { label: 'Cyan', value: '#06b6d4' },

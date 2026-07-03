@@ -7,7 +7,7 @@
 :root {
     --arena-bg: var(--bg-dark);
     --arena-surface: var(--bg-surface);
-    --arena-border: rgba(255, 255, 255, 0.06);
+    --arena-border: var(--border-subtle);
     --arena-red: var(--primary);
     --arena-red-dark: var(--primary-dark);
     --arena-cream: var(--complementary);
@@ -131,7 +131,7 @@
 }
 
 .sidebar-contest-item.active {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--border-subtle);
 }
 
 .sidebar-contest-item.active::before {
@@ -145,7 +145,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
+    color: var(--text-main);
     flex-shrink: 0;
 }
 
@@ -164,7 +164,7 @@
 .soon-badge {
     margin-left: auto;
     padding: 0.25rem 0.75rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--border-subtle);
     border: 1px solid var(--arena-border);
     border-radius: 50px;
     font-size: 0.75rem;
@@ -212,7 +212,7 @@
 }
 
 .sidebar-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--border-subtle);
     border-color: var(--arena-red);
     color: var(--arena-cream);
     transform: translateX(4px);
@@ -271,7 +271,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
+    color: var(--text-main);
     margin-bottom: 1rem;
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
 }
@@ -406,7 +406,7 @@
     background: var(--arena-red);
     border: none;
     border-radius: 8px;
-    color: #fff;
+    color: var(--text-main);
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
@@ -425,7 +425,7 @@
 }
 
 .enter-arena-btn.disabled {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--border-subtle);
     color: var(--arena-text-muted);
     cursor: not-allowed;
     box-shadow: none;

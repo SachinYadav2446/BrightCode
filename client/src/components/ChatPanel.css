@@ -4,7 +4,7 @@
     height: 100%;
     background: rgba(20, 20, 20, 0.4);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
     border-radius: 16px;
     overflow: hidden;
 }
@@ -12,7 +12,7 @@
 .chat-header {
     padding: 16px 20px;
     background: rgba(255, 255, 255, 0.02);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-subtle);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -29,7 +29,7 @@
 .chat-title-text {
     font-size: 0.85rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text-main);
     letter-spacing: 0.05em;
     text-transform: uppercase;
 }
@@ -148,7 +148,7 @@
 .chat-msg-bubble {
     padding: 9px 14px;
     background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.06);
+    border: 1px solid var(--border-subtle);
     border-radius: 4px 14px 14px 14px;
     font-size: 0.85rem;
     color: #cbd5e1;
@@ -160,14 +160,14 @@
     background: rgba(var(--primary-rgb), 0.09);
     border: 1px solid rgba(var(--primary-rgb), 0.22);
     border-radius: 14px 4px 14px 14px;
-    color: #fff;
+    color: var(--text-main);
 }
 
 /* ── Input Area ────────────────────────────────────────────── */
 .chat-input-area {
     padding: 14px 16px;
     background: rgba(0,0,0,0.2);
-    border-top: 1px solid rgba(255,255,255,0.05);
+    border-top: 1px solid var(--border-subtle);
     display: flex;
     gap: 10px;
     position: relative;
@@ -176,18 +176,18 @@
 
 .chat-text-input {
     flex: 1;
-    background: rgba(255,255,255,0.05);
+    background: var(--border-subtle);
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 10px;
     padding: 10px 14px;
-    color: #fff;
+    color: var(--text-main);
     font-size: 0.85rem;
     transition: all 0.2s;
 }
 
 .chat-text-input:focus {
     outline: none;
-    background: rgba(255,255,255,0.08);
+    background: var(--border-subtle);
     border-color: rgba(255,255,255,0.2);
 }
 
@@ -197,7 +197,7 @@
     background: var(--primary);
     border: none;
     border-radius: 10px;
-    color: #fff;
+    color: var(--text-main);
     display: flex;
     align-items: center;
     justify-content: center;

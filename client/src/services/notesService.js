@@ -1,4 +1,4 @@
-﻿import API_URL from '../config';
+import API_URL from '../config';
 // API_URL imported from config.js
 
 // Helper to get auth token

@@ -74,9 +74,9 @@ const ProctorPage = () => {
               animate={{
                 scale: [1, 1.05, 1],
                 boxShadow: [
-                  '0 0 0 0px rgba(239,68,68,0.0)',
-                  '0 0 0 18px rgba(239,68,68,0.06)',
-                  '0 0 0 0px rgba(239,68,68,0.0)',
+                  '0 0 0 0px rgba(249, 115, 22,0.0)',
+                  '0 0 0 18px rgba(249, 115, 22,0.06)',
+                  '0 0 0 0px rgba(249, 115, 22,0.0)',
                 ],
               }}
               transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
@@ -163,14 +163,14 @@ const ProctorPage = () => {
                 num: '01',
                 title: 'Technical Interview',
                 desc: 'Conduct live coding interviews with HD video, shared editor, and real-time violation tracking.',
-                color: '#ef4444',
+                color: 'var(--primary)',
                 icon: <Video size={20} />,
               },
               {
                 num: '02',
                 title: 'Coding Assessment',
                 desc: 'Deploy timed assessments to candidates with auto-grading, complexity analysis, and Sentinel AI monitoring.',
-                color: '#f97316',
+                color: 'var(--primary)',
                 icon: <FileText size={20} />,
               },
               {

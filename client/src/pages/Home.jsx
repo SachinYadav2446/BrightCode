@@ -125,7 +125,7 @@ const Home = () => {
   const todaysXp = activity[todayDateKey] || 0;
   const activeDays = Object.keys(activity).length;
 
-  const levelInfo = xp >= 10000 ? { label: 'Grandmaster', color: '#ef4444', next: null }
+  const levelInfo = xp >= 10000 ? { label: 'Grandmaster', color: 'var(--primary)', next: null }
     : xp >= 5000 ? { label: 'Expert', color: '#f59e0b', next: 10000 }
     : xp >= 2000 ? { label: 'Advanced', color: '#3b82f6', next: 5000 }
     : xp >= 500 ? { label: 'Apprentice', color: '#10b981', next: 2000 }
@@ -160,7 +160,7 @@ const Home = () => {
       label: 'Logic Engine', 
       val: Number(user?.logic_level || 0), 
       max: 150, 
-      color: '#ef4444', 
+      color: 'var(--primary)', 
       icon: Cpu, 
       category: 'JS Logic', 
       desc: 'Conquer complex JavaScript puzzles ranging from control flow to nested arrays, closures, and DOM selectors.',
@@ -292,7 +292,7 @@ const Home = () => {
       name: 'Flame Overlord',
       desc: 'Achieve a 10-day coding streak.',
       icon: Flame,
-      color: '#ef4444',
+      color: 'var(--primary)',
       unlocked: activeDays >= 10
     },
     {
@@ -340,7 +340,7 @@ const Home = () => {
       name: 'Algorithm Sage',
       desc: 'Reach Level 55 in Logic Engine.',
       icon: Cpu,
-      color: '#ef4444',
+      color: 'var(--primary)',
       unlocked: Number(user?.logic_level || 0) >= 55
     }
   ];
@@ -812,7 +812,7 @@ const Home = () => {
                 {/* Mission Card */}
                 <div className="about-card about-card-mission">
                   <div className="about-card-icon-row">
-                    <div className="about-card-icon" style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444' }}>
+                    <div className="about-card-icon" style={{ background: 'rgba(var(--primary-rgb), 0.12)', color: 'var(--primary)' }}>
                       <Flame size={22} />
                     </div>
                     <span className="about-card-tag">Our Mission</span>
@@ -822,9 +822,9 @@ const Home = () => {
                     We believe every developer deserves a structured path to mastery. BrightCode bridges the gap between learning and doing — replacing passive tutorials with hands-on, level-based challenges that push your boundaries and reward real progress.
                   </p>
                   <ul className="about-bullet-list">
-                    <li><span className="about-bullet-dot" style={{ background: '#ef4444' }} />Gamified XP system that makes progress tangible</li>
-                    <li><span className="about-bullet-dot" style={{ background: '#ef4444' }} />Daily coding streaks to build consistency habits</li>
-                    <li><span className="about-bullet-dot" style={{ background: '#ef4444' }} />Tier-based ranking to benchmark your skill level</li>
+                    <li><span className="about-bullet-dot" style={{ background: 'var(--primary)' }} />Gamified XP system that makes progress tangible</li>
+                    <li><span className="about-bullet-dot" style={{ background: 'var(--primary)' }} />Daily coding streaks to build consistency habits</li>
+                    <li><span className="about-bullet-dot" style={{ background: 'var(--primary)' }} />Tier-based ranking to benchmark your skill level</li>
                   </ul>
                 </div>
 
@@ -853,7 +853,7 @@ const Home = () => {
                       </div>
                     </div>
                     <div className="about-step-item">
-                      <div className="about-step-num" style={{ borderColor: '#ef4444', color: '#ef4444' }}>03</div>
+                      <div className="about-step-num" style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }}>03</div>
                       <div className="about-step-content">
                         <span className="about-step-title">Rank Up & Get Recognised</span>
                         <span className="about-step-desc">Your XP, streak, and badges define your profile. Compete globally on the Hall of Fame leaderboard and showcase your milestones.</span>
@@ -873,7 +873,7 @@ const Home = () => {
                   <h3 className="about-card-title">What You're Competing In</h3>
                   <div className="about-stats-grid">
                     <div className="about-stat-box">
-                      <span className="about-stat-num" style={{ color: '#ef4444' }}>7</span>
+                      <span className="about-stat-num" style={{ color: 'var(--primary)' }}>7</span>
                       <span className="about-stat-label">Technology Tracks</span>
                     </div>
                     <div className="about-stat-box">
@@ -885,18 +885,18 @@ const Home = () => {
                       <span className="about-stat-label">Rank Tiers</span>
                     </div>
                     <div className="about-stat-box">
-                      <span className="about-stat-num" style={{ color: '#f87171' }}>8</span>
+                      <span className="about-stat-num" style={{ color: 'var(--primary-light)' }}>8</span>
                       <span className="about-stat-label">Achievement Badges</span>
                     </div>
                   </div>
                   <div className="about-tech-tracks-row">
                     {[
                       { label: 'CSS', color: '#3b82f6' },
-                      { label: 'JS Logic', color: '#ef4444' },
+                      { label: 'JS Logic', color: 'var(--primary)' },
                       { label: 'React', color: '#06b6d4' },
                       { label: 'Java', color: '#10b981' },
                       { label: 'C++', color: '#ec4899' },
-                      { label: 'Python', color: '#dc2626' },
+                      { label: 'Python', color: 'var(--primary-dark)' },
                       { label: 'Go', color: '#0ea5e9' },
                     ].map(t => (
                       <span key={t.label} className="about-track-pill" style={{ borderColor: t.color + '50', color: t.color, background: t.color + '12' }}>{t.label}</span>
@@ -926,7 +926,7 @@ const Home = () => {
               <div className="about-cta-banner">
                 <div className="about-cta-text">
                   <span className="about-cta-eyebrow">Ready to level up?</span>
-                  <span className="about-cta-headline">Start solving. Start growing. <span style={{ color: '#ef4444' }}>Today.</span></span>
+                  <span className="about-cta-headline">Start solving. Start growing. <span style={{ color: 'var(--primary)' }}>Today.</span></span>
                 </div>
                 <div className="about-cta-actions">
                   <button className="about-cta-primary" onClick={() => navigate('/library')}>

@@ -2630,7 +2630,7 @@ const EditorPage = () => {
                             onClick={e => e.stopPropagation()}
                         >
                             <div className="end-modal-icon">
-                                <div className="warning-icon-circle" style={{ background: '#ef4444' }}>
+                                <div className="warning-icon-circle" style={{ background: 'var(--primary)' }}>
                                     <ShieldAlert size={40} />
                                 </div>
                             </div>
@@ -2925,7 +2925,7 @@ const EditorPage = () => {
                                                         </span>
                                                         {isUserInCall && (
                                                             <span className={`voice-indicator ${isUserMuted ? 'muted' : 'active'}`} title={isUserMuted ? 'Muted' : 'Speaking'} style={{ display: 'inline-flex', alignItems: 'center', marginLeft: 6 }}>
-                                                                {isUserMuted ? <MicOff size={12} style={{ color: '#ef4444' }} /> : <Mic size={12} style={{ color: '#10b981' }} />}
+                                                                {isUserMuted ? <MicOff size={12} style={{ color: 'var(--primary)' }} /> : <Mic size={12} style={{ color: '#10b981' }} />}
                                                             </span>
                                                         )}
                                                         <span className={`role-badge ${userRole}`}>

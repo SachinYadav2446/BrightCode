@@ -56,7 +56,7 @@ const FEATURES = [
     title: 'Interactive Terminal',
     desc: 'Full-featured terminal synced across all collaborators. Run commands, scripts, and see output the moment it appears.',
     tag: '01 / Terminal',
-    accent: '#ef4444',
+    accent: 'var(--primary)',
     detail: ['Real-time output sync', 'Multi-user access', 'Persistent session'],
   },
   {
@@ -782,10 +782,10 @@ const Workspace = () => {
                     return (
                       <div className="limit-warning-banner" style={{
                         padding: '12px',
-                        background: 'rgba(239, 68, 68, 0.1)',
-                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                        background: 'rgba(249, 115, 22, 0.1)',
+                        border: '1px solid rgba(249, 115, 22, 0.2)',
                         borderRadius: '8px',
-                        color: '#ef4444',
+                        color: 'var(--primary)',
                         fontSize: '0.8rem',
                         marginBottom: '16px',
                         textAlign: 'center',

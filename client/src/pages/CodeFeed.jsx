@@ -22,7 +22,7 @@ const MAX_CHARS = 500;
 
 const POST_TYPES = [
     { id: 'til',       label: 'TIL',           icon: Lightbulb, color: '#22c55e', bg: 'rgba(34,197,94,0.1)'  },
-    { id: 'roast',     label: 'Roast My Code', icon: Flame,     color: '#f97316', bg: 'rgba(249,115,22,0.1)' },
+    { id: 'roast',     label: 'Roast My Code', icon: Flame,     color: 'var(--primary)', bg: 'rgba(249, 115, 22,0.1)' },
     { id: 'challenge', label: 'Challenge',     icon: Code2,     color: '#a855f7', bg: 'rgba(168,85,247,0.1)' },
     { id: 'flex',      label: 'Flex',          icon: Trophy,    color: '#eab308', bg: 'rgba(234,179,8,0.1)'  },
     { id: 'ask',       label: 'Ask',           icon: HelpCircle,color: '#38bdf8', bg: 'rgba(56,189,248,0.1)' },
@@ -30,11 +30,11 @@ const POST_TYPES = [
 
 // All 5 backend reactions — styled with SVG icons, NO plain emojis
 const REACTIONS = [
-    { id: 'fire',    label: '🔥', title: 'Fire',     activeColor: '#f97316' },
+    { id: 'fire',    label: '🔥', title: 'Fire',     activeColor: 'var(--primary)' },
     { id: 'clever',  label: '💡', title: 'Clever',   activeColor: '#eab308' },
     { id: 'bigbrain',label: '🧠', title: 'Big Brain',activeColor: '#a855f7' },
     { id: 'brute',   label: '⚡', title: 'Brute',    activeColor: '#38bdf8' },
-    { id: 'cursed',  label: '💀', title: 'Cursed',   activeColor: '#ef4444' },
+    { id: 'cursed',  label: '💀', title: 'Cursed',   activeColor: 'var(--primary)' },
 ];
 
 const LANGS = ['javascript','python','java','cpp','c','typescript','go','rust','sql','bash','ruby','swift','kotlin'];
@@ -82,7 +82,7 @@ function extractHashtags(text) {
 }
 
 /* ── Avatar ── */
-const AVATAR_COLORS = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#a855f7','#ec4899'];
+const AVATAR_COLORS = ['var(--primary)','var(--primary)','#eab308','#22c55e','#3b82f6','#a855f7','#ec4899'];
 function getAvatarColor(name = '') {
     let hash = 0;
     for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -112,7 +112,7 @@ function CharRing({ count, max }) {
     const remaining = max - count;
     const warn = count >= max * 0.8;
     const danger = count >= max * 0.95;
-    const strokeColor = danger ? '#ef4444' : warn ? '#f97316' : '#1d9bf0';
+    const strokeColor = danger ? 'var(--primary)' : warn ? 'var(--primary)' : '#1d9bf0';
     if (count === 0) return null;
     return (
         <div className="df-char-ring">

@@ -20,9 +20,9 @@ const PixelTrail = () => {
 
     const gridSize = 72; // Reduced by 10% (80px -> 72px)
     
-    const colors = {
-      line: 'rgba(239, 68, 68, 0.05)', 
-      highlightLine: 'rgba(239, 68, 68, 0.25)',
+    const getThemeRgb = () => {
+      const computed = getComputedStyle(document.documentElement);
+      return computed.getPropertyValue('--primary-rgb').trim() || '239, 68, 68';
     };
 
     const resize = () => {
@@ -58,6 +58,7 @@ const PixelTrail = () => {
       const width = canvas.width;
       const height = canvas.height;
       const highlightRadius = 300; // Increased radius for larger grid visibility
+      const themeRgb = getThemeRgb();
 
       ctx.clearRect(0, 0, width, height);
 
@@ -70,10 +71,10 @@ const PixelTrail = () => {
         );
         
         // Smoother, multi-step falloff to avoid the "torch" look
-        glowGradient.addColorStop(0, `rgba(239, 68, 68, ${0.24 * opacity})`); // Increased from 0.22 (approx 10%)
-        glowGradient.addColorStop(0.3, `rgba(239, 68, 68, ${0.11 * opacity})`); // Increased from 0.1
-        glowGradient.addColorStop(0.6, `rgba(239, 68, 68, ${0.035 * opacity})`); // Increased from 0.03
-        glowGradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
+        glowGradient.addColorStop(0, `rgba(${themeRgb}, ${0.24 * opacity})`); 
+        glowGradient.addColorStop(0.3, `rgba(${themeRgb}, ${0.11 * opacity})`); 
+        glowGradient.addColorStop(0.6, `rgba(${themeRgb}, ${0.035 * opacity})`); 
+        glowGradient.addColorStop(1, `rgba(${themeRgb}, 0)`);
         
         ctx.fillStyle = glowGradient;
         ctx.fillRect(0, 0, width, height);
@@ -82,15 +83,15 @@ const PixelTrail = () => {
       // 2. Draw horizontal lines
       for (let y = 0; y <= height; y += gridSize) {
         const distY = Math.abs(y - mouse.y);
-        let lineOpacity = 0.06; // Increased base visibility from 0.05
+        let lineOpacity = 0.06; // Base visibility
         
         if (mouse.active && distY < highlightRadius) {
           const factor = 1 - distY / highlightRadius;
-          lineOpacity = Math.max(0.06, factor * 0.45 * opacity); // Increased factor from 0.4
+          lineOpacity = Math.max(0.06, factor * 0.45 * opacity); 
         }
         
         ctx.beginPath();
-        ctx.strokeStyle = `rgba(239, 68, 68, ${lineOpacity})`;
+        ctx.strokeStyle = `rgba(${themeRgb}, ${lineOpacity})`;
         ctx.lineWidth = 0.6; 
         ctx.moveTo(0, y);
         ctx.lineTo(width, y);
@@ -100,16 +101,16 @@ const PixelTrail = () => {
       // 3. Draw vertical lines
       for (let x = 0; x <= width; x += gridSize) {
         const distX = Math.abs(x - mouse.x);
-        let lineOpacity = 0.06; // Increased base visibility from 0.05
+        let lineOpacity = 0.06; // Base visibility
 
         if (mouse.active && distX < highlightRadius) {
           const factor = 1 - distX / highlightRadius;
-          lineOpacity = Math.max(0.06, factor * 0.45 * opacity); // Increased factor from 0.4
+          lineOpacity = Math.max(0.06, factor * 0.45 * opacity); 
         }
         
         ctx.beginPath();
-        ctx.strokeStyle = `rgba(239, 68, 68, ${lineOpacity})`;
-        ctx.lineWidth = 0.6; // Slightly thinner for cleaner look
+        ctx.strokeStyle = `rgba(${themeRgb}, ${lineOpacity})`;
+        ctx.lineWidth = 0.6; 
         ctx.moveTo(x, 0);
         ctx.lineTo(x, height);
         ctx.stroke();

@@ -124,14 +124,18 @@ const applyGlobalTheme = (theme) => {
     root.style.setProperty('--primary-light', '#f87171');
     root.style.setProperty('--primary-light-rgb', '248, 113, 113');
     root.style.setProperty('--primary-glow', 'rgba(239, 68, 68, 0.5)');
-    root.style.setProperty('--complementary', '#fdf5e6');
+    root.style.setProperty('--accent', '#ef4444');
+    root.style.setProperty('--accent-rgb', '239, 68, 68');
+    root.style.setProperty('--accent-hover', '#f87171');
+    root.style.setProperty('--accent-glow', 'rgba(239, 68, 68, 0.45)');
+    root.style.setProperty('--complementary', '#fff9e6');
     root.style.setProperty('--text-complementary', '#1a1a1a');
     root.style.setProperty('--panel-text', '#1a1a1a');
     root.style.setProperty('--bg-dark', '#0f0f0f');
     root.style.setProperty('--bg-surface', '#1a1a1a');
     root.style.setProperty('--text-main', '#ffffff');
     root.style.setProperty('--text-muted', '#a0a0a0');
-    root.style.setProperty('--text-hi', '#fffdd0');
+    root.style.setProperty('--text-hi', '#ffffff');
     root.style.setProperty('--text-mid', '#f5f5dc');
     root.style.setProperty('--text-lo', '#d2b48c');
     localStorage.setItem('app_theme', 'crimson');
@@ -144,19 +148,23 @@ const applyGlobalTheme = (theme) => {
     root.style.setProperty('--primary-light', '#f87171');
     root.style.setProperty('--primary-light-rgb', '248, 113, 113');
     root.style.setProperty('--primary-glow', 'rgba(239, 68, 68, 0.5)');
-    root.style.setProperty('--complementary', '#fdf5e6');
+    root.style.setProperty('--accent', '#ef4444');
+    root.style.setProperty('--accent-rgb', '239, 68, 68');
+    root.style.setProperty('--accent-hover', '#f87171');
+    root.style.setProperty('--accent-glow', 'rgba(239, 68, 68, 0.45)');
+    root.style.setProperty('--complementary', '#fff9e6');
     root.style.setProperty('--text-complementary', '#1a1a1a');
     root.style.setProperty('--panel-text', '#1a1a1a');
     root.style.setProperty('--bg-dark', '#0f0f0f');
     root.style.setProperty('--bg-surface', '#1a1a1a');
     root.style.setProperty('--text-main', '#ffffff');
     root.style.setProperty('--text-muted', '#a0a0a0');
-    root.style.setProperty('--text-hi', '#fffdd0');
+    root.style.setProperty('--text-hi', '#ffffff');
     root.style.setProperty('--text-mid', '#f5f5dc');
     root.style.setProperty('--text-lo', '#d2b48c');
     localStorage.setItem('app_theme', 'crimson');
   } else {
-      // ── Scarlet Flare theme (default) ──────────────────────────
+      // ── Default Theme (Crimson) ──────────────────────────
       root.style.setProperty('--primary', '#ef4444');
       root.style.setProperty('--primary-rgb', '239, 68, 68');
       root.style.setProperty('--primary-dark', '#dc2626');
@@ -164,17 +172,20 @@ const applyGlobalTheme = (theme) => {
       root.style.setProperty('--primary-light', '#f87171');
       root.style.setProperty('--primary-light-rgb', '248, 113, 113');
       root.style.setProperty('--primary-glow', 'rgba(239, 68, 68, 0.5)');
-      root.style.setProperty('--complementary', '#fdf5e6');
+      root.style.setProperty('--accent', '#ef4444');
+      root.style.setProperty('--accent-rgb', '239, 68, 68');
+      root.style.setProperty('--accent-hover', '#f87171');
+      root.style.setProperty('--accent-glow', 'rgba(239, 68, 68, 0.45)');
+      root.style.setProperty('--complementary', '#fff9e6');
       root.style.setProperty('--text-complementary', '#1a1a1a');
       root.style.setProperty('--panel-text', '#1a1a1a');
       root.style.setProperty('--bg-dark', '#0f0f0f');
       root.style.setProperty('--bg-surface', '#1a1a1a');
-      // Text variables – always set explicitly to prevent CSS cascade bugs
       root.style.setProperty('--text-main', '#ffffff');
       root.style.setProperty('--text-muted', '#a0a0a0');
-      root.style.setProperty('--text-hi', '#fffdd0');   // Cream – the Scarlet Flare signature
-      root.style.setProperty('--text-mid', '#f5f5dc');  // Light cream
-      root.style.setProperty('--text-lo', '#d2b48c');   // Tan
+      root.style.setProperty('--text-hi', '#ffffff');
+      root.style.setProperty('--text-mid', '#f5f5dc');
+      root.style.setProperty('--text-lo', '#d2b48c');
     }
 };
 
@@ -202,14 +213,18 @@ const applyScarletFlare = () => {
   root.style.setProperty('--primary-light', '#f87171');
   root.style.setProperty('--primary-light-rgb', '248, 113, 113');
   root.style.setProperty('--primary-glow', 'rgba(239, 68, 68, 0.5)');
-  root.style.setProperty('--complementary', '#faf5ee');
+  root.style.setProperty('--accent', '#ef4444');
+  root.style.setProperty('--accent-rgb', '239, 68, 68');
+  root.style.setProperty('--accent-hover', '#f87171');
+  root.style.setProperty('--accent-glow', 'rgba(239, 68, 68, 0.45)');
+  root.style.setProperty('--complementary', '#fff9e6');
   root.style.setProperty('--text-complementary', '#1a1a1a');
   root.style.setProperty('--panel-text', '#1a1a1a');
   root.style.setProperty('--bg-dark', '#0f0f0f');
   root.style.setProperty('--bg-surface', '#1a1a1a');
   root.style.setProperty('--text-main', '#ffffff');
   root.style.setProperty('--text-muted', '#a0a0a0');
-  root.style.setProperty('--text-hi', '#fffdd0');
+  root.style.setProperty('--text-hi', '#ffffff');
   root.style.setProperty('--text-mid', '#f5f5dc');
   root.style.setProperty('--text-lo', '#d2b48c');
   root.style.setProperty('--font-sans', "'Poppins', sans-serif");
@@ -233,6 +248,29 @@ const ThemeManager = () => {
       // Only apply font override if not a special theme (those set their own font)
       if (savedTheme !== 'amber' && savedTheme !== 'neo-noir') {
         applyGlobalFont(savedFont);
+      }
+
+      // Re-apply user's accent and background preferences ONLY if they are using the default Scarlet Flare (crimson) theme.
+      // Other special themes like Creeper Craft ('amber') or Night City ('neo-noir') must use their own styles.
+      if (savedTheme === 'crimson') {
+        // Re-apply user's accent color preference
+        const ACCENT_MAP = {
+          red:      { p: '#ef4444', rgb: '239, 68, 68', d: '#dc2626', dRgb: '220, 38, 38', l: '#f87171', lRgb: '248, 113, 113' },
+          orange:   { p: '#f97316', rgb: '249, 115, 22', d: '#ea6c0a', dRgb: '234, 108, 10', l: '#fb923c', lRgb: '251, 146, 60' },
+          espresso: { p: '#8B4513', rgb: '139, 69, 19', d: '#6B3410', dRgb: '107, 52, 16', l: '#C08060', lRgb: '192, 128, 96' },
+        };
+        const savedAccent = localStorage.getItem('accent_color') || 'red';
+        if (ACCENT_MAP[savedAccent]) {
+          const a = ACCENT_MAP[savedAccent];
+          const root = document.documentElement;
+          root.style.setProperty('--primary',           a.p);
+          root.style.setProperty('--primary-rgb',       a.rgb);
+          root.style.setProperty('--primary-dark',      a.d);
+          root.style.setProperty('--primary-dark-rgb',  a.dRgb);
+          root.style.setProperty('--primary-light',     a.l);
+          root.style.setProperty('--primary-light-rgb', a.lRgb);
+          root.style.setProperty('--primary-glow',      `rgba(${a.rgb}, 0.5)`);
+        }
       }
     }
   }, [location.pathname]);

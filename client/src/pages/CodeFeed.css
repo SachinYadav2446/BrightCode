@@ -12,8 +12,8 @@
     --df-surface2:    rgba(255,255,255,0.042);
     --df-surface3:    rgba(255,255,255,0.062);
 
-    --df-border:      rgba(255,255,255,0.07);
-    --df-border2:     rgba(255,255,255,0.11);
+    --df-border:      var(--border-subtle);
+    --df-border2:     var(--border-hi);
     --df-border3:     rgba(255,255,255,0.17);
 
     --df-text:        #e8ecf0;
@@ -39,8 +39,8 @@
     /* Post type accent colors */
     --type-til:           #22c55e;
     --type-til-dim:       rgba(34,197,94,0.1);
-    --type-roast:         #f97316;
-    --type-roast-dim:     rgba(249,115,22,0.1);
+    --type-roast:         var(--primary);
+    --type-roast-dim:     rgba(var(--primary-rgb),0.1);
     --type-challenge:     #a855f7;
     --type-challenge-dim: rgba(168,85,247,0.1);
     --type-flex:          #c9a84c;
@@ -359,7 +359,7 @@
     border-bottom: 1px solid var(--df-border);
 }
 .df-lang-select {
-    background: rgba(255,255,255,0.06);
+    background: var(--border-subtle);
     border: 1px solid var(--df-border2);
     border-radius: 3px;
     color: var(--df-text2);
@@ -1011,10 +1011,10 @@
     gap: 10px;
     padding: 18px 20px;
     border-bottom: 1px solid var(--df-border);
-    border-left: 4px solid rgba(255,255,255,0.05);
+    border-left: 4px solid var(--border-subtle);
 }
 .df-skel {
-    background: rgba(255,255,255,0.05);
+    background: var(--border-subtle);
     border-radius: 3px;
     animation: df-pulse 2s ease-in-out infinite;
 }
