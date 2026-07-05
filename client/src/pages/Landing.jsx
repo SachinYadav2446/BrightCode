@@ -5,7 +5,7 @@ import {
   Brain, Trophy, Shield, GitBranch, Users, Terminal,
   Sparkles, Check, Play, CheckCircle, ArrowUpRight,
   Code2, Menu, X, Zap, Activity, Star, TrendingUp, Lock, Crown,
-  User, Settings
+  User, Settings, ChevronRight
 } from "lucide-react";
 import API_URL from "../config";
 import CodeBrightLogo from "../components/CodeBrightLogo";
@@ -75,15 +75,19 @@ function Nav({ handleAuth }) {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
 
-      const sections = ["features", "modules", "arena"];
-      const scrollPos = window.scrollY + 200;
+      // If at the very bottom of the page, automatically highlight the last section
+      const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 80;
+      if (isAtBottom) {
+        setActiveLink("arena");
+        return;
+      }
 
+      const sections = ["features", "modules", "arena"];
       for (const sec of sections) {
         const el = document.getElementById(sec);
         if (el) {
-          const top = el.offsetTop;
-          const height = el.offsetHeight;
-          if (scrollPos >= top && scrollPos < top + height) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= 150 && rect.bottom >= 150) {
             setActiveLink(sec);
             break;
           }
@@ -93,6 +97,12 @@ function Nav({ handleAuth }) {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const navLinks = [
+    { label: "Features", id: "features" },
+    { label: "Modules", id: "modules" },
+    { label: "Hall of Fame", id: "arena" }
+  ];
 
   return (
     <>
@@ -105,19 +115,18 @@ function Nav({ handleAuth }) {
             </a>
           </div>
 
-          {/* CENTER: Nav links (styled identically to Home/Library/etc but pointing to Landing hashes) */}
+          {/* CENTER: Nav links */}
           <div className="nav-center">
-            {["Features", "Modules", "Arena"].map(l => {
-              const id = l.toLowerCase();
-              const isActive = activeLink === id;
+            {navLinks.map(link => {
+              const isActive = activeLink === link.id;
               return (
                 <a
-                  key={l}
-                  href={`#${id}`}
+                  key={link.id}
+                  href={`#${link.id}`}
                   className={`nav-link-hover ${isActive ? "active" : ""}`}
-                  onClick={() => setActiveLink(id)}
+                  onClick={() => setActiveLink(link.id)}
                 >
-                  {l}
+                  {link.label}
                 </a>
               );
             })}
@@ -150,17 +159,16 @@ function Nav({ handleAuth }) {
         {/* Mobile menu dropdown drawer */}
         {open && (
           <div className="nav-mobile-menu">
-            {["Features", "Workflow", "Modules", "Arena"].map(l => {
-              const id = l.toLowerCase();
-              const isActive = activeLink === id;
+            {navLinks.map(link => {
+              const isActive = activeLink === link.id;
               return (
                 <a
-                  key={l}
-                  href={`#${id}`}
+                  key={link.id}
+                  href={`#${link.id}`}
                   className={`nav-mobile-link ${isActive ? "active" : ""}`}
-                  onClick={() => { setOpen(false); setActiveLink(id); }}
+                  onClick={() => { setOpen(false); setActiveLink(link.id); }}
                 >
-                  {l}
+                  {link.label}
                 </a>
               );
             })}
@@ -207,19 +215,12 @@ function BrightCodeCanvas() {
     const lastMouse = { x: -9999, y: -9999 };
     let totalDist = 0;
 
-    const DATA_TERMS = [
-      "Python", "Rust", "Go", "TypeScript", "C++", "Java", "O(n)", "O(1)", "O(log n)",
-      "30ms", "Live Battle", "Factions", "CodeVault", "Proctor AI", "Allies", "1024 XP",
-      "{ }", "[ ]", "=>", "solve()", "compile", "heap", "stack", "BST", "DP", "Graph",
-      "✓ pass", "Apprentice", "Grandmaster", "Elo +24", "Streak x5", "Sentinel"
-    ];
-
     const COLORS = [
-      '#ef4444', '#f87171', '#fbbf24', '#f59e0b', '#fb923c', '#a8a29e', '#cbd5e1'
+      '#ef4444', '#dc2626', '#b91c1c', '#ef4444'
     ];
 
     function init() {
-      const rect = container.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect();
       W = rect.width;
       H = rect.height;
       const dpr = window.devicePixelRatio || 1;
@@ -232,33 +233,79 @@ function BrightCodeCanvas() {
     }
 
     function spawnParticle(mx, my) {
-      const text = DATA_TERMS[Math.floor(Math.random() * DATA_TERMS.length)];
+      const text = "BrightCode";
       const color = COLORS[Math.floor(Math.random() * COLORS.length)];
-      ctx.font = '10px monospace';
-      const textW = ctx.measureText(text).width;
       
       particles.push({
-        x: mx - textW / 2 - 8,
-        y: my - 10,
-        w: textW + 16,
-        h: 20,
+        x: mx,
+        y: my,
         text: text,
         color: color,
-        vx: (Math.random() - 0.5) * 0.8,
-        vy: -0.5 - Math.random() * 0.8,
         alpha: 1.0,
-        scale: 0.9 + Math.random() * 0.2,
         life: 1.0,
-        decay: 0.008 + Math.random() * 0.008
+        decay: 0.04 // Fades out trail bubbles in ~25 frames
       });
+    }
+
+    function drawBubble(ctx, x, y, text, color, alpha, isMain) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+
+      ctx.font = '700 13px monospace';
+      const textW = ctx.measureText(text).width;
+      const w = textW + 28;
+      const h = 28;
+
+      // Positioned close above the cursor tip, centered horizontally with canvas edge clamping
+      const px = Math.max(4, Math.min(x - w / 2, W - w - 4));
+      const py = Math.max(4, Math.min(y - h - 4, H - h - 4));
+
+      ctx.translate(px + w / 2, py + h / 2);
+      if (!isMain) {
+        // scale down tail bubbles slightly to taper the trail
+        ctx.scale(0.88, 0.88);
+      }
+      ctx.translate(-w / 2, -h / 2);
+
+      // Bubble background and border outline
+      ctx.strokeStyle = isMain ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255, 255, 255, 0.15)';
+      ctx.lineWidth = 1;
+      ctx.fillStyle = isMain ? '#ef4444' : color;
+      
+      const rr = 6; // border radius
+      ctx.beginPath();
+      ctx.moveTo(rr, 0);
+      ctx.lineTo(w - rr, 0);
+      ctx.arcTo(w, 0, w, rr, rr);
+      ctx.lineTo(w, h - rr);
+      ctx.arcTo(w, h, w - rr, h, rr);
+      ctx.lineTo(rr, h);
+      ctx.arcTo(0, h, 0, h - rr, rr);
+      ctx.lineTo(0, rr);
+      ctx.arcTo(0, 0, rr, 0, rr);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Indicator dot
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(10, h / 2, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Text label
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 12px monospace';
+      ctx.fillText(text, 18, h / 2 + 4.5);
+
+      ctx.restore();
     }
 
     function draw() {
       ctx.clearRect(0, 0, W, H);
 
+      // 1. Draw and update trailing bubbles
       particles.forEach((p, idx) => {
-        p.x += p.vx;
-        p.y += p.vy;
         p.life -= p.decay;
         p.alpha = p.life;
 
@@ -267,45 +314,13 @@ function BrightCodeCanvas() {
           return;
         }
 
-        ctx.save();
-        ctx.globalAlpha = p.alpha;
-        ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
-        ctx.scale(p.scale, p.scale);
-        ctx.translate(-p.w / 2, -p.h / 2);
-
-        // Glassmorphic rounded bubble outline
-        ctx.strokeStyle = p.color + '44'; // transparency
-        ctx.lineWidth = 1;
-        ctx.fillStyle = 'rgba(15, 15, 25, 0.4)';
-        
-        const rr = 6; // border radius
-        ctx.beginPath();
-        ctx.moveTo(rr, 0);
-        ctx.lineTo(p.w - rr, 0);
-        ctx.arcTo(p.w, 0, p.w, rr, rr);
-        ctx.lineTo(p.w, p.h - rr);
-        ctx.arcTo(p.w, p.h, p.w - rr, p.h, rr);
-        ctx.lineTo(rr, p.h);
-        ctx.arcTo(0, p.h, 0, p.h - rr, rr);
-        ctx.lineTo(0, rr);
-        ctx.arcTo(0, 0, rr, 0, rr);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        // Small indicator dot
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(8, p.h / 2, 2.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Text label
-        ctx.fillStyle = '#f4f4f5';
-        ctx.font = '700 9px monospace';
-        ctx.fillText(p.text, 15, p.h / 2 + 3);
-
-        ctx.restore();
+        drawBubble(ctx, p.x, p.y, p.text, p.color, p.alpha, false);
       });
+
+      // 2. Draw the main active bubble under the pointer (always on top)
+      if (lastMouse.x !== -9999) {
+        drawBubble(ctx, lastMouse.x, lastMouse.y, "BrightCode", "#ef4444", 1.0, true);
+      }
 
       rafRef.current = requestAnimationFrame(draw);
     }
@@ -314,16 +329,15 @@ function BrightCodeCanvas() {
     rafRef.current = requestAnimationFrame(draw);
 
     const onMove = e => {
-      if (!section) return;
-      const rect = section.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
 
       if (lastMouse.x !== -9999) {
         const dist = Math.hypot(mx - lastMouse.x, my - lastMouse.y);
         totalDist += dist;
-        if (totalDist > 24) {
-          spawnParticle(mx, my);
+        if (totalDist > 16) {
+          spawnParticle(lastMouse.x, lastMouse.y);
           totalDist = 0;
         }
       }
@@ -366,9 +380,6 @@ function BrightCodeCanvas() {
 function HeroSection({ handleAuth, handleHub }) {
   return (
     <section className="hero-section" id="home">
-      {/* Full-bg pixel reveal canvas */}
-      <BrightCodeCanvas />
-
       {/* Gradient overlays */}
       <div className="hero-bg">
         <div className="hero-orb hero-orb-1" />
@@ -402,28 +413,8 @@ function HeroSection({ handleAuth, handleHub }) {
             </button>
           </div>
 
-          <div className="hero-proof" style={{ justifyContent: 'center' }}>
-            <div className="proof-item">
-              <AnimCounter target={2500} suffix="+" />
-              <span>Challenges</span>
-            </div>
-            <div className="proof-sep" />
-            <div className="proof-item">
-              <AnimCounter target={12000} suffix="+" />
-              <span>Engineers</span>
-            </div>
-            <div className="proof-sep" />
-            <div className="proof-item">
-              <span>{'<30ms'}</span>
-              <span>Sync Speed</span>
-            </div>
-          </div>
+          
         </motion.div>
-      </div>
-
-      {/* Scroll hint */}
-      <div className="hero-scroll-hint">
-        <span />
       </div>
     </section>
   );
@@ -462,45 +453,34 @@ function BentoFeatures() {
 
   const cardsData = [
     {
-      stat: "2,500+",
-      label: "Algorithms & Quests",
-      desc: "Spanning dynamic programming, graphs, machine learning, and systems design.",
-      type: "image",
-      src: "/developers_coding.png",
-      alt: "Developers coding",
-      accent: "rust"
+      stat: "1v1",
+      label: "Live Code Wars Arena",
+      desc: "Challenge top engineers to head-to-head speed-coding battles and climb the Elo ladder.",
+      type: "ui-codewars",
     },
     {
-      stat: "99.8%",
-      label: "Assessment Integrity",
-      desc: "Trusted worldwide via screen tracking, AI behavior checks, and tab monitoring.",
+      stat: "Active",
+      label: "AI Proctor Arena",
+      desc: "Run cheat-proof coding evaluations with tab activity logs, screen tracking, and copy-paste blocks.",
       type: "ui-proctor",
-      accent: "cream"
+    },
+    {
+      stat: "900+",
+      label: "Developer Arcade",
+      desc: "Complete algorithm quests, solve learning tracks, and earn global XP rankings.",
+      type: "ui-arcade",
     },
     {
       stat: "15+",
       label: "Supported Languages",
-      desc: "Fully optimized environment with auto-completion and instant runtimes.",
+      desc: "Write, compile, and run code instantly in our high-performance collaborative web IDE.",
       type: "ui-lang",
-      accent: "gold"
     },
     {
-      stat: "48K+",
-      label: "Global Engineers",
-      desc: "Collaborating, competing, scaling leaderboards, and building factions daily.",
-      type: "image",
-      src: "/global_community.png",
-      alt: "Global community",
-      accent: "sage"
-    },
-    {
-      stat: "$10K+",
-      label: "Weekly Battle Prizes",
-      desc: "Won by developers in real-time speed coding arenas and faction tournaments.",
-      type: "image",
-      src: "/hackathon_team.png",
-      alt: "Hackathon tournament",
-      accent: "red"
+      stat: "Guilds",
+      label: "Developer Factions & Feed",
+      desc: "Join programmer guilds, collaborate with alliances, and share solutions on the Code Feed.",
+      type: "ui-factions",
     }
   ];
 
@@ -514,54 +494,131 @@ function BentoFeatures() {
         </motion.div>
       </div>
 
-      <div className="vertical-bento-row">
-        {cardsData.map((card, i) => (
-          <motion.div 
-            key={i} 
-            {...cardAnim(i * 0.08)} 
-            className={`vert-bento-card accent-${card.accent}`}
-          >
-            <div className="vert-bcard-top">
-              <span className="vert-bcard-stat">{card.stat}</span>
-              <h3 className="vert-bcard-title">{card.label}</h3>
-              <p className="vert-bcard-desc">{card.desc}</p>
-            </div>
-            
-            <div className="vert-bcard-visual">
-              {card.type === "image" && (
-                <img src={card.src} alt={card.alt} className="vert-bcard-img" />
-              )}
+      <div className="bento-grid-custom">
+        {cardsData.map((card, i) => {
+          const gridClass = i < 2 ? "bento-span-3" : "bento-span-2";
+          return (
+            <motion.div 
+              key={i} 
+              {...cardAnim(i * 0.08)} 
+              className={`bento-card-custom ${gridClass}`}
+            >
+              <div className="vert-bcard-top">
+                <span className="bento-card-stat">{card.stat}</span>
+                <h3 className="vert-bcard-title">{card.label}</h3>
+                <p className="vert-bcard-desc">{card.desc}</p>
+              </div>
               
-              {card.type === "ui-lang" && (
-                <div className="vert-ui-lang-wrap">
-                  <div className="vert-lang-chips">
-                    {["Python", "JS", "Go", "Rust", "C++", "Java"].map((l, idx) => (
-                      <span key={l} className={`vert-lang-chip ${idx === 0 ? "active" : ""}`}>
-                        {l}
-                      </span>
-                    ))}
+              <div className="bento-card-visual">
+                {card.type === "ui-codewars" && (
+                  <div className="visual-codewars">
+                    <div className="cw-players">
+                      <div className="cw-player">
+                        <div className="cw-name">User_Alpha</div>
+                        <div className="cw-hp-bar">
+                          <div className="cw-hp-fill red" />
+                        </div>
+                      </div>
+                      <div className="cw-vs">VS</div>
+                      <div className="cw-player">
+                        <div className="cw-name">User_Beta</div>
+                        <div className="cw-hp-bar">
+                          <div className="cw-hp-fill gray" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="cw-status">
+                      <code>[STATUS] <span>7/10</span> test suites compiled successfully.</code>
+                    </div>
                   </div>
-                  <div className="vert-mini-console">
-                    <span className="c-green">✓</span> solve(nums) <span className="c-gray">in 4ms</span>
+                )}
+                
+                {card.type === "ui-proctor" && (
+                  <div className="visual-proctor">
+                    <div className="proctor-scanner">
+                      <div className="proctor-ring" />
+                      <div className="proctor-shield">
+                        <Shield size={22} />
+                      </div>
+                    </div>
+                    <div className="proctor-tags">
+                      <div className="proctor-tag active">WEB CAM: ON</div>
+                      <div className="proctor-tag active">TAB MONITOR: LOCKED</div>
+                    </div>
+                    <div className="proctor-integrity">
+                      INTEGRITY RATING: <span>100% SECURE</span>
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              {card.type === "ui-proctor" && (
-                <div className="vert-ui-proctor-wrap">
-                  <div className="vert-proctor-circle">
-                    <svg viewBox="0 0 36 36" className="vert-circular-chart">
-                      <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                      <path className="circle-fg" strokeDasharray="98, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <div className="vert-percentage">98%</div>
+                )}
+
+                {card.type === "ui-arcade" && (
+                  <div className="visual-arcade">
+                    <div className="arcade-xp-section">
+                      <div className="arcade-lvl">LEVEL 42</div>
+                      <div className="arcade-xp-text">950 / 1000 XP</div>
+                    </div>
+                    <div className="arcade-progress-bar">
+                      <div className="arcade-progress-fill" />
+                    </div>
+                    <div className="arcade-quest-card">
+                      <div className="arcade-quest-icon">
+                        <Trophy size={16} />
+                      </div>
+                      <div className="arcade-quest-details">
+                        <div className="arcade-quest-name">Dynamic Programming I</div>
+                        <div className="arcade-quest-reward">+250 XP • Badge Unlocked</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="vert-proctor-tag">AI SECURE</div>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        ))}
+                )}
+                
+                {card.type === "ui-lang" && (
+                  <div className="visual-languages">
+                    <div className="lang-grid-custom">
+                      <div className="lang-card-mini active">Python</div>
+                      <div className="lang-card-mini">JavaScript</div>
+                      <div className="lang-card-mini active">Go</div>
+                      <div className="lang-card-mini">Rust</div>
+                      <div className="lang-card-mini active">C++</div>
+                      <div className="lang-card-mini">Java</div>
+                    </div>
+                    <div className="lang-terminal-mini">
+                      <code>$ python solve.py --test <span style={{ color: '#10b981' }}>✓ ok (4ms)</span></code>
+                    </div>
+                  </div>
+                )}
+                
+                {card.type === "ui-factions" && (
+                  <div className="visual-factions">
+                    <div className="faction-rankings-mini">
+                      <div className="faction-item-mini">
+                        <div className="faction-name-mini">
+                          <div className="faction-crest-dot" style={{ background: '#ef4444' }} />
+                          CyberNova
+                        </div>
+                        <div className="faction-elo-mini">1,240 XP</div>
+                      </div>
+                      <div className="faction-item-mini">
+                        <div className="faction-name-mini">
+                          <div className="faction-crest-dot" style={{ background: '#71717a' }} />
+                          BitBusters
+                        </div>
+                        <div className="faction-elo-mini">980 XP</div>
+                      </div>
+                      <div className="faction-item-mini">
+                        <div className="faction-name-mini">
+                          <div className="faction-crest-dot" style={{ background: '#52525b' }} />
+                          CodeCrusaders
+                        </div>
+                        <div className="faction-elo-mini">850 XP</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
     </section>
   );
@@ -704,12 +761,7 @@ function AlumniNetwork() {
             </motion.p>
           </div>
           
-          <div className="alumni-header-right">
-            <div className="currency-3d-wrap">
-              <div className="gold-currency-symbol" style={{ fontSize: "4.5rem" }}>&lt;/&gt;</div>
-              <div className="gold-currency-reflection" />
-            </div>
-          </div>
+          
         </div>
 
         {/* LOWER ROW: Two infinite sliding marquee strips */}
@@ -757,124 +809,128 @@ function AlumniNetwork() {
 /* ────────────────────────────────────────────────────────────
    LEADERBOARD SECTION
 ──────────────────────────────────────────────────────────── */
-function LeaderboardSection({ data, loading, handleAuth }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
+function LeaderboardSection({ data, loading }) {
+  const navigate = useNavigate();
 
-  const RANK_COLORS = ["#f59e0b","#94a3b8","#b45309","#a78bfa","#34d399"];
-
-  // Mock data for demonstration
   const mockData = [
-    { username: "code_master_99", level: "Grandmaster", xp: 15420 },
-    { username: "algo_queen", level: "Master", xp: 12350 },
-    { username: "byte_ninja", level: "Expert", xp: 9870 },
+    { username: "code_master_99", xp: 84200 },
+    { username: "algo_queen", xp: 71800 },
+    { username: "byte_ninja", xp: 68100 },
+    { username: "rust_coder", xp: 54300 },
+    { username: "stack_overflowed", xp: 49200 },
+    { username: "git_push_force", xp: 44100 },
+    { username: "py_wizard", xp: 39800 },
+    { username: "hacker_ranker", xp: 35600 },
+    { username: "binary_searcher", xp: 31200 },
+    { username: "null_pointer", xp: 28900 }
   ];
 
   const displayData = data && data.length > 0 ? data : mockData;
 
   return (
-    <section className="lb-section" id="arena" ref={ref}>
-      <div className="lb-inner">
-        <motion.div
-          className="lb-left"
-          initial={{ opacity: 0, x: -30 }}
-          animate={inView ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <span className="section-pill">Competitive</span>
+    <section className="fame-section-fullwidth" id="arena">
+      <div className="fame-fullwidth-inner">
+
+        {/* Attracting Header Block */}
+        <div className="fame-marketing-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '48px' }}>
+          <span className="section-pill">Competitive Standings</span>
           <h2 className="section-h2">Rise on the Global Leaderboard</h2>
-          <p className="section-sub">Solve problems, earn XP, and compete for the top spot.</p>
-
-          <div className="lb-perks">
-            {[
-              { icon: Zap,         text: "XP from Apprentice to Grandmaster" },
-              { icon: Users,       text: "Faction Wars with real stakes" },
-              { icon: TrendingUp,  text: "Streak multipliers up to 3×" },
-              { icon: Trophy,      text: "Monthly global ranking resets" },
-            ].map(({ icon: Icon, text }, i) => (
-              <div key={i} className="lb-perk">
-                <div className="lb-perk-icon"><Icon size={15} /></div>
-                <span>{text}</span>
-              </div>
-            ))}
-          </div>
-
-          <button className="btn-clay" onClick={() => handleAuth("register")} style={{ marginTop: "28px" }}>
-            Join a Faction Today
+          <p className="section-sub" style={{ marginBottom: '24px' }}>
+            Earn XP by solving challenges, maintaining streaks, and collaborating. Compete against top developers worldwide to claim your place on the 3D podium and secure your operative rank.
+          </p>
+          <button className="leaderboard-header-btn" onClick={() => navigate('/leaderboard')}>
+            <Trophy size={14} />
+            <span>View Full Leaderboard</span>
           </button>
-        </motion.div>
+        </div>
 
-        <motion.div
-          className="lb-right"
-          initial={{ opacity: 0, x: 30 }}
-          animate={inView ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-        >
-          <div className="lb-podium">
+        {/* Two-column layout: Podium left | Rankings list right */}
+        <div className="fame-layout-split">
+
+          {/* LEFT: Top 3 Podium */}
+          <div className="fame-podium-col">
             {loading ? (
-              <div className="lb-empty">Loading operatives…</div>
-            ) : displayData.length > 0 ? (
-              <>
-                {/* 2nd Place */}
-                <motion.div
-                  className="lb-podium-item lb-podium-2nd"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={inView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
-                  <div className="lb-podium-rank">2</div>
-                  <div className="lb-podium-avatar">
-                    <Trophy size={24} className="lb-podium-icon" />
-                  </div>
-                  <div className="lb-podium-name">{displayData[1]?.username}</div>
-                  <div className="lb-podium-level">{displayData[1]?.level}</div>
-                  <div className="lb-podium-xp">{(displayData[1]?.xp || 0).toLocaleString()} XP</div>
-                </motion.div>
-
-                {/* 1st Place */}
-                <motion.div
-                  className="lb-podium-item lb-podium-1st"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={inView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                >
-                  <div className="lb-podium-crown">
-                    <Crown size={28} className="lb-crown-icon" />
-                  </div>
-                  <div className="lb-podium-rank">1</div>
-                  <div className="lb-podium-avatar">
-                    <Trophy size={32} className="lb-podium-icon" />
-                  </div>
-                  <div className="lb-podium-name">{displayData[0]?.username}</div>
-                  <div className="lb-podium-level">{displayData[0]?.level}</div>
-                  <div className="lb-podium-xp">{(displayData[0]?.xp || 0).toLocaleString()} XP</div>
-                </motion.div>
-
-                {/* 3rd Place */}
-                <motion.div
-                  className="lb-podium-item lb-podium-3rd"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={inView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.5, delay: 0.4 }}
-                >
-                  <div className="lb-podium-rank">3</div>
-                  <div className="lb-podium-avatar">
-                    <Trophy size={24} className="lb-podium-icon" />
-                  </div>
-                  <div className="lb-podium-name">{displayData[2]?.username}</div>
-                  <div className="lb-podium-level">{displayData[2]?.level}</div>
-                  <div className="lb-podium-xp">{(displayData[2]?.xp || 0).toLocaleString()} XP</div>
-                </motion.div>
-              </>
+              <p className="widget-loading">Loading...</p>
+            ) : !displayData || !displayData.length ? (
+              <p className="widget-error">Rankings node offline.</p>
             ) : (
-              <div className="lb-empty">No operatives ranked yet.</div>
+              <div className="fame-podium">
+                {/* 2nd Place */}
+                {displayData[1] && (
+                  <div className="podium-column column-2" onClick={(e) => { e.stopPropagation(); navigate(`/u/${displayData[1].username}`); }}>
+                    <span className="podium-rank-emoji">🥈</span>
+                    <div className="podium-avatar-circle avatar-silver">{displayData[1].username[0].toUpperCase()}</div>
+                    <div className="podium-user-info">
+                      <span className="podium-username">{displayData[1].username}</span>
+                      <span className="podium-xp">{displayData[1].xp?.toLocaleString()} XP</span>
+                    </div>
+                    <div className="podium-box step-2-box"><span className="step-num">2</span></div>
+                  </div>
+                )}
+                {/* 1st Place */}
+                {displayData[0] && (
+                  <div className="podium-column column-1" onClick={(e) => { e.stopPropagation(); navigate(`/u/${displayData[0].username}`); }}>
+                    <span className="podium-crown-icon"><Crown size={20} fill="#fbbf24" color="#fbbf24" /></span>
+                    <span className="podium-rank-emoji">🥇</span>
+                    <div className="podium-avatar-circle avatar-gold">{displayData[0].username[0].toUpperCase()}</div>
+                    <div className="podium-user-info">
+                      <span className="podium-username">{displayData[0].username}</span>
+                      <span className="podium-xp">{displayData[0].xp?.toLocaleString()} XP</span>
+                    </div>
+                    <div className="podium-box step-1-box"><span className="step-num">1</span></div>
+                  </div>
+                )}
+                {/* 3rd Place */}
+                {displayData[2] && (
+                  <div className="podium-column column-3" onClick={(e) => { e.stopPropagation(); navigate(`/u/${displayData[2].username}`); }}>
+                    <span className="podium-rank-emoji">🥉</span>
+                    <div className="podium-avatar-circle avatar-bronze">{displayData[2].username[0].toUpperCase()}</div>
+                    <div className="podium-user-info">
+                      <span className="podium-username">{displayData[2].username}</span>
+                      <span className="podium-xp">{displayData[2].xp?.toLocaleString()} XP</span>
+                    </div>
+                    <div className="podium-box step-3-box"><span className="step-num">3</span></div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
-        </motion.div>
+
+          {/* Vertical divider */}
+          <div className="fame-split-divider" />
+
+          {/* RIGHT: Ranks 4-10 stacked list */}
+          <div className="fame-rankings-col">
+            <div className="fame-rankings-label">RANKS 4 – 10</div>
+            {loading ? (
+              <p className="widget-loading">Loading...</p>
+            ) : !displayData || !displayData.length ? (
+              <p className="widget-error">Rankings node offline.</p>
+            ) : (
+              <div className="fame-list-stack">
+                {displayData.slice(3, 10).map((ranker, idx) => (
+                  <div
+                    key={ranker.username}
+                    className="fame-list-row"
+                    onClick={(e) => { e.stopPropagation(); navigate(`/u/${ranker.username}`); }}
+                  >
+                    <span className="fame-list-rank">#{idx + 4}</span>
+                    <div className="fame-list-avatar">{ranker.username[0].toUpperCase()}</div>
+                    <span className="fame-list-username">{ranker.username}</span>
+                    <span className="fame-list-xp">{ranker.xp?.toLocaleString()} XP</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
       </div>
     </section>
   );
 }
+
+
 
 /* ────────────────────────────────────────────────────────────
    STATS BAND
@@ -2220,7 +2276,7 @@ export default function Landing() {
   useEffect(() => {
     fetch(`${API_URL}/leaderboard`)
       .then(r => r.json())
-      .then(d => { setLeaderboard(Array.isArray(d) ? d.slice(0, 5) : []); setLbLoading(false); })
+      .then(d => { const rows = Array.isArray(d) ? d : (d?.data || []); setLeaderboard(rows.slice(0, 10)); setLbLoading(false); })
       .catch(() => setLbLoading(false));
   }, []);
 
@@ -2228,14 +2284,15 @@ export default function Landing() {
   const handleHub  = () => navigate("/hub");
 
   return (
-    <div className="lp-root">
+    <div className="lp-root" style={{ position: "relative" }}>
       <Nav handleAuth={handleAuth} />
+      <BrightCodeCanvas />
       <HeroSection handleAuth={handleAuth} handleHub={handleHub} />
       <Ticker />
       <BentoFeatures />
       <AlumniNetwork />
       <ModulesSection />
-      <LeaderboardSection data={leaderboard} loading={lbLoading} handleAuth={handleAuth} />
+      <LeaderboardSection data={leaderboard} loading={lbLoading} />
       <CTASection handleAuth={handleAuth} handleHub={handleHub} />
       <Footer />
     </div>
