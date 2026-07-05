@@ -881,6 +881,166 @@ function BentoFeatures() {
   );
 }
 
+function ArcadeRoadmap() {
+  const [selectedLevel, setSelectedLevel] = useState(2); // Default to Apprentice (index 2)
+
+  const roadmapData = [
+    {
+      level: 1,
+      tier: "Initiate",
+      topic: "Syntax & Logic Fundamentals",
+      desc: "Master the basics of programming syntax. Learn to write clean loops, evaluate boolean conditionals, and work with basic arithmetic operators.",
+      stats: "12 Quests • +100 XP • 85% Completion",
+      badge: "Initiate Shield",
+      tracks: [
+        { name: "Variables & Types", progress: 100 },
+        { name: "Conditionals & Logic", progress: 90 },
+        { name: "Loops & Iterations", progress: 75 }
+      ]
+    },
+    {
+      level: 2,
+      tier: "Novice",
+      topic: "Core Data Structures",
+      desc: "Dive into data storage models. Write efficient algorithms using Arrays, Singly/Doubly Linked Lists, Hashmaps, and String parsing routines.",
+      stats: "24 Quests • +250 XP • 45% Completion",
+      badge: "Data Sentinel",
+      tracks: [
+        { name: "Arrays & Strings", progress: 80 },
+        { name: "Linked Lists & Stacks", progress: 40 },
+        { name: "Hashmaps & Sets", progress: 15 }
+      ]
+    },
+    {
+      level: 3,
+      tier: "Apprentice",
+      topic: "Algorithms & Search Trees",
+      desc: "Implement sorting and searching logic. Learn DFS/BFS traversals, binary search trees, and leverage basic recursion to solve partition challenges.",
+      stats: "40 Quests • +500 XP • Locked",
+      badge: "Apprentice Crest",
+      tracks: [
+        { name: "Sorting & Filtering", progress: 0 },
+        { name: "Binary Search & BSTs", progress: 0 },
+        { name: "Recursion & Backtracking", progress: 0 }
+      ]
+    },
+    {
+      level: 4,
+      tier: "Grandmaster",
+      topic: "Advanced Optimization",
+      desc: "Solve complex time-complexity challenges. Master Dynamic Programming (bottom-up/top-down), Greedy strategies, and advanced Graph Theory algorithms (Dijkstra's, MST).",
+      stats: "55 Quests • +1000 XP • Locked",
+      badge: "Master Code",
+      tracks: [
+        { name: "Dynamic Programming", progress: 0 },
+        { name: "Graph Shortest Path", progress: 0 },
+        { name: "Greedy Algorithms", progress: 0 }
+      ]
+    },
+    {
+      level: 5,
+      tier: "Elite",
+      topic: "Distributed Systems & Concurrency",
+      desc: "Graduate to full production architecture. Write concurrent code using channels/go-routines, design thread-safe APIs, and build simulated load-balancers and rate limiters.",
+      stats: "30 Quests • +2000 XP • Locked",
+      badge: "Elite Crown",
+      tracks: [
+        { name: "Concurrency & Channels", progress: 0 },
+        { name: "Rate Limiters & Caching", progress: 0 },
+        { name: "API Replication Models", progress: 0 }
+      ]
+    }
+  ];
+
+  return (
+    <section className="roadmap-section" id="roadmap">
+      <div className="roadmap-header">
+        <span className="section-pill">Arcade Road</span>
+        <h2 className="section-h2">Rank Tiers &amp; Quest Tree</h2>
+        <p className="section-sub">Climb the developer ladder. Unlock elite status badges from Initiate to Grandmaster.</p>
+      </div>
+
+      <div className="roadmap-container">
+        {/* Subway Map Track (Left side) */}
+        <div className="roadmap-track-container">
+          <div className="subway-line">
+            <div 
+              className="subway-line-fill" 
+              style={{ height: `${(selectedLevel / (roadmapData.length - 1)) * 100}%` }}
+            />
+          </div>
+
+          <div className="subway-nodes">
+            {roadmapData.map((node, idx) => {
+              const isActive = selectedLevel === idx;
+              const isPassed = idx < selectedLevel;
+              return (
+                <div 
+                  key={node.level} 
+                  className={`subway-node-wrapper ${isActive ? "active" : ""} ${isPassed ? "passed" : ""}`}
+                  onClick={() => setSelectedLevel(idx)}
+                >
+                  <div className="subway-node-dot">
+                    <span className="node-inner-dot" />
+                  </div>
+                  <div className="subway-node-info">
+                    <span className="node-level">LEVEL {node.level}</span>
+                    <span className="node-tier">{node.tier}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Level Details Card (Right side) */}
+        <div className="roadmap-details-card">
+          <div className="details-card-header">
+            <div className="details-title-wrap">
+              <span className="details-level-tag">LEVEL {roadmapData[selectedLevel].level}</span>
+              <h3 className="details-tier-name">{roadmapData[selectedLevel].tier}</h3>
+            </div>
+            <div className="details-badge-preview">
+              <div className="details-badge-glowing-effect" />
+              <Shield size={24} style={{ position: 'relative', zIndex: 1 }} />
+            </div>
+          </div>
+
+          <div className="details-card-body">
+            <h4 className="details-topic">{roadmapData[selectedLevel].topic}</h4>
+            <p className="details-desc">{roadmapData[selectedLevel].desc}</p>
+            
+            <div className="details-stats-pill">
+              {roadmapData[selectedLevel].stats}
+            </div>
+
+            <div className="details-tracks-list">
+              <span className="details-tracks-title">QUEST SUB-TRACKS</span>
+              {roadmapData[selectedLevel].tracks.map((track, tIdx) => (
+                <div key={tIdx} className="details-track-item">
+                  <div className="track-meta">
+                    <span className="track-name">{track.name}</span>
+                    <span className="track-pct">{track.progress}%</span>
+                  </div>
+                  <div className="track-bar">
+                    <div className="track-bar-fill" style={{ width: `${track.progress}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="details-card-footer">
+            <button className="btn-roadmap-unlock">
+              {selectedLevel <= 1 ? "Enter Level Arena" : "Unlock Tier Quest"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ────────────────────────────────────────────────────────────
    ALUMNI & PARTNERS BAND (Redesigned Light Theme Stack Marquee)
 ──────────────────────────────────────────────────────────── */
@@ -2548,6 +2708,7 @@ export default function Landing() {
       <Ticker />
       <InteractivePlayground />
       <BentoFeatures />
+      <ArcadeRoadmap />
       <AlumniNetwork />
       <ModulesSection />
       <LeaderboardSection data={leaderboard} loading={lbLoading} />
