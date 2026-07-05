@@ -69,11 +69,17 @@ function Nav({ handleAuth }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [hoveredLink, setHoveredLink] = useState(null);
-  const [activeLink, setActiveLink] = useState("features");
+  const [activeLink, setActiveLink] = useState(null);
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
+
+      // If at the very top of the page, no active link should be highlighted
+      if (window.scrollY < 120) {
+        setActiveLink(null);
+        return;
+      }
 
       // If at the very bottom of the page, automatically highlight the last section
       const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 80;
@@ -967,6 +973,14 @@ function ArcadeRoadmap() {
   // Reset selected sub-track when changing levels
   useEffect(() => {
     setActiveTrackIdx(0);
+  }, [selectedLevel]);
+
+  // Auto-cycle through levels every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSelectedLevel((prev) => (prev + 1) % roadmapData.length);
+    }, 5000);
+    return () => clearInterval(interval);
   }, [selectedLevel]);
 
   const handleSelectLevel = (idx) => {
