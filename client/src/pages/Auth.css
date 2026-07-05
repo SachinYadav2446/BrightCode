@@ -419,3 +419,99 @@
     margin-top: 60px;
   }
 }
+
+/* Left Stats Grid layout */
+.left-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.left-stat-pill {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all 0.3s ease;
+}
+
+.left-stat-pill:hover {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.2);
+  transform: translateY(-2px);
+}
+
+.pill-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.2px;
+}
+
+.pill-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 1px;
+}
+
+/* Tab list styling inside Simulator header */
+.sim-tabs-list {
+  display: flex;
+  gap: 12px;
+}
+
+.tab-item {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  position: relative;
+  padding-bottom: 2px;
+  transition: color 0.2s ease;
+}
+
+.tab-item.active {
+  color: var(--primary-light);
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary);
+  border-radius: 1px;
+}
+
+/* Monaco simulated syntax highlighting colors */
+.code-line {
+  margin-bottom: 3px;
+  white-space: pre;
+}
+
+.code-line.comment {
+  color: #71717a;
+  font-style: italic;
+}
+
+.token-keyword {
+  color: #f43f5e; /* Rose / Pink key words */
+  font-weight: bold;
+}
+
+.token-builtin {
+  color: #38bdf8; /* Light blue Set / Array classes */
+}
+
+.token-function {
+  color: #fb923c; /* Orange function names */
+}

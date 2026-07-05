@@ -38,6 +38,34 @@ function resolveConflict(factionA, factionB) {
     return () => clearInterval(interval);
   }, [typedCode]);
 
+  // A simple syntax highlighter for the simulated Monaco preview
+  const highlightCode = (rawCode) => {
+    if (!rawCode) return null;
+    const lines = rawCode.split("\n");
+    return lines.map((line, idx) => {
+      if (line.trim().startsWith("//")) {
+        return <div key={idx} className="code-line comment">{line}</div>;
+      }
+      return (
+        <div key={idx} className="code-line">
+          {line.split(/(\s+)/).map((word, wIdx) => {
+            const cleanWord = word.trim();
+            if (["function", "const", "return", "new"].includes(cleanWord)) {
+              return <span key={wIdx} className="token-keyword">{word}</span>;
+            }
+            if (["Set", "Array", "sort", "from"].includes(cleanWord)) {
+              return <span key={wIdx} className="token-builtin">{word}</span>;
+            }
+            if (cleanWord.startsWith("resolveConflict")) {
+              return <span key={wIdx} className="token-function">{word}</span>;
+            }
+            return word;
+          })}
+        </div>
+      );
+    });
+  };
+
   // Handle OAuth success callback parameters & errors
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -125,6 +153,18 @@ function resolveConflict(factionA, factionB) {
               Connect to the multiplayer coding core. Engage in speed battles, collaborate in real-time Monaco workspaces, and climb the ranks.
             </p>
 
+            {/* Elegant Stats Grid */}
+            <div className="left-stats-grid">
+              <div className="left-stat-pill">
+                <span className="pill-value">1v1 / 2v2 / 4v4</span>
+                <span className="pill-label">ARENA MODES</span>
+              </div>
+              <div className="left-stat-pill">
+                <span className="pill-value">Sub-10ms</span>
+                <span className="pill-label">SYNC LATENCY</span>
+              </div>
+            </div>
+
             {/* Premium Minimalist Editor Simulator */}
             <div className="premium-editor-sim">
               <div className="sim-editor-header">
@@ -133,12 +173,15 @@ function resolveConflict(factionA, factionB) {
                   <span className="mac-dot yellow"></span>
                   <span className="mac-dot green"></span>
                 </div>
-                <span className="sim-tab-active">resolve_duel.js</span>
+                <div className="sim-tabs-list">
+                  <span className="tab-item active">resolve_duel.js</span>
+                  <span className="tab-item">duel_system.cpp</span>
+                </div>
               </div>
               <div className="sim-editor-content">
                 <pre>
                   <code>
-                    {typedCode}
+                    {highlightCode(typedCode)}
                     <span className="cursor-blink">|</span>
                   </code>
                 </pre>
