@@ -970,17 +970,31 @@ function ArcadeRoadmap() {
     }
   ];
 
+  const [elapsedTime, setElapsedTime] = useState(0);
+
   // Reset selected sub-track when changing levels
   useEffect(() => {
     setActiveTrackIdx(0);
   }, [selectedLevel]);
 
-  // Auto-cycle through levels every 5 seconds
+  // Smooth auto-cycling through levels with requestAnimationFrame elapsed tracking
   useEffect(() => {
-    const interval = setInterval(() => {
-      setSelectedLevel((prev) => (prev + 1) % roadmapData.length);
-    }, 5000);
-    return () => clearInterval(interval);
+    let start = Date.now();
+    let animFrame;
+
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      if (elapsed >= 5000) {
+        setSelectedLevel((prev) => (prev + 1) % roadmapData.length);
+        setElapsedTime(0);
+      } else {
+        setElapsedTime(elapsed);
+        animFrame = requestAnimationFrame(tick);
+      }
+    };
+
+    animFrame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(animFrame);
   }, [selectedLevel]);
 
   const handleSelectLevel = (idx) => {
@@ -988,6 +1002,13 @@ function ArcadeRoadmap() {
   };
 
   const activeLevelData = roadmapData[selectedLevel];
+
+  const totalNodes = roadmapData.length;
+  const currentPos = (selectedLevel / (totalNodes - 1)) * 100;
+  const nextLevel = (selectedLevel + 1) % totalNodes;
+  const nextPos = (nextLevel / (totalNodes - 1)) * 100;
+  const ratio = Math.min(1, elapsedTime / 5000);
+  const lineFillHeight = currentPos + (nextPos - currentPos) * ratio;
 
   return (
     <section className="roadmap-section" id="roadmap">
@@ -1003,7 +1024,10 @@ function ArcadeRoadmap() {
           <div className="subway-line">
             <div 
               className="subway-line-fill" 
-              style={{ height: `${(selectedLevel / (roadmapData.length - 1)) * 100}%` }}
+              style={{ 
+                height: `${lineFillHeight}%`,
+                transition: 'none'
+              }}
             />
           </div>
 
