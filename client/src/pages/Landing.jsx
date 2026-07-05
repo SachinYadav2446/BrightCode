@@ -394,6 +394,7 @@ function HeroSection({ handleAuth, handleHub }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
+
           <h1 className="hero-h1" style={{ textAlign: 'center', alignItems: 'center' }}>
             <span className="hero-h1-line">Code Harder.</span>
             <span className="hero-h1-line hero-h1-gradient">Compete Smarter.</span>
@@ -403,7 +404,7 @@ function HeroSection({ handleAuth, handleHub }) {
             The ultimate competitive coding arena — real-time collaboration, AI-powered proctoring, faction wars &amp; more.
           </p>
 
-          <div className="hero-actions" style={{ justifyContent: 'center' }}>
+          <div className="hero-actions" style={{ justifyContent: 'center', marginBottom: '56px' }}>
             <button className="btn-clay" onClick={() => handleAuth('register')}>
               Start Building for Free
             </button>
@@ -413,7 +414,80 @@ function HeroSection({ handleAuth, handleHub }) {
             </button>
           </div>
 
-          
+          {/* Interactive Platform Mockup Showcase */}
+          <div className="hero-dashboard-preview">
+            <div className="dashboard-window">
+              <div className="window-header">
+                <div className="window-dots">
+                  <span className="window-dot red" />
+                  <span className="window-dot yellow" />
+                  <span className="window-dot green" />
+                </div>
+                <div className="window-title">brightcode.io/arena/1v1</div>
+                <div className="window-actions-dummy" />
+              </div>
+              
+              <div className="window-body">
+                {/* Left Side: Code Editor Mock */}
+                <div className="editor-mock">
+                  <div className="editor-mock-header">
+                    <span className="tab active">solution.rs</span>
+                    <span className="tab">test_cases.json</span>
+                  </div>
+                  <div className="editor-mock-content">
+                    <div className="code-line"><span className="keyword">fn</span> <span className="function">main</span>() &#123;</div>
+                    <div className="code-line indent"><span className="keyword">let</span> <span className="variable">faction</span> = <span className="string">"CyberNova"</span>;</div>
+                    <div className="code-line indent"><span className="keyword">let</span> <span className="variable">integrity</span> = <span className="number">100</span>;</div>
+                    <div className="code-line indent"><span className="keyword">match</span> <span className="variable">compile_solution</span>() &#123;</div>
+                    <div className="code-line indent-2"><span className="type">Ok</span>(<span className="variable">xp</span>) =&gt; <span className="macro">println!</span>(<span className="string">"Victory! +&#123;&#125; XP"</span>, <span className="variable">xp</span>),</div>
+                    <div className="code-line indent-2"><span className="type">Err</span>(<span className="variable">e</span>) =&gt; <span className="macro">panic!</span>(<span className="string">"Refactor code"</span>),</div>
+                    <div className="code-line indent">&#125;</div>
+                    <div className="code-line">&#125;</div>
+                  </div>
+                </div>
+
+                {/* Right Side: Arena Status Mock */}
+                <div className="status-mock">
+                  <div className="arena-header">
+                    <span className="arena-badge">ARENA: SPEED DUEL</span>
+                    <span className="arena-timer">01:42</span>
+                  </div>
+
+                  <div className="arena-players">
+                    <div className="player-card">
+                      <div className="player-info">
+                        <span className="player-avatar red">CN</span>
+                        <div className="player-meta">
+                          <span className="player-name">User_Alpha</span>
+                          <span className="player-faction">CyberNova</span>
+                        </div>
+                      </div>
+                      <div className="player-status-line">
+                        <span className="status-dot green" />
+                        <span className="status-text">Tests: 5/5 Passed</span>
+                      </div>
+                    </div>
+
+                    <div className="versus">VS</div>
+
+                    <div className="player-card">
+                      <div className="player-info">
+                        <span className="player-avatar blue">BB</span>
+                        <div className="player-meta">
+                          <span className="player-name">User_Beta</span>
+                          <span className="player-faction">BitBusters</span>
+                        </div>
+                      </div>
+                      <div className="player-status-line">
+                        <span className="status-dot yellow animate-pulse" />
+                        <span className="status-text">Compiling solution...</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </motion.div>
       </div>
     </section>
