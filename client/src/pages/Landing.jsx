@@ -1441,10 +1441,7 @@ function CTASection({ handleAuth, handleHub }) {
         <div className="cta-orb cta-orb-1" />
         <div className="cta-orb cta-orb-2" />
         <div className="cta-content">
-          <div className="cta-badge">
-            <Sparkles size={12} />
-            Free to start — no credit card required
-          </div>
+
           <h2 className="cta-h2">Ready to become an elite engineer?</h2>
           <p className="cta-p">Join thousands of developers who practice smarter with BrightCode every day.</p>
           <div className="cta-btns">
