@@ -3,9 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
-import { 
-  ChevronLeft, Terminal
-} from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import './Auth.css';
 
 const API = API_URL;
@@ -96,131 +94,104 @@ function resolveConflict(factionA, factionB) {
   }, [location.search, navigate]);
 
   return (
-    <div className="auth-page">
+    <div className="auth-page-centered">
+      {/* Back to Home Button */}
       <div className="back-to-home-global" onClick={() => navigate('/')}>
         <ChevronLeft size={16} />
         <span>Back to Home</span>
       </div>
 
-      <motion.div
-        layout
-        className="auth-container"
-        transition={{ layout: { duration: 0.4, ease: [0.4, 0, 0.2, 1] } }}
-      >
-        {/* ── Left branding panel (Product Dashboard Simulator) ── */}
-        <div className="auth-left">
-          <div className="auth-bg-glows">
-            <div className="auth-glow auth-glow-1"></div>
-            <div className="auth-glow auth-glow-2"></div>
-            <div className="auth-glow auth-glow-3"></div>
-          </div>
+      {/* Elegant Radial Background Orbs */}
+      <div className="auth-glow-bg">
+        <div className="glow-orb orb-1"></div>
+        <div className="glow-orb orb-2"></div>
+      </div>
 
-          <div className="auth-left-headline">
-            <h1>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="auth-glass-card"
+      >
+        {/* Left Side: Product Demo Simulator */}
+        <div className="auth-card-left">
+          <div className="left-inner">
+            <div className="brand-badge-mini">BRIGHTCODE PLATFORM</div>
+            <h1 className="left-hero-title">
               Code. Compete.<br />
-              <span className="scarlet-gradient">Dominate.</span>
+              <span className="scarlet-flare-text">Dominate.</span>
             </h1>
-            <p>
+            <p className="left-hero-desc">
               Connect to the multiplayer coding core. Engage in speed battles, collaborate in real-time Monaco workspaces, and climb the ranks.
             </p>
-          </div>
 
-          {/* Simulated Product Dashboard Module */}
-          <div className="cyber-dashboard-simulator">
-            <div className="sim-header">
-              <div className="sim-title-wrap">
-                <span className="sim-status-dot blinking-dot"></span>
-                <span className="sim-title">simulation_node://arena-battle</span>
-              </div>
-              
-              {/* Mini AI Proctor Box overlay */}
-              <div className="mini-proctor-box">
-                <div className="proctor-scanner" />
-                <div className="proctor-indicator">
-                  <span className="rec-dot"></span>
-                  <span>AI PROCTOR: ACTIVE</span>
+            {/* Premium Minimalist Editor Simulator */}
+            <div className="premium-editor-sim">
+              <div className="sim-editor-header">
+                <div className="mac-dots">
+                  <span className="mac-dot red"></span>
+                  <span className="mac-dot yellow"></span>
+                  <span className="mac-dot green"></span>
                 </div>
-                <div className="face-wireframe">
-                  <div className="wireframe-circle" />
-                  <div className="wireframe-line horizontal" />
-                  <div className="wireframe-line vertical" />
-                </div>
+                <span className="sim-tab-active">resolve_duel.js</span>
               </div>
-            </div>
-
-            {/* Simulated Monaco Editor panel */}
-            <div className="sim-editor-panel">
-              <div className="editor-tab">
-                <span className="tab-name">conflict_solver.js</span>
+              <div className="sim-editor-content">
+                <pre>
+                  <code>
+                    {typedCode}
+                    <span className="cursor-blink">|</span>
+                  </code>
+                </pre>
               </div>
-              <pre className="editor-code-area">
-                <code>
-                  {typedCode}
-                  <span className="editor-caret">_</span>
-                </code>
-              </pre>
-            </div>
-
-            {/* Simulated Output Terminal panel */}
-            <div className="sim-terminal-panel">
-              <div className="terminal-prompt">
-                <span className="prompt-symbol">$</span> npm run test
-              </div>
-              <div className="terminal-results">
-                <div className="term-line green-text">✓ Sample case #1: resolved</div>
-                <div className="term-line green-text">✓ Edge case #2: resolved</div>
-                <div className="term-line gold-text">★ Completed: +150 XP (Grandmaster path)</div>
+              <div className="sim-editor-footer">
+                <span className="footer-status-text">✓ Ready to compile</span>
+                <span className="footer-xp-pill">+150 XP</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ── Right form panel ── */}
-        <div className="auth-form-side">
-          <motion.div layout className="form-content">
-            <div className="auth-brand">
-              <div className="auth-brand-name">Bright<span>Code</span></div>
-              <div className="auth-brand-tag">Developer Platform</div>
+        {/* Right Side: Authentication Portal */}
+        <div className="auth-card-right">
+          <div className="right-inner">
+            <div className="auth-logo-header">
+              <div className="brand-logo-text">Bright<span>Code</span></div>
+              <p className="brand-subtitle">THE MULTIPLAYER CODING ARENA</p>
             </div>
 
-            <div className="form-header">
-              <motion.h2
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                Welcome to BrightCode
-              </motion.h2>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                Sign in or create an account using your preferred provider
-              </motion.p>
+            <div className="auth-intro-text">
+              <h2>Access Gateway</h2>
+              <p>Authorize your developer profile to enter workspaces, document projects, and fight in duels.</p>
             </div>
 
-            <div className="social-login-group">
+            <div className="social-actions-list">
               <button
                 type="button"
-                className="social-btn google-btn"
+                className="classy-social-btn google"
                 onClick={() => window.location.href = `${API}/api/auth/google`}
               >
-                <svg viewBox="0 0 24 24" fill="currentColor">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="provider-icon">
                   <path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.41 0-6.19-2.78-6.19-6.19s2.78-6.19 6.19-6.19c1.7 0 3.25.69 4.38 1.81l3.02-3.02C19.14 1.76 15.91 0 12.24 0 5.58 0 0 5.58 0 12.24s5.58 12.24 12.24 12.24c6.98 0 12.24-4.8 12.24-12.24 0-.78-.07-1.53-.2-2.255H12.24z"/>
                 </svg>
-                <span>Continue with Google</span>
+                <span>Sign in with Google</span>
               </button>
+
               <button
                 type="button"
-                className="social-btn github-btn"
+                className="classy-social-btn github"
                 onClick={() => window.location.href = `${API}/api/auth/github`}
               >
-                <svg viewBox="0 0 24 24" fill="currentColor">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="provider-icon">
                   <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.11.82-.26.82-.577v-2.234c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.372.82 1.102.82 2.222v3.293c0 .319.22.694.825.576C20.565 21.795 24 17.3 24 12c0-6.63-5.37-12-12-12z"/>
                 </svg>
-                <span>Continue with GitHub</span>
+                <span>Sign in with GitHub</span>
               </button>
             </div>
-          </motion.div>
+
+            <div className="auth-card-footer">
+              <p>Secure authentication powered by OAuth 2.0 protocol.</p>
+            </div>
+          </div>
         </div>
       </motion.div>
     </div>
