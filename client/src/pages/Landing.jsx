@@ -889,13 +889,13 @@ function ArcadeRoadmap() {
     {
       level: 1,
       tier: "Novice",
-      topic: "Code Library & Core Logic",
-      desc: "The starting rank for all new coders on BrightCode. Solve entry-level problems in the Library to earn your first XP and raise your Logic Level (logic_level) or CSS Level (css_level).",
-      stats: "Default Rank • Library Access • 50 XP per easy solve",
+      topic: "Code Library & Basic logic",
+      desc: "The starting rank for all users. Solve easy problems in the Library to earn your first XP points (+50 XP per solve) and establish your Logic Level (logic_level) or CSS Level (css_level).",
+      stats: "0+ XP • Library Access • +50 XP per Easy solve",
       badge: "Initiate Shield",
       tracks: [
         { name: "Variables & Loops", progress: 100, target: "Syntax logic: Complete basic arithmetic and looping quests." },
-        { name: "CSS Flexbox & Layouts", progress: 90, target: "Layout control: Align page elements dynamically inside sandbox nodes." },
+        { name: "CSS Flexbox & Box Model", progress: 90, target: "Layout control: Align page elements dynamically inside sandbox nodes." },
         { name: "Logic Calibration", progress: 75, target: "Type validation: Write checkers verifying JavaScript variable primitives." }
       ]
     },
@@ -903,8 +903,8 @@ function ArcadeRoadmap() {
       level: 2,
       tier: "Apprentice",
       topic: "Intermediate Structures & 1v1 Arena",
-      desc: "Level up by solving medium-difficulty problems and participating in 1v1 Code Wars battles. Grow your language specific stats: C++ Level (cpp_level) or Python Level (python_level).",
-      stats: "Unlock Rank • Code Wars Access • 80 XP per medium solve",
+      desc: "Unlock intermediate challenges once you cross 500 XP. Participate in 1v1 Arena Matches in Code Wars and climb language specific ratings (cpp_level, python_level).",
+      stats: "500+ XP • Code Wars Access • +80 XP per Medium solve",
       badge: "Data Sentinel",
       tracks: [
         { name: "Arrays & Strings", progress: 80, target: "String parsing: Implement fast prefix searching and substring matching." },
@@ -914,28 +914,41 @@ function ArcadeRoadmap() {
     },
     {
       level: 3,
-      tier: "Grandmaster",
-      topic: "Advanced Optimization & Monaco Sync",
-      desc: "Unlocked by achieving advanced Elo rankings. Collaborate live with teammates inside Monaco workspaces (2v2 or 4v4) and pass all 15 weighted test cases under pressure.",
-      stats: "Elite Rank • Monaco sync rooms • 150 XP per hard solve",
+      tier: "Advanced",
+      topic: "Fullstack Projects & CodeVault Notes",
+      desc: "Reaching 2000 XP unlocks advanced stack modules. Level up React Level (react_level) and MERN Level (mern_level), and organize notes in CodeVault using Markdown.",
+      stats: "2000+ XP • CodeVault Markdown Editor • +150 XP per Hard solve",
       badge: "Apprentice Crest",
       tracks: [
-        { name: "Dynamic Programming", progress: 0, target: "State transitions: Avoid overlapping checks via memoization." },
-        { name: "Graph Traversals (DFS/BFS)", progress: 0, target: "Path propagation: Trace node hops to find shortest route." },
-        { name: "Team battle workspace", progress: 0, target: "Live sync: Code concurrently with teammates inside Monaco editors." }
+        { name: "React State & Hooks", progress: 0, target: "State management: Coordinate interactive data streams dynamically." },
+        { name: "CodeVault Markdown Docs", progress: 0, target: "Knowledge base: Store notes, syntax helpers, and diagram scripts." },
+        { name: "Websocket Session Sync", progress: 0, target: "Live sync: Connect sockets to collaborate concurrently on documents." }
       ]
     },
     {
       level: 4,
-      tier: "Elite",
-      topic: "Distributed Concurrency & Factions",
-      desc: "The ultimate rank on BrightCode. Lead active Factions (like Nothing, ABC, or g), design thread-safe APIs using Go level channels, and document structures in CodeVault with Mermaid.",
-      stats: "Max Rank Tier • Factions leaderboards • CodeVault documentation",
-      badge: "Elite Crown",
+      tier: "Expert",
+      topic: "Concurrency & Collaborative Code Wars",
+      desc: "Crossing 5000 XP unlocks Expert-level challenges. Work with teammates inside live Monaco sync workspaces to tackle Code Wars passing all 15 weighted test cases.",
+      stats: "5000+ XP • 15 Test Cases/Problem • Weighted Test Scoring",
+      badge: "Master Code",
       tracks: [
         { name: "Go channels & Routines", progress: 0, target: "Pipeline worker: Stream bytes safely across parallel workers." },
-        { name: "CodeVault Markdown & Mermaid", progress: 0, target: "Diagram styling: Map microservice consensus schemas via Mermaid." },
-        { name: "Faction tournament signups", progress: 0, target: "Elo trophy: Coordinate with teammates to defeat rival factions." }
+        { name: "2v2 & 4v4 Team battles", progress: 0, target: "Collaborative Monaco: Code together in real-time with live cursor tracking." },
+        { name: "Edge Case Code Hardening", progress: 0, target: "Stress testing: Optimize performance to pass stress and random inputs." }
+      ]
+    },
+    {
+      level: 5,
+      tier: "Grandmaster",
+      topic: "Distributed Systems & Faction Leadership",
+      desc: "The ultimate rank on BrightCode. Lead active Factions (like Nothing, ABC, or g), coordinate faction battles, draw microservice consensus schemas via Mermaid, and dominate the global rankings.",
+      stats: "10000+ XP • Factions Leadership • Max ELO Leaderboards",
+      badge: "Elite Crown",
+      tracks: [
+        { name: "Consensus Algorithms", progress: 0, target: "Raft synchronization: Design coordinator sync routines across replicas." },
+        { name: "Mermaid Architecture Charts", progress: 0, target: "Diagram styling: Draw consensus node sync schemes via Mermaid." },
+        { name: "Faction Tournament Supremacy", progress: 0, target: "Elo trophy: Coordinate with teammates to defeat rival factions." }
       ]
     }
   ];
