@@ -882,82 +882,125 @@ function BentoFeatures() {
 }
 
 function ArcadeRoadmap() {
-  const [selectedLevel, setSelectedLevel] = useState(2); // Default to Apprentice (index 2)
+  const [selectedLevel, setSelectedLevel] = useState(0); // Default to Novice (index 0)
+  const [activeTrackIdx, setActiveTrackIdx] = useState(0); // Selected sub-track index
+  const [quizAnswers, setQuizAnswers] = useState({}); // Level index -> option index chosen
+  const [quizScore, setQuizScore] = useState(0); // Floating score indicator
 
   const roadmapData = [
     {
       level: 1,
-      tier: "Initiate",
+      tier: "Novice",
       topic: "Syntax & Logic Fundamentals",
       desc: "Master the basics of programming syntax. Learn to write clean loops, evaluate boolean conditionals, and work with basic arithmetic operators.",
       stats: "12 Quests • +100 XP • 85% Completion",
       badge: "Initiate Shield",
       tracks: [
-        { name: "Variables & Types", progress: 100 },
-        { name: "Conditionals & Logic", progress: 90 },
-        { name: "Loops & Iterations", progress: 75 }
-      ]
+        { name: "Variables & Types", progress: 100, target: "Type Validator: Write a utility checking primitive types dynamically." },
+        { name: "Conditionals & Logic", progress: 90, target: "Leap Year Check: Implement Gregorian calendar logic with leap cycles." },
+        { name: "Loops & Iterations", progress: 75, target: "Factorial Engine: Calculate factorial bounds iteratively without stack overflow." }
+      ],
+      quiz: {
+        question: "Which operator checks both value and type equality in JavaScript?",
+        options: ["==", "===", "="],
+        answer: 1,
+        explanation: "The === operator (strict equality) checks both values and types."
+      }
     },
     {
       level: 2,
-      tier: "Novice",
+      tier: "Apprentice",
       topic: "Core Data Structures",
       desc: "Dive into data storage models. Write efficient algorithms using Arrays, Singly/Doubly Linked Lists, Hashmaps, and String parsing routines.",
       stats: "24 Quests • +250 XP • 45% Completion",
       badge: "Data Sentinel",
       tracks: [
-        { name: "Arrays & Strings", progress: 80 },
-        { name: "Linked Lists & Stacks", progress: 40 },
-        { name: "Hashmaps & Sets", progress: 15 }
-      ]
+        { name: "Arrays & Strings", progress: 80, target: "Array Rotator: Shift array elements rightwards by K index counts." },
+        { name: "Linked Lists & Stacks", progress: 40, target: "Valid Parentheses: Validate nested brackets sequence using a clean Stack." },
+        { name: "Hashmaps & Sets", progress: 15, target: "Two Sum: Retrieve indices of target sum pairs in O(n) search time." }
+      ],
+      quiz: {
+        question: "What is the average time complexity to lookup a key in a HashMap?",
+        options: ["O(1)", "O(log n)", "O(n)"],
+        answer: 0,
+        explanation: "HashMaps offer O(1) constant time complexity for key lookups."
+      }
     },
     {
       level: 3,
-      tier: "Apprentice",
+      tier: "Grandmaster",
       topic: "Algorithms & Search Trees",
       desc: "Implement sorting and searching logic. Learn DFS/BFS traversals, binary search trees, and leverage basic recursion to solve partition challenges.",
       stats: "40 Quests • +500 XP • Locked",
       badge: "Apprentice Crest",
       tracks: [
-        { name: "Sorting & Filtering", progress: 0 },
-        { name: "Binary Search & BSTs", progress: 0 },
-        { name: "Recursion & Backtracking", progress: 0 }
-      ]
+        { name: "Sorting & Filtering", progress: 0, target: "Kth Largest: Find the Kth largest array element in average O(n) time." },
+        { name: "Binary Search & BSTs", progress: 0, target: "Rotated Search: Locate target inside rotated sorted array in O(log n) steps." },
+        { name: "Recursion & Backtracking", progress: 0, target: "Sudoku Solver: Fill empty grid configurations dynamically via backtracking." }
+      ],
+      quiz: {
+        question: "Which tree traversal algorithm uses a Queue data structure?",
+        options: ["DFS (Depth-First)", "BFS (Breadth-First)", "In-Order Traversal"],
+        answer: 1,
+        explanation: "BFS (Breadth-First Search) queues nodes level-by-level."
+      }
     },
     {
       level: 4,
-      tier: "Grandmaster",
-      topic: "Advanced Optimization",
-      desc: "Solve complex time-complexity challenges. Master Dynamic Programming (bottom-up/top-down), Greedy strategies, and advanced Graph Theory algorithms (Dijkstra's, MST).",
-      stats: "55 Quests • +1000 XP • Locked",
-      badge: "Master Code",
-      tracks: [
-        { name: "Dynamic Programming", progress: 0 },
-        { name: "Graph Shortest Path", progress: 0 },
-        { name: "Greedy Algorithms", progress: 0 }
-      ]
-    },
-    {
-      level: 5,
       tier: "Elite",
-      topic: "Distributed Systems & Concurrency",
-      desc: "Graduate to full production architecture. Write concurrent code using channels/go-routines, design thread-safe APIs, and build simulated load-balancers and rate limiters.",
+      topic: "Advanced Optimization & Concurrency",
+      desc: "Solve complex time-complexity challenges, master Dynamic Programming (bottom-up/top-down), concurrency streams, and distributed coordination.",
       stats: "30 Quests • +2000 XP • Locked",
       badge: "Elite Crown",
       tracks: [
-        { name: "Concurrency & Channels", progress: 0 },
-        { name: "Rate Limiters & Caching", progress: 0 },
-        { name: "API Replication Models", progress: 0 }
-      ]
+        { name: "Dynamic Programming", progress: 0, target: "Longest Subsequence: Determine LCS character length iteratively." },
+        { name: "Concurrency & Channels", progress: 0, target: "Pipeline Worker: Orchestrate parallel workers with safe channels." },
+        { name: "API Replication Models", progress: 0, target: "Consensus Coordinator: Synchronize distributed replicas using consensus state." }
+      ],
+      quiz: {
+        question: "In Go, what happens when writing to a full unbuffered channel?",
+        options: ["It blocks the goroutine", "It silences the error", "It drops the write value"],
+        answer: 0,
+        explanation: "Writing to a full unbuffered channel blocks execution until a read occurs."
+      }
     }
   ];
+
+  // Reset selected sub-track when changing levels
+  useEffect(() => {
+    setActiveTrackIdx(0);
+  }, [selectedLevel]);
+
+  const handleSelectLevel = (idx) => {
+    setSelectedLevel(idx);
+  };
+
+  const handleAnswerQuiz = (optIdx) => {
+    if (quizAnswers[selectedLevel] !== undefined) return; // Answered already
+    
+    setQuizAnswers(prev => ({ ...prev, [selectedLevel]: optIdx }));
+    const isCorrect = optIdx === roadmapData[selectedLevel].quiz.answer;
+    
+    if (isCorrect) {
+      setQuizScore(prev => prev + 10);
+      // Trigger a brief float animation overlay
+      setTimeout(() => {
+        setQuizScore(prev => Math.max(0, prev - 10));
+      }, 1000);
+    }
+  };
+
+  const activeLevelData = roadmapData[selectedLevel];
+  const activeQuiz = activeLevelData.quiz;
+  const chosenAnswer = quizAnswers[selectedLevel];
+  const isCorrectAnswer = chosenAnswer === activeQuiz.answer;
 
   return (
     <section className="roadmap-section" id="roadmap">
       <div className="roadmap-header">
         <span className="section-pill">Arcade Road</span>
         <h2 className="section-h2">Rank Tiers &amp; Quest Tree</h2>
-        <p className="section-sub">Climb the developer ladder. Unlock elite status badges from Initiate to Grandmaster.</p>
+        <p className="section-sub">Interactive skill checkpoint. Select rank nodes, investigate target quests, and complete quizzes to unlock XP.</p>
       </div>
 
       <div className="roadmap-container">
@@ -978,7 +1021,7 @@ function ArcadeRoadmap() {
                 <div 
                   key={node.level} 
                   className={`subway-node-wrapper ${isActive ? "active" : ""} ${isPassed ? "passed" : ""}`}
-                  onClick={() => setSelectedLevel(idx)}
+                  onClick={() => handleSelectLevel(idx)}
                 >
                   <div className="subway-node-dot">
                     <span className="node-inner-dot" />
@@ -997,8 +1040,8 @@ function ArcadeRoadmap() {
         <div className="roadmap-details-card">
           <div className="details-card-header">
             <div className="details-title-wrap">
-              <span className="details-level-tag">LEVEL {roadmapData[selectedLevel].level}</span>
-              <h3 className="details-tier-name">{roadmapData[selectedLevel].tier}</h3>
+              <span className="details-level-tag">LEVEL {activeLevelData.level}</span>
+              <h3 className="details-tier-name">{activeLevelData.tier}</h3>
             </div>
             <div className="details-badge-preview">
               <div className="details-badge-glowing-effect" />
@@ -1007,27 +1050,42 @@ function ArcadeRoadmap() {
           </div>
 
           <div className="details-card-body">
-            <h4 className="details-topic">{roadmapData[selectedLevel].topic}</h4>
-            <p className="details-desc">{roadmapData[selectedLevel].desc}</p>
+            <h4 className="details-topic">{activeLevelData.topic}</h4>
+            <p className="details-desc">{activeLevelData.desc}</p>
             
             <div className="details-stats-pill">
-              {roadmapData[selectedLevel].stats}
+              {activeLevelData.stats}
             </div>
 
+            {/* Sub-tracks Interactive Tabs */}
             <div className="details-tracks-list">
-              <span className="details-tracks-title">QUEST SUB-TRACKS</span>
-              {roadmapData[selectedLevel].tracks.map((track, tIdx) => (
-                <div key={tIdx} className="details-track-item">
-                  <div className="track-meta">
-                    <span className="track-name">{track.name}</span>
-                    <span className="track-pct">{track.progress}%</span>
+              <span className="details-tracks-title">SELECT A SUB-TRACK FOR ACTIVE TARGETS</span>
+              <div className="tracks-tabs-wrap">
+                {activeLevelData.tracks.map((track, tIdx) => (
+                  <div 
+                    key={tIdx} 
+                    className={`details-track-item-interactive ${activeTrackIdx === tIdx ? "active" : ""}`}
+                    onClick={() => setActiveTrackIdx(tIdx)}
+                  >
+                    <div className="track-meta">
+                      <span className="track-name">{track.name}</span>
+                      <span className="track-pct">{track.progress}%</span>
+                    </div>
+                    <div className="track-bar">
+                      <div className="track-bar-fill" style={{ width: `${track.progress}%` }} />
+                    </div>
                   </div>
-                  <div className="track-bar">
-                    <div className="track-bar-fill" style={{ width: `${track.progress}%` }} />
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
+
+            {/* Glowing Active Quest Details Pane */}
+            <div className="target-quest-pane">
+              <span className="target-badge">TARGET DETECTED</span>
+              <p className="target-desc">{activeLevelData.tracks[activeTrackIdx].target}</p>
+            </div>
+
+
           </div>
 
           <div className="details-card-footer">
