@@ -1048,19 +1048,6 @@ function ArcadeRoadmap() {
               </div>
             </div>
 
-            {/* Glowing Active Quest Details Pane */}
-            <div className="target-quest-pane">
-              <span className="target-badge">TARGET DETECTED</span>
-              <p className="target-desc">{activeLevelData.tracks[activeTrackIdx].target}</p>
-            </div>
-
-
-          </div>
-
-          <div className="details-card-footer">
-            <button className="btn-roadmap-unlock">
-              {selectedLevel <= 1 ? "Enter Level Arena" : "Unlock Tier Quest"}
-            </button>
           </div>
         </div>
       </div>
