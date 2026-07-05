@@ -123,12 +123,6 @@ function resolveConflict(factionA, factionB) {
 
   return (
     <div className="auth-page-centered">
-      {/* Back to Home Button */}
-      <div className="back-to-home-global" onClick={() => navigate('/')}>
-        <ChevronLeft size={16} />
-        <span>Back to Home</span>
-      </div>
-
       {/* Elegant Radial Background Orbs */}
       <div className="auth-glow-bg">
         <div className="glow-orb orb-1"></div>
@@ -143,8 +137,13 @@ function resolveConflict(factionA, factionB) {
       >
         {/* Left Side: Product Demo Simulator */}
         <div className="auth-card-left">
+          {/* Back to Home Button inside Card */}
+          <div className="back-to-home-card" onClick={() => navigate('/')}>
+            <ChevronLeft size={14} />
+            <span>Back to Home</span>
+          </div>
+
           <div className="left-inner">
-            <div className="brand-badge-mini">BRIGHTCODE PLATFORM</div>
             <h1 className="left-hero-title">
               Code. Compete.<br />
               <span className="scarlet-flare-text">Dominate.</span>

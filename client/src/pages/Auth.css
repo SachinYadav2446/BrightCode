@@ -47,34 +47,26 @@
 }
 
 /* Back to Home Button */
-.back-to-home-global {
-  position: fixed;
+/* Back to Home Button inside Card */
+.back-to-home-card {
+  position: absolute;
   top: 24px;
   left: 28px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.82rem;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.78rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 100;
-  padding: 10px 16px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(14, 14, 20, 0.6);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  width: fit-content;
 }
 
-.back-to-home-global:hover {
+.back-to-home-card:hover {
   color: #fff;
-  border-color: rgba(239, 68, 68, 0.4);
-  background: rgba(239, 68, 68, 0.08);
   transform: translateX(-3px);
-  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.2);
 }
 
 /* Main Centered Glass Card */
