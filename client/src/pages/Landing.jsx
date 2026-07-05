@@ -82,7 +82,7 @@ function Nav({ handleAuth }) {
         return;
       }
 
-      const sections = ["features", "modules", "arena"];
+      const sections = ["features", "roadmap", "modules", "arena"];
       for (const sec of sections) {
         const el = document.getElementById(sec);
         if (el) {
@@ -100,6 +100,7 @@ function Nav({ handleAuth }) {
 
   const navLinks = [
     { label: "Features", id: "features" },
+    { label: "Roadmap", id: "roadmap" },
     { label: "Modules", id: "modules" },
     { label: "Hall of Fame", id: "arena" }
   ];
@@ -124,9 +125,14 @@ function Nav({ handleAuth }) {
                   key={link.id}
                   href={`#${link.id}`}
                   className={`nav-link-hover ${isActive ? "active" : ""}`}
-                  onClick={() => setActiveLink(link.id)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveLink(link.id);
+                    document.getElementById(link.id)?.scrollIntoView({ behavior: "smooth" });
+                  }}
                 >
                   {link.label}
+                  {isActive && <div className="nav-active-pill" />}
                 </a>
               );
             })}
@@ -166,7 +172,12 @@ function Nav({ handleAuth }) {
                   key={link.id}
                   href={`#${link.id}`}
                   className={`nav-mobile-link ${isActive ? "active" : ""}`}
-                  onClick={() => { setOpen(false); setActiveLink(link.id); }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpen(false);
+                    setActiveLink(link.id);
+                    document.getElementById(link.id)?.scrollIntoView({ behavior: "smooth" });
+                  }}
                 >
                   {link.label}
                 </a>
