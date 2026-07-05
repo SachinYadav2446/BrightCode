@@ -949,25 +949,7 @@ function ArcadeRoadmap() {
     setSelectedLevel(idx);
   };
 
-  const handleAnswerQuiz = (optIdx) => {
-    if (quizAnswers[selectedLevel] !== undefined) return; // Answered already
-    
-    setQuizAnswers(prev => ({ ...prev, [selectedLevel]: optIdx }));
-    const isCorrect = optIdx === roadmapData[selectedLevel].quiz.answer;
-    
-    if (isCorrect) {
-      setQuizScore(prev => prev + 10);
-      // Trigger a brief float animation overlay
-      setTimeout(() => {
-        setQuizScore(prev => Math.max(0, prev - 10));
-      }, 1000);
-    }
-  };
-
   const activeLevelData = roadmapData[selectedLevel];
-  const activeQuiz = activeLevelData.quiz;
-  const chosenAnswer = quizAnswers[selectedLevel];
-  const isCorrectAnswer = chosenAnswer === activeQuiz.answer;
 
   return (
     <section className="roadmap-section" id="roadmap">
