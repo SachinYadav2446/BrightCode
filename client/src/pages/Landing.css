@@ -3,7 +3,7 @@
    Design: Glassmorphism + Bento Grid + Claymorphism + Brutalism
    ══════════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;700;800;900&display=swap');
 
 /* ── DESIGN TOKENS ── */
 .lp-root {
@@ -40,8 +40,8 @@
   --t2:          #a1a1aa;
   --t3:          #52525b;
   --t4:          #27272a;
-  --font:        'Inter', system-ui, sans-serif;
-  --heading:     'Outfit', 'Inter', sans-serif;
+  --font:        'Poppins', sans-serif;
+  --heading:     'Poppins', sans-serif;
   --mono:        'JetBrains Mono', monospace;
   --radius-sm:   8px;
   --radius-md:   14px;
