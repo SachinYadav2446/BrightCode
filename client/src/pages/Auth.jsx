@@ -116,10 +116,6 @@ function resolveConflict(factionA, factionB) {
           </div>
 
           <div className="auth-left-headline">
-            <div className="cyber-terminal-badge">
-              <Terminal size={10} style={{ marginRight: '4px' }} />
-              SECURE SYSTEM // ONLINE
-            </div>
             <h1>
               Code. Compete.<br />
               <span className="scarlet-gradient">Dominate.</span>
