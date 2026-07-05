@@ -888,54 +888,54 @@ function ArcadeRoadmap() {
   const roadmapData = [
     {
       level: 1,
-      tier: "Code Library",
-      topic: "Multi-Language Proficiencies",
-      desc: "Explore hundreds of coding challenges. Track your progression with language-specific ratings including C++ Level (cpp_level), Python Level (python_level), Java Level (java_level), and Go Level (go_level).",
-      stats: "5 Languages • +50 to +150 XP per problem • ELO Leaderboard",
+      tier: "Novice",
+      topic: "Code Library & Core Logic",
+      desc: "The starting rank for all new coders on BrightCode. Solve entry-level problems in the Library to earn your first XP and raise your Logic Level (logic_level) or CSS Level (css_level).",
+      stats: "Default Rank • Library Access • 50 XP per easy solve",
       badge: "Initiate Shield",
       tracks: [
-        { name: "C++ & Java Core", progress: 100, target: "Language seeding: Fetch and convert Codeforces rated problems to Java/C++." },
-        { name: "Python Scripting", progress: 90, target: "Parser validation: Run local tests to parse and calculate standard outputs." },
-        { name: "Go Concurrency", progress: 75, target: "Channel pipes: Build safe Go channels to pipeline concurrent executions." }
+        { name: "Variables & Loops", progress: 100, target: "Syntax logic: Complete basic arithmetic and looping quests." },
+        { name: "CSS Flexbox & Layouts", progress: 90, target: "Layout control: Align page elements dynamically inside sandbox nodes." },
+        { name: "Logic Calibration", progress: 75, target: "Type validation: Write checkers verifying JavaScript variable primitives." }
       ]
     },
     {
       level: 2,
-      tier: "Arena Duelist",
-      topic: "Code Wars Team Battles",
-      desc: "Fight in multiplayer code battles (1v1, 2v2, 4v4). Collaborate live with teammates to solve algorithmic problems while passing 15 separate test cases.",
-      stats: "15 Test Cases/Problem • Weighted Test Scoring • Elo Arena",
+      tier: "Apprentice",
+      topic: "Intermediate Structures & 1v1 Arena",
+      desc: "Level up by solving medium-difficulty problems and participating in 1v1 Code Wars battles. Grow your language specific stats: C++ Level (cpp_level) or Python Level (python_level).",
+      stats: "Unlock Rank • Code Wars Access • 80 XP per medium solve",
       badge: "Data Sentinel",
       tracks: [
-        { name: "1v1 Ranked Duels", progress: 80, target: "Solve speed: Finish 3 random problems before the arena time-limit expires." },
-        { name: "Collaborative Monaco", progress: 40, target: "Socket sync: Cooperate inside a live Monaco code editor with teammates." },
-        { name: "Faction Arena War", progress: 15, target: "Emblem capture: Win team matches to secure faction points and trophies." }
+        { name: "Arrays & Strings", progress: 80, target: "String parsing: Implement fast prefix searching and substring matching." },
+        { name: "Stacks & HashMaps", progress: 40, target: "Key value lookups: Find elements and validate brackets sequence in O(1) time." },
+        { name: "1v1 Arena Duels", progress: 15, target: "Speed matches: Beat the timer to submit correct solutions." }
       ]
     },
     {
       level: 3,
-      tier: "Full-Stack Architect",
-      topic: "Dev Stack Modules & Projects",
-      desc: "Build complete web projects. Level up your skill attributes from CSS Level (css_level) and Logic Level (logic_level) to React Level (react_level) and MERN Level (mern_level).",
-      stats: "4 Stack Levels • Custom Interactive Sandbox • Vercel Integrations",
+      tier: "Grandmaster",
+      topic: "Advanced Optimization & Monaco Sync",
+      desc: "Unlocked by achieving advanced Elo rankings. Collaborate live with teammates inside Monaco workspaces (2v2 or 4v4) and pass all 15 weighted test cases under pressure.",
+      stats: "Elite Rank • Monaco sync rooms • 150 XP per hard solve",
       badge: "Apprentice Crest",
       tracks: [
-        { name: "CSS Grid & Layouts", progress: 0, target: "Flexbox structures: Verify responsive layouts inside mock sandboxes." },
-        { name: "Logic Engine", progress: 0, target: "Algorithms track: Implement and bundle complex JS logic routines." },
-        { name: "React & MERN Stack", progress: 0, target: "Fullstack API: Deploy Express servers and sync data models." }
+        { name: "Dynamic Programming", progress: 0, target: "State transitions: Avoid overlapping checks via memoization." },
+        { name: "Graph Traversals (DFS/BFS)", progress: 0, target: "Path propagation: Trace node hops to find shortest route." },
+        { name: "Team battle workspace", progress: 0, target: "Live sync: Code concurrently with teammates inside Monaco editors." }
       ]
     },
     {
       level: 4,
-      tier: "Guild Master",
-      topic: "CodeVault Notes & Factions",
-      desc: "Organize note folders in CodeVault using Markdown and render live Mermaid flowcharts or sequence diagrams. Create or join active factions (like Nothing, ABC, or g) to compete together.",
-      stats: "Markdown Editor • Mermaid Rendering • Faction XP Leaderboard",
+      tier: "Elite",
+      topic: "Distributed Concurrency & Factions",
+      desc: "The ultimate rank on BrightCode. Lead active Factions (like Nothing, ABC, or g), design thread-safe APIs using Go level channels, and document structures in CodeVault with Mermaid.",
+      stats: "Max Rank Tier • Factions leaderboards • CodeVault documentation",
       badge: "Elite Crown",
       tracks: [
-        { name: "CodeVault Markdown Docs", progress: 0, target: "Knowledge base: Store notes, syntax helpers, and diagram scripts." },
-        { name: "Mermaid Diagrams", progress: 0, target: "Architecture design: Draw microservice topologies and flow charts." },
-        { name: "Faction Alliances", progress: 0, target: "Active roster: Sync with active members and climb faction rankings." }
+        { name: "Go channels & Routines", progress: 0, target: "Pipeline worker: Stream bytes safely across parallel workers." },
+        { name: "CodeVault Markdown & Mermaid", progress: 0, target: "Diagram styling: Map microservice consensus schemas via Mermaid." },
+        { name: "Faction tournament signups", progress: 0, target: "Elo trophy: Coordinate with teammates to defeat rival factions." }
       ]
     }
   ];
