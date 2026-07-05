@@ -884,85 +884,59 @@ function BentoFeatures() {
 function ArcadeRoadmap() {
   const [selectedLevel, setSelectedLevel] = useState(0); // Default to Novice (index 0)
   const [activeTrackIdx, setActiveTrackIdx] = useState(0); // Selected sub-track index
-  const [quizAnswers, setQuizAnswers] = useState({}); // Level index -> option index chosen
-  const [quizScore, setQuizScore] = useState(0); // Floating score indicator
 
   const roadmapData = [
     {
       level: 1,
-      tier: "Novice",
-      topic: "Syntax & Logic Fundamentals",
-      desc: "Master the basics of programming syntax. Learn to write clean loops, evaluate boolean conditionals, and work with basic arithmetic operators.",
-      stats: "12 Quests • +100 XP • 85% Completion",
+      tier: "Code Library",
+      topic: "Multi-Language Proficiencies",
+      desc: "Explore hundreds of coding challenges. Track your progression with language-specific ratings including C++ Level (cpp_level), Python Level (python_level), Java Level (java_level), and Go Level (go_level).",
+      stats: "5 Languages • +50 to +150 XP per problem • ELO Leaderboard",
       badge: "Initiate Shield",
       tracks: [
-        { name: "Variables & Types", progress: 100, target: "Type Validator: Write a utility checking primitive types dynamically." },
-        { name: "Conditionals & Logic", progress: 90, target: "Leap Year Check: Implement Gregorian calendar logic with leap cycles." },
-        { name: "Loops & Iterations", progress: 75, target: "Factorial Engine: Calculate factorial bounds iteratively without stack overflow." }
-      ],
-      quiz: {
-        question: "Which operator checks both value and type equality in JavaScript?",
-        options: ["==", "===", "="],
-        answer: 1,
-        explanation: "The === operator (strict equality) checks both values and types."
-      }
+        { name: "C++ & Java Core", progress: 100, target: "Language seeding: Fetch and convert Codeforces rated problems to Java/C++." },
+        { name: "Python Scripting", progress: 90, target: "Parser validation: Run local tests to parse and calculate standard outputs." },
+        { name: "Go Concurrency", progress: 75, target: "Channel pipes: Build safe Go channels to pipeline concurrent executions." }
+      ]
     },
     {
       level: 2,
-      tier: "Apprentice",
-      topic: "Core Data Structures",
-      desc: "Dive into data storage models. Write efficient algorithms using Arrays, Singly/Doubly Linked Lists, Hashmaps, and String parsing routines.",
-      stats: "24 Quests • +250 XP • 45% Completion",
+      tier: "Arena Duelist",
+      topic: "Code Wars Team Battles",
+      desc: "Fight in multiplayer code battles (1v1, 2v2, 4v4). Collaborate live with teammates to solve algorithmic problems while passing 15 separate test cases.",
+      stats: "15 Test Cases/Problem • Weighted Test Scoring • Elo Arena",
       badge: "Data Sentinel",
       tracks: [
-        { name: "Arrays & Strings", progress: 80, target: "Array Rotator: Shift array elements rightwards by K index counts." },
-        { name: "Linked Lists & Stacks", progress: 40, target: "Valid Parentheses: Validate nested brackets sequence using a clean Stack." },
-        { name: "Hashmaps & Sets", progress: 15, target: "Two Sum: Retrieve indices of target sum pairs in O(n) search time." }
-      ],
-      quiz: {
-        question: "What is the average time complexity to lookup a key in a HashMap?",
-        options: ["O(1)", "O(log n)", "O(n)"],
-        answer: 0,
-        explanation: "HashMaps offer O(1) constant time complexity for key lookups."
-      }
+        { name: "1v1 Ranked Duels", progress: 80, target: "Solve speed: Finish 3 random problems before the arena time-limit expires." },
+        { name: "Collaborative Monaco", progress: 40, target: "Socket sync: Cooperate inside a live Monaco code editor with teammates." },
+        { name: "Faction Arena War", progress: 15, target: "Emblem capture: Win team matches to secure faction points and trophies." }
+      ]
     },
     {
       level: 3,
-      tier: "Grandmaster",
-      topic: "Algorithms & Search Trees",
-      desc: "Implement sorting and searching logic. Learn DFS/BFS traversals, binary search trees, and leverage basic recursion to solve partition challenges.",
-      stats: "40 Quests • +500 XP • Locked",
+      tier: "Full-Stack Architect",
+      topic: "Dev Stack Modules & Projects",
+      desc: "Build complete web projects. Level up your skill attributes from CSS Level (css_level) and Logic Level (logic_level) to React Level (react_level) and MERN Level (mern_level).",
+      stats: "4 Stack Levels • Custom Interactive Sandbox • Vercel Integrations",
       badge: "Apprentice Crest",
       tracks: [
-        { name: "Sorting & Filtering", progress: 0, target: "Kth Largest: Find the Kth largest array element in average O(n) time." },
-        { name: "Binary Search & BSTs", progress: 0, target: "Rotated Search: Locate target inside rotated sorted array in O(log n) steps." },
-        { name: "Recursion & Backtracking", progress: 0, target: "Sudoku Solver: Fill empty grid configurations dynamically via backtracking." }
-      ],
-      quiz: {
-        question: "Which tree traversal algorithm uses a Queue data structure?",
-        options: ["DFS (Depth-First)", "BFS (Breadth-First)", "In-Order Traversal"],
-        answer: 1,
-        explanation: "BFS (Breadth-First Search) queues nodes level-by-level."
-      }
+        { name: "CSS Grid & Layouts", progress: 0, target: "Flexbox structures: Verify responsive layouts inside mock sandboxes." },
+        { name: "Logic Engine", progress: 0, target: "Algorithms track: Implement and bundle complex JS logic routines." },
+        { name: "React & MERN Stack", progress: 0, target: "Fullstack API: Deploy Express servers and sync data models." }
+      ]
     },
     {
       level: 4,
-      tier: "Elite",
-      topic: "Advanced Optimization & Concurrency",
-      desc: "Solve complex time-complexity challenges, master Dynamic Programming (bottom-up/top-down), concurrency streams, and distributed coordination.",
-      stats: "30 Quests • +2000 XP • Locked",
+      tier: "Guild Master",
+      topic: "CodeVault Notes & Factions",
+      desc: "Organize note folders in CodeVault using Markdown and render live Mermaid flowcharts or sequence diagrams. Create or join active factions (like Nothing, ABC, or g) to compete together.",
+      stats: "Markdown Editor • Mermaid Rendering • Faction XP Leaderboard",
       badge: "Elite Crown",
       tracks: [
-        { name: "Dynamic Programming", progress: 0, target: "Longest Subsequence: Determine LCS character length iteratively." },
-        { name: "Concurrency & Channels", progress: 0, target: "Pipeline Worker: Orchestrate parallel workers with safe channels." },
-        { name: "API Replication Models", progress: 0, target: "Consensus Coordinator: Synchronize distributed replicas using consensus state." }
-      ],
-      quiz: {
-        question: "In Go, what happens when writing to a full unbuffered channel?",
-        options: ["It blocks the goroutine", "It silences the error", "It drops the write value"],
-        answer: 0,
-        explanation: "Writing to a full unbuffered channel blocks execution until a read occurs."
-      }
+        { name: "CodeVault Markdown Docs", progress: 0, target: "Knowledge base: Store notes, syntax helpers, and diagram scripts." },
+        { name: "Mermaid Diagrams", progress: 0, target: "Architecture design: Draw microservice topologies and flow charts." },
+        { name: "Faction Alliances", progress: 0, target: "Active roster: Sync with active members and climb faction rankings." }
+      ]
     }
   ];
 
