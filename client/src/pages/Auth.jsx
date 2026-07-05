@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { 
-  Trophy, Users, Zap, Shield, ChevronLeft, Terminal
+  ChevronLeft, Terminal
 } from 'lucide-react';
 import './Auth.css';
 
@@ -13,28 +13,32 @@ const API = API_URL;
 const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [logs, setLogs] = useState([]);
+  const [typedCode, setTypedCode] = useState("");
 
-  // Live boot diagnostics logger for futuristic visual theme
+  const codeSnippet = `// Active Arena Duel //
+function resolveConflict(factionA, factionB) {
+  const union = new Set([...factionA, ...factionB]);
+  return Array.from(union).sort((a, b) => b.xp - a.xp);
+}`;
+
+  // Live code typing simulation resembling actual Monaco editor workspaces
   useEffect(() => {
-    const diagnosticSteps = [
-      "Initializing connection to BrightCode mainframes...",
-      "Securing transport layer via TLS 1.3 handshake...",
-      "Activating Scarlet Flare graphics overlay...",
-      "Resolving WebRTC websocket signaling nodes...",
-      "Standby... Mainframe ready for user authentication."
-    ];
-    let currentLogIndex = 0;
+    let index = 0;
     const interval = setInterval(() => {
-      if (currentLogIndex < diagnosticSteps.length) {
-        setLogs(prev => [...prev, diagnosticSteps[currentLogIndex]]);
-        currentLogIndex++;
+      if (index < codeSnippet.length) {
+        setTypedCode(codeSnippet.substring(0, index + 1));
+        index++;
       } else {
+        // Hold on completed state, then loop back
         clearInterval(interval);
+        setTimeout(() => {
+          index = 0;
+          setTypedCode("");
+        }, 4000);
       }
-    }, 1000);
+    }, 45);
     return () => clearInterval(interval);
-  }, []);
+  }, [typedCode]);
 
   // Handle OAuth success callback parameters & errors
   useEffect(() => {
@@ -103,7 +107,7 @@ const Auth = () => {
         className="auth-container"
         transition={{ layout: { duration: 0.4, ease: [0.4, 0, 0.2, 1] } }}
       >
-        {/* ── Left branding panel ── */}
+        {/* ── Left branding panel (Product Dashboard Simulator) ── */}
         <div className="auth-left">
           <div className="auth-bg-glows">
             <div className="auth-glow auth-glow-1"></div>
@@ -125,34 +129,52 @@ const Auth = () => {
             </p>
           </div>
 
-          {/* Cyber Radar Graphic */}
-          <div className="cyber-radar-wrap">
-            <div className="radar-grid" />
-            <div className="radar-sweep" />
-            <div className="radar-target" />
-            <div className="radar-ping" />
-            <span className="radar-label">COGNITIVE INDEX: ACTIVE</span>
-          </div>
-
-          {/* Live Diagnostic Boot Terminal */}
-          <div className="cyber-terminal">
-            <div className="cyber-terminal-header">
-              <span className="term-dot green-dot"></span>
-              <span className="term-dot yellow-dot"></span>
-              <span className="term-dot red-dot"></span>
-              <span className="term-title">diagnostics://brightcode.core</span>
+          {/* Simulated Product Dashboard Module */}
+          <div className="cyber-dashboard-simulator">
+            <div className="sim-header">
+              <div className="sim-title-wrap">
+                <span className="sim-status-dot blinking-dot"></span>
+                <span className="sim-title">simulation_node://arena-battle</span>
+              </div>
+              
+              {/* Mini AI Proctor Box overlay */}
+              <div className="mini-proctor-box">
+                <div className="proctor-scanner" />
+                <div className="proctor-indicator">
+                  <span className="rec-dot"></span>
+                  <span>AI PROCTOR: ACTIVE</span>
+                </div>
+                <div className="face-wireframe">
+                  <div className="wireframe-circle" />
+                  <div className="wireframe-line horizontal" />
+                  <div className="wireframe-line vertical" />
+                </div>
+              </div>
             </div>
-            <div className="cyber-terminal-body">
-              {logs.map((log, idx) => (
-                <div key={idx} className="cyber-log-line">
-                  <span className="log-prompt">&gt;</span> {log}
-                </div>
-              ))}
-              {logs.length < 5 && (
-                <div className="cyber-log-line loading-line">
-                  <span className="log-prompt">&gt;</span> <span className="caret">_</span>
-                </div>
-              )}
+
+            {/* Simulated Monaco Editor panel */}
+            <div className="sim-editor-panel">
+              <div className="editor-tab">
+                <span className="tab-name">conflict_solver.js</span>
+              </div>
+              <pre className="editor-code-area">
+                <code>
+                  {typedCode}
+                  <span className="editor-caret">_</span>
+                </code>
+              </pre>
+            </div>
+
+            {/* Simulated Output Terminal panel */}
+            <div className="sim-terminal-panel">
+              <div className="terminal-prompt">
+                <span className="prompt-symbol">$</span> npm run test
+              </div>
+              <div className="terminal-results">
+                <div className="term-line green-text">✓ Sample case #1: resolved</div>
+                <div className="term-line green-text">✓ Edge case #2: resolved</div>
+                <div className="term-line gold-text">★ Completed: +150 XP (Grandmaster path)</div>
+              </div>
             </div>
           </div>
         </div>
