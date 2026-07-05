@@ -438,6 +438,189 @@ function Ticker() {
   );
 }
 
+function InteractivePlayground() {
+  const [selectedChallenge, setSelectedChallenge] = useState(0);
+  const [code, setCode] = useState("");
+  const [output, setOutput] = useState([]);
+  const [isRunning, setIsRunning] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const challenges = [
+    {
+      name: "Reverse a String",
+      fnName: "reverseString",
+      desc: "Write a function that reverses the input string.",
+      starter: `function reverseString(str) {\n  // Write your code here\n  return str.split("").reverse().join("");\n}`,
+      tests: [
+        { input: ["bright"], expected: "thgirb" },
+        { input: ["code"], expected: "edoc" }
+      ]
+    },
+    {
+      name: "Is Palindrome",
+      fnName: "isPalindrome",
+      desc: "Return true if the string is a palindrome, false otherwise.",
+      starter: `function isPalindrome(str) {\n  // Write your code here\n  const clean = str.toLowerCase().replace(/[^a-z0-9]/g, "");\n  return clean === clean.split("").reverse().join("");\n}`,
+      tests: [
+        { input: ["racecar"], expected: true },
+        { input: ["hello"], expected: false }
+      ]
+    },
+    {
+      name: "FizzBuzz",
+      fnName: "fizzBuzz",
+      desc: "Return an array representing FizzBuzz from 1 to n.",
+      starter: `function fizzBuzz(n) {\n  // Write your code here\n  let arr = [];\n  for (let i = 1; i <= n; i++) {\n    if (i % 3 === 0) arr.push("Fizz");\n    else if (i % 5 === 0) arr.push("Buzz");\n    else arr.push(i.toString());\n  }\n  return arr;\n}`,
+      tests: [
+        { input: [5], expected: ["1", "2", "Fizz", "4", "Buzz"] },
+        { input: [3], expected: ["1", "2", "Fizz"] }
+      ]
+    }
+  ];
+
+  useEffect(() => {
+    setCode(challenges[selectedChallenge].starter);
+    setOutput([`// Output console ready for ${challenges[selectedChallenge].name}.`, `// Click 'Compile & Run' to check your code.`]);
+    setSuccess(false);
+  }, [selectedChallenge]);
+
+  const handleRun = () => {
+    setIsRunning(true);
+    setSuccess(false);
+    setOutput(["> Compiling solution...", "> Running test cases..."]);
+
+    setTimeout(() => {
+      try {
+        const challenge = challenges[selectedChallenge];
+        // Safely parse and run function
+        const testCode = code + `\nreturn ${challenge.fnName};`;
+        const userFn = new Function(testCode)();
+
+        const logs = ["> Compiling solution... Done.", "> Running test cases..."];
+        let allPassed = true;
+
+        challenge.tests.forEach((test, idx) => {
+          const result = userFn(...test.input);
+          
+          const isArr = Array.isArray(result) && Array.isArray(test.expected);
+          const passed = isArr 
+            ? JSON.stringify(result) === JSON.stringify(test.expected)
+            : result === test.expected;
+
+          if (passed) {
+            logs.push(`✓ Test Case ${idx + 1}: ${challenge.fnName}(${JSON.stringify(test.input)}) -> ${JSON.stringify(result)} (Pass)`);
+          } else {
+            allPassed = false;
+            logs.push(`✗ Test Case ${idx + 1} Failed: Expected ${JSON.stringify(test.expected)}, got ${JSON.stringify(result)}`);
+          }
+        });
+
+        if (allPassed) {
+          logs.push(`🎉 SUCCESS: All tests passed! +50 XP awarded.`);
+          setSuccess(true);
+        } else {
+          logs.push(`✗ FAILED: Some test cases did not pass. Try again!`);
+        }
+
+        setOutput(logs);
+      } catch (err) {
+        setOutput([
+          "> Compiling solution... Failed.",
+          `✗ Runtime Error: ${err.message}`,
+          "> Please check your syntax or function signature."
+        ]);
+      }
+      setIsRunning(false);
+    }, 750);
+  };
+
+  const lineCount = code.split("\n").length;
+  const lineNumbers = Array.from({ length: Math.max(8, lineCount) }, (_, i) => i + 1);
+
+  return (
+    <section className="playground-section" id="playground">
+      <div className="playground-header">
+        <span className="section-pill">Playground</span>
+        <h2 className="section-h2">Test Your Skills Instantly</h2>
+        <p className="section-sub">Write Javascript code, compile, and validate test cases directly in the browser.</p>
+      </div>
+
+      <div className="playground-grid">
+        {/* Editor Pod */}
+        <div className="playground-editor-container">
+          <div className="editor-header">
+            <div className="editor-dots">
+              <div className="editor-dot red" />
+              <div className="editor-dot yellow" />
+              <div className="editor-dot green" />
+            </div>
+            <div className="challenge-selector">
+              {challenges.map((tab, idx) => (
+                <button
+                  key={tab.name}
+                  className={`challenge-tab ${selectedChallenge === idx ? "active" : ""}`}
+                  onClick={() => setSelectedChallenge(idx)}
+                >
+                  {tab.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="editor-body">
+            <div className="editor-line-numbers">
+              {lineNumbers.map(n => (
+                <div key={n}>{n}</div>
+              ))}
+            </div>
+            <textarea
+              className="editor-textarea"
+              value={code}
+              onChange={e => setCode(e.target.value)}
+              spellCheck="false"
+            />
+          </div>
+        </div>
+
+        {/* Console Pod */}
+        <div className="playground-console-container">
+          <div className="console-header">
+            <div className="console-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <Terminal size={14} />
+              TEST RUNNER CONSOLE
+            </div>
+            <div className="console-status">
+              <div className="console-pulse-dot" />
+              ONLINE
+            </div>
+          </div>
+          <div className="console-body">
+            {output.map((log, idx) => {
+              let logClass = "";
+              if (log.startsWith("✓")) logClass = "green";
+              else if (log.startsWith("✗") || log.startsWith("Error")) logClass = "red";
+              else if (log.startsWith(">")) logClass = "yellow";
+              return (
+                <div key={idx} className={`console-log-item ${logClass}`}>
+                  {log}
+                </div>
+              );
+            })}
+          </div>
+          <div className="console-footer">
+            <button
+              className="btn-playground-run"
+              onClick={handleRun}
+              disabled={isRunning}
+            >
+              {isRunning ? "Compiling..." : "Compile & Run"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ────────────────────────────────────────────────────────────
    BENTO FEATURES
 ──────────────────────────────────────────────────────────── */
@@ -2289,6 +2472,7 @@ export default function Landing() {
       <BrightCodeCanvas />
       <HeroSection handleAuth={handleAuth} handleHub={handleHub} />
       <Ticker />
+      <InteractivePlayground />
       <BentoFeatures />
       <AlumniNetwork />
       <ModulesSection />
