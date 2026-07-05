@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { 
-  Trophy, Users, Zap, Shield, ChevronLeft
+  Trophy, Users, Zap, Shield, ChevronLeft, Terminal
 } from 'lucide-react';
 import './Auth.css';
 
@@ -13,6 +13,28 @@ const API = API_URL;
 const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [logs, setLogs] = useState([]);
+
+  // Live boot diagnostics logger for futuristic visual theme
+  useEffect(() => {
+    const diagnosticSteps = [
+      "Initializing connection to BrightCode mainframes...",
+      "Securing transport layer via TLS 1.3 handshake...",
+      "Activating Scarlet Flare graphics overlay...",
+      "Resolving WebRTC websocket signaling nodes...",
+      "Standby... Mainframe ready for user authentication."
+    ];
+    let currentLogIndex = 0;
+    const interval = setInterval(() => {
+      if (currentLogIndex < diagnosticSteps.length) {
+        setLogs(prev => [...prev, diagnosticSteps[currentLogIndex]]);
+        currentLogIndex++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Handle OAuth success callback parameters & errors
   useEffect(() => {
@@ -90,37 +112,48 @@ const Auth = () => {
           </div>
 
           <div className="auth-left-headline">
+            <div className="cyber-terminal-badge">
+              <Terminal size={10} style={{ marginRight: '4px' }} />
+              SECURE SYSTEM // ONLINE
+            </div>
             <h1>
               Code. Compete.<br />
-              <span>Dominate.</span>
+              <span className="scarlet-gradient">Dominate.</span>
             </h1>
             <p>
-              Join thousands of developers sharpening their skills,
-              competing in real-time battles, and building in collaborative workspaces.
+              Connect to the multiplayer coding core. Engage in speed battles, collaborate in real-time Monaco workspaces, and climb the ranks.
             </p>
           </div>
 
-          <div className="auth-stats">
-            {[
-              { icon: <Users size={16} />, value: "Active community", label: "Developers worldwide" },
-              { icon: <Trophy size={16} />, value: "Daily challenges", label: "Logic Lab & Code Wars" },
-              { icon: <Zap size={16} />, value: "Real-time editor", label: "Sub-10ms sync latency" },
-              { icon: <Shield size={16} />, value: "Ranked system", label: "XP, levels & factions" },
-            ].map((s, i) => (
-              <motion.div
-                key={i}
-                className="auth-stat"
-                initial={{ opacity: 0, x: -16 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 + i * 0.07, duration: 0.4 }}
-              >
-                <div className="auth-stat-icon">{s.icon}</div>
-                <div className="auth-stat-text">
-                  <span className="auth-stat-value">{s.value}</span>
-                  <span className="auth-stat-label">{s.label}</span>
+          {/* Cyber Radar Graphic */}
+          <div className="cyber-radar-wrap">
+            <div className="radar-grid" />
+            <div className="radar-sweep" />
+            <div className="radar-target" />
+            <div className="radar-ping" />
+            <span className="radar-label">COGNITIVE INDEX: ACTIVE</span>
+          </div>
+
+          {/* Live Diagnostic Boot Terminal */}
+          <div className="cyber-terminal">
+            <div className="cyber-terminal-header">
+              <span className="term-dot green-dot"></span>
+              <span className="term-dot yellow-dot"></span>
+              <span className="term-dot red-dot"></span>
+              <span className="term-title">diagnostics://brightcode.core</span>
+            </div>
+            <div className="cyber-terminal-body">
+              {logs.map((log, idx) => (
+                <div key={idx} className="cyber-log-line">
+                  <span className="log-prompt">&gt;</span> {log}
                 </div>
-              </motion.div>
-            ))}
+              ))}
+              {logs.length < 5 && (
+                <div className="cyber-log-line loading-line">
+                  <span className="log-prompt">&gt;</span> <span className="caret">_</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
