@@ -20,7 +20,7 @@ import BattleArena from './pages/BattleArena';
 import UserModule from './pages/UserModule';
 import UserProfile from './pages/UserProfile';
 import ContributePage from './pages/ContributePage';
-import GuildBoard from './pages/GuildBoard';
+import NexusBoard from './pages/NexusBoard';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
@@ -327,6 +327,7 @@ function App() {
           />
           <NavbarWrapper />
           <Routes>
+              <Route path="/nexus" element={<ProtectedRoute><NexusBoard /></ProtectedRoute>} />
               <Route path="/" element={<LandingRoute />} />
               <Route 
                 path="/hub" 
@@ -453,14 +454,7 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-              <Route
-                path="/guild"
-                element={
-                  <ProtectedRoute>
-                    <GuildBoard />
-                  </ProtectedRoute>
-                }
-              />
+
               {/* Catch-all: redirect any unknown path to landing */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

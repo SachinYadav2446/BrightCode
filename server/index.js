@@ -1431,16 +1431,16 @@ app.get('/messages/unread/counts', authenticateToken, async (req, res) => {
 
 // ── GUILD SYSTEM (SOS / Mentorship Board) ─────────────────────────────────
 
-let guildMemoryStore = []; // { id, author_id, author_username, title, description, language, tags, status: 'open'|'resolved', mentor_id, created_at }
+let nexusMemoryStore = []; // { id, author_id, author_username, title, description, language, tags, status: 'open'|'resolved', mentor_id, created_at }
 const GUILD_FILE = path.join(__dirname, 'guild_db.json');
 
 const loadGuildStore = () => {
     if (fs.existsSync(GUILD_FILE)) {
-        try { guildMemoryStore = JSON.parse(fs.readFileSync(GUILD_FILE, 'utf8')) || []; } catch (e) { guildMemoryStore = []; }
+        try { nexusMemoryStore = JSON.parse(fs.readFileSync(GUILD_FILE, 'utf8')) || []; } catch (e) { nexusMemoryStore = []; }
     }
 };
 const saveGuildStore = () => {
-    try { fs.writeFileSync(GUILD_FILE, JSON.stringify(guildMemoryStore, null, 2)); } catch (e) {}
+    try { fs.writeFileSync(GUILD_FILE, JSON.stringify(nexusMemoryStore, null, 2)); } catch (e) {}
 };
 loadGuildStore();
 
@@ -1466,11 +1466,11 @@ const initGuildTables = async () => {
 };
 initGuildTables();
 
-// GET /api/guild/tickets
-app.get('/api/guild/tickets', authenticateToken, async (req, res) => {
+// GET /api/nexus/tickets
+app.get('/api/nexus/tickets', authenticateToken, async (req, res) => {
     try {
         if (useMemoryDB) {
-            const tickets = [...guildMemoryStore].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            const tickets = [...nexusMemoryStore].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
             return res.json(tickets);
         } else {
             const { rows } = await pool.query(`SELECT * FROM guild_tickets ORDER BY created_at DESC`);
@@ -1482,8 +1482,8 @@ app.get('/api/guild/tickets', authenticateToken, async (req, res) => {
     }
 });
 
-// POST /api/guild/tickets
-app.post('/api/guild/tickets', authenticateToken, async (req, res) => {
+// POST /api/nexus/tickets
+app.post('/api/nexus/tickets', authenticateToken, async (req, res) => {
     const { title, description, language, tags } = req.body;
     const myId = req.user.id;
     const myUsername = req.user.username;
@@ -1504,7 +1504,7 @@ app.post('/api/guild/tickets', authenticateToken, async (req, res) => {
 
     try {
         if (useMemoryDB) {
-            guildMemoryStore.unshift(newTicket);
+            nexusMemoryStore.unshift(newTicket);
             saveGuildStore();
         } else {
             await pool.query(
@@ -1521,13 +1521,13 @@ app.post('/api/guild/tickets', authenticateToken, async (req, res) => {
     }
 });
 
-// POST /api/guild/tickets/:id/answer
-app.post('/api/guild/tickets/:id/answer', authenticateToken, async (req, res) => {
+// POST /api/nexus/tickets/:id/answer
+app.post('/api/nexus/tickets/:id/answer', authenticateToken, async (req, res) => {
     const ticketId = req.params.id;
     const myId = req.user.id;
     try {
         if (useMemoryDB) {
-            const ticket = guildMemoryStore.find(t => t.id === ticketId);
+            const ticket = nexusMemoryStore.find(t => t.id === ticketId);
             if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
             if (ticket.status !== 'open') return res.status(400).json({ error: 'Ticket already answered or closed' });
             if (ticket.author_id === myId) return res.status(400).json({ error: 'Cannot answer your own ticket' });
@@ -1551,13 +1551,13 @@ app.post('/api/guild/tickets/:id/answer', authenticateToken, async (req, res) =>
     }
 });
 
-// POST /api/guild/tickets/:id/resolve
-app.post('/api/guild/tickets/:id/resolve', authenticateToken, async (req, res) => {
+// POST /api/nexus/tickets/:id/resolve
+app.post('/api/nexus/tickets/:id/resolve', authenticateToken, async (req, res) => {
     const ticketId = req.params.id;
     const myId = req.user.id;
     try {
         if (useMemoryDB) {
-            const ticket = guildMemoryStore.find(t => t.id === ticketId);
+            const ticket = nexusMemoryStore.find(t => t.id === ticketId);
             if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
             if (ticket.author_id !== myId) return res.status(403).json({ error: 'Only author can resolve' });
             
