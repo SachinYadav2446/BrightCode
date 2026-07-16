@@ -752,8 +752,8 @@ function BentoFeatures() {
     },
     {
       stat: "Guilds",
-      label: "Developer Factions & Feed",
-      desc: "Join programmer guilds, collaborate with alliances, and share solutions on the Code Feed.",
+      label: "Developer Factions & The Guild",
+      desc: "Join programmer guilds, collaborate with alliances, and solve SOS Tickets on The Guild.",
       type: "ui-factions",
     }
   ];
@@ -2238,12 +2238,12 @@ function VaultShowcase({ navigate }) {
   );
 }
 
-function FeedShowcase({ navigate }) {
+function GuildShowcase({ navigate }) {
   return (
     <div className="workspace-showcase-container">
       {/* LEFT COLUMN */}
       <div className="workspace-showcase-left">
-        <h3 className="w-title">CodeFeed Social Arena</h3>
+        <h3 className="w-title">The Guild: Mentorship & SOS</h3>
         <p className="w-desc">
           Share your daily coding insights, learn from others, and interact with the community. Attach code blocks and earn XP for every post!
         </p>
@@ -2259,7 +2259,7 @@ function FeedShowcase({ navigate }) {
           <div className="v-feature-item">
             <span className="v-feat-icon" />
             <div className="v-feat-text">
-              <strong>Roast My Code:</strong> Request constructive, high-level feedback and optimization reviews from fellow expert engineers.
+              <strong>Answer the Call:</strong> Hop into an SOS ticket to mentor junior developers and earn massive XP.
             </div>
           </div>
           <div className="v-feature-item">
@@ -2281,7 +2281,7 @@ function FeedShowcase({ navigate }) {
               <span className="w-dot yellow" />
               <span className="w-dot green" />
             </div>
-            <div className="w-address-bar">vault/feed</div>
+            <div className="w-address-bar">vault/guild</div>
             <div className="w-live-badge" style={{ color: "#22c55e", borderColor: "rgba(34, 197, 94, 0.2)", background: "rgba(34, 197, 94, 0.08)" }}>
               <span className="w-live-pulse" style={{ backgroundColor: "#22c55e", boxShadow: "0 0 6px #22c55e" }} /> ONLINE
             </div>
@@ -2289,7 +2289,7 @@ function FeedShowcase({ navigate }) {
           <div className="w-browser-content">
             <motion.img 
               src="/images/feed_page.png" 
-              alt="CodeFeed preview" 
+              alt="The Guild preview" 
               className="w-preview-img"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -2624,7 +2624,7 @@ function ModulesSection() {
     { id: "workspace", label: "Workspace & Collaboration" },
     { id: "theme", label: "Themes" },
     { id: "vault", label: "CodeVault" },
-    { id: "feed", label: "Feed" },
+    { id: "guild", label: "The Guild" },
     { id: "allies", label: "Allies & Profiles" },
     { id: "leaderboard", label: "Leaderboard" },
     { id: "faction", label: "Factions" }

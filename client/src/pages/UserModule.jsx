@@ -231,7 +231,7 @@ const PageGettingStarted = () => (
     </AccordionItem>
     <AccordionItem title="Dashboard Overview">
       <BulletList items={[
-        '<strong>Hub</strong> &mdash; Your personal stats, heatmap, XP bar, and activity feed.',
+        '<strong>Hub</strong> &mdash; Your personal stats, heatmap, XP bar, and Guild activity.',
         '<strong>Workspace</strong> &mdash; Collaborative real-time code editor.',
         '<strong>CodeVault</strong> &mdash; Personal notes and knowledge base.',
         '<strong>Arcade</strong> &mdash; Competitive coding challenges and Logic Lab.',
