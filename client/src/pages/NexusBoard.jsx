@@ -85,7 +85,7 @@ export default function NexusBoard() {
         <div className="nexus-container">
             <header className="nexus-header">
                 <div className="nexus-title-section">
-                    <h1><Cpu size={36} color="#00ffaa" /> The Nexus</h1>
+                    <h1><Cpu size={36} color="var(--primary)" /> The Nexus</h1>
                     <p>SYSTEM.NET // MENTORSHIP & SOS DIRECTORY // [SECURE]</p>
                 </div>
                 <button className="btn-post-sos" onClick={() => setIsModalOpen(true)}>
@@ -94,7 +94,7 @@ export default function NexusBoard() {
             </header>
 
             {loading ? (
-                <div style={{color: '#00ffaa', fontFamily: 'monospace', fontSize: '1.2rem', padding: '20px'}}>
+                <div style={{color: 'var(--primary)', fontFamily: 'monospace', fontSize: '1.2rem', padding: '20px'}}>
                     &gt; INITIALIZING NEXUS TERMINAL...
                 </div>
             ) : (
@@ -135,7 +135,7 @@ export default function NexusBoard() {
                                     </button>
                                 )}
                                 {ticket.status === 'in_progress' && ticket.mentor_id === user?.id && (
-                                    <span style={{color: '#00ffaa', alignSelf: 'center', fontWeight: 'bold', fontFamily: 'monospace'}}>
+                                    <span style={{color: 'var(--primary)', alignSelf: 'center', fontWeight: 'bold', fontFamily: 'monospace'}}>
                                         &gt; LINK ESTABLISHED
                                     </span>
                                 )}
@@ -153,7 +153,7 @@ export default function NexusBoard() {
             {isModalOpen && (
                 <div className="sos-modal-overlay">
                     <div className="sos-modal">
-                        <h2><Cpu color="#00ffaa" size={32} /> NEW SOS DIRECTIVE</h2>
+                        <h2><Cpu color="var(--primary)" size={32} /> NEW SOS DIRECTIVE</h2>
                         <form onSubmit={handleCreateTicket}>
                             <div className="sos-form-group">
                                 <label>DIRECTIVE TITLE</label>

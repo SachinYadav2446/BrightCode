@@ -1,11 +1,11 @@
 .nexus-container {
-    padding: 40px 60px;
+    padding: 100px 60px 40px 60px;
     min-height: 100vh;
     background-color: var(--bg-dark);
     /* High-tech dotted grid background */
     background-image: 
-        radial-gradient(rgba(0, 255, 170, 0.1) 1px, transparent 1px),
-        radial-gradient(rgba(0, 255, 170, 0.05) 1px, transparent 1px);
+        radial-gradient(rgba(var(--primary-rgb), 0.1) 1px, transparent 1px),
+        radial-gradient(rgba(var(--primary-rgb), 0.05) 1px, transparent 1px);
     background-position: 0 0, 25px 25px;
     background-size: 50px 50px;
     color: var(--text-main);
@@ -23,7 +23,7 @@
     position: absolute;
     top: -150px; left: -150px;
     width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(0, 255, 170, 0.15) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--primary-rgb), 0.15) 0%, transparent 70%);
     pointer-events: none;
     z-index: 0;
 }
@@ -41,7 +41,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    border-bottom: 2px solid rgba(0, 255, 170, 0.3);
+    border-bottom: 2px solid rgba(var(--primary-rgb), 0.3);
     padding-bottom: 25px;
     position: relative;
     z-index: 1;
@@ -57,7 +57,7 @@
     font-size: 3rem;
     font-weight: 900;
     margin: 0;
-    background: linear-gradient(135deg, #00ffaa, #fff);
+    background: linear-gradient(135deg, var(--primary), #fff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     display: flex;
@@ -65,7 +65,7 @@
     gap: 15px;
     text-transform: uppercase;
     letter-spacing: 2px;
-    text-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+    text-shadow: 0 0 20px rgba(var(--primary-rgb), 0.3);
 }
 
 .nexus-title-section p {
@@ -77,7 +77,7 @@
 
 /* Cyberpunk Button */
 .btn-post-sos {
-    background: linear-gradient(90deg, rgba(0, 255, 170, 0.9), rgba(0, 200, 150, 0.9));
+    background: linear-gradient(90deg, rgba(var(--primary-rgb), 0.9), rgba(0, 200, 150, 0.9));
     color: #000;
     border: none;
     padding: 14px 30px;
@@ -92,13 +92,13 @@
     /* Angled corners */
     clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
     transition: all 0.3s ease;
-    box-shadow: 0 0 15px rgba(0, 255, 170, 0.5);
+    box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.5);
 }
 
 .btn-post-sos:hover {
     transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 0 25px rgba(0, 255, 170, 0.8);
-    background: linear-gradient(90deg, #00ffaa, #00ffaa);
+    box-shadow: 0 0 25px rgba(var(--primary-rgb), 0.8);
+    background: linear-gradient(90deg, var(--primary), var(--primary));
 }
 
 .tickets-grid {
@@ -141,8 +141,8 @@
 }
 
 .ticket-card:hover::after {
-    border-color: rgba(0, 255, 170, 0.6);
-    box-shadow: inset 0 0 20px rgba(0, 255, 170, 0.2);
+    border-color: rgba(var(--primary-rgb), 0.6);
+    box-shadow: inset 0 0 20px rgba(var(--primary-rgb), 0.2);
 }
 
 /* Holographic Scanline */
@@ -150,7 +150,7 @@
     position: absolute;
     top: -100%; left: 0;
     width: 100%; height: 20%;
-    background: linear-gradient(to bottom, transparent, rgba(0, 255, 170, 0.1), rgba(0, 255, 170, 0.3), transparent);
+    background: linear-gradient(to bottom, transparent, rgba(var(--primary-rgb), 0.1), rgba(var(--primary-rgb), 0.3), transparent);
     z-index: 10;
     pointer-events: none;
     opacity: 0;
@@ -254,7 +254,7 @@
     padding: 4px 10px;
     border-radius: 2px;
     font-size: 0.8rem;
-    color: #00ffaa;
+    color: var(--primary);
     font-family: 'Fira Code', monospace;
 }
 
@@ -268,9 +268,9 @@
 }
 
 .btn-answer {
-    background: rgba(0, 255, 170, 0.1);
-    color: #00ffaa;
-    border: 1px solid #00ffaa;
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+    border: 1px solid var(--primary);
     padding: 10px 20px;
     font-weight: 700;
     cursor: pointer;
@@ -281,9 +281,9 @@
     clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
 }
 .btn-answer:hover {
-    background: #00ffaa;
+    background: var(--primary);
     color: #000;
-    box-shadow: 0 0 20px rgba(0, 255, 170, 0.4);
+    box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.4);
 }
 
 .btn-resolve {
@@ -319,8 +319,8 @@
 
 .sos-modal {
     background: rgba(20, 20, 25, 0.95);
-    border: 1px solid #00ffaa;
-    box-shadow: 0 0 40px rgba(0, 255, 170, 0.2);
+    border: 1px solid var(--primary);
+    box-shadow: 0 0 40px rgba(var(--primary-rgb), 0.2);
     width: 90%;
     max-width: 650px;
     padding: 40px;
@@ -344,7 +344,7 @@
 .sos-form-group label {
     display: block;
     margin-bottom: 10px;
-    color: #00ffaa;
+    color: var(--primary);
     font-weight: 700;
     letter-spacing: 1px;
     font-size: 0.9rem;
@@ -361,8 +361,8 @@
 }
 .sos-form-group input:focus, .sos-form-group textarea:focus {
     outline: none;
-    border-color: #00ffaa;
-    box-shadow: 0 0 10px rgba(0,255,170,0.2);
+    border-color: var(--primary);
+    box-shadow: 0 0 10px rgba(var(--primary-rgb),0.2);
 }
 
 .sos-modal-actions {
@@ -386,7 +386,7 @@
 .btn-cancel:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: #fff; }
 
 .btn-submit {
-    background: #00ffaa;
+    background: var(--primary);
     color: #000;
     border: none;
     padding: 12px 25px;
@@ -400,8 +400,8 @@
     transition: all 0.2s;
 }
 .btn-submit:hover {
-    background: #00e699;
-    box-shadow: 0 0 15px rgba(0,255,170,0.5);
+    background: var(--primary-light);
+    box-shadow: 0 0 15px rgba(var(--primary-rgb),0.5);
 }
 
 @keyframes nexusFadeIn {
