@@ -20,7 +20,7 @@ import BattleArena from './pages/BattleArena';
 import UserModule from './pages/UserModule';
 import UserProfile from './pages/UserProfile';
 import ContributePage from './pages/ContributePage';
-import CodeFeed from './pages/CodeFeed';
+import GuildBoard from './pages/GuildBoard';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
@@ -454,10 +454,10 @@ function App() {
                 } 
               />
               <Route
-                path="/feed"
+                path="/guild"
                 element={
                   <ProtectedRoute>
-                    <CodeFeed />
+                    <GuildBoard />
                   </ProtectedRoute>
                 }
               />

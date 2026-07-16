@@ -38,7 +38,7 @@ const Navbar = () => {
     if (path.startsWith('/codevault')) return 'codevault';
     if (path.startsWith('/factions')) return 'factions';
     if (path.startsWith('/contribute')) return 'contribute';
-    if (path.startsWith('/feed')) return 'feed';
+    if (path.startsWith('/guild')) return 'guild';
     if (path.startsWith('/user-guide')) return 'guide';
     return '';
   };
@@ -79,7 +79,7 @@ const Navbar = () => {
             <Link to="/workspace" className={`nav-link-hover ${currentPage === 'workspace' ? 'active' : ''}`}>Workspace</Link>
             <Link to="/codevault" className={`nav-link-hover ${currentPage === 'codevault' ? 'active' : ''}`}>Vault</Link>
             <Link to="/factions"  className={`nav-link-hover ${currentPage === 'factions'  ? 'active' : ''}`}>Factions</Link>
-            <Link to="/feed"      className={`nav-link-hover ${currentPage === 'feed'      ? 'active' : ''}`}>Feed</Link>
+            <Link to="/guild"      className={`nav-link-hover ${currentPage === 'guild'      ? 'active' : ''}`}>The Guild</Link>
           </div>
 
           {/* RIGHT: Actions */}
@@ -125,7 +125,7 @@ const Navbar = () => {
             <Link to="/workspace" className={`nav-mobile-link ${currentPage === 'workspace' ? 'active' : ''}`}>Workspace</Link>
             <Link to="/codevault" className={`nav-mobile-link ${currentPage === 'codevault' ? 'active' : ''}`}>Vault</Link>
             <Link to="/factions"  className={`nav-mobile-link ${currentPage === 'factions'  ? 'active' : ''}`}>Factions</Link>
-            <Link to="/feed"      className={`nav-mobile-link ${currentPage === 'feed'      ? 'active' : ''}`}>Feed</Link>
+            <Link to="/guild"      className={`nav-mobile-link ${currentPage === 'guild'      ? 'active' : ''}`}>The Guild</Link>
           </div>
         )}
       </nav>
