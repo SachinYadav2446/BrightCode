@@ -29,7 +29,7 @@ const logger = require('./logger');
 const { pool, useMemoryDB: dbMemoryMode } = require('./db');
 let useMemoryDB = dbMemoryMode;
 
-const FRONTEND_URL = process.env.FRONTEND_URL || '*';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const JWT_SECRET = process.env.JWT_SECRET || 'brightcode_secret_key_123';
 
 const app = express();
