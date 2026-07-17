@@ -1457,6 +1457,7 @@ const initGuildTables = async () => {
                 language TEXT DEFAULT 'javascript',
                 tags JSONB DEFAULT '[]',
                 mentor_requests JSONB DEFAULT '[]',
+                messages JSONB DEFAULT '[]',
                 status TEXT DEFAULT 'open',
                 mentor_id TEXT,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -1499,6 +1500,7 @@ app.post('/api/nexus/tickets', authenticateToken, async (req, res) => {
         language: language || 'javascript',
         tags: tags || [],
         mentor_requests: [],
+        messages: [],
         status: 'open',
         mentor_id: null,
         created_at: new Date().toISOString()
@@ -1510,9 +1512,9 @@ app.post('/api/nexus/tickets', authenticateToken, async (req, res) => {
             saveGuildStore();
         } else {
             await pool.query(
-                `INSERT INTO guild_tickets (id, author_id, author_username, title, description, language, tags, mentor_requests, status, created_at)
-                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-                [newTicket.id, myId, myUsername, newTicket.title, newTicket.description, newTicket.language, JSON.stringify(newTicket.tags), JSON.stringify([]), newTicket.status, newTicket.created_at]
+                `INSERT INTO guild_tickets (id, author_id, author_username, title, description, language, tags, mentor_requests, messages, status, created_at)
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+                [newTicket.id, myId, myUsername, newTicket.title, newTicket.description, newTicket.language, JSON.stringify(newTicket.tags), JSON.stringify([]), JSON.stringify([]), newTicket.status, newTicket.created_at]
             );
         }
         io.emit('guild:new_ticket', newTicket);
@@ -1590,6 +1592,57 @@ app.post('/api/nexus/tickets/:id/accept-mentor', authenticateToken, async (req, 
         }
     } catch (e) {
         res.status(500).json({ error: 'Failed to accept mentor' });
+    }
+});
+
+// POST /api/nexus/tickets/:id/chat
+app.post('/api/nexus/tickets/:id/chat', authenticateToken, async (req, res) => {
+    const ticketId = req.params.id;
+    const myId = req.user.id;
+    const { text } = req.body;
+    if (!text?.trim()) return res.status(400).json({ error: 'Message text required' });
+
+    const newMsg = {
+        id: uuidV4(),
+        sender_id: myId,
+        sender_username: req.user.username,
+        text: text.trim(),
+        timestamp: new Date().toISOString()
+    };
+
+    try {
+        if (useMemoryDB) {
+            const ticket = nexusMemoryStore.find(t => t.id === ticketId);
+            if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+            if (ticket.author_id !== myId && ticket.mentor_id !== myId) {
+                return res.status(403).json({ error: 'Only author and mentor can chat' });
+            }
+            if (!ticket.messages) ticket.messages = [];
+            ticket.messages.push(newMsg);
+            saveGuildStore();
+            io.emit('guild:update_ticket', ticket);
+            return res.json(ticket);
+        } else {
+            const { rows } = await pool.query(`SELECT * FROM guild_tickets WHERE id=$1`, [ticketId]);
+            if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+            const ticket = rows[0];
+            if (ticket.author_id !== myId && ticket.mentor_id !== myId) {
+                return res.status(403).json({ error: 'Only author and mentor can chat' });
+            }
+            
+            let msgs = ticket.messages || [];
+            if (typeof msgs === 'string') msgs = JSON.parse(msgs);
+            msgs.push(newMsg);
+
+            const updated = await pool.query(
+                `UPDATE guild_tickets SET messages=$1 WHERE id=$2 RETURNING *`,
+                [JSON.stringify(msgs), ticketId]
+            );
+            io.emit('guild:update_ticket', updated.rows[0]);
+            return res.json(updated.rows[0]);
+        }
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to send message' });
     }
 });
 
