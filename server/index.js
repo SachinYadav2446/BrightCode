@@ -1456,6 +1456,7 @@ const initGuildTables = async () => {
                 description TEXT NOT NULL,
                 language TEXT DEFAULT 'javascript',
                 tags JSONB DEFAULT '[]',
+                mentor_requests JSONB DEFAULT '[]',
                 status TEXT DEFAULT 'open',
                 mentor_id TEXT,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -1497,6 +1498,7 @@ app.post('/api/nexus/tickets', authenticateToken, async (req, res) => {
         description: description.trim(),
         language: language || 'javascript',
         tags: tags || [],
+        mentor_requests: [],
         status: 'open',
         mentor_id: null,
         created_at: new Date().toISOString()
@@ -1508,9 +1510,9 @@ app.post('/api/nexus/tickets', authenticateToken, async (req, res) => {
             saveGuildStore();
         } else {
             await pool.query(
-                `INSERT INTO guild_tickets (id, author_id, author_username, title, description, language, tags, status, created_at)
-                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-                [newTicket.id, myId, myUsername, newTicket.title, newTicket.description, newTicket.language, JSON.stringify(newTicket.tags), newTicket.status, newTicket.created_at]
+                `INSERT INTO guild_tickets (id, author_id, author_username, title, description, language, tags, mentor_requests, status, created_at)
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+                [newTicket.id, myId, myUsername, newTicket.title, newTicket.description, newTicket.language, JSON.stringify(newTicket.tags), JSON.stringify([]), newTicket.status, newTicket.created_at]
             );
         }
         io.emit('guild:new_ticket', newTicket);
@@ -1521,33 +1523,73 @@ app.post('/api/nexus/tickets', authenticateToken, async (req, res) => {
     }
 });
 
-// POST /api/nexus/tickets/:id/answer
-app.post('/api/nexus/tickets/:id/answer', authenticateToken, async (req, res) => {
+// POST /api/nexus/tickets/:id/request-mentor
+app.post('/api/nexus/tickets/:id/request-mentor', authenticateToken, async (req, res) => {
     const ticketId = req.params.id;
     const myId = req.user.id;
+    const myUsername = req.user.username;
     try {
         if (useMemoryDB) {
             const ticket = nexusMemoryStore.find(t => t.id === ticketId);
             if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
-            if (ticket.status !== 'open') return res.status(400).json({ error: 'Ticket already answered or closed' });
-            if (ticket.author_id === myId) return res.status(400).json({ error: 'Cannot answer your own ticket' });
+            if (ticket.status !== 'open') return res.status(400).json({ error: 'Ticket is not open' });
+            if (ticket.author_id === myId) return res.status(400).json({ error: 'Cannot mentor your own ticket' });
+            
+            if (!ticket.mentor_requests) ticket.mentor_requests = [];
+            if (!ticket.mentor_requests.find(r => r.id === myId)) {
+                ticket.mentor_requests.push({ id: myId, username: myUsername });
+            }
+            saveGuildStore();
+            io.emit('guild:update_ticket', ticket);
+            return res.json(ticket);
+        } else {
+            // Postgres path: fetch, modify, save
+            const { rows } = await pool.query(`SELECT * FROM guild_tickets WHERE id=$1`, [ticketId]);
+            if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+            let reqs = rows[0].mentor_requests || [];
+            if (typeof reqs === 'string') reqs = JSON.parse(reqs);
+            if (!reqs.find(r => r.id === myId)) reqs.push({ id: myId, username: myUsername });
+            
+            const updated = await pool.query(
+                `UPDATE guild_tickets SET mentor_requests=$1 WHERE id=$2 RETURNING *`,
+                [JSON.stringify(reqs), ticketId]
+            );
+            io.emit('guild:update_ticket', updated.rows[0]);
+            return res.json(updated.rows[0]);
+        }
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to request mentor' });
+    }
+});
+
+// POST /api/nexus/tickets/:id/accept-mentor
+app.post('/api/nexus/tickets/:id/accept-mentor', authenticateToken, async (req, res) => {
+    const ticketId = req.params.id;
+    const myId = req.user.id;
+    const { mentor_id } = req.body;
+    try {
+        if (useMemoryDB) {
+            const ticket = nexusMemoryStore.find(t => t.id === ticketId);
+            if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+            if (ticket.author_id !== myId) return res.status(403).json({ error: 'Only author can accept mentor' });
             
             ticket.status = 'in_progress';
-            ticket.mentor_id = myId;
+            ticket.mentor_id = mentor_id;
+            ticket.mentor_requests = [];
             saveGuildStore();
             io.emit('guild:update_ticket', ticket);
             return res.json(ticket);
         } else {
             const { rows } = await pool.query(
-                `UPDATE guild_tickets SET status='in_progress', mentor_id=$1 WHERE id=$2 AND status='open' AND author_id != $1 RETURNING *`,
-                [myId, ticketId]
+                `UPDATE guild_tickets SET status='in_progress', mentor_id=$1, mentor_requests='[]'::jsonb WHERE id=$2 AND author_id=$3 RETURNING *`,
+                [mentor_id, ticketId, myId]
             );
-            if (!rows[0]) return res.status(400).json({ error: 'Cannot answer ticket' });
+            if (!rows[0]) return res.status(400).json({ error: 'Cannot accept mentor' });
             io.emit('guild:update_ticket', rows[0]);
             return res.json(rows[0]);
         }
     } catch (e) {
-        res.status(500).json({ error: 'Failed to answer ticket' });
+        res.status(500).json({ error: 'Failed to accept mentor' });
     }
 });
 
