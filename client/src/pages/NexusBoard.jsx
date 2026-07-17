@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Plus, CheckCircle, Clock, Search, Code, Cpu, MessageCircle, HelpCircle, Bell, UserCheck, Send, Layout } from 'lucide-react';
+import { Plus, CheckCircle, Clock, Search, Code, Cpu, MessageCircle, HelpCircle, Bell, UserCheck, Send, Layout, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API_URL from '../config';
 import './NexusBoard.css';
