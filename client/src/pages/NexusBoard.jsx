@@ -84,7 +84,7 @@ const TicketCard = ({ ticket, user, onAcceptMentor, onRequestMentor, onResolve }
                 <div className="mentorship-room">
                     <div className="mentorship-room-header">
                         <span><UserCheck size={14} /> Active Mentorship Room</span>
-                        <button className="btn-join-workspace" onClick={() => navigate(`/editor/${ticket.id}`)}>
+                        <button className="btn-join-workspace" onClick={() => navigate(`/editor/${ticket.id}`, { state: { returnTo: '/nexus' } })}>
                             <Layout size={14} /> Join Workspace
                         </button>
                     </div>

@@ -1,7 +1,7 @@
 import API_URL from '../config';
 import React, { useState, useEffect, useRef } from 'react';
 
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
 import { initSocket } from '../socket';
 
@@ -99,12 +99,13 @@ const EditorPage = () => {
     const modalInputRef = useRef(null);
 
     const { roomId } = useParams();
-
     const navigate = useNavigate();
+    const location = useLocation();
+    const returnTo = location.state?.returnTo || '/workspace';
 
 
 
-    // â”€â”€ Core Editor States â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Core Editor States ────────────────────────────────────────────────────────
 
     const [clients, setClients] = useState([]);
 
@@ -2603,7 +2604,7 @@ const EditorPage = () => {
                                             localStorage.setItem(key, JSON.stringify(existing));
                                         }
                                         setShowEndSessionModal(false);
-                                        navigate('/workspace');
+                                        navigate(returnTo);
                                     }}
                                 >
                                     <Plus size={18} style={{ transform: 'rotate(45deg)' }} />
@@ -2645,7 +2646,7 @@ const EditorPage = () => {
                                     className="end-modal-btn confirm-btn"
                                     onClick={() => {
                                         setShowSessionEndedModal(false);
-                                        navigate('/workspace');
+                                        navigate(returnTo);
                                     }}
                                     style={{ width: '100%' }}
                                 >
@@ -2990,7 +2991,7 @@ const EditorPage = () => {
                                     });
                                     socketRef.current.disconnect();
                                 }
-                                navigate('/workspace');
+                                navigate(returnTo);
                             }}>
                                 <LogOut size={16} />
                                 <span>Leave</span>
