@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Plus, CheckCircle, Clock, Search, Code, Cpu, MessageCircle, HelpCircle, Bell, UserCheck, Send, Layout, Globe } from 'lucide-react';
+import { Plus, CheckCircle, Clock, Search, Code, Cpu, MessageCircle, HelpCircle, Bell, UserCheck, Send, Layout, Globe, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API_URL from '../config';
 import './NexusBoard.css';
 
-const TicketCard = ({ ticket, user, onAcceptMentor, onRequestMentor, onResolve }) => {
+const TicketCard = ({ ticket, user, onAcceptMentor, onRequestMentor, onResolve, onRevokeMentor }) => {
     const navigate = useNavigate();
     const [chatText, setChatText] = useState('');
 
@@ -124,9 +124,18 @@ const TicketCard = ({ ticket, user, onAcceptMentor, onRequestMentor, onResolve }
                     </button>
                 )}
                 {ticket.status === 'in_progress' && isAuthor && (
-                    <button className="btn-resolve" onClick={() => onResolve(ticket.id)}>
-                        <CheckCircle size={16} /> Mark Resolved
-                    </button>
+                    <>
+                        <button className="btn-resolve" onClick={() => onResolve(ticket.id)}>
+                            <CheckCircle size={16} /> Mark Resolved
+                        </button>
+                        <button className="btn-revoke" onClick={() => onRevokeMentor(ticket.id)} style={{
+                            background: 'transparent', border: '1px solid var(--error)', color: 'var(--error)', 
+                            padding: '6px 12px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '6px', 
+                            fontSize: '0.8rem', cursor: 'pointer', marginLeft: '10px'
+                        }}>
+                            <XCircle size={16} /> Reopen Ticket
+                        </button>
+                    </>
                 )}
             </div>
         </div>
@@ -215,6 +224,18 @@ export default function NexusBoard() {
         }
     };
 
+    const handleRevokeMentor = async (id) => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.post(`${API_URL}/api/nexus/tickets/${id}/revoke-mentor`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchTickets();
+        } catch (error) {
+            alert(error.response?.data?.error || 'Failed to reopen ticket');
+        }
+    };
+
     const displayedTickets = tickets.filter(t => {
         if (activeTab === 'global') return true;
         return t.author_id === user?.id || t.mentor_id === user?.id;
@@ -261,6 +282,7 @@ export default function NexusBoard() {
                             onAcceptMentor={handleAcceptMentor} 
                             onRequestMentor={handleRequestMentor} 
                             onResolve={handleResolveTicket} 
+                            onRevokeMentor={handleRevokeMentor}
                         />
                     ))}
                     {displayedTickets.length === 0 && (
