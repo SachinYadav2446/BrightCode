@@ -1,232 +1,189 @@
-# BrightCode
+<div align="center">
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![React](https://img.shields.io/badge/React-19.2.4-61dafb.svg?logo=react)
-![Node.js](https://img.shields.io/badge/Node.js-Backend-339933.svg?logo=nodedotjs)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1.svg?logo=postgresql)
-![Vite](https://img.shields.io/badge/Vite-8.0.4-646CFF.svg?logo=vite)
+# ⚡ BrightCode
 
-BrightCode is a high-performance, real-time collaborative coding platform designed for the modern developer. It integrates professional-grade IDE features, gamified learning experiences, and competitive social layers into a unified interface.
+**A next-generation collaborative coding platform for developers who want to learn, compete, and grow together.**
 
----
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-bright--code--ruby.vercel.app-brightgreen?style=for-the-badge&logo=vercel)](https://bright-code-ruby.vercel.app)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org)
+[![Node.js](https://img.shields.io/badge/Node.js-Backend-339933?style=for-the-badge&logo=nodedotjs)](https://nodejs.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=for-the-badge&logo=postgresql)](https://postgresql.org)
 
-## Project Overview
-
-BrightCode provides a comprehensive environment for developers to:
-- Collaborate in real-time on code
-- Practice coding challenges with progressive difficulty
-- Compete in timed contests
-- Manage and organize coding notes and resources
-- Learn through structured modules
-- Contribute to the platform's question library
+</div>
 
 ---
 
-## Core Features
+## 🚀 Overview
 
-### Collaborative Workspace
-- Real-time code synchronization using WebSockets
-- Integrated Monaco Editor with syntax highlighting for multiple languages
-- Shared terminal access
-- Teammate presence and cursor tracking
-- Workspace snapshot and version history
-- Git integration for version control
+BrightCode is a full-stack real-time collaborative coding platform that combines a professional-grade IDE, gamified learning, competitive coding, mentorship, and social features — all in one unified interface.
 
-### Logic Lab
-- Progressive learning modules organized by difficulty
-- Structured curriculum covering algorithms, data structures, and programming languages
-- Interactive problem-solving interface
-- Instant feedback and test case validation
+Whether you're a beginner solving your first algorithm or an experienced developer looking to mentor others, BrightCode has a space for you.
 
-### Code Arena
-- Timed coding challenges
-- Multiple difficulty levels
-- Leaderboard and ranking system
+---
+
+## ✨ Features
+
+### 🖥️ Collaborative Workspace
+- Real-time multi-user code synchronization via **WebSockets**
+- **Monaco Editor** with full syntax highlighting for 10+ languages
+- Shared terminal and live execution environment
+- Git integration with commit, push, and branch management
+- Teammate presence indicators and live cursor tracking
+
+### 🧠 Logic Lab
+- Curated problem sets organized by difficulty and topic
+- Covers algorithms, data structures, React, MERN, and more
+- Instant test case validation with detailed feedback
+- XP rewards and streak tracking for consistency
+
+### ⚔️ Code Arena (Code Wars)
+- Timed head-to-head and group coding contests
+- Multiple difficulty levels with live leaderboards
 - Contest history and performance analytics
+- Forfeit / end-contest controls
 
-### CodeVault
-- Rich-text note editor with Markdown support
-- Code block syntax highlighting
-- Diagram creation with Excalidraw
-- Folder organization for notes
-- Export functionality
+### 📓 CodeVault
+- Rich-text note editor with **Markdown** and **code block** support
+- Diagram creation powered by Excalidraw
+- Folder-based organization system with tags and search
+- Auto-save and cloud sync
 
-### AI Companion
-- Code analysis and suggestions
-- Syntax error detection and fixes
-- Complexity optimization recommendations
-- Contextual assistance based on active code
+### 🆘 The Nexus (SOS Mentorship Board)
+- Post tickets when you're stuck on a problem
+- Mentors can browse open tickets and offer help
+- Private chat between mentee and assigned mentor
+- Collaborative workspace opens when mentor is accepted
+- Issue reassignment if the mentor can't resolve it
 
-### Factions & Community
-- Team formation and collaboration
-- Group challenges and competitions
-- Global leaderboards
-- Social features and friend management
+### 👥 Social Layer
+- Friend requests and real-time online status
+- Private direct messaging
+- Factions / team system with join requests
+- Global leaderboard with XP rankings
 
----
-
-## System Architecture
-
-BrightCode follows a 3-tier web architecture optimized for real-time communication:
-
-### Presentation Layer
-- React 19 with Vite for fast development and optimized builds
-- Client-side routing with React Router
-- State management using React Context API
-- Real-time communication via Socket.io Client
-- UI animations with Framer Motion
-
-### Application Layer
-- Express.js REST API for core backend functionality
-- Socket.io Server for real-time event broadcasting
-- JWT-based authentication system
-- Secure code execution sandbox
-- Background workers for resource-intensive tasks
-
-### Data Layer
-- PostgreSQL relational database for persistent storage
-- Neon serverless PostgreSQL integration
-- Socket.io Postgres Adapter for scaling real-time features
+### 🤖 Pal — AI Assistant
+- Built-in AI chatbot with BrightCode-specific knowledge
+- No API key required — runs fully on-device embeddings
+- Assists with debugging, explanations, and platform navigation
 
 ---
 
-## Technology Stack
+## 🛠️ Tech Stack
 
-| Layer | Technologies |
-|-------|--------------|
-| Frontend | React 19, Vite, Monaco Editor, Framer Motion, React Router, Socket.io Client, TipTap, Lucide React |
-| Backend | Node.js, Express, Socket.io, JWT, Bcrypt, Nodemailer, Winston |
-| Database | PostgreSQL, Neon Serverless |
-| DevOps | Docker, Docker Compose, Vercel |
+| Layer | Technology |
+|---|---|
+| **Frontend** | React 19, Vite, Monaco Editor, Socket.IO Client |
+| **Backend** | Node.js, Express.js, Socket.IO |
+| **Database** | PostgreSQL (Neon), with in-memory JSON fallback |
+| **Auth** | JWT + Google OAuth + GitHub OAuth |
+| **Realtime** | WebSockets via Socket.IO |
+| **Deployment** | Vercel (frontend) + Render (backend) |
+| **Payments** | Razorpay (subscription tiers) |
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
-brightcode/
-├── client/                 # Frontend application
-│   ├── public/             # Static assets
-│   │   └── data/           # Question banks and resources
+BrightCode/
+├── client/               # React frontend (Vite)
 │   ├── src/
-│   │   ├── assets/         # Images and media
-│   │   ├── components/     # Reusable UI components
-│   │   │   ├── codevault/  # CodeVault feature components
-│   │   │   └── codewars/   # CodeArena feature components
-│   │   ├── context/        # React Context providers
-│   │   ├── data/           # Static data files
-│   │   ├── pages/          # Page components
-│   │   ├── services/       # API service functions
-│   │   ├── App.jsx         # Main app component
-│   │   └── main.jsx        # Entry point
-│   ├── package.json
-│   └── vite.config.js
-├── server/                 # Backend application
-│   ├── index.js            # Server entry point
+│   │   ├── pages/        # Route-level components
+│   │   ├── components/   # Shared UI components
+│   │   └── config.js     # API URL config
 │   └── package.json
-├── docs/                   # Project documentation
-│   ├── features/           # Feature specifications
-│   ├── guides/             # Setup and usage guides
-│   └── project_updates/    # Development updates
-└── docker-compose.yml      # Docker configuration
+├── server/               # Node.js backend
+│   ├── index.js          # Main server entry point
+│   ├── logger.js         # Winston logging
+│   ├── questions/        # Local coding problem bank
+│   └── package.json
+├── render.yaml           # Render deployment config
+├── vercel.json           # Vercel deployment config
+└── docker-compose.yml    # Local Docker setup
 ```
 
 ---
 
-## Getting Started
+## ⚙️ Getting Started
 
 ### Prerequisites
-- Node.js (v18 or higher)
-- PostgreSQL (v14 or higher)
-- npm or yarn package manager
+- Node.js 18+
+- PostgreSQL (or use memory mode for local dev)
 
-### Installation
+### Local Development
 
-1. Clone the repository
-   ```bash
-   git clone https://github.com/SachinYadav2446/BrightCode.git
-   cd BrightCode
-   ```
+```bash
+# Clone the repository
+git clone https://github.com/SachinYadav2446/BrightCode.git
+cd BrightCode
 
-2. Set up environment variables
-   Create a `.env` file in the `server` directory with the following variables:
-   ```env
-   DATABASE_URL=your_postgresql_connection_string
-   JWT_SECRET=your_jwt_secret_key
-   PORT=5000
-   ```
+# Install and start the backend
+cd server
+npm install
+npm start
 
-   Create a `.env` file in the `client` directory with:
-   ```env
-   VITE_API_URL=http://localhost:5000
-   VITE_SOCKET_URL=http://localhost:5000
-   ```
+# In a new terminal — install and start the frontend
+cd client
+npm install
+npm run dev
+```
 
-3. Install server dependencies and start the backend
-   ```bash
-   cd server
-   npm install
-   npm start
-   ```
+The frontend runs on `http://localhost:5173` and the backend on `http://localhost:5051`.
 
-4. Install client dependencies and start the frontend
-   ```bash
-   cd ../client
-   npm install
-   npm run dev
-   ```
+### Environment Variables
 
-5. Access the application at `http://localhost:5173`
+Create a `server/.env` file:
 
----
+```env
+DB_CONNECTION_STRING=postgresql://user:password@host:5432/dbname
+JWT_SECRET=your_jwt_secret
+FRONTEND_URL=http://localhost:5173
 
-## Configuration
+# Optional — OAuth
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GITHUB_OAUTH_CLIENT_ID=
+GITHUB_OAUTH_CLIENT_SECRET=
 
-### Server Configuration
-- `PORT`: Server port (default: 5000)
-- `DATABASE_URL`: PostgreSQL connection string
-- `JWT_SECRET`: Secret key for JWT token generation
-- `NODE_ENV`: Environment mode (development/production)
+# Optional — Payments
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+```
 
-### Client Configuration
-- `VITE_API_URL`: Backend API endpoint
-- `VITE_SOCKET_URL`: Socket.io server endpoint
+> **Note:** If `DB_CONNECTION_STRING` is not set or unreachable, the server automatically falls back to a local JSON-based memory store — no setup required for quick local testing.
 
 ---
 
-## API Reference
+## 🚢 Deployment
 
-### Authentication
-- `POST /api/auth/register` - Register a new user
-- `POST /api/auth/login` - User login
-- `POST /api/auth/logout` - User logout
+| Service | Platform | Config File |
+|---|---|---|
+| Frontend | Vercel | `vercel.json` |
+| Backend | Render | `render.yaml` |
 
-### Users
-- `GET /api/users/profile` - Get user profile
-- `PUT /api/users/profile` - Update user profile
-- `GET /api/users/leaderboard` - Get user leaderboard
-
-### Questions
-- `GET /api/questions` - Get questions list
-- `GET /api/questions/:id` - Get question details
-- `POST /api/questions` - Submit a new question (Contribute feature)
+Simply push to `main` — both platforms auto-deploy on new commits.
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome. Please follow these steps:
+Contributions are welcome! Please open an issue first to discuss significant changes.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit your changes (`git commit -m 'Add your feature'`)
-4. Push to the branch (`git push origin feature/your-feature`)
+1. Fork the repo
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit your changes: `git commit -m 'feat: add some feature'`
+4. Push to the branch: `git push origin feature/your-feature`
 5. Open a Pull Request
 
-Please ensure your code follows the project's coding standards and includes appropriate tests.
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+<div align="center">
+  Built with ❤️ by <a href="https://github.com/SachinYadav2446">Sachin Yadav</a>
+</div>
