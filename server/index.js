@@ -1670,6 +1670,33 @@ const initGuildTables = async () => {
 };
 initGuildTables();
 
+// One-time migration endpoint — call this once on production to fix missing columns
+app.get('/api/nexus/run-migration', async (req, res) => {
+    if (useMemoryDB) return res.json({ status: 'memory mode, no migration needed' });
+    try {
+        const migrations = [
+            `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'`,
+            `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_requests JSONB DEFAULT '[]'`,
+            `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS messages JSONB DEFAULT '[]'`,
+            `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_id TEXT`,
+            `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'open'`,
+        ];
+        const results = [];
+        for (const sql of migrations) {
+            try {
+                await pool.query(sql);
+                results.push({ sql, status: 'ok' });
+            } catch (e) {
+                results.push({ sql, status: 'error', message: e.message });
+            }
+        }
+        logger.info('[GUILD] Manual migration ran');
+        res.json({ success: true, results });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // GET /api/nexus/tickets
 app.get('/api/nexus/tickets', authenticateToken, async (req, res) => {
     try {
