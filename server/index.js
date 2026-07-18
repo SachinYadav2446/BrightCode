@@ -1790,6 +1790,35 @@ app.post('/api/nexus/tickets', authenticateToken, async (req, res) => {
     }
 });
 
+// GET /api/nexus/tickets/:id — single ticket detail
+app.get('/api/nexus/tickets/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    try {
+        if (useMemoryDB) {
+            const ticket = nexusMemoryStore.find(t => t.id === id);
+            if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+            return res.json({
+                ...ticket,
+                tags: ticket.tags || [],
+                mentor_requests: ticket.mentor_requests || [],
+                messages: ticket.messages || [],
+            });
+        }
+        const { rows } = await pool.query(`SELECT * FROM guild_tickets WHERE id=$1`, [id]);
+        if (!rows[0]) return res.status(404).json({ error: 'Ticket not found' });
+        const t = rows[0];
+        res.json({
+            ...t,
+            tags: t.tags || [],
+            mentor_requests: t.mentor_requests || [],
+            messages: t.messages || [],
+        });
+    } catch (e) {
+        logger.error('[GUILD] Fetch single ticket error:', e.message);
+        res.status(500).json({ error: 'Failed to fetch ticket' });
+    }
+});
+
 // POST /api/nexus/tickets/:id/request-mentor
 app.post('/api/nexus/tickets/:id/request-mentor', authenticateToken, async (req, res) => {
     const ticketId = req.params.id;
