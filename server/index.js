@@ -1487,12 +1487,15 @@ app.get('/api/nexus/tickets', authenticateToken, async (req, res) => {
     }
 });
 
-// POST /api/nexus/tickets
 app.post('/api/nexus/tickets', authenticateToken, async (req, res) => {
+    logger.info('[GUILD] Creating new ticket request received, body: %j', req.body);
     const { title, description, language, tags } = req.body;
     const myId = req.user.id;
     const myUsername = req.user.username;
-    if (!title?.trim() || !description?.trim()) return res.status(400).json({ error: 'Title and description are required' });
+    if (!title?.trim() || !description?.trim()) {
+        logger.warn('[GUILD] Create ticket validation failed: title or description empty');
+        return res.status(400).json({ error: 'Title and description are required' });
+    }
 
     const newTicket = {
         id: uuidV4(),
@@ -1521,10 +1524,11 @@ app.post('/api/nexus/tickets', authenticateToken, async (req, res) => {
             );
         }
         io.emit('guild:new_ticket', newTicket);
+        logger.info('[GUILD] Ticket created successfully: %s', newTicket.id);
         res.json(newTicket);
     } catch (e) {
-        logger.error('[GUILD] Create error:', e.message);
-        res.status(500).json({ error: 'Failed to create ticket' });
+        logger.error('[GUILD] Create error:', e);
+        res.status(500).json({ error: 'Failed to create ticket: ' + e.message });
     }
 });
 
