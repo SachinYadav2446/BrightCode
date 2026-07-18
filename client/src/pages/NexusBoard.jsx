@@ -6,29 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import API_URL from '../config';
 import './NexusBoard.css';
 
-const TicketCard = ({ ticket, user, onAcceptMentor, onRequestMentor, onResolve, onRevokeMentor }) => {
+const TicketCard = ({ ticket }) => {
     const navigate = useNavigate();
-    const [chatText, setChatText] = useState('');
-
-    const isAuthor = ticket.author_id === user?.id;
-    const isMentor = ticket.mentor_id === user?.id;
-    const mentorRequests = ticket.mentor_requests || [];
-    const hasRequested = mentorRequests.some(r => r.id === user?.id);
-    const messages = ticket.messages || [];
-
-    const handleSendChat = async (e) => {
-        e.preventDefault();
-        if (!chatText.trim()) return;
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_URL}/api/nexus/tickets/${ticket.id}/chat`, { text: chatText }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setChatText('');
-        } catch (error) {
-            console.error('Failed to send message', error);
-        }
-    };
 
     const timeAgo = (ts) => {
         const s = Math.floor((Date.now() - new Date(ts)) / 1000);
@@ -39,7 +18,7 @@ const TicketCard = ({ ticket, user, onAcceptMentor, onRequestMentor, onResolve, 
     };
 
     return (
-        <div className="ticket-card">
+        <div className="ticket-card" onClick={() => navigate(`/nexus/ticket/${ticket.id}`)} style={{ cursor: 'pointer' }}>
             <div className="ticket-header">
                 <h3 className="ticket-title">{ticket.title}</h3>
                 <span className={`ticket-status status-${ticket.status}`}>
@@ -60,83 +39,9 @@ const TicketCard = ({ ticket, user, onAcceptMentor, onRequestMentor, onResolve, 
                     <span key={idx} className="ticket-tag">#{tag}</span>
                 ))}
             </div>
-
-            {isAuthor && ticket.status === 'open' && mentorRequests.length > 0 && (
-                <div className="mentor-requests-panel">
-                    <div className="mentor-requests-header">
-                        <Bell size={14} className="animate-pulse-icon" /> 
-                        <span>{mentorRequests.length} user{mentorRequests.length > 1 ? 's' : ''} offered to help!</span>
-                    </div>
-                    <div className="mentor-requests-list">
-                        {mentorRequests.map(r => (
-                            <div key={r.id} className="mentor-request-item">
-                                <span>@{r.username}</span>
-                                <button className="btn-accept" onClick={() => onAcceptMentor(ticket.id, r.id)}>
-                                    Accept
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {ticket.status === 'in_progress' && (isAuthor || isMentor) && (
-                <div className="mentorship-room">
-                    <div className="mentorship-room-header">
-                        <span><UserCheck size={14} /> Active Mentorship Room</span>
-                        <button className="btn-join-workspace" onClick={() => navigate(`/editor/${ticket.id}`, { state: { returnTo: '/nexus' } })}>
-                            <Layout size={14} /> Join Workspace
-                        </button>
-                    </div>
-                    <div className="mentorship-chat-window">
-                        {messages.length === 0 ? (
-                            <div className="chat-empty">No messages yet. Say hi!</div>
-                        ) : (
-                            messages.map(msg => (
-                                <div key={msg.id} className={`chat-bubble ${msg.sender_id === user?.id ? 'chat-mine' : 'chat-theirs'}`}>
-                                    <span className="chat-sender">{msg.sender_username}</span>
-                                    <span className="chat-text">{msg.text}</span>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                    <form className="mentorship-chat-input" onSubmit={handleSendChat}>
-                        <input 
-                            type="text" 
-                            placeholder="Type a message..." 
-                            value={chatText} 
-                            onChange={e => setChatText(e.target.value)} 
-                        />
-                        <button type="submit"><Send size={14} /></button>
-                    </form>
-                </div>
-            )}
-
-            <div className="ticket-actions">
-                {ticket.status === 'open' && !isAuthor && !hasRequested && (
-                    <button className="btn-answer" onClick={() => onRequestMentor(ticket.id)}>
-                        <MessageCircle size={16} /> Offer Help
-                    </button>
-                )}
-                {ticket.status === 'open' && !isAuthor && hasRequested && (
-                    <button className="btn-answer disabled" disabled>
-                        <Clock size={16} /> Offer Pending
-                    </button>
-                )}
-                {ticket.status === 'in_progress' && isAuthor && (
-                    <>
-                        <button className="btn-resolve" onClick={() => onResolve(ticket.id)}>
-                            <CheckCircle size={16} /> Mark Resolved
-                        </button>
-                        <button className="btn-revoke" onClick={() => onRevokeMentor(ticket.id)} style={{
-                            background: 'transparent', border: '1px solid var(--error)', color: 'var(--error)', 
-                            padding: '6px 12px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '6px', 
-                            fontSize: '0.8rem', cursor: 'pointer', marginLeft: '10px'
-                        }}>
-                            <XCircle size={16} /> Reopen Ticket
-                        </button>
-                    </>
-                )}
+            
+            <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--nexus-border)', textAlign: 'center', color: 'var(--nexus-blue)', fontWeight: '600', fontSize: '0.9rem' }}>
+                View Details & Collaborate →
             </div>
         </div>
     );
@@ -278,11 +183,6 @@ export default function NexusBoard() {
                         <TicketCard 
                             key={ticket.id} 
                             ticket={ticket} 
-                            user={user} 
-                            onAcceptMentor={handleAcceptMentor} 
-                            onRequestMentor={handleRequestMentor} 
-                            onResolve={handleResolveTicket} 
-                            onRevokeMentor={handleRevokeMentor}
                         />
                     ))}
                     {displayedTickets.length === 0 && (

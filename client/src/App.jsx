@@ -12,6 +12,7 @@ import Factions from './pages/Factions';
 import Library from './pages/Library';
 import Workspace from './pages/Workspace';
 import CodeVault from './pages/CodeVault';
+import NexusTicketDetail from './pages/NexusTicketDetail';
 import CodeWarsArena from './pages/CodeWarsArena';
 import ProctorArena from './pages/ProctorArena';
 import ProctorPage from './pages/ProctorPage';
@@ -328,6 +329,7 @@ function App() {
           <NavbarWrapper />
           <Routes>
               <Route path="/nexus" element={<ProtectedRoute><NexusBoard /></ProtectedRoute>} />
+              <Route path="/nexus/ticket/:id" element={<ProtectedRoute><NexusTicketDetail /></ProtectedRoute>} />
               <Route path="/" element={<LandingRoute />} />
               <Route 
                 path="/hub" 
