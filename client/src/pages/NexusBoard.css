@@ -31,7 +31,7 @@
 }
 
 /* Ensure content stays above the background */
-.nexus-container > * {
+.nexus-container > *:not(.sos-modal-overlay) {
     position: relative;
     z-index: 1;
 }
