@@ -1743,36 +1743,24 @@ app.post('/api/nexus/tickets', authenticateToken, async (req, res) => {
             nexusMemoryStore.unshift(newTicket);
             saveGuildStore();
         } else {
-            // Try inserting with all columns
-            try {
-                await pool.query(
-                    `INSERT INTO guild_tickets (id, author_id, author_username, title, description, language, tags, mentor_requests, messages, status, created_at)
-                     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-                    [newTicket.id, myId, myUsername, newTicket.title, newTicket.description, newTicket.language, JSON.stringify(newTicket.tags), JSON.stringify([]), JSON.stringify([]), newTicket.status, newTicket.created_at]
-                );
-            } catch (insertErr) {
-                // PostgreSQL error code 42703 = undefined_column — run ALL migrations then retry
-                if (insertErr.code === '42703' || (insertErr.message && insertErr.message.includes('does not exist'))) {
-                    logger.warn('[GUILD] Column missing (' + insertErr.message + '), running all migrations...');
-                    const migrations = [
-                        `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'`,
-                        `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_requests JSONB DEFAULT '[]'`,
-                        `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS messages JSONB DEFAULT '[]'`,
-                        `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_id TEXT`,
-                    ];
-                    for (const sql of migrations) {
-                        try { await pool.query(sql); } catch (migErr) { logger.warn('[GUILD] Migration: ' + migErr.message); }
-                    }
-                    // Retry the insert now that columns exist
-                    await pool.query(
-                        `INSERT INTO guild_tickets (id, author_id, author_username, title, description, language, tags, mentor_requests, messages, status, created_at)
-                         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-                        [newTicket.id, myId, myUsername, newTicket.title, newTicket.description, newTicket.language, JSON.stringify(newTicket.tags), JSON.stringify([]), JSON.stringify([]), newTicket.status, newTicket.created_at]
-                    );
-                } else {
-                    throw insertErr;
-                }
+            // Step 1: Always run migrations first (fast no-op if columns already exist)
+            const schemaSQLs = [
+                `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'`,
+                `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_requests JSONB DEFAULT '[]'`,
+                `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS messages JSONB DEFAULT '[]'`,
+                `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_id TEXT`,
+            ];
+            for (const sql of schemaSQLs) {
+                try { await pool.query(sql); } catch (migErr) { logger.warn('[GUILD] Schema fix: ' + migErr.message); }
             }
+
+            // Step 2: INSERT — now guaranteed to have all columns
+            await pool.query(
+                `INSERT INTO guild_tickets (id, author_id, author_username, title, description, language, tags, mentor_requests, messages, status, created_at)
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+                [newTicket.id, myId, myUsername, newTicket.title, newTicket.description, newTicket.language,
+                 JSON.stringify(newTicket.tags), JSON.stringify([]), JSON.stringify([]), newTicket.status, newTicket.created_at]
+            );
         }
         io.emit('guild:new_ticket', newTicket);
         logger.info('[GUILD] Ticket created successfully: %s', newTicket.id);
