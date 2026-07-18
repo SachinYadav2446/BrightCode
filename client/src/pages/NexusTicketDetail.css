@@ -1,17 +1,8 @@
 .nexus-detail-container {
-    --nexus-blue: #3b82f6;
-    --nexus-blue-dark: #2563eb;
-    --nexus-blue-glow: rgba(59, 130, 246, 0.4);
-    --nexus-bg: #09090b;
-    --nexus-surface: #18181b;
-    --nexus-border: #27272a;
-
     padding: 100px 40px 40px 40px;
     min-height: 100vh;
-    background-color: var(--nexus-bg);
-    background-image: 
-        radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08), transparent 25%),
-        radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.08), transparent 25%);
+    background-color: #09090b;
+    position: relative;
     color: var(--text-main);
     display: flex;
     flex-direction: column;
@@ -21,6 +12,27 @@
     margin: 0 auto;
     width: 100%;
     box-sizing: border-box;
+}
+
+.nexus-detail-container::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image: 
+        linear-gradient(rgba(var(--primary-rgb), 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(var(--primary-rgb), 0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+    background-position: center center;
+    mask-image: radial-gradient(circle at center, black 20%, transparent 80%);
+    -webkit-mask-image: radial-gradient(circle at center, black 20%, transparent 80%);
+    opacity: 0.6;
+}
+
+.nexus-detail-container > * {
+    position: relative;
+    z-index: 1;
 }
 
 .btn-back {
@@ -38,7 +50,7 @@
 }
 
 .btn-back:hover {
-    color: var(--nexus-blue);
+    color: var(--primary);
 }
 
 .ticket-detail-content {
@@ -61,8 +73,10 @@
 }
 
 .detail-card {
-    border-color: var(--nexus-blue-glow);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(59, 130, 246, 0.1);
+    background: #18181b;
+    border: 1px solid #27272a;
+    border-color: rgba(var(--primary-rgb), 0.4);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(var(--primary-rgb), 0.15);
 }
 
 .ticket-desc-full {
@@ -74,7 +88,7 @@
     background: rgba(0,0,0,0.2);
     padding: 20px;
     border-radius: 8px;
-    border: 1px solid var(--nexus-border);
+    border: 1px solid #27272a;
 }
 
 .ticket-actions-row {
@@ -82,18 +96,18 @@
     gap: 16px;
     margin-top: 10px;
     padding-top: 20px;
-    border-top: 1px solid var(--nexus-border);
+    border-top: 1px solid #27272a;
 }
 
 .detail-panel {
-    border-color: rgba(59, 130, 246, 0.4);
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);
+    border-color: rgba(var(--primary-rgb), 0.4);
+    box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.1);
 }
 
 .detail-room {
     height: 600px;
-    border-color: rgba(59, 130, 246, 0.4);
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);
+    border-color: rgba(var(--primary-rgb), 0.4);
+    box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.1);
 }
 
 .nexus-loading, .nexus-error {
