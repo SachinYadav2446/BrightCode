@@ -1410,10 +1410,22 @@ app.get('/messages/unread/counts', authenticateToken, async (req, res) => {
     try {
         if (useMemoryDB) {
             const unread = {};
-res.status(500).json({ error: 'Search failed' });
+            messagesMemoryStore
+                .filter(m => m.to_id === myId && !m.read)
+                .forEach(m => { unread[m.from_id] = (unread[m.from_id] || 0) + 1; });
+            return res.json(unread);
+        }
+        const { rows } = await pool.query(
+            'SELECT from_id, COUNT(*) as count FROM dm_messages WHERE to_id=$1 AND read=FALSE GROUP BY from_id',
+            [myId]
+        );
+        const unread = {};
+        rows.forEach(r => { unread[r.from_id] = parseInt(r.count); });
+        res.json(unread);
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to fetch unread counts' });
     }
 });
-
 // Send a friend request
 app.post('/friends/request', authenticateToken, async (req, res) => {
     const { recipientId } = req.body;
