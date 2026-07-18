@@ -1517,11 +1517,27 @@ app.post('/api/nexus/tickets', authenticateToken, async (req, res) => {
             nexusMemoryStore.unshift(newTicket);
             saveGuildStore();
         } else {
-            await pool.query(
-                `INSERT INTO guild_tickets (id, author_id, author_username, title, description, language, tags, mentor_requests, messages, status, created_at)
-                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-                [newTicket.id, myId, myUsername, newTicket.title, newTicket.description, newTicket.language, JSON.stringify(newTicket.tags), JSON.stringify([]), JSON.stringify([]), newTicket.status, newTicket.created_at]
-            );
+            // Try inserting with messages column first, fall back if column doesn't exist yet
+            try {
+                await pool.query(
+                    `INSERT INTO guild_tickets (id, author_id, author_username, title, description, language, tags, mentor_requests, messages, status, created_at)
+                     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+                    [newTicket.id, myId, myUsername, newTicket.title, newTicket.description, newTicket.language, JSON.stringify(newTicket.tags), JSON.stringify([]), JSON.stringify([]), newTicket.status, newTicket.created_at]
+                );
+            } catch (insertErr) {
+                if (insertErr.message && insertErr.message.includes('messages')) {
+                    // messages column doesn't exist yet, add it and retry without
+                    logger.warn('[GUILD] messages column missing, adding it now...');
+                    await pool.query(`ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS messages JSONB DEFAULT '[]'`);
+                    await pool.query(
+                        `INSERT INTO guild_tickets (id, author_id, author_username, title, description, language, tags, mentor_requests, messages, status, created_at)
+                         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+                        [newTicket.id, myId, myUsername, newTicket.title, newTicket.description, newTicket.language, JSON.stringify(newTicket.tags), JSON.stringify([]), JSON.stringify([]), newTicket.status, newTicket.created_at]
+                    );
+                } else {
+                    throw insertErr;
+                }
+            }
         }
         io.emit('guild:new_ticket', newTicket);
         logger.info('[GUILD] Ticket created successfully: %s', newTicket.id);
