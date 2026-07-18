@@ -79,7 +79,7 @@ export default function NexusBoard() {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            const tagsArray = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
+            const tagsArray = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
             await axios.post(`${API_URL}/api/nexus/tickets`, {
                 ...formData,
                 tags: tagsArray
@@ -90,6 +90,7 @@ export default function NexusBoard() {
             fetchTickets();
         } catch (error) {
             console.error('Error creating ticket', error);
+            alert('Failed to create ticket: ' + (error.response?.data?.error || error.message));
         }
     };
 

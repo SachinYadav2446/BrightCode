@@ -1463,6 +1463,9 @@ const initGuildTables = async () => {
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         `);
+        await pool.query(`
+            ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS messages JSONB DEFAULT '[]';
+        `);
         logger.info('[GUILD] Tables ready');
     } catch (e) { logger.error('[GUILD] Table init error:', e.message); }
 };
