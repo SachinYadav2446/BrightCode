@@ -1704,8 +1704,16 @@ app.get('/api/nexus/tickets', authenticateToken, async (req, res) => {
             const tickets = [...nexusMemoryStore].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
             return res.json(tickets);
         } else {
+            // Read only columns guaranteed to exist; add defaults in JS for optional ones
             const { rows } = await pool.query(`SELECT * FROM guild_tickets ORDER BY created_at DESC`);
-            return res.json(rows);
+            const tickets = rows.map(r => ({
+                ...r,
+                tags: r.tags || [],
+                mentor_requests: r.mentor_requests || [],
+                messages: r.messages || [],
+                mentor_id: r.mentor_id || null,
+            }));
+            return res.json(tickets);
         }
     } catch (e) {
         logger.error('[GUILD] Fetch error:', e.message);
@@ -1743,24 +1751,23 @@ app.post('/api/nexus/tickets', authenticateToken, async (req, res) => {
             nexusMemoryStore.unshift(newTicket);
             saveGuildStore();
         } else {
-            // Step 1: Always run migrations first (fast no-op if columns already exist)
-            const schemaSQLs = [
-                `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'`,
-                `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_requests JSONB DEFAULT '[]'`,
-                `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS messages JSONB DEFAULT '[]'`,
-                `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_id TEXT`,
-            ];
-            for (const sql of schemaSQLs) {
-                try { await pool.query(sql); } catch (migErr) { logger.warn('[GUILD] Schema fix: ' + migErr.message); }
-            }
-
-            // Step 2: INSERT — now guaranteed to have all columns
+            // GUARANTEED INSERT: only use columns that definitely exist in the original schema.
+            // Optional columns (tags, mentor_requests, messages, mentor_id) are handled separately.
             await pool.query(
-                `INSERT INTO guild_tickets (id, author_id, author_username, title, description, language, tags, mentor_requests, messages, status, created_at)
-                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-                [newTicket.id, myId, myUsername, newTicket.title, newTicket.description, newTicket.language,
-                 JSON.stringify(newTicket.tags), JSON.stringify([]), JSON.stringify([]), newTicket.status, newTicket.created_at]
+                `INSERT INTO guild_tickets (id, author_id, author_username, title, description, language, status, created_at)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                [newTicket.id, myId, myUsername, newTicket.title, newTicket.description,
+                 newTicket.language, newTicket.status, newTicket.created_at]
             );
+            // Try to fill optional columns; ignore errors if columns don't exist yet
+            try {
+                await pool.query(
+                    `UPDATE guild_tickets SET tags=$1, mentor_requests=$2, messages=$3 WHERE id=$4`,
+                    [JSON.stringify(newTicket.tags), JSON.stringify([]), JSON.stringify([]), newTicket.id]
+                );
+            } catch (optErr) {
+                logger.warn('[GUILD] Optional column update skipped: ' + optErr.message);
+            }
         }
         io.emit('guild:new_ticket', newTicket);
         logger.info('[GUILD] Ticket created successfully: %s', newTicket.id);
