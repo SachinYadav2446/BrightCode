@@ -1,4 +1,4 @@
-# Render Blueprint — BrightCode
+# Render Blueprint — BrightCode (v2026-07-18)
 # Deploys backend (Node/Express/Socket.IO) and frontend (Vite/React) on Render.
 # Backend CANNOT run on Vercel because it uses Socket.IO (WebSockets),
 # node-pty (native module), and file-system writes — all unsupported on serverless.
