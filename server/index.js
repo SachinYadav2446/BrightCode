@@ -1410,6 +1410,201 @@ app.get('/messages/unread/counts', authenticateToken, async (req, res) => {
     try {
         if (useMemoryDB) {
             const unread = {};
+res.status(500).json({ error: 'Search failed' });
+    }
+});
+
+// Send a friend request
+app.post('/friends/request', authenticateToken, async (req, res) => {
+    const { recipientId } = req.body;
+    const myId = req.user.id;
+    if (!recipientId || recipientId === myId) return res.status(400).json({ error: 'Invalid recipient' });
+    try {
+        if (useMemoryDB) {
+            const exists = friendsMemoryStore.find(f =>
+                (f.requester_id === myId && f.recipient_id === recipientId) ||
+                (f.requester_id === recipientId && f.recipient_id === myId)
+            );
+            if (exists) return res.status(409).json({ error: 'Request already exists' });
+            const newReq = { id: uuidV4(), requester_id: myId, recipient_id: recipientId, status: 'pending', created_at: new Date().toISOString() };
+            friendsMemoryStore.push(newReq);
+            saveFriendsStore();
+            // Notify recipient in real-time
+            const requesterUser = memoryStore.users.find(u => u.id === myId);
+            io.to(`user:${recipientId}`).emit('friend:request', { from: { id: myId, username: requesterUser?.username } });
+            return res.json({ success: true });
+        }
+        await pool.query(
+            `INSERT INTO friends (requester_id, recipient_id, status) VALUES ($1, $2, 'pending') ON CONFLICT DO NOTHING`,
+            [myId, recipientId]
+        );
+        const requester = await getUserPublicProfile(myId);
+        io.to(`user:${recipientId}`).emit('friend:request', { from: requester });
+        res.json({ success: true });
+    } catch (e) {
+        logger.error('[FRIENDS] Request error:', e.message);
+        res.status(500).json({ error: 'Failed to send request' });
+    }
+});
+
+// Accept a friend request
+app.post('/friends/accept', authenticateToken, async (req, res) => {
+    const { requesterId } = req.body;
+    const myId = req.user.id;
+    try {
+        if (useMemoryDB) {
+            const idx = friendsMemoryStore.findIndex(f => f.requester_id === requesterId && f.recipient_id === myId && f.status === 'pending');
+            if (idx === -1) return res.status(404).json({ error: 'No pending request found' });
+            friendsMemoryStore[idx].status = 'accepted';
+            saveFriendsStore();
+            const accepter = memoryStore.users.find(u => u.id === myId);
+            io.to(`user:${requesterId}`).emit('friend:accepted', { by: { id: myId, username: accepter?.username } });
+            return res.json({ success: true });
+        }
+        await pool.query(
+            `UPDATE friends SET status='accepted' WHERE requester_id=$1 AND recipient_id=$2 AND status='pending'`,
+            [requesterId, myId]
+        );
+        const accepter = await getUserPublicProfile(myId);
+        io.to(`user:${requesterId}`).emit('friend:accepted', { by: accepter });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to accept' });
+    }
+});
+
+// Reject / cancel / remove a friend
+app.post('/friends/remove', authenticateToken, async (req, res) => {
+    const { otherId } = req.body;
+    const myId = req.user.id;
+    try {
+        if (useMemoryDB) {
+            friendsMemoryStore = friendsMemoryStore.filter(f =>
+                !((f.requester_id === myId && f.recipient_id === otherId) ||
+                  (f.requester_id === otherId && f.recipient_id === myId))
+            );
+            saveFriendsStore();
+            return res.json({ success: true });
+        }
+        await pool.query(
+            `DELETE FROM friends WHERE (requester_id=$1 AND recipient_id=$2) OR (requester_id=$2 AND recipient_id=$1)`,
+            [myId, otherId]
+        );
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to remove' });
+    }
+});
+
+// Get my friends list (accepted) + pending incoming requests
+app.get('/friends', authenticateToken, async (req, res) => {
+    const myId = req.user.id;
+    try {
+        let accepted = [], incoming = [], outgoing = [];
+        if (useMemoryDB) {
+            const myRels = friendsMemoryStore.filter(f => f.requester_id === myId || f.recipient_id === myId);
+            for (const rel of myRels) {
+                const otherId = rel.requester_id === myId ? rel.recipient_id : rel.requester_id;
+                const other = memoryStore.users.find(u => u.id === otherId);
+                if (!other) continue;
+                const profile = { id: other.id, username: other.username, xp: other.xp || 0, level: other.level || 'Novice', online: onlineUsers.has(other.id) };
+                if (rel.status === 'accepted') accepted.push(profile);
+                else if (rel.status === 'pending' && rel.recipient_id === myId) incoming.push({ ...profile, requesterId: rel.requester_id });
+                else if (rel.status === 'pending' && rel.requester_id === myId) outgoing.push(profile);
+            }
+        } else {
+            const { rows } = await pool.query(
+                `SELECT f.*, 
+                    CASE WHEN f.requester_id=$1 THEN f.recipient_id ELSE f.requester_id END as other_id
+                 FROM friends f WHERE f.requester_id=$1 OR f.recipient_id=$1`,
+                [myId]
+            );
+            for (const rel of rows) {
+                const profile = await getUserPublicProfile(rel.other_id);
+                if (!profile) continue;
+                profile.online = onlineUsers.has(rel.other_id);
+                if (rel.status === 'accepted') accepted.push(profile);
+                else if (rel.status === 'pending' && rel.recipient_id === myId) incoming.push({ ...profile, requesterId: rel.requester_id });
+                else if (rel.status === 'pending' && rel.requester_id === myId) outgoing.push(profile);
+            }
+        }
+        res.json({ friends: accepted, incoming, outgoing });
+    } catch (e) {
+        logger.error('[FRIENDS] Get error:', e.message);
+        res.status(500).json({ error: 'Failed to get friends' });
+    }
+});
+
+// Fix: also support DELETE /friends/:id (old client call compat)
+app.delete('/friends/:id', authenticateToken, async (req, res) => {
+    const otherId = req.params.id;
+    const myId = req.user.id;
+    try {
+        if (useMemoryDB) {
+            friendsMemoryStore = friendsMemoryStore.filter(f =>
+                !((f.requester_id === myId && f.recipient_id === otherId) ||
+                  (f.requester_id === otherId && f.recipient_id === myId))
+            );
+            saveFriendsStore();
+            return res.json({ success: true });
+        }
+        await pool.query(
+            `DELETE FROM friends WHERE (requester_id=$1 AND recipient_id=$2) OR (requester_id=$2 AND recipient_id=$1)`,
+            [myId, otherId]
+        );
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to remove' });
+    }
+});
+
+// ── DM MESSAGE HISTORY ─────────────────────────────────────────────────────
+
+// GET /messages/:friendId  — last 100 messages between me and friendId
+app.get('/messages/:friendId', authenticateToken, async (req, res) => {
+    const myId = req.user.id;
+    const friendId = req.params.friendId;
+    try {
+        if (useMemoryDB) {
+            const msgs = messagesMemoryStore
+                .filter(m =>
+                    (m.from_id === myId && m.to_id === friendId) ||
+                    (m.from_id === friendId && m.to_id === myId)
+                )
+                .sort((a, b) => a.timestamp - b.timestamp)
+                .slice(-100);
+            // Mark messages to me as read
+            messagesMemoryStore = messagesMemoryStore.map(m =>
+                (m.from_id === friendId && m.to_id === myId) ? { ...m, read: true } : m
+            );
+            saveMessagesStore();
+            return res.json(msgs);
+        }
+        const { rows } = await pool.query(
+            `SELECT * FROM dm_messages
+             WHERE (from_id=$1 AND to_id=$2) OR (from_id=$2 AND to_id=$1)
+             ORDER BY timestamp ASC
+             LIMIT 100`,
+            [myId, friendId]
+        );
+        // Mark as read
+        await pool.query(
+            `UPDATE dm_messages SET read=TRUE WHERE from_id=$1 AND to_id=$2 AND read=FALSE`,
+            [friendId, myId]
+        );
+        res.json(rows);
+    } catch (e) {
+        logger.error('[DM] History fetch error:', e.message);
+        res.status(500).json({ error: 'Failed to fetch messages' });
+    }
+});
+
+// GET /messages/unread/counts — how many unread messages per sender
+app.get('/messages/unread/counts', authenticateToken, async (req, res) => {
+    const myId = req.user.id;
+    try {
+        if (useMemoryDB) {
+            const unread = {};
             messagesMemoryStore
                 .filter(m => m.to_id === myId && !m.read)
                 .forEach(m => { unread[m.from_id] = (unread[m.from_id] || 0) + 1; });
@@ -1447,6 +1642,7 @@ loadGuildStore();
 const initGuildTables = async () => {
     if (useMemoryDB) return;
     try {
+        // Create base table without optional columns first (safe for old DBs)
         await pool.query(`
             CREATE TABLE IF NOT EXISTS guild_tickets (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1455,18 +1651,21 @@ const initGuildTables = async () => {
                 title TEXT NOT NULL,
                 description TEXT NOT NULL,
                 language TEXT DEFAULT 'javascript',
-                tags JSONB DEFAULT '[]',
-                mentor_requests JSONB DEFAULT '[]',
-                messages JSONB DEFAULT '[]',
                 status TEXT DEFAULT 'open',
-                mentor_id TEXT,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        await pool.query(`
-            ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS messages JSONB DEFAULT '[]';
-        `);
-        logger.info('[GUILD] Tables ready');
+        // Migrate each new column individually — safe even if already exists
+        const migrations = [
+            `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'`,
+            `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_requests JSONB DEFAULT '[]'`,
+            `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS messages JSONB DEFAULT '[]'`,
+            `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_id TEXT`,
+        ];
+        for (const sql of migrations) {
+            try { await pool.query(sql); } catch (migErr) { logger.warn('[GUILD] Migration: ' + migErr.message); }
+        }
+        logger.info('[GUILD] Tables and migrations complete');
     } catch (e) { logger.error('[GUILD] Table init error:', e.message); }
 };
 initGuildTables();
