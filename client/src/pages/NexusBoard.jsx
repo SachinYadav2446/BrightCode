@@ -178,20 +178,63 @@ export default function NexusBoard() {
                 <div style={{color: 'var(--text-muted)', fontSize: '1rem', padding: '20px'}}>
                     Loading tickets...
                 </div>
-            ) : (
+            ) : activeTab === 'global' ? (
                 <div className="tickets-grid">
-                    {displayedTickets.map(ticket => (
-                        <TicketCard 
-                            key={ticket.id} 
-                            ticket={ticket} 
-                        />
+                    {tickets.map(ticket => (
+                        <TicketCard key={ticket.id} ticket={ticket} />
                     ))}
-                    {displayedTickets.length === 0 && (
+                    {tickets.length === 0 && (
                         <div className="empty-state">
                             <HelpCircle size={48} color="var(--border-hi)" />
-                            <p>{activeTab === 'global' ? 'No active SOS tickets at the moment.' : 'You have no active tickets or mentorships.'}</p>
+                            <p>No active SOS tickets at the moment.</p>
                         </div>
                     )}
+                </div>
+            ) : (
+                <div className="personal-dashboard">
+                    {/* ── Issues Raised ── */}
+                    <div className="dashboard-section">
+                        <div className="dashboard-section-header raised">
+                            <HelpCircle size={18} />
+                            <span>Issues Raised</span>
+                            <span className="section-badge">{tickets.filter(t => t.author_id === user?.id).length}</span>
+                        </div>
+                        <div className="tickets-grid dashboard-grid">
+                            {tickets.filter(t => t.author_id === user?.id).map(ticket => (
+                                <TicketCard key={ticket.id} ticket={ticket} />
+                            ))}
+                            {tickets.filter(t => t.author_id === user?.id).length === 0 && (
+                                <div className="empty-state-inline">
+                                    <HelpCircle size={32} color="var(--border-hi)" />
+                                    <p>You haven't raised any issues yet.</p>
+                                    <button className="btn-post-sos-sm" onClick={() => setIsModalOpen(true)}>
+                                        <Plus size={14} /> Create SOS Ticket
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* ── Issues Mentored ── */}
+                    <div className="dashboard-section">
+                        <div className="dashboard-section-header mentored">
+                            <UserCheck size={18} />
+                            <span>Issues Mentored</span>
+                            <span className="section-badge mentored-badge">{tickets.filter(t => t.mentor_id === user?.id).length}</span>
+                        </div>
+                        <div className="tickets-grid dashboard-grid">
+                            {tickets.filter(t => t.mentor_id === user?.id).map(ticket => (
+                                <TicketCard key={ticket.id} ticket={ticket} />
+                            ))}
+                            {tickets.filter(t => t.mentor_id === user?.id).length === 0 && (
+                                <div className="empty-state-inline">
+                                    <UserCheck size={32} color="var(--border-hi)" />
+                                    <p>You haven't mentored anyone yet.</p>
+                                    <p style={{fontSize: '0.8rem', opacity: 0.6}}>Browse the Global Board and offer help!</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
 
