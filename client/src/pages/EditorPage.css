@@ -5607,3 +5607,187 @@
 .font-mono {
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
+
+/* ── Nexus Workspace Banner ─────────────────────────────────────── */
+.nexus-ws-banner {
+    width: 100%;
+    background: #121214;
+    border-bottom: 1px solid rgba(230, 57, 70, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+    z-index: 1000;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    max-height: 80px;
+    overflow: hidden;
+}
+
+.nexus-ws-banner--collapsed {
+    max-height: 38px;
+    border-bottom-color: rgba(230, 57, 70, 0.1);
+}
+
+.nexus-ws-banner-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    height: 100%;
+    min-height: 38px;
+}
+
+.nexus-ws-banner--collapsed .nexus-ws-banner-inner {
+    padding: 6px 24px;
+}
+
+.nexus-ws-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+}
+
+.nexus-ws-tag {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #ffffff;
+    background: linear-gradient(135deg, #e63946, #b02a37);
+    padding: 3px 10px;
+    border-radius: 4px;
+    text-shadow: 0 0 10px rgba(230, 57, 70, 0.4);
+    box-shadow: 0 0 15px rgba(230, 57, 70, 0.25);
+    flex-shrink: 0;
+}
+
+.nexus-ws-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ffffff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nexus-ws-banner--collapsed .nexus-ws-title {
+    font-size: 0.85rem;
+}
+
+.nexus-ws-desc {
+    font-size: 0.82rem;
+    color: #88889c;
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+    padding-left: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nexus-ws-banner-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.nexus-ws-roles {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nexus-ws-banner--collapsed .nexus-ws-roles {
+    display: none;
+}
+
+.nexus-ws-role-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.nexus-ws-role-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.nexus-ws-role-author {
+    color: #818cf8;
+    border-color: rgba(129, 140, 248, 0.25);
+    background: rgba(129, 140, 248, 0.05);
+}
+
+.nexus-ws-role-author .nexus-ws-role-dot {
+    background: #818cf8;
+    box-shadow: 0 0 6px #818cf8;
+}
+
+.nexus-ws-role-mentor {
+    color: #34d399;
+    border-color: rgba(52, 211, 153, 0.25);
+    background: rgba(52, 211, 153, 0.05);
+}
+
+.nexus-ws-role-mentor .nexus-ws-role-dot {
+    background: #34d399;
+    box-shadow: 0 0 6px #34d399;
+}
+
+.nexus-ws-role-pill em {
+    font-style: normal;
+    opacity: 0.5;
+    font-size: 0.7rem;
+    margin-left: 4px;
+}
+
+.nexus-ws-back-btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: rgba(230, 57, 70, 0.1);
+    border: 1px solid rgba(230, 57, 70, 0.4);
+    padding: 5px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.nexus-ws-back-btn:hover {
+    background: #e63946;
+    box-shadow: 0 0 12px rgba(230, 57, 70, 0.4);
+    border-color: #e63946;
+    transform: translateY(-1px);
+}
+
+.nexus-ws-banner--collapsed .nexus-ws-back-btn {
+    padding: 3px 10px;
+    font-size: 0.72rem;
+}
+
+.nexus-ws-collapse-btn {
+    background: transparent;
+    border: none;
+    color: #555566;
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.nexus-ws-collapse-btn:hover {
+    color: #ffffff;
+}

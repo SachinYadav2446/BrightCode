@@ -205,7 +205,20 @@ export default function NexusTicketDetail() {
                         {inProgress && (isAuthor || isMentor) && (
                             <button
                                 className="ntd-workspace-btn"
-                                onClick={() => navigate(`/editor/${ticket.id}`, { state: { returnTo: `/nexus/ticket/${ticket.id}` } })}
+                                onClick={() => navigate(`/editor/${ticket.id}`, {
+                                    state: {
+                                        returnTo: `/nexus/ticket/${ticket.id}`,
+                                        nexusMode: true,
+                                        nexusTicket: {
+                                            id: ticket.id,
+                                            title: ticket.title,
+                                            description: ticket.description,
+                                            language: ticket.language,
+                                            authorUsername: ticket.author_username,
+                                            mentorUsername: ticket.mentor_username,
+                                        }
+                                    }
+                                })}
                             >
                                 <Layout size={18}/>
                                 <span>Open Workspace</span>

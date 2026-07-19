@@ -1638,8 +1638,12 @@ app.get('/messages/unread/counts', authenticateToken, async (req, res) => {
 
 // ── GUILD SYSTEM (SOS / Mentorship Board) ─────────────────────────────────
 
-let nexusMemoryStore = []; // { id, author_id, author_username, title, description, language, tags, status: 'open'|'resolved', mentor_id, created_at }
+let nexusMemoryStore = []; // { id, author_id, author_username, title, description, language, tags, status: 'open'|'resolved', mentor_id, mentor_username, created_at }
 const GUILD_FILE = path.join(__dirname, 'guild_db.json');
+
+// ── Nexus workspace rooms: ticketId → { authorUsername, mentorUsername, title, description }
+// Populated when a mentor is accepted, used by join-room to auto-grant writer permission
+const nexusWorkspaceRooms = new Map();
 
 const loadGuildStore = () => {
     if (fs.existsSync(GUILD_FILE)) {
@@ -1650,6 +1654,18 @@ const saveGuildStore = () => {
     try { fs.writeFileSync(GUILD_FILE, JSON.stringify(nexusMemoryStore, null, 2)); } catch (e) {}
 };
 loadGuildStore();
+
+// Hydrate nexusWorkspaceRooms from persisted in_progress tickets so workspace works after server restart
+nexusMemoryStore.filter(t => t.status === 'in_progress' && t.mentor_id).forEach(t => {
+    nexusWorkspaceRooms.set(t.id, {
+        authorId: t.author_id,
+        authorUsername: t.author_username,
+        mentorId: t.mentor_id,
+        mentorUsername: t.mentor_username || null,
+        title: t.title,
+        description: t.description,
+    });
+});
 
 const initGuildTables = async () => {
     if (useMemoryDB) return;
@@ -1862,29 +1878,62 @@ app.post('/api/nexus/tickets/:id/request-mentor', authenticateToken, async (req,
 app.post('/api/nexus/tickets/:id/accept-mentor', authenticateToken, async (req, res) => {
     const ticketId = req.params.id;
     const myId = req.user.id;
-    const { mentor_id } = req.body;
+    // ── FIX: client sends `mentorId` (camelCase), accept both forms ──
+    const resolvedMentorId = req.body.mentorId || req.body.mentor_id;
     try {
         if (useMemoryDB) {
             const ticket = nexusMemoryStore.find(t => t.id === ticketId);
             if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
             if (ticket.author_id !== myId) return res.status(403).json({ error: 'Only author can accept mentor' });
-            
+
+            // Find the mentor's username from the requests list
+            const mentorRequest = (ticket.mentor_requests || []).find(r => r.id === resolvedMentorId);
+            const mentorUsername = mentorRequest?.username || null;
+
             ticket.status = 'in_progress';
-            ticket.mentor_id = mentor_id;
+            ticket.mentor_id = resolvedMentorId;
+            ticket.mentor_username = mentorUsername;
             ticket.mentor_requests = [];
             saveGuildStore();
+
+            // ── Register this ticket as a Nexus workspace room ──
+            nexusWorkspaceRooms.set(ticketId, {
+                authorId: ticket.author_id,
+                authorUsername: ticket.author_username,
+                mentorId: resolvedMentorId,
+                mentorUsername: mentorUsername,
+                title: ticket.title,
+                description: ticket.description,
+            });
+
             io.emit('guild:update_ticket', ticket);
             return res.json(ticket);
         } else {
+            // Fetch the mentor's username from users table first
+            const mentorUser = await pool.query('SELECT username FROM users WHERE id=$1', [resolvedMentorId]);
+            const mentorUsername = mentorUser.rows[0]?.username || null;
+
             const { rows } = await pool.query(
-                `UPDATE guild_tickets SET status='in_progress', mentor_id=$1, mentor_requests='[]'::jsonb WHERE id=$2 AND author_id=$3 RETURNING *`,
-                [mentor_id, ticketId, myId]
+                `UPDATE guild_tickets SET status='in_progress', mentor_id=$1, mentor_username=$2, mentor_requests='[]'::jsonb WHERE id=$3 AND author_id=$4 RETURNING *`,
+                [resolvedMentorId, mentorUsername, ticketId, myId]
             );
             if (!rows[0]) return res.status(400).json({ error: 'Cannot accept mentor' });
+
+            // ── Register this ticket as a Nexus workspace room ──
+            nexusWorkspaceRooms.set(ticketId, {
+                authorId: rows[0].author_id,
+                authorUsername: rows[0].author_username,
+                mentorId: resolvedMentorId,
+                mentorUsername: mentorUsername,
+                title: rows[0].title,
+                description: rows[0].description,
+            });
+
             io.emit('guild:update_ticket', rows[0]);
             return res.json(rows[0]);
         }
     } catch (e) {
+        console.error('[accept-mentor] error:', e);
         res.status(500).json({ error: 'Failed to accept mentor' });
     }
 });
@@ -3724,8 +3773,14 @@ io.on('connection', (socket) => {
 
         // ── 3-Tier Role System: admin | writer | viewer ──────────────
         const isCreator = room.owner === username;
-        const role = isCreator ? 'admin' : 'viewer';
-        const permission = isCreator ? 'admin' : 'viewer'; // Default to viewer
+
+        // ── Nexus Workspace: auto-grant writer to ticket author & mentor ──
+        const nexusRoom = nexusWorkspaceRooms.get(roomId);
+        const isNexusParticipant = nexusRoom &&
+            (nexusRoom.authorUsername === username || nexusRoom.mentorUsername === username);
+
+        const role = isCreator ? 'admin' : isNexusParticipant ? 'writer' : 'viewer';
+        const permission = isCreator ? 'admin' : isNexusParticipant ? 'writer' : 'viewer';
         room.permissions[socket.id] = permission;
 
         const userData = { id: socket.id, username, role, permission };
@@ -3749,6 +3804,17 @@ io.on('connection', (socket) => {
             workspaceOwner: room.owner,
             workspaceName: workspaceName
         });
+
+        // ── If this is a Nexus workspace, send ticket context to joining user ──
+        if (nexusRoom) {
+            socket.emit('nexus-workspace-context', {
+                ticketId: roomId,
+                title: nexusRoom.title,
+                description: nexusRoom.description,
+                authorUsername: nexusRoom.authorUsername,
+                mentorUsername: nexusRoom.mentorUsername,
+            });
+        }
 
         // Only broadcast user-joined if this is NOT a grace-period reconnect
         if (!wasReconnecting) {
