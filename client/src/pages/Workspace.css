@@ -1950,4 +1950,56 @@
     margin: 0 auto 20px auto;
     width: fit-content;
   }
+
+  /* Horizontal snapping carousel for workspace cards instead of vertical stacking */
+  .ws-cards-grid {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    gap: 16px;
+    padding-bottom: 12px;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding: 0 20px;
+    /* hide scrollbar */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .ws-cards-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ws-cards-grid .ws-card {
+    min-width: 85vw; /* Almost full width but peeks the next card */
+    scroll-snap-align: center;
+    flex-shrink: 0;
+  }
+
+  /* Make the New Workspace button a Floating Action Button (FAB) on mobile */
+  .new-ws-btn {
+    position: fixed;
+    bottom: calc(76px + env(safe-area-inset-bottom)); /* Above bottom nav */
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(230, 57, 70, 0.4);
+    z-index: 900;
+  }
+
+  .new-ws-btn span {
+    display: none; /* Hide text, only show icon */
+  }
+
+  .new-ws-btn svg {
+    margin: 0 !important;
+    width: 24px;
+    height: 24px;
+  }
 }

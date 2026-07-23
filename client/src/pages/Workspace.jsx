@@ -637,7 +637,7 @@ const Workspace = () => {
               )}
             </div>
             <button className="new-ws-btn" onClick={() => { setShowCreateModal(true); setWorkspaceName(''); setCreatedWorkspace(null); }}>
-              <Plus size={16} /> New Workspace
+              <Plus size={16} /> <span>New Workspace</span>
             </button>
           </div>
 

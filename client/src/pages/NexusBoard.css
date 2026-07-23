@@ -680,3 +680,74 @@
     box-shadow: 0 0 16px rgba(230,57,70,0.25);
     transform: translateY(-1px);
 }
+
+/* ============================================================
+   MOBILE RESPONSIVENESS (Nexus)
+   ============================================================ */
+
+@media (max-width: 768px) {
+    /* Horizontal scrolling for tickets instead of stacking */
+    .tickets-grid, .dashboard-grid {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        gap: 16px;
+        padding-bottom: 20px;
+        -webkit-overflow-scrolling: touch;
+        scroll-padding: 0 20px;
+        /* hide scrollbar */
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    
+    .tickets-grid::-webkit-scrollbar, .dashboard-grid::-webkit-scrollbar {
+        display: none;
+    }
+
+    .ticket-card {
+        min-width: 85vw; /* Snap card size */
+        scroll-snap-align: center;
+        flex-shrink: 0;
+    }
+
+    /* Convert Post SOS button to a Floating Action Button (FAB) */
+    .btn-post-sos {
+        position: fixed;
+        bottom: calc(76px + env(safe-area-inset-bottom)); /* Above bottom nav */
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+        z-index: 900;
+        /* Make it pop */
+        background: linear-gradient(135deg, var(--nexus-primary), var(--nexus-primary-dark));
+    }
+
+    .btn-post-sos svg {
+        margin: 0 !important;
+        width: 24px;
+        height: 24px;
+    }
+
+    /* Hide the text, only show icon in FAB */
+    .btn-post-sos-text {
+        display: none;
+    }
+
+    .nexus-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-input-wrapper {
+        width: 100%;
+        max-width: none;
+    }
+}

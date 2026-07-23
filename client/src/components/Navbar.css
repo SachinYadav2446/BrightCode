@@ -373,10 +373,9 @@
 }
 
 /* Mobile Media Queries */
-@media (max-width: 1024px) {
+@media (max-width: 900px) {
   .nav-container {
-    grid-template-columns: auto 1fr;
-    padding: 0 20px;
+    grid-template-columns: 1fr 1fr;
   }
   .nav-center {
     display: none; /* Hide desktop links */
@@ -385,7 +384,7 @@
     justify-content: flex-end;
   }
   .nav-mobile-toggle {
-    display: flex; /* Show hamburger toggle */
+    display: none; /* Hide hamburger toggle, using bottom nav instead */
   }
 }
 

@@ -2742,3 +2742,27 @@ a {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   GLOBAL MOBILE RESPONSIVENESS OVERHAUL
+═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* Prevent content from hiding behind the MobileBottomNav */
+  body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom)) !important;
+  }
+  
+  /* Make all scrollbars invisible on mobile to save horizontal space and look cleaner */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  * {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  /* Optimize touch interactions */
+  button, a {
+    min-height: 44px; /* Apple Human Interface Guidelines minimum */
+  }
+}

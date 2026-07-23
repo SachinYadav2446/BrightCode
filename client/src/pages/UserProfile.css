@@ -279,6 +279,97 @@
     border: 1px solid rgba(var(--primary-rgb), 0.2);
 }
 
+/* Desktop Layout */
+@media (min-width: 1280px) {
+  .profile-content {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 30px;
+      align-items: start;
+  }
+
+  .profile-left-col {
+      position: sticky;
+      top: 100px;
+  }
+}
+
+/* Tablet Layout */
+@media (max-width: 1279px) and (min-width: 768px) {
+  .profile-header {
+      padding: 30px 40px;
+      margin-top: 30px;
+  }
+
+  .profile-content {
+      padding: 0 40px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+  }
+
+  .profile-left-col,
+  .profile-right-col {
+      width: 100%;
+  }
+
+  .profile-stats-grid {
+      grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Mobile Layout */
+@media (max-width: 768px) {
+  .profile-header {
+      padding: 20px;
+      margin-top: 10px;
+      flex-direction: column;
+      text-align: center;
+      gap: 16px;
+  }
+
+  .profile-avatar-container {
+      margin: 0 auto;
+  }
+
+  .profile-header-actions {
+      width: 100%;
+      justify-content: center;
+  }
+
+  .profile-content {
+      padding: 0 16px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+  }
+
+  .profile-stats-grid {
+      grid-template-columns: 1fr 1fr; /* 2 columns on mobile */
+      gap: 12px;
+  }
+
+  .stat-card {
+      padding: 16px 12px;
+  }
+
+  .profile-tabs {
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+  }
+
+  .profile-tabs::-webkit-scrollbar {
+      display: none;
+  }
+
+  .profile-tab-btn {
+      white-space: nowrap;
+  }
+}
+
 /* ── Stats Dossier ── */
 .up-stats-row {
     display: grid;

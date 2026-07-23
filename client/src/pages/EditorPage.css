@@ -5790,4 +5790,81 @@
 
 .nexus-ws-collapse-btn:hover {
     color: #ffffff;
-}
+}
+
+/* ============================================================
+   MOBILE RESPONSIVENESS (Editor Page)
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .ide-shell {
+        height: 100dvh !important; /* Full dynamic viewport height on mobile */
+    }
+
+    /* Force the layout to stack or overlay */
+    .editor-layout {
+        display: block !important; /* Override grid */
+        height: calc(100% - 40px) !important;
+    }
+
+    /* Make sidebar a slide-over drawer */
+    .editor-sidebar {
+        position: fixed !important;
+        top: 40px !important;
+        left: 0 !important;
+        height: calc(100% - 40px) !important;
+        z-index: 500 !important;
+        background: #121214 !important;
+        border-right: 1px solid var(--border-subtle) !important;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        width: 85vw !important; /* Take up most of screen */
+        max-width: 320px !important;
+    }
+
+    /* When sidebar is NOT collapsed, it slides in */
+    /* We detect the collapsed state by the lack of the width inline style or via an active class if present */
+    /* Because inline style is used in JSX for grid, we need the parent or child to handle it. 
+       Actually, if we force the sidebar to be absolute, we can just rely on the toggle button to set width to 0 or sidebarWidth. */
+    .editor-sidebar[style*="width: 0px"],
+    .editor-sidebar[style*="display: none"] {
+        transform: translateX(-100%) !important;
+        width: 85vw !important;
+    }
+
+    .editor-sidebar:not([style*="width: 0px"]):not([style*="display: none"]) {
+        transform: translateX(0) !important;
+    }
+
+    /* Ensure the main editor container takes full width always */
+    .editor-main-content, .editor-container {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    /* Floating nav bar inside editor (the tab bar) */
+    .editor-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .editor-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Mobile adjustments for header nav */
+    .editor-nav {
+        padding: 0 10px;
+    }
+    
+    .nav-center .view-selector {
+        display: none; /* Hide view selector to save space on mobile, just show code */
+    }
+
+    .room-info {
+        font-size: 0.7rem;
+    }
+}
+

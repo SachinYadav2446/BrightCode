@@ -155,7 +155,7 @@ export default function NexusBoard() {
                     <p>Mentorship &amp; SOS Directory</p>
                 </div>
                 <button className="btn-post-sos" onClick={() => setIsModalOpen(true)}>
-                    <Plus size={18} strokeWidth={2.5} /> Create SOS Ticket
+                    <Plus size={18} strokeWidth={2.5} /> <span className="btn-post-sos-text">Create SOS Ticket</span>
                 </button>
             </header>
 

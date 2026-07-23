@@ -25,6 +25,7 @@ import NexusBoard from './pages/NexusBoard';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
+import MobileBottomNav from './components/MobileBottomNav';
 import { useLocation } from 'react-router-dom';
 
 const ProtectedRoute = ({ children }) => {
@@ -327,6 +328,7 @@ function App() {
             }}
           />
           <NavbarWrapper />
+          <MobileBottomNav />
           <Routes>
               <Route path="/nexus" element={<ProtectedRoute><NexusBoard /></ProtectedRoute>} />
               <Route path="/nexus/ticket/:id" element={<ProtectedRoute><NexusTicketDetail /></ProtectedRoute>} />

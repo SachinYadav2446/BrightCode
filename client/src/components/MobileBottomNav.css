@@ -1,0 +1,94 @@
+.mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding-bottom: env(safe-area-inset-bottom);
+    background: rgba(9, 9, 11, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 768px) {
+    .mobile-bottom-nav {
+        display: block;
+        animation: slideUpNav 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+}
+
+@keyframes slideUpNav {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.mobile-bottom-nav-inner {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 64px;
+    padding: 0 10px;
+}
+
+.mobile-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted, #71717a);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 8px 0;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-nav-btn.active {
+    color: var(--primary, #e63946);
+}
+
+.mobile-nav-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mobile-nav-btn.active .mobile-nav-icon {
+    transform: translateY(-2px);
+}
+
+.mobile-nav-indicator {
+    position: absolute;
+    bottom: -10px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: var(--primary, #e63946);
+    box-shadow: 0 0 8px var(--primary, #e63946);
+}
+
+.mobile-nav-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.02em;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+.mobile-nav-btn.active .mobile-nav-label {
+    opacity: 1;
+}
+
+/* Add active state for touch devices */
+.mobile-nav-btn:active {
+    transform: scale(0.92);
+}
