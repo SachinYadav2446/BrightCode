@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚡ BrightCode
+# BrightCode
 
 **A next-generation collaborative coding platform for developers who want to learn, compete, and grow together.**
 
@@ -14,7 +14,7 @@
 
 ---
 
-## 🚀 Overview
+##  Overview
 
 BrightCode is a full-stack real-time collaborative coding platform that combines a professional-grade IDE, gamified learning, competitive coding, mentorship, and social features — all in one unified interface.
 
@@ -22,22 +22,22 @@ Whether you're a beginner solving your first algorithm or an experienced develop
 
 ---
 
-## ✨ Features
+##  Features
 
-### 🖥️ Collaborative Workspace
+###  Collaborative Workspace
 - Real-time multi-user code synchronization via **WebSockets**
 - **Monaco Editor** with full syntax highlighting for 10+ languages
 - Shared terminal and live execution environment
 - Git integration with commit, push, and branch management
 - Teammate presence indicators and live cursor tracking
 
-### 🧠 Logic Lab
+###  Logic Lab
 - Curated problem sets organized by difficulty and topic
 - Covers algorithms, data structures, React, MERN, and more
 - Instant test case validation with detailed feedback
 - XP rewards and streak tracking for consistency
 
-### ⚔️ Code Arena (Code Wars)
+###  Code Arena (Code Wars)
 - Timed head-to-head and group coding contests
 - Multiple difficulty levels with live leaderboards
 - Contest history and performance analytics
@@ -49,27 +49,27 @@ Whether you're a beginner solving your first algorithm or an experienced develop
 - Folder-based organization system with tags and search
 - Auto-save and cloud sync
 
-### 🆘 The Nexus (SOS Mentorship Board)
+###  The Nexus (SOS Mentorship Board)
 - Post tickets when you're stuck on a problem
 - Mentors can browse open tickets and offer help
 - Private chat between mentee and assigned mentor
 - Collaborative workspace opens when mentor is accepted
 - Issue reassignment if the mentor can't resolve it
 
-### 👥 Social Layer
+###  Social Layer
 - Friend requests and real-time online status
 - Private direct messaging
 - Factions / team system with join requests
 - Global leaderboard with XP rankings
 
-### 🤖 Pal — AI Assistant
+###  Pal — AI Assistant
 - Built-in AI chatbot with BrightCode-specific knowledge
 - No API key required — runs fully on-device embeddings
 - Assists with debugging, explanations, and platform navigation
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -83,7 +83,7 @@ Whether you're a beginner solving your first algorithm or an experienced develop
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 BrightCode/
@@ -105,7 +105,7 @@ BrightCode/
 
 ---
 
-## ⚙️ Getting Started
+##  Getting Started
 
 ### Prerequisites
 - Node.js 18+
@@ -155,7 +155,7 @@ RAZORPAY_KEY_SECRET=
 
 ---
 
-## 🚢 Deployment
+##  Deployment
 
 | Service | Platform | Config File |
 |---|---|---|
@@ -166,7 +166,7 @@ Simply push to `main` — both platforms auto-deploy on new commits.
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are welcome! Please open an issue first to discuss significant changes.
 
@@ -178,12 +178,9 @@ Contributions are welcome! Please open an issue first to discuss significant cha
 
 ---
 
-## 📄 License
-
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 ---
 
 <div align="center">
-  Built with ❤️ by <a href="https://github.com/SachinYadav2446">Sachin Yadav</a>
+  Built by <a href="https://github.com/SachinYadav2446">Sachin Yadav</a>
 </div>
