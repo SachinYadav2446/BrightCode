@@ -225,44 +225,52 @@ export default function NexusTicketDetail() {
                         )}
 
                         {/* ── action buttons ── */}
-                        <div className="ntd-actions-card">
-                            {ticket.status === 'open' && !isAuthor && !hasOffered && (
-                                <button className="ntd-btn ntd-btn-offer" onClick={offerHelp}>
-                                    <Shield size={16}/> Offer Help
-                                </button>
-                            )}
-                            {ticket.status === 'open' && !isAuthor && hasOffered && (
-                                <button className="ntd-btn ntd-btn-pending" disabled>
-                                    <Clock size={16}/> Offer Pending…
-                                </button>
-                            )}
-                            {inProgress && isAuthor && (
-                                <>
-                                    <button className="ntd-btn ntd-btn-resolve" onClick={resolveTicket}>
-                                        <CheckCircle size={16}/> Mark Resolved
+                        {(
+                            (ticket.status === 'open' && !isAuthor && !hasOffered) ||
+                            (ticket.status === 'open' && !isAuthor && hasOffered) ||
+                            (inProgress && isAuthor) ||
+                            (ticket.status === 'resolved') ||
+                            (inProgress && ticket.mentor_username)
+                        ) && (
+                            <div className="ntd-actions-card">
+                                {ticket.status === 'open' && !isAuthor && !hasOffered && (
+                                    <button className="ntd-btn ntd-btn-offer" onClick={offerHelp}>
+                                        <Shield size={16}/> Offer Help
                                     </button>
-                                    <button className="ntd-btn ntd-btn-revoke" onClick={revokementor}>
-                                        <RefreshCw size={15}/> Reopen Ticket
+                                )}
+                                {ticket.status === 'open' && !isAuthor && hasOffered && (
+                                    <button className="ntd-btn ntd-btn-pending" disabled>
+                                        <Clock size={16}/> Offer Pending…
                                     </button>
-                                </>
-                            )}
-                            {ticket.status === 'resolved' && (
-                                <div className="ntd-resolved-badge">
-                                    <CheckCircle size={18}/> Issue Resolved
-                                </div>
-                            )}
-                            {/* show session info */}
-                            {inProgress && ticket.mentor_username && (
-                                <div className="ntd-session-row">
-                                    <div className="ntd-live-dot"/>
-                                    <Avatar name={ticket.mentor_username} size={26}/>
-                                    <div>
-                                        <span className="ntd-session-mentor">@{ticket.mentor_username}</span>
-                                        <span className="ntd-session-label">Mentor · Active Session</span>
+                                )}
+                                {inProgress && isAuthor && (
+                                    <>
+                                        <button className="ntd-btn ntd-btn-resolve" onClick={resolveTicket}>
+                                            <CheckCircle size={16}/> Mark Resolved
+                                        </button>
+                                        <button className="ntd-btn ntd-btn-revoke" onClick={revokementor}>
+                                            <RefreshCw size={15}/> Reopen Ticket
+                                        </button>
+                                    </>
+                                )}
+                                {ticket.status === 'resolved' && (
+                                    <div className="ntd-resolved-badge">
+                                        <CheckCircle size={18}/> Issue Resolved
                                     </div>
-                                </div>
-                            )}
-                        </div>
+                                )}
+                                {/* show session info */}
+                                {inProgress && ticket.mentor_username && (
+                                    <div className="ntd-session-row">
+                                        <div className="ntd-live-dot"/>
+                                        <Avatar name={ticket.mentor_username} size={26}/>
+                                        <div>
+                                            <span className="ntd-session-mentor">@{ticket.mentor_username}</span>
+                                            <span className="ntd-session-label">Mentor · Active Session</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* ── TABS ── */}
                         <div className="ntd-panel">
