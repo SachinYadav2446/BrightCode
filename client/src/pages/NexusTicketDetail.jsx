@@ -159,9 +159,24 @@ export default function NexusTicketDetail() {
                                 </div>
                                 <h1 className="ntd-ticket-title">{ticket.title}</h1>
                                 <div className="ntd-author-row">
-                                    <Avatar name={ticket.author_username} size={28}/>
-                                    <span className="ntd-author">@{ticket.author_username}</span>
-                                    {isAuthor && <span className="ntd-you">YOU</span>}
+                                    <div className="author-badge">
+                                        <Avatar name={ticket.author_username} size={28}/>
+                                        <span className="ntd-author">@{ticket.author_username}</span>
+                                        <span className="badge-label">Author</span>
+                                        {isAuthor && <span className="ntd-you">YOU</span>}
+                                    </div>
+                                    
+                                    {ticket.mentor_username && (
+                                        <>
+                                            <span className="mentor-arrow">→</span>
+                                            <div className="mentor-badge">
+                                                <Avatar name={ticket.mentor_username} size={28}/>
+                                                <span className="ntd-author">@{ticket.mentor_username}</span>
+                                                <span className="badge-label hl">Mentor</span>
+                                                {isMentor && <span className="ntd-you">YOU</span>}
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
 
@@ -178,23 +193,6 @@ export default function NexusTicketDetail() {
                                     {ticket.tags.map((t,i) => <span key={i} className="ntd-tag">#{t}</span>)}
                                 </div>
                             )}
-                        </div>
-
-                        {/* ── info tiles ── */}
-                        <div className="ntd-tiles">
-                            {[
-                                { label:'Status',   val: <StatusBadge status={ticket.status}/> },
-                                { label:'Language', val: ticket.language },
-                                { label:'Author',   val: `@${ticket.author_username}` },
-                                { label:'Created',  val: timeAgo(ticket.created_at) },
-                                { label:'Offers',   val: `${requests.length} mentor${requests.length!==1?'s':''}` },
-                                ticket.mentor_username && { label:'Mentor', val: `@${ticket.mentor_username}`, highlight: true },
-                            ].filter(Boolean).map((item, i) => (
-                                <div key={i} className={`ntd-tile ${item.highlight ? 'ntd-tile-hl' : ''}`}>
-                                    <span className="ntd-tile-label">{item.label}</span>
-                                    <span className="ntd-tile-val">{item.val}</span>
-                                </div>
-                            ))}
                         </div>
                     </div>
 

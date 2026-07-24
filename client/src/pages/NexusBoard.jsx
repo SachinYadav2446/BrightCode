@@ -40,8 +40,8 @@ const TicketCard = ({ ticket }) => {
                 ))}
             </div>
             
-            <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--nexus-border)', textAlign: 'center', color: 'var(--nexus-blue)', fontWeight: '600', fontSize: '0.9rem' }}>
-                View Details & Collaborate →
+            <div className="ticket-footer">
+                <span className="view-details-btn">View Details & Collaborate <span className="arrow">→</span></span>
             </div>
         </div>
     );
