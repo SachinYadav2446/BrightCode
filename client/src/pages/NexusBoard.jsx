@@ -54,6 +54,7 @@ export default function NexusBoard() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({ title: '', description: '', language: 'javascript', tags: '' });
     const [activeTab, setActiveTab] = useState('global');
+    const [dashboardTab, setDashboardTab] = useState('raised'); // 'raised' or 'mentored'
 
     const fetchTickets = async () => {
         try {
@@ -192,49 +193,69 @@ export default function NexusBoard() {
                 </div>
             ) : (
                 <div className="personal-dashboard">
-                    {/* ── Issues Raised ── */}
-                    <div className="dashboard-section">
-                        <div className="dashboard-section-header raised">
-                            <HelpCircle size={18} />
-                            <span>Issues Raised</span>
-                            <span className="section-badge">{tickets.filter(t => t.author_id === user?.id).length}</span>
-                        </div>
-                        <div className="tickets-grid dashboard-grid">
-                            {tickets.filter(t => t.author_id === user?.id).map(ticket => (
-                                <TicketCard key={ticket.id} ticket={ticket} />
-                            ))}
-                            {tickets.filter(t => t.author_id === user?.id).length === 0 && (
-                                <div className="empty-state-inline">
-                                    <HelpCircle size={32} color="var(--border-hi)" />
-                                    <p>You haven't raised any issues yet.</p>
-                                    <button className="btn-post-sos-sm" onClick={() => setIsModalOpen(true)}>
-                                        <Plus size={14} /> Create SOS Ticket
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                    {/* ── Dashboard Sub-Navigation ── */}
+                    <div className="dashboard-subnav">
+                        <button 
+                            className={`subnav-btn ${dashboardTab === 'raised' ? 'active raised' : ''}`}
+                            onClick={() => setDashboardTab('raised')}
+                        >
+                            <HelpCircle size={16} /> Issues Raised
+                            <span className="subnav-badge raised-badge">{tickets.filter(t => t.author_id === user?.id).length}</span>
+                        </button>
+                        <button 
+                            className={`subnav-btn ${dashboardTab === 'mentored' ? 'active mentored' : ''}`}
+                            onClick={() => setDashboardTab('mentored')}
+                        >
+                            <UserCheck size={16} /> Issues Mentored
+                            <span className="subnav-badge mentored-badge">{tickets.filter(t => t.mentor_id === user?.id).length}</span>
+                        </button>
                     </div>
 
-                    {/* ── Issues Mentored ── */}
-                    <div className="dashboard-section">
-                        <div className="dashboard-section-header mentored">
-                            <UserCheck size={18} />
-                            <span>Issues Mentored</span>
-                            <span className="section-badge mentored-badge">{tickets.filter(t => t.mentor_id === user?.id).length}</span>
+                    {/* ── Issues Raised Tab ── */}
+                    {dashboardTab === 'raised' && (
+                        <div className="dashboard-section active-section">
+                            <div className="tickets-grid dashboard-grid">
+                                {tickets.filter(t => t.author_id === user?.id).map(ticket => (
+                                    <TicketCard key={ticket.id} ticket={ticket} />
+                                ))}
+                                {tickets.filter(t => t.author_id === user?.id).length === 0 && (
+                                    <div className="premium-empty-state">
+                                        <div className="empty-icon-wrapper raised-icon">
+                                            <HelpCircle size={40} />
+                                        </div>
+                                        <h3>No Issues Raised</h3>
+                                        <p>You haven't asked for help yet. Create a ticket to get assistance from a mentor.</p>
+                                        <button className="btn-post-sos-sm" onClick={() => setIsModalOpen(true)}>
+                                            <Plus size={16} /> Create SOS Ticket
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <div className="tickets-grid dashboard-grid">
-                            {tickets.filter(t => t.mentor_id === user?.id).map(ticket => (
-                                <TicketCard key={ticket.id} ticket={ticket} />
-                            ))}
-                            {tickets.filter(t => t.mentor_id === user?.id).length === 0 && (
-                                <div className="empty-state-inline">
-                                    <UserCheck size={32} color="var(--border-hi)" />
-                                    <p>You haven't mentored anyone yet.</p>
-                                    <p style={{fontSize: '0.8rem', opacity: 0.6}}>Browse the Global Board and offer help!</p>
-                                </div>
-                            )}
+                    )}
+
+                    {/* ── Issues Mentored Tab ── */}
+                    {dashboardTab === 'mentored' && (
+                        <div className="dashboard-section active-section">
+                            <div className="tickets-grid dashboard-grid">
+                                {tickets.filter(t => t.mentor_id === user?.id).map(ticket => (
+                                    <TicketCard key={ticket.id} ticket={ticket} />
+                                ))}
+                                {tickets.filter(t => t.mentor_id === user?.id).length === 0 && (
+                                    <div className="premium-empty-state">
+                                        <div className="empty-icon-wrapper mentored-icon">
+                                            <UserCheck size={40} />
+                                        </div>
+                                        <h3>No Mentorships Yet</h3>
+                                        <p>You aren't mentoring anyone right now. Browse the Global Board to offer your expertise!</p>
+                                        <button className="btn-post-sos-sm mentored-btn" onClick={() => setActiveTab('global')}>
+                                            <Globe size={16} /> Browse Global Board
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             )}
 
