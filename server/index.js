@@ -1888,29 +1888,37 @@ app.post('/api/nexus/tickets/:id/request-mentor', authenticateToken, async (req,
 app.post('/api/nexus/tickets/:id/accept-mentor', authenticateToken, async (req, res) => {
     const ticketId = req.params.id;
     const myId = req.user.id;
-    // ── FIX: client sends `mentorId` (camelCase), accept both forms ──
+    const myUsername = req.user.username;
     const resolvedMentorId = req.body.mentorId || req.body.mentor_id;
+    const reqMentorUsername = req.body.mentorUsername || req.body.mentor_username;
+    
     try {
         if (useMemoryDB) {
             const ticket = nexusMemoryStore.find(t => t.id === ticketId);
             if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
-            if (ticket.author_id !== myId) return res.status(403).json({ error: 'Only author can accept mentor' });
+            
+            const isAuth = String(ticket.author_id) === String(myId) || 
+                           (ticket.author_username && String(ticket.author_username).toLowerCase() === String(myUsername).toLowerCase());
+            if (!isAuth) return res.status(403).json({ error: 'Only ticket author can accept a mentor' });
 
-            // Find the mentor's username from the requests list
-            const mentorRequest = (ticket.mentor_requests || []).find(r => r.id === resolvedMentorId);
-            const mentorUsername = mentorRequest?.username || null;
+            const mentorRequest = (ticket.mentor_requests || []).find(r => 
+                String(r.id) === String(resolvedMentorId) || 
+                (r.username && reqMentorUsername && String(r.username).toLowerCase() === String(reqMentorUsername).toLowerCase())
+            );
+            const mentorUsername = reqMentorUsername || mentorRequest?.username || null;
+            const finalMentorId = resolvedMentorId || mentorRequest?.id || null;
 
             ticket.status = 'in_progress';
-            ticket.mentor_id = resolvedMentorId;
+            ticket.mentor_id = finalMentorId;
             ticket.mentor_username = mentorUsername;
             ticket.mentor_requests = [];
             saveGuildStore();
 
-            // ── Register this ticket as a Nexus workspace room ──
+            // Register room
             nexusWorkspaceRooms.set(ticketId, {
                 authorId: ticket.author_id,
                 authorUsername: ticket.author_username,
-                mentorId: resolvedMentorId,
+                mentorId: finalMentorId,
                 mentorUsername: mentorUsername,
                 title: ticket.title,
                 description: ticket.description,
@@ -1919,21 +1927,42 @@ app.post('/api/nexus/tickets/:id/accept-mentor', authenticateToken, async (req, 
             io.emit('guild:update_ticket', ticket);
             return res.json(ticket);
         } else {
-            // Fetch the mentor's username from users table first
-            const mentorUser = await pool.query('SELECT username FROM users WHERE id=$1', [resolvedMentorId]);
-            const mentorUsername = mentorUser.rows[0]?.username || null;
+            // Fetch ticket first to verify author and get request info
+            const { rows: ticketRows } = await pool.query(`SELECT * FROM guild_tickets WHERE id=$1`, [ticketId]);
+            if (!ticketRows[0]) return res.status(404).json({ error: 'Ticket not found' });
+            const ticket = ticketRows[0];
+            
+            const isAuth = String(ticket.author_id) === String(myId) || 
+                           (ticket.author_username && String(ticket.author_username).toLowerCase() === String(myUsername).toLowerCase());
+            if (!isAuth) return res.status(403).json({ error: 'Only ticket author can accept a mentor' });
+
+            let reqs = ticket.mentor_requests || [];
+            if (typeof reqs === 'string') reqs = JSON.parse(reqs);
+            
+            const mentorRequest = reqs.find(r => 
+                String(r.id) === String(resolvedMentorId) || 
+                (r.username && reqMentorUsername && String(r.username).toLowerCase() === String(reqMentorUsername).toLowerCase())
+            );
+
+            let mentorUsername = reqMentorUsername || mentorRequest?.username || null;
+            if (!mentorUsername && resolvedMentorId) {
+                try {
+                    const mentorUser = await pool.query('SELECT username FROM users WHERE id=$1 OR username=$2', [resolvedMentorId, resolvedMentorId]);
+                    mentorUsername = mentorUser.rows[0]?.username || null;
+                } catch(e) {}
+            }
+            const finalMentorId = resolvedMentorId || mentorRequest?.id || null;
 
             const { rows } = await pool.query(
-                `UPDATE guild_tickets SET status='in_progress', mentor_id=$1, mentor_username=$2, mentor_requests='[]'::jsonb WHERE id=$3 AND author_id=$4 RETURNING *`,
-                [resolvedMentorId, mentorUsername, ticketId, myId]
+                `UPDATE guild_tickets SET status='in_progress', mentor_id=$1, mentor_username=$2, mentor_requests='[]'::jsonb WHERE id=$3 RETURNING *`,
+                [finalMentorId, mentorUsername, ticketId]
             );
             if (!rows[0]) return res.status(400).json({ error: 'Cannot accept mentor' });
 
-            // ── Register this ticket as a Nexus workspace room ──
             nexusWorkspaceRooms.set(ticketId, {
                 authorId: rows[0].author_id,
                 authorUsername: rows[0].author_username,
-                mentorId: resolvedMentorId,
+                mentorId: finalMentorId,
                 mentorUsername: mentorUsername,
                 title: rows[0].title,
                 description: rows[0].description,

@@ -99,9 +99,9 @@ export default function NexusTicketDetail() {
         catch (e) { alert(e.response?.data?.error || 'Failed'); }
     }
 
-    async function acceptMentor(mentorId) {
+    async function acceptMentor(mentorId, mentorUsername) {
         try {
-            await axios.post(`${API_URL}/api/nexus/tickets/${id}/accept-mentor`, { mentorId }, { headers: headers() });
+            await axios.post(`${API_URL}/api/nexus/tickets/${id}/accept-mentor`, { mentorId, mentorUsername }, { headers: headers() });
             fetchTicket(true);
             setActiveTab('chat');
         } catch (e) { alert(e.response?.data?.error || 'Failed'); }
@@ -326,7 +326,7 @@ export default function NexusTicketDetail() {
                                                         <span className="ntd-notif-sub">Offered to mentor this issue</span>
                                                     </div>
                                                     {isAuthor && ticket.status === 'open' && (
-                                                        <button className="ntd-accept-btn" onClick={() => acceptMentor(r.id)}>
+                                                        <button className="ntd-accept-btn" onClick={() => acceptMentor(r.id, r.username)}>
                                                             <CheckCircle size={13}/> Accept
                                                         </button>
                                                     )}

@@ -67,27 +67,19 @@ function AnimCounter({ target, suffix = "", duration = 2000 }) {
 ──────────────────────────────────────────────────────────── */
 function Nav({ handleAuth }) {
   const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [hoveredLink, setHoveredLink] = useState(null);
   const [activeLink, setActiveLink] = useState(null);
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-
-      // If at the very top of the page, no active link should be highlighted
       if (window.scrollY < 120) {
         setActiveLink(null);
         return;
       }
-
-      // If at the very bottom of the page, automatically highlight the last section
       const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 80;
       if (isAtBottom) {
         setActiveLink("arena");
         return;
       }
-
       const sections = ["features", "roadmap", "modules", "arena"];
       for (const sec of sections) {
         const el = document.getElementById(sec);
@@ -105,15 +97,20 @@ function Nav({ handleAuth }) {
   }, []);
 
   const navLinks = [
-    { label: "Features", id: "features" },
-    { label: "Roadmap", id: "roadmap" },
-    { label: "Modules", id: "modules" },
-    { label: "Hall of Fame", id: "arena" }
+    { label: "Features", id: "features", icon: Sparkles },
+    { label: "Roadmap", id: "roadmap", icon: Compass },
+    { label: "Modules", id: "modules", icon: BookOpen },
+    { label: "Hall of Fame", id: "arena", icon: Shield }
   ];
 
   return (
     <>
-      <nav className={`floating-nav ${scrolled ? "scrolled" : ""}`}>
+      <motion.nav 
+        className="floating-nav"
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      >
         <div className="nav-container">
           {/* LEFT: Logo */}
           <div className="nav-left">
@@ -125,20 +122,28 @@ function Nav({ handleAuth }) {
           {/* CENTER: Nav links */}
           <div className="nav-center">
             {navLinks.map(link => {
+              const Icon = link.icon;
               const isActive = activeLink === link.id;
               return (
                 <a
                   key={link.id}
                   href={`#${link.id}`}
-                  className={`nav-link-hover ${isActive ? "active" : ""}`}
+                  className={`nav-link-item ${isActive ? "active" : ""}`}
                   onClick={(e) => {
                     e.preventDefault();
                     setActiveLink(link.id);
                     document.getElementById(link.id)?.scrollIntoView({ behavior: "smooth" });
                   }}
                 >
-                  {link.label}
-                  {isActive && <div className="nav-active-pill" />}
+                  <Icon size={14} className="nav-link-icon" />
+                  <span>{link.label}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeNavPillLanding"
+                      className="nav-active-bg"
+                      transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                    />
+                  )}
                 </a>
               );
             })}
@@ -146,16 +151,20 @@ function Nav({ handleAuth }) {
 
           {/* RIGHT: Actions / CTAs */}
           <div className="nav-right">
-            <button 
-              className="nav-link-hover" 
+            <motion.button 
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.94 }}
+              className="nav-link-item" 
               onClick={() => handleAuth("login")}
-              style={{ background: "none", border: "none", cursor: "pointer", marginRight: "4px" }}
+              style={{ background: "none", border: "none", cursor: "pointer" }}
             >
               Sign In
-            </button>
-            <button className="shiny-btn" onClick={() => handleAuth("register")}>
-              Get Started
-            </button>
+            </motion.button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <button className="shiny-btn" onClick={() => handleAuth("register")}>
+                Get Started
+              </button>
+            </motion.div>
 
             {/* Mobile Hamburger toggle */}
             <button
@@ -172,6 +181,7 @@ function Nav({ handleAuth }) {
         {open && (
           <div className="nav-mobile-menu">
             {navLinks.map(link => {
+              const Icon = link.icon;
               const isActive = activeLink === link.id;
               return (
                 <a
@@ -185,7 +195,8 @@ function Nav({ handleAuth }) {
                     document.getElementById(link.id)?.scrollIntoView({ behavior: "smooth" });
                   }}
                 >
-                  {link.label}
+                  <Icon size={16} />
+                  <span>{link.label}</span>
                 </a>
               );
             })}
@@ -207,7 +218,7 @@ function Nav({ handleAuth }) {
             </div>
           </div>
         )}
-      </nav>
+      </motion.nav>
     </>
   );
 }
