@@ -2,19 +2,19 @@
 
 .floating-nav {
   position: fixed;
-  top: 16px;
+  top: 12px;
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - 48px);
-  max-width: 1200px;
-  height: 60px;
+  width: calc(100% - 32px);
+  max-width: 1350px;
+  height: 56px;
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
 
   /* Floating Glass Capsule */
-  background: linear-gradient(135deg, rgba(18, 18, 22, 0.75) 0%, rgba(10, 10, 14, 0.85) 100%);
+  background: linear-gradient(135deg, rgba(16, 16, 20, 0.85) 0%, rgba(8, 8, 12, 0.92) 100%);
   border-radius: 99px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-top: 1px solid rgba(255, 255, 255, 0.2); /* glassy light edge */
@@ -22,8 +22,8 @@
   -webkit-backdrop-filter: blur(24px);
 
   box-shadow: 
-    0 16px 40px rgba(0, 0, 0, 0.6),
-    0 0 30px rgba(0, 0, 0, 0.3),
+    0 12px 36px rgba(0, 0, 0, 0.6),
+    0 0 24px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -51,8 +51,7 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 1200px;
-  padding: 0 24px;
+  padding: 0 16px;
   height: 100%;
 }
 
@@ -60,15 +59,16 @@
 .nav-left {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 /* CENTER zone - nav links */
 .nav-center {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   background: rgba(255, 255, 255, 0.02);
-  padding: 4px;
+  padding: 3px;
   border-radius: 99px;
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -78,12 +78,12 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 5px;
   color: #a1a1aa;
   text-decoration: none;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 500;
-  padding: 7px 16px;
+  padding: 6px 12px;
   border-radius: 99px;
   z-index: 1;
   transition: color 0.2s ease;
@@ -185,7 +185,8 @@
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 /* Friends / Allies button */
@@ -353,15 +354,17 @@
 }
 
 /* Mobile Media Queries */
-@media (max-width: 900px) {
-  .nav-container {
-    grid-template-columns: 1fr 1fr;
+@media (max-width: 1024px) {
+  .nav-link-item {
+    padding: 5px 9px;
+    font-size: 0.75rem;
+    gap: 4px;
   }
+}
+
+@media (max-width: 900px) {
   .nav-center {
     display: none; /* Hide desktop links */
-  }
-  .nav-right {
-    justify-content: flex-end;
   }
   .nav-mobile-toggle {
     display: none; /* Hide hamburger toggle, using bottom nav instead */
@@ -369,8 +372,12 @@
 }
 
 @media (max-width: 640px) {
+  .floating-nav {
+    width: calc(100% - 20px);
+    top: 8px;
+  }
   .nav-container {
-    padding: 0 16px;
+    padding: 0 12px;
   }
   .shiny-btn {
     padding: 6px 12px;
