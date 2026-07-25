@@ -1689,6 +1689,8 @@ const initGuildTables = async () => {
             `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_requests JSONB DEFAULT '[]'`,
             `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS messages JSONB DEFAULT '[]'`,
             `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_id TEXT`,
+            `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_username TEXT`,
+            `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'open'`,
         ];
         for (const sql of migrations) {
             try { await pool.query(sql); } catch (migErr) { logger.warn('[GUILD] Migration: ' + migErr.message); }
@@ -1707,6 +1709,7 @@ app.get('/api/nexus/run-migration', async (req, res) => {
             `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_requests JSONB DEFAULT '[]'`,
             `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS messages JSONB DEFAULT '[]'`,
             `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_id TEXT`,
+            `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_username TEXT`,
             `ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'open'`,
         ];
         const results = [];
@@ -1953,11 +1956,43 @@ app.post('/api/nexus/tickets/:id/accept-mentor', authenticateToken, async (req, 
             }
             const finalMentorId = resolvedMentorId || mentorRequest?.id || null;
 
-            const { rows } = await pool.query(
-                `UPDATE guild_tickets SET status='in_progress', mentor_id=$1, mentor_username=$2, mentor_requests='[]'::jsonb WHERE id=$3 RETURNING *`,
-                [finalMentorId, mentorUsername, ticketId]
-            );
-            if (!rows[0]) return res.status(400).json({ error: 'Cannot accept mentor' });
+            // Block author from accepting themselves as mentor
+            if (
+                String(finalMentorId) === String(ticket.author_id) ||
+                (mentorUsername && String(mentorUsername).toLowerCase() === String(ticket.author_username).toLowerCase()) ||
+                (finalMentorId && String(finalMentorId) === String(myId)) ||
+                (mentorUsername && String(mentorUsername).toLowerCase() === String(myUsername).toLowerCase())
+            ) {
+                return res.status(400).json({ error: 'You cannot accept yourself as a mentor for your own issue' });
+            }
+
+            let rows;
+            try {
+                const res = await pool.query(
+                    `UPDATE guild_tickets SET status='in_progress', mentor_id=$1, mentor_username=$2, mentor_requests='[]'::jsonb WHERE id=$3 RETURNING *`,
+                    [finalMentorId, mentorUsername, ticketId]
+                );
+                rows = res.rows;
+            } catch (pgErr) {
+                // If mentor_username column missing on production, add it and retry
+                try {
+                    await pool.query(`ALTER TABLE guild_tickets ADD COLUMN IF NOT EXISTS mentor_username TEXT`);
+                    const res = await pool.query(
+                        `UPDATE guild_tickets SET status='in_progress', mentor_id=$1, mentor_username=$2, mentor_requests='[]'::jsonb WHERE id=$3 RETURNING *`,
+                        [finalMentorId, mentorUsername, ticketId]
+                    );
+                    rows = res.rows;
+                } catch(e) {
+                    // Fallback query without mentor_username
+                    const res = await pool.query(
+                        `UPDATE guild_tickets SET status='in_progress', mentor_id=$1, mentor_requests='[]'::jsonb WHERE id=$2 RETURNING *`,
+                        [finalMentorId, ticketId]
+                    );
+                    rows = res.rows;
+                }
+            }
+
+            if (!rows || !rows[0]) return res.status(400).json({ error: 'Cannot accept mentor' });
 
             nexusWorkspaceRooms.set(ticketId, {
                 authorId: rows[0].author_id,
