@@ -5,7 +5,7 @@ import {
   Brain, Trophy, Shield, GitBranch, Users, Terminal,
   Sparkles, Check, Play, CheckCircle, ArrowUpRight,
   Code2, Menu, X, Zap, Activity, Star, TrendingUp, Lock, Crown,
-  User, Settings, ChevronRight
+  User, Settings, ChevronRight, Compass, BookOpen
 } from "lucide-react";
 import API_URL from "../config";
 import CodeBrightLogo from "../components/CodeBrightLogo";
