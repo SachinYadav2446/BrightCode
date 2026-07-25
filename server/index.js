@@ -1761,6 +1761,9 @@ app.post('/api/nexus/tickets', authenticateToken, async (req, res) => {
         logger.warn('[GUILD] Create ticket validation failed: title or description empty');
         return res.status(400).json({ error: 'Title and description are required' });
     }
+    if (description.trim().length < 50) {
+        return res.status(400).json({ error: 'Description must be at least 50 characters long' });
+    }
 
     const newTicket = {
         id: uuidV4(),
@@ -2319,122 +2322,7 @@ app.get('/me', authenticateToken, async (req, res) => {
     }
 });
 
-// ── SUBSCRIPTION & RAZORPAY BILLING ROUTES ──────────────────────────────────
-app.post('/api/subscription/create-order', authenticateToken, async (req, res) => {
-    const { plan } = req.body;
-    if (!['pro', 'elite'].includes(plan)) {
-        return res.status(400).json({ error: 'Invalid plan selected' });
-    }
 
-    // Amount in INR Paisa (Pro: ₹499 -> 49900, Elite: ₹1499 -> 149900)
-    const amount = plan === 'pro' ? 49900 : 149900;
-    const keyId = process.env.RAZORPAY_KEY_ID;
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
-
-    // Strict check for Razorpay configuration to avoid accidental sandbox upgrades
-    if (!keyId || !keySecret || keyId.startsWith('rzp_test_dummy')) {
-        logger.error('[BILLING] Razorpay keys missing or invalid in environment');
-        return res.status(500).json({ error: 'Billing system misconfigured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.' });
-    }
-
-    try {
-        logger.info(`[BILLING] Connecting to Razorpay for order: ${plan}`);
-        const Razorpay = require('razorpay');
-        const razorpay = new Razorpay({
-            key_id: keyId,
-            key_secret: keySecret
-        });
-
-        const order = await razorpay.orders.create({
-            amount,
-            currency: 'INR',
-            receipt: `sub_${req.user.id.slice(0, 20)}_${Date.now().toString().slice(-8)}`
-        });
-
-        res.json({
-            id: order.id,
-            amount: order.amount,
-            currency: order.currency,
-            key_id: keyId,
-            sandbox: false
-        });
-    } catch (err) {
-        logger.error('[BILLING] Order Creation Error Details:', {
-            message: err.message,
-            statusCode: err.statusCode,
-            description: err.error?.description,
-            code: err.error?.code
-        });
-        res.status(500).json({ 
-            error: 'Failed to initiate checkout order', 
-            details: err.error?.description || err.message 
-        });
-    }
-});
-
-app.post('/api/subscription/verify-payment', authenticateToken, async (req, res) => {
-    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, plan } = req.body;
-    if (!['pro', 'elite'].includes(plan)) {
-        return res.status(400).json({ error: 'Invalid plan selected' });
-    }
-
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    const keyId = process.env.RAZORPAY_KEY_ID;
-
-    if (!keyId || !keySecret || keyId.startsWith('rzp_test_dummy')) {
-        return res.status(500).json({ error: 'Billing system misconfigured' });
-    }
-
-    try {
-        logger.info(`[BILLING] Verifying Razorpay Signature for payment: ${razorpay_payment_id}`);
-        const crypto = require('crypto');
-        const text = razorpay_order_id + "|" + razorpay_payment_id;
-        const generated_signature = crypto
-            .createHmac('sha256', keySecret)
-            .update(text)
-            .digest('hex');
-
-        if (generated_signature !== razorpay_signature) {
-            return res.status(400).json({ error: 'Payment signature verification failed' });
-        }
-
-        // Apply Upgrade
-        if (useMemoryDB) {
-            const u = memoryStore.users.find(x => x.id === req.user.id);
-            if (u) {
-                u.subscription = plan;
-                saveStore();
-            }
-        } else {
-            await pool.query('UPDATE users SET subscription = $1 WHERE id = $2', [plan, req.user.id]);
-        }
-
-        logger.info(`[BILLING] User ${req.user.username} upgraded to ${plan}`);
-        res.json({ success: true, subscription: plan });
-    } catch (err) {
-        logger.error('[BILLING] Payment Verification Error:', err);
-        res.status(500).json({ error: 'Failed to verify payment' });
-    }
-});
-
-app.post('/api/subscription/cancel', authenticateToken, async (req, res) => {
-    try {
-        if (useMemoryDB) {
-            const u = memoryStore.users.find(x => x.id === req.user.id);
-            if (u) {
-                u.subscription = 'basic';
-                saveStore();
-            }
-        } else {
-            await pool.query("UPDATE users SET subscription = 'basic' WHERE id = $1", [req.user.id]);
-        }
-        logger.info(`[BILLING] User ${req.user.username} reverted to basic plan`);
-        res.json({ success: true, subscription: 'basic' });
-    } catch (err) {
-        logger.error('[BILLING] Subscription Cancel Error:', err);
-        res.status(500).json({ error: 'Failed to cancel subscription' });
-    }
-});
 
 // ── Public User Profile (by username) ─────────────────────────────────────
 app.get('/profile/:username', async (req, res) => {

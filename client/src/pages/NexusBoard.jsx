@@ -41,7 +41,7 @@ const TicketCard = ({ ticket }) => {
             </div>
             
             <div className="ticket-footer">
-                <span className="view-details-btn">View Details & Collaborate <span className="arrow">→</span></span>
+                <span className="view-details-btn">View Details & Collaborate</span>
             </div>
         </div>
     );
@@ -78,6 +78,10 @@ export default function NexusBoard() {
 
     const handleCreateTicket = async (e) => {
         e.preventDefault();
+        if (!formData.description || formData.description.trim().length < 50) {
+            alert('Description must be at least 50 characters long to provide enough detail for mentors.');
+            return;
+        }
         try {
             const token = localStorage.getItem('token');
             const tagsArray = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
@@ -103,7 +107,7 @@ export default function NexusBoard() {
             });
             fetchTickets();
         } catch (error) {
-            alert(error.response?.data?.error || 'Failed to request mentor');
+            console.error('Error requesting mentor', error);
         }
     };
 
@@ -181,10 +185,10 @@ export default function NexusBoard() {
                 </div>
             ) : activeTab === 'global' ? (
                 <div className="tickets-grid">
-                    {tickets.map(ticket => (
+                    {tickets.filter(t => t.status === 'open').map(ticket => (
                         <TicketCard key={ticket.id} ticket={ticket} />
                     ))}
-                    {tickets.length === 0 && (
+                    {tickets.filter(t => t.status === 'open').length === 0 && (
                         <div className="empty-state">
                             <HelpCircle size={48} color="var(--border-hi)" />
                             <p>No active SOS tickets at the moment.</p>
@@ -275,11 +279,17 @@ export default function NexusBoard() {
                                 />
                             </div>
                             <div className="sos-form-group">
-                                <label>Description</label>
+                                <label style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>Description</span>
+                                    <span style={{ color: formData.description.trim().length < 50 ? '#ef4444' : '#22c55e', fontSize: '0.78rem' }}>
+                                        {formData.description.trim().length}/50 chars (min 50)
+                                    </span>
+                                </label>
                                 <textarea 
                                     required 
                                     rows="4" 
-                                    placeholder="Explain your issue in detail..."
+                                    minLength={50}
+                                    placeholder="Explain your issue in detail (at least 50 characters required for mentors)..."
                                     value={formData.description}
                                     onChange={(e) => setFormData({...formData, description: e.target.value})}
                                 />

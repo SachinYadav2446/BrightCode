@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import API_URL from '../config';
 import Chatbot from '../components/Chatbot';
+import ContributePage from './ContributePage';
 import './Settings.css';
 
 const Settings = () => {
@@ -38,88 +39,7 @@ const Settings = () => {
     fetchNotesCount();
   }, [user]);
 
-  const handleUpgrade = async (planCode) => {
-    try {
-      const token = localStorage.getItem('token') || user?.token;
-      if (!token) {
-        toast.error("Authentic session not found.");
-        return;
-      }
-      
-      const res = await axios.post(`${API_URL}/api/subscription/create-order`, { plan: planCode }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      const order = res.data;
-      
-      const options = {
-        key: order.key_id,
-        amount: order.amount,
-        currency: order.currency,
-        name: "BrightCode Command Center",
-        description: `Upgrade system clearance to ${planCode.toUpperCase()}`,
-        order_id: order.id,
-        handler: async function (response) {
-          try {
-            toast.loading("Verifying payment transaction...", { id: "pay_verify" });
-            const verifyRes = await axios.post(`${API_URL}/api/subscription/verify-payment`, {
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_signature: response.razorpay_signature,
-              plan: planCode
-            }, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            
-            if (verifyRes.data.success) {
-              toast.success(`Clearance upgraded to ${planCode.toUpperCase()}!`, { id: "pay_verify" });
-              await syncUser();
-            }
-          } catch (err) {
-            toast.error(err.response?.data?.error || "Payment verification failed", { id: "pay_verify" });
-          }
-        },
-        prefill: {
-          name: user.username,
-          email: user.email
-        },
-        theme: {
-          color: "var(--primary)"
-        },
-        modal: {
-          ondismiss: function() {
-            toast.error("Payment checkout canceled.");
-          }
-        }
-      };
 
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (response) {
-        toast.error(`Payment Failed: ${response.error.description}`);
-      });
-      rzp.open();
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.error || "Failed to initiate payment");
-    }
-  };
-
-  const handleCancelSubscription = async () => {
-    const confirmCancel = window.confirm("Are you sure you want to revert your system clearance to Basic? Your limits will immediately change.");
-    if (!confirmCancel) return;
-    try {
-      const token = localStorage.getItem('token') || user?.token;
-      const res = await axios.post(`${API_URL}/api/subscription/cancel`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.data.success) {
-        toast.success("Subscription canceled. Clearance level reset to Basic.");
-        await syncUser();
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to cancel subscription");
-    }
-  };
 
   // Calculate Metrics (similar to Home.jsx)
   const activity = user?.activity || {};
@@ -534,13 +454,6 @@ const Settings = () => {
             >
               <Info size={20} />
               <span>About</span>
-            </button>
-            <button
-              className={`nav-item ${activeTab === 'subscription' ? 'active' : ''}`}
-              onClick={() => setActiveTab('subscription')}
-            >
-              <CreditCard size={20} />
-              <span>Billing</span>
             </button>
             <button
               className={`nav-item ${activeTab === 'contribute' ? 'active' : ''}`}
@@ -991,171 +904,6 @@ const Settings = () => {
                   </div>
                 </div>
               </motion.div>
-            ) : activeTab === 'subscription' ? (
-              <motion.div
-                key="subscription"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="dashboard-content"
-              >
-                <div className="system-section">
-                  <div className="section-header">
-                    <h2>System Clearance &amp; Limits</h2>
-                    <p style={{ color: '#71717a', fontSize: '0.85rem', marginTop: '4px' }}>
-                      Monitor your usage metrics, active features, and system clearances.
-                    </p>
-                  </div>
-
-                  {/* Subscription Summary */}
-                  <div className="dashboard-card identity-card" style={{ marginTop: '24px' }}>
-                    <div className="card-header">
-                      <div className="header-icon"><Shield size={18} /></div>
-                      <h3>Current Clearance Clearance</h3>
-                    </div>
-                    <div className="card-body">
-                      <div className="subscription-summary-layout">
-                        <div className="summary-left">
-                          <h4 style={{ color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '1.2rem' }}>
-                            {user.subscription || 'basic'} Plan
-                          </h4>
-                          <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginTop: '4px' }}>
-                            {user.subscription === 'elite' 
-                              ? 'Unlimited structural sandbox clearance. Full server priority.' 
-                              : user.subscription === 'pro' 
-                                ? 'Extended operative limits. Unlocked exam proctor cockpit.' 
-                                : 'Standard limits. Upgrade clear levels to unlock Proctor modules.'}
-                          </p>
-                        </div>
-                        {user.subscription && user.subscription !== 'basic' && (
-                          <button className="cancel-sub-btn" onClick={handleCancelSubscription}>
-                            Downgrade to Basic
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Progression Stats */}
-                      <div className="usage-stats-progress mt-4">
-                        <div className="usage-stat-bar">
-                          <div className="usage-stat-header">
-                            <span>Workspaces created</span>
-                            <span>
-                              {workspaceCount} / {user.subscription === 'elite' ? '∞' : (user.subscription === 'pro' ? 50 : 10)}
-                            </span>
-                          </div>
-                          <div className="usage-bar-track">
-                            <div 
-                              className="usage-bar-fill" 
-                              style={{ width: `${Math.min(100, (workspaceCount / (user.subscription === 'elite' ? 99999 : (user.subscription === 'pro' ? 50 : 10))) * 100)}%` }} 
-                            />
-                          </div>
-                        </div>
-
-                        <div className="usage-stat-bar mt-4">
-                          <div className="usage-stat-header">
-                            <span>CodeVault files stored</span>
-                            <span>
-                              {notesCount} / {user.subscription === 'elite' ? '∞' : (user.subscription === 'pro' ? 500 : 30)}
-                            </span>
-                          </div>
-                          <div className="usage-bar-track">
-                            <div 
-                              className="usage-bar-fill" 
-                              style={{ width: `${Math.min(100, (notesCount / (user.subscription === 'elite' ? 99999 : (user.subscription === 'pro' ? 500 : 30))) * 100)}%` }} 
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Plan Cards Grid */}
-                  <div className="pricing-cards-grid mt-4">
-                    {/* Basic Card */}
-                    <div className={`pricing-card ${(!user.subscription || user.subscription === 'basic') ? 'active-plan-card' : ''}`}>
-                      <div className="pricing-card-header">
-                        <h3>Basic</h3>
-                        <div className="pricing-price">
-                          <span className="currency">₹</span>
-                          <span className="amount">0</span>
-                          <span className="period">/mo</span>
-                        </div>
-                      </div>
-                      <div className="pricing-card-body">
-                        <ul>
-                          <li><CheckCircle2 size={14} className="check-icon" /> 10 Workspaces</li>
-                          <li><CheckCircle2 size={14} className="check-icon" /> 30 CodeVault Files</li>
-                          <li className="locked-feature"><X size={14} className="cross-icon" /> Proctor Dashboard</li>
-                          <li className="locked-feature"><X size={14} className="cross-icon" /> Unlimited Storage</li>
-                        </ul>
-                      </div>
-                      <div className="pricing-card-footer">
-                        {(!user.subscription || user.subscription === 'basic') ? (
-                          <div className="active-plan-indicator">Current Clearance</div>
-                        ) : (
-                          <button className="pricing-action-btn secondary" onClick={handleCancelSubscription}>Downgrade</button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Pro Card */}
-                    <div className={`pricing-card pro-pricing-card ${user.subscription === 'pro' ? 'active-plan-card' : ''}`}>
-                      <div className="premium-glow-border" />
-                      <div className="pricing-card-header">
-                        <div className="popular-badge">Operative choice</div>
-                        <h3>Pro Developer</h3>
-                        <div className="pricing-price">
-                          <span className="currency">₹</span>
-                          <span className="amount">499</span>
-                          <span className="period">/mo</span>
-                        </div>
-                      </div>
-                      <div className="pricing-card-body">
-                        <ul>
-                          <li><CheckCircle2 size={14} className="check-icon" /> 50 Workspaces</li>
-                          <li><CheckCircle2 size={14} className="check-icon" /> 500 CodeVault Files</li>
-                          <li><CheckCircle2 size={14} className="check-icon" /> Proctor Dashboard (Unlocked)</li>
-                          <li><CheckCircle2 size={14} className="check-icon" /> Priority Code War rooms</li>
-                        </ul>
-                      </div>
-                      <div className="pricing-card-footer">
-                        {user.subscription === 'pro' ? (
-                          <div className="active-plan-indicator">Current Clearance</div>
-                        ) : (
-                          <button className="pricing-action-btn primary" onClick={() => handleUpgrade('pro')}>Upgrade Clearance</button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Elite Card */}
-                    <div className={`pricing-card ${user.subscription === 'elite' ? 'active-plan-card' : ''}`}>
-                      <div className="pricing-card-header">
-                        <h3>Enterprise Elite</h3>
-                        <div className="pricing-price">
-                          <span className="currency">₹</span>
-                          <span className="amount">1499</span>
-                          <span className="period">/mo</span>
-                        </div>
-                      </div>
-                      <div className="pricing-card-body">
-                        <ul>
-                          <li><CheckCircle2 size={14} className="check-icon" /> Unlimited Workspaces</li>
-                          <li><CheckCircle2 size={14} className="check-icon" /> Unlimited CodeVault Files</li>
-                          <li><CheckCircle2 size={14} className="check-icon" /> Proctor Dashboard (Unlocked)</li>
-                          <li><CheckCircle2 size={14} className="check-icon" /> Dedicated Core Server Access</li>
-                        </ul>
-                      </div>
-                      <div className="pricing-card-footer">
-                        {user.subscription === 'elite' ? (
-                          <div className="active-plan-indicator">Current Clearance</div>
-                        ) : (
-                          <button className="pricing-action-btn primary" onClick={() => handleUpgrade('elite')}>Upgrade Clearance</button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
             ) : activeTab === 'contribute' ? (
               <motion.div
                 key="contribute"
@@ -1163,66 +911,9 @@ const Settings = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 className="dashboard-content"
+                style={{ width: '100%' }}
               >
-                <div className="system-section">
-                  <div className="section-header">
-                    <h2>Contribute</h2>
-                    <p style={{ color: '#71717a', fontSize: '0.85rem', marginTop: '4px' }}>
-                      Help grow the BrightCode question bank. Submit problems, review submissions, and earn XP.
-                    </p>
-                  </div>
-
-                  <div className="dashboard-card identity-card" style={{ marginTop: '24px' }}>
-                    <div className="card-header">
-                      <div className="header-icon"><GitPullRequest size={18} /></div>
-                      <h3>Question Contributions</h3>
-                    </div>
-                    <div className="card-body">
-                      <p style={{ color: '#a1a1aa', fontSize: '0.88rem', lineHeight: 1.7, marginBottom: '20px' }}>
-                        Submit new coding questions to the BrightCode library. Accepted questions earn you XP and appear for all users in the Library.
-                      </p>
-
-                      <div className="contribute-feature-grid">
-                        <div className="contribute-feature-item">
-                          <div className="feature-icon-wrap" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}>
-                            <CheckCircle2 size={18} color="#22c55e" />
-                          </div>
-                          <div>
-                            <strong>Submit Problems</strong>
-                            <p>Write question titles, descriptions, examples, and test cases.</p>
-                          </div>
-                        </div>
-                        <div className="contribute-feature-item">
-                          <div className="feature-icon-wrap" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.2)' }}>
-                            <Zap size={18} color="#eab308" />
-                          </div>
-                          <div>
-                            <strong>Earn XP</strong>
-                            <p>Every accepted question rewards you with bonus XP.</p>
-                          </div>
-                        </div>
-                        <div className="contribute-feature-item">
-                          <div className="feature-icon-wrap" style={{ background: 'rgba(249, 115, 22,0.1)', border: '1px solid rgba(249, 115, 22,0.2)' }}>
-                            <Users size={18} color="var(--primary)" />
-                          </div>
-                          <div>
-                            <strong>Help the Community</strong>
-                            <p>Your questions are reviewed and added to the shared library.</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        className="premium-save-btn"
-                        style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', padding: '12px 28px' }}
-                        onClick={() => navigate('/contribute')}
-                      >
-                        <GitPullRequest size={16} />
-                        Open Contribution Panel
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <ContributePage embedded={true} />
               </motion.div>
             ) : null}
           </AnimatePresence>
