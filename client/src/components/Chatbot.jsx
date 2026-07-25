@@ -118,81 +118,91 @@ const Chatbot = ({ context = {}, isSidebarOpen = false }) => {
 
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            transition={{ duration: 0.2 }}
-            className={`chatbot-window ${isExpanded ? 'expanded' : ''}`}
-          >
-            <div className="chatbot-header">
-              <div className="chatbot-header-title">
-                <Bot size={20} className="chatbot-header-icon" />
-                <span>Pal</span>
-                <span className="chatbot-status-dot"></span>
-              </div>
-              <div className="chatbot-header-actions">
-                <button onClick={() => setIsExpanded(!isExpanded)} className="chatbot-action-btn">
-                  {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-                </button>
-                <button onClick={() => setIsOpen(false)} className="chatbot-action-btn">
-                  <X size={16} />
-                </button>
-              </div>
-            </div>
-
-            <div className="chatbot-messages">
-              {messages.map((msg) => (
-                <motion.div
-                  key={msg.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`chatbot-message ${msg.type}`}
-                >
-                  <div className="chatbot-message-avatar">
-                    {msg.type === 'bot' ? <Bot size={16} /> : <User size={16} />}
-                  </div>
-                  <div className="chatbot-message-content">
-                    {msg.text.split('\n').map((line, i) => (
-                      <React.Fragment key={i}>
-                        {line}
-                        {i < msg.text.split('\n').length - 1 && <br />}
-                      </React.Fragment>
-                    ))}
-                  </div>
-                </motion.div>
-              ))}
-              {isTyping && (
-                <div className="chatbot-message bot">
-                  <div className="chatbot-message-avatar">
-                    <Bot size={16} />
-                  </div>
-                  <div className="chatbot-message-content typing-indicator">
-                    <span></span><span></span><span></span>
-                  </div>
+          <>
+            <motion.div 
+              className="chatbot-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setIsOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+              className={`chatbot-window ${isExpanded ? 'expanded' : ''}`}
+            >
+              <div className="chatbot-header">
+                <div className="chatbot-header-title">
+                  <Bot size={20} className="chatbot-header-icon" />
+                  <span>Pal</span>
+                  <span className="chatbot-status-dot"></span>
                 </div>
-              )}
-              
-              <div ref={messagesEndRef} />
-            </div>
+                <div className="chatbot-header-actions">
+                  <button onClick={() => setIsExpanded(!isExpanded)} className="chatbot-action-btn">
+                    {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                  </button>
+                  <button onClick={() => setIsOpen(false)} className="chatbot-action-btn">
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
 
-            <form className="chatbot-input-form" onSubmit={handleSend}>
-              <input
-                type="text"
-                placeholder="Ask me anything about coding..."
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                className="chatbot-input"
-              />
-              <button 
-                type="submit" 
-                disabled={!inputValue.trim() || isTyping} 
-                className="chatbot-send-btn"
-              >
-                <Send size={18} />
-              </button>
-            </form>
-          </motion.div>
+              <div className="chatbot-messages">
+                {messages.map((msg) => (
+                  <motion.div
+                    key={msg.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`chatbot-message ${msg.type}`}
+                  >
+                    <div className="chatbot-message-avatar">
+                      {msg.type === 'bot' ? <Bot size={16} /> : <User size={16} />}
+                    </div>
+                    <div className="chatbot-message-content">
+                      {msg.text.split('\n').map((line, i) => (
+                        <React.Fragment key={i}>
+                          {line}
+                          {i < msg.text.split('\n').length - 1 && <br />}
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </motion.div>
+                ))}
+                {isTyping && (
+                  <div className="chatbot-message bot">
+                    <div className="chatbot-message-avatar">
+                      <Bot size={16} />
+                    </div>
+                    <div className="chatbot-message-content typing-indicator">
+                      <span></span><span></span><span></span>
+                    </div>
+                  </div>
+                )}
+                
+                <div ref={messagesEndRef} />
+              </div>
+
+              <form className="chatbot-input-form" onSubmit={handleSend}>
+                <input
+                  type="text"
+                  placeholder="Ask me anything about coding..."
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  className="chatbot-input"
+                />
+                <button 
+                  type="submit" 
+                  disabled={!inputValue.trim() || isTyping} 
+                  className="chatbot-send-btn"
+                >
+                  <Send size={18} />
+                </button>
+              </form>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>

@@ -6,59 +6,19 @@
   left: 0;
   width: 100%;
   z-index: 1000;
-  height: 64px;
+  height: 68px;
   display: flex;
   align-items: center;
   justify-content: center;
 
-  /* layered dark glass */
-  background:
-    linear-gradient(180deg, rgba(15, 8, 8, 0.96) 0%, rgba(8, 8, 11, 0.92) 100%);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
+  /* Clean premium glassmorphism */
+  background: rgba(10, 10, 12, 0.6);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
 
-  /* red-tinted bottom glow */
-  border-bottom: 1px solid rgba(var(--primary-rgb), 0.2);
-  box-shadow:
-    0 1px 0 rgba(var(--primary-rgb), 0.06),
-    0 2px 40px rgba(0, 0, 0, 0.7),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-/* static red gradient bottom border - no animation */
-.floating-nav::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(var(--primary-rgb), 0.4) 20%,
-    rgba(var(--primary-rgb), 0.7) 50%,
-    rgba(var(--primary-rgb), 0.4) 80%,
-    transparent 100%
-  );
-}
-
-/* subtle top inner highlight */
-.floating-nav::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--border-subtle) 30%,
-    rgba(255, 255, 255, 0.1) 50%,
-    var(--border-subtle) 70%,
-    transparent 100%
-  );
+  /* Single subtle bottom border */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
 }
 
 /* ── 3-zone container ── */
@@ -83,11 +43,7 @@
 .nav-center {
   display: flex;
   align-items: center;
-  gap: 2px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 4px 6px;
+  gap: 6px;
 }
 
 /* RIGHT zone - actions pushed to the right */
@@ -101,58 +57,25 @@
 /* Individual nav link */
 .nav-link-hover {
   position: relative;
-  color: #71717a;
+  color: #a1a1aa;
   text-decoration: none;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  padding: 7px 14px;
-  border-radius: 7px;
-  transition: color 0.18s ease, background 0.18s ease;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
 .nav-link-hover:hover {
-  color: #e4e4e7;
-  background: var(--border-subtle);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .nav-link-hover.active {
-  color: #f4f4f5;
-  background: rgba(var(--primary-rgb), 0.1);
-}
-
-/* active pill glow */
-.nav-link-hover.active::after {
-  content: '';
-  position: absolute;
-  bottom: 3px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 55%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--primary), transparent);
-  border-radius: 2px;
-  box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.7);
-}
-
-/* hover underline */
-.nav-link-hover:not(.active)::before {
-  content: '';
-  position: absolute;
-  bottom: 3px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 2px;
-  background: rgba(var(--primary-rgb), 0.35);
-  border-radius: 2px;
-  transition: width 0.18s ease;
-}
-
-.nav-link-hover:not(.active):hover::before {
-  width: 50%;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
 }
 
 /* Proctor nav link - shield icon + text */
