@@ -2863,48 +2863,26 @@
   transition: none !important;
 }
 
-/* Nav Links Sliding Bubble */
+/* Minimal Nav Center */
 .nav-center {
   position: relative;
-  background: rgba(255, 255, 255, 0.02) !important;
-  border: 1px solid var(--border-subtle) !important;
-  padding: 4px !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
   z-index: 1;
 }
 .nav-link-hover {
   position: relative;
   z-index: 2;
-  background: transparent !important; /* disable static hover bg */
-  color: #a1a1aa !important;
-  transition: color 0.25s ease !important;
+  background: transparent !important;
+  color: #71717a !important;
+  transition: color 0.2s ease !important;
 }
 .nav-link-hover:hover {
-  color: #fff !important;
+  color: #f4f4f5 !important;
 }
 .nav-link-hover.active {
-  color: var(--primary-light) !important;
-}
-
-/* Sliding hover capsule background */
-.nav-hover-pill {
-  position: absolute;
-  inset: 0;
-  background: var(--border-subtle);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  z-index: -1;
-}
-
-/* Sliding active indicator capsule */
-.nav-active-pill {
-  position: absolute;
-  bottom: 0;
-  left: 10%;
-  right: 10%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--primary), transparent);
-  box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.8);
-  z-index: 3;
+  color: #ffffff !important;
 }
 
 /* Shiny Button Shimmer Sweep */

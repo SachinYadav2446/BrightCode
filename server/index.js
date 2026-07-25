@@ -1845,10 +1845,12 @@ app.post('/api/nexus/tickets/:id/request-mentor', authenticateToken, async (req,
             const ticket = nexusMemoryStore.find(t => t.id === ticketId);
             if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
             if (ticket.status !== 'open') return res.status(400).json({ error: 'Ticket is not open' });
-            if (ticket.author_id === myId) return res.status(400).json({ error: 'Cannot mentor your own ticket' });
+            if (String(ticket.author_id) === String(myId) || (ticket.author_username && String(ticket.author_username).toLowerCase() === String(myUsername).toLowerCase())) {
+                return res.status(400).json({ error: 'You cannot mentor your own issue' });
+            }
             
             if (!ticket.mentor_requests) ticket.mentor_requests = [];
-            if (!ticket.mentor_requests.find(r => r.id === myId)) {
+            if (!ticket.mentor_requests.find(r => String(r.id) === String(myId) || String(r.username).toLowerCase() === String(myUsername).toLowerCase())) {
                 ticket.mentor_requests.push({ id: myId, username: myUsername });
             }
             saveGuildStore();
@@ -1858,9 +1860,17 @@ app.post('/api/nexus/tickets/:id/request-mentor', authenticateToken, async (req,
             // Postgres path: fetch, modify, save
             const { rows } = await pool.query(`SELECT * FROM guild_tickets WHERE id=$1`, [ticketId]);
             if (!rows[0]) return res.status(404).json({ error: 'Not found' });
-            let reqs = rows[0].mentor_requests || [];
+            const ticket = rows[0];
+            if (ticket.status !== 'open') return res.status(400).json({ error: 'Ticket is not open' });
+            if (String(ticket.author_id) === String(myId) || (ticket.author_username && String(ticket.author_username).toLowerCase() === String(myUsername).toLowerCase())) {
+                return res.status(400).json({ error: 'You cannot mentor your own issue' });
+            }
+
+            let reqs = ticket.mentor_requests || [];
             if (typeof reqs === 'string') reqs = JSON.parse(reqs);
-            if (!reqs.find(r => r.id === myId)) reqs.push({ id: myId, username: myUsername });
+            if (!reqs.find(r => String(r.id) === String(myId) || String(r.username).toLowerCase() === String(myUsername).toLowerCase())) {
+                reqs.push({ id: myId, username: myUsername });
+            }
             
             const updated = await pool.query(
                 `UPDATE guild_tickets SET mentor_requests=$1 WHERE id=$2 RETURNING *`,

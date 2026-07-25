@@ -91,6 +91,10 @@ export default function NexusTicketDetail() {
     }
 
     async function offerHelp() {
+        if (isAuthor) {
+            alert('You cannot offer to mentor your own issue');
+            return;
+        }
         try { await axios.post(`${API_URL}/api/nexus/tickets/${id}/request-mentor`, {}, { headers: headers() }); fetchTicket(true); }
         catch (e) { alert(e.response?.data?.error || 'Failed'); }
     }
@@ -121,11 +125,24 @@ export default function NexusTicketDetail() {
     );
     if (!ticket) return <div className="ntd-error">Ticket not found</div>;
 
-    const isAuthor   = ticket.author_id  === user?.id;
-    const isMentor   = ticket.mentor_id  === user?.id;
+    const isAuthor   = Boolean(
+        user && (
+            String(ticket.author_id) === String(user.id) ||
+            (ticket.author_username && user.username && String(ticket.author_username).toLowerCase() === String(user.username).toLowerCase())
+        )
+    );
+    const isMentor   = Boolean(
+        user && (
+            String(ticket.mentor_id) === String(user.id) ||
+            (ticket.mentor_username && user.username && String(ticket.mentor_username).toLowerCase() === String(user.username).toLowerCase())
+        )
+    );
     const requests   = ticket.mentor_requests || [];
     const messages   = ticket.messages || [];
-    const hasOffered = requests.some(r => r.id === user?.id);
+    const hasOffered = requests.some(r => 
+        String(r.id) === String(user?.id) || 
+        (r.username && user?.username && String(r.username).toLowerCase() === String(user.username).toLowerCase())
+    );
     const inProgress = ticket.status === 'in_progress';
     const canChat    = inProgress && (isAuthor || isMentor);
     const notifCount = isAuthor && ticket.status === 'open' ? requests.length : 0;
