@@ -895,6 +895,8 @@ select.cp-input option { background: #1a1a1e; }
   .cp-studio-tc-row { flex-direction: column; }
   .cp-studio-tc-row .cp-del-btn { margin-top: 0; align-self: flex-start; }
   .cp-modal { max-height: calc(100vh - 16px); border-radius: 14px; }
+  .cp-stats-row { grid-template-columns: 1fr 1fr; }
+}
 
 /* ── Embedded Mode (inside Settings) ── */
 .cp-embedded {
