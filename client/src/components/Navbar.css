@@ -23,12 +23,12 @@
 
 /* ── 3-zone container ── */
 .nav-container {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
-  max-width: 1400px;
-  padding: 0 28px;
+  max-width: 1300px;
+  padding: 0 32px;
   height: 100%;
 }
 
@@ -43,39 +43,43 @@
 .nav-center {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 24px;
 }
 
-/* RIGHT zone - actions pushed to the right */
-.nav-right {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-/* Individual nav link */
+/* Individual nav link - ultra minimal */
 .nav-link-hover {
   position: relative;
-  color: #a1a1aa;
+  color: #71717a;
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 500;
-  padding: 8px 16px;
-  border-radius: 20px;
-  transition: all 0.2s ease;
+  padding: 4px 0;
+  background: transparent;
+  transition: color 0.2s ease;
   white-space: nowrap;
 }
 
 .nav-link-hover:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.05);
+  color: #f4f4f5;
+  background: transparent;
 }
 
 .nav-link-hover.active {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  font-weight: 600;
+  background: transparent;
+}
+
+/* Minimal active indicator line */
+.nav-link-hover.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  background: #ffffff;
+  border-radius: 1px;
 }
 
 /* Proctor nav link - shield icon + text */
@@ -134,76 +138,73 @@
   50%       { opacity: 0.7; transform: scale(0.92); }
 }
 
-/* Friends / Allies button */
+/* RIGHT zone */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Friends / Allies button - no circle or box background */
 .fd-nav-btn {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-subtle);
+  background: transparent;
+  border: none;
   color: #71717a;
   cursor: pointer;
-  transition: color 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  padding: 4px;
+  transition: color 0.2s ease;
 }
 
 .fd-nav-btn:hover {
-  color: #f4f4f5;
-  background: var(--border-subtle);
-  border-color: var(--border-hi);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.04);
+  color: #ffffff;
+  background: transparent;
+  box-shadow: none;
 }
 
 .fd-nav-btn.has-requests {
   color: var(--primary);
-  border-color: rgba(var(--primary-rgb), 0.35);
-  background: rgba(var(--primary-rgb), 0.07);
-  box-shadow: 0 0 12px rgba(var(--primary-rgb), 0.15);
+  background: transparent;
+  box-shadow: none;
 }
 
 .fd-nav-dot {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 7px;
-  height: 7px;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--primary);
-  border: 1.5px solid #0a0810;
-  box-shadow: 0 0 6px rgba(var(--primary-rgb), 0.9);
 }
 
-/* Avatar pill */
+/* Avatar profile - clean text/initial, no circle background */
 .user-profile-pill {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.22), rgba(var(--primary-rgb), 0.08));
-  border: 1.5px solid rgba(var(--primary-rgb), 0.4);
+  background: transparent;
+  border: none;
   cursor: pointer;
   text-decoration: none;
-  transition: all 0.22s ease;
-  box-shadow: 0 0 14px rgba(var(--primary-rgb), 0.12);
+  transition: opacity 0.2s ease;
+  padding: 4px;
 }
 
 .user-profile-pill:hover {
-  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.32), rgba(var(--primary-rgb), 0.16));
-  border-color: rgba(var(--primary-rgb), 0.65);
-  box-shadow: 0 0 22px rgba(var(--primary-rgb), 0.3);
-  transform: scale(1.07);
+  opacity: 0.8;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
 }
 
 .profile-initial {
-  color: var(--primary-light);
-  font-weight: 800;
-  font-size: 0.92rem;
-  letter-spacing: -0.3px;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.85rem;
 }
 
 /* Join button */
