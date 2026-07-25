@@ -28,14 +28,31 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Animated Glowing Beam along top edge */
+.floating-nav::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(var(--primary-rgb), 0.8) 50%, transparent 100%);
+  animation: navBeamPulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes navBeamPulse {
+  0% { opacity: 0.3; left: 15%; right: 15%; }
+  100% { opacity: 0.9; left: 25%; right: 25%; }
+}
+
 /* ── 3-zone container ── */
 .nav-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 1300px;
-  padding: 0 32px;
+  max-width: 1200px;
+  padding: 0 24px;
   height: 100%;
 }
 
@@ -43,7 +60,6 @@
 .nav-left {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
 }
 
 /* CENTER zone - nav links */
@@ -54,42 +70,59 @@
   background: rgba(255, 255, 255, 0.02);
   padding: 4px;
   border-radius: 99px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Individual nav link - smooth animated pill */
-.nav-link-hover {
+/* Individual nav link item */
+.nav-link-item {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
   color: #a1a1aa;
   text-decoration: none;
   font-size: 0.82rem;
   font-weight: 500;
   padding: 7px 16px;
   border-radius: 99px;
-  background: transparent;
-  border: 1px solid transparent;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+  transition: color 0.2s ease;
   white-space: nowrap;
 }
 
-.nav-link-hover:hover {
+.nav-link-icon {
+  color: #71717a;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.nav-link-item:hover {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.nav-link-item:hover .nav-link-icon {
+  color: #ffffff;
   transform: translateY(-1px);
 }
 
-.nav-link-hover.active {
+.nav-link-item.active {
   color: #ffffff;
   font-weight: 600;
-  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.2) 0%, rgba(var(--primary-rgb), 0.08) 100%);
-  border: 1px solid rgba(var(--primary-rgb), 0.3);
-  border-top: 1px solid rgba(var(--primary-rgb), 0.5);
-  box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-.nav-link-hover.active::after {
-  display: none;
+.nav-link-item.active .nav-link-icon {
+  color: var(--primary-light, #ff4d4d);
+}
+
+/* Framer Motion Active Pill Background */
+.nav-active-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.22) 0%, rgba(var(--primary-rgb), 0.08) 100%);
+  border: 1px solid rgba(var(--primary-rgb), 0.4);
+  border-top: 1px solid rgba(var(--primary-rgb), 0.7);
+  border-radius: 99px;
+  box-shadow: 0 4px 18px rgba(var(--primary-rgb), 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  z-index: -1;
 }
 
 /* Proctor nav link - shield icon + text */

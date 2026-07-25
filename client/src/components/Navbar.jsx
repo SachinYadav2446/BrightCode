@@ -5,15 +5,31 @@ import { Link, useLocation } from 'react-router-dom';
 import CodeBrightLogo from './CodeBrightLogo';
 import FriendsDrawer from './FriendsDrawer';
 import axios from 'axios';
+import { motion } from 'framer-motion';
 import { 
   Users, 
   Menu,
-  X
+  X,
+  Home,
+  BookOpen,
+  Terminal,
+  Lock,
+  Shield,
+  Compass
 } from 'lucide-react';
 import './Navbar.css';
 import './FriendsDrawer.css';
 
 const API = API_URL;
+
+const NAV_ITEMS = [
+  { id: 'home', label: 'Home', path: '/hub', icon: Home },
+  { id: 'library', label: 'Library', path: '/library', icon: BookOpen },
+  { id: 'workspace', label: 'Workspace', path: '/workspace', icon: Terminal },
+  { id: 'codevault', label: 'Vault', path: '/codevault', icon: Lock },
+  { id: 'factions', label: 'Factions', path: '/factions', icon: Shield },
+  { id: 'nexus', label: 'The Nexus', path: '/nexus', icon: Compass },
+];
 
 const Navbar = () => {
   const { user, friendsDrawerOpen, setFriendsDrawerOpen } = useAuth();
@@ -61,10 +77,14 @@ const Navbar = () => {
     return () => clearInterval(interval);
   }, [user?.token]);
 
-  // Else render original navbar
   return (
     <>
-      <nav className="floating-nav">
+      <motion.nav 
+        className="floating-nav"
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      >
         <div className="nav-container">
 
           {/* LEFT: Logo */}
@@ -72,37 +92,58 @@ const Navbar = () => {
             <CodeBrightLogo size="small" />
           </div>
 
-          {/* CENTER: Nav links */}
+          {/* CENTER: Nav links with spring sliding indicator */}
           <div className="nav-center">
-            <Link to="/hub"       className={`nav-link-hover ${currentPage === 'home'      ? 'active' : ''}`}>Home</Link>
-            <Link to="/library"   className={`nav-link-hover ${currentPage === 'library'   ? 'active' : ''}`}>Library</Link>
-            <Link to="/workspace" className={`nav-link-hover ${currentPage === 'workspace' ? 'active' : ''}`}>Workspace</Link>
-            <Link to="/codevault" className={`nav-link-hover ${currentPage === 'codevault' ? 'active' : ''}`}>Vault</Link>
-            <Link to="/factions"  className={`nav-link-hover ${currentPage === 'factions'  ? 'active' : ''}`}>Factions</Link>
-            <Link to="/nexus"      className={`nav-link-hover ${currentPage === 'nexus'      ? 'active' : ''}`}>The Nexus</Link>
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = currentPage === item.id;
+              return (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  className={`nav-link-item ${isActive ? 'active' : ''}`}
+                >
+                  <Icon size={14} className="nav-link-icon" />
+                  <span>{item.label}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeNavPill"
+                      className="nav-active-bg"
+                      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
           </div>
 
           {/* RIGHT: Actions */}
           <div className="nav-right">
             {user && (
-              <button
+              <motion.button
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.94 }}
                 className={`fd-nav-btn ${(pendingCount > 0 || hasUnread) ? 'has-requests' : ''}`}
                 onClick={() => { setFriendsDrawerOpen(true); setHasUnread(false); }}
                 title="Allies"
               >
                 <Users size={15} />
                 {(pendingCount > 0 || hasUnread) && <span className="fd-nav-dot" />}
-              </button>
+              </motion.button>
             )}
 
             {user ? (
-              <Link to="/settings" className="user-profile-pill">
-                <span className="profile-initial">
-                  {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
-                </span>
-              </Link>
+              <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.94 }}>
+                <Link to="/settings" className="user-profile-pill">
+                  <span className="profile-initial">
+                    {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
+                  </span>
+                </Link>
+              </motion.div>
             ) : (
-              <Link to="/auth" className="shiny-btn">Join Now</Link>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link to="/auth" className="shiny-btn">Join Now</Link>
+              </motion.div>
             )}
 
             {/* Mobile Hamburger toggle */}
@@ -120,15 +161,23 @@ const Navbar = () => {
         {/* Mobile menu dropdown drawer */}
         {menuOpen && (
           <div className="nav-mobile-menu">
-            <Link to="/hub"       className={`nav-mobile-link ${currentPage === 'home'      ? 'active' : ''}`}>Home</Link>
-            <Link to="/library"   className={`nav-mobile-link ${currentPage === 'library'   ? 'active' : ''}`}>Library</Link>
-            <Link to="/workspace" className={`nav-mobile-link ${currentPage === 'workspace' ? 'active' : ''}`}>Workspace</Link>
-            <Link to="/codevault" className={`nav-mobile-link ${currentPage === 'codevault' ? 'active' : ''}`}>Vault</Link>
-            <Link to="/factions"  className={`nav-mobile-link ${currentPage === 'factions'  ? 'active' : ''}`}>Factions</Link>
-            <Link to="/nexus"      className={`nav-mobile-link ${currentPage === 'nexus'      ? 'active' : ''}`}>The Nexus</Link>
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = currentPage === item.id;
+              return (
+                <Link 
+                  key={item.id}
+                  to={item.path} 
+                  className={`nav-mobile-link ${isActive ? 'active' : ''}`}
+                >
+                  <Icon size={16} />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
           </div>
         )}
-      </nav>
+      </motion.nav>
 
       <FriendsDrawer open={friendsDrawerOpen} onClose={() => setFriendsDrawerOpen(false)} onUnread={() => { if (!friendsDrawerOpen) setHasUnread(true); }} />
     </>
