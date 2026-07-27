@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { compileAndRunJava } = require('./javaCompiler');
+const { executeJudge0TestCases } = require('./judge0Service');
 const logger = require('./logger');
 
 const PISTON_API = 'https://emkc.org/api/v2/piston';
@@ -35,6 +36,18 @@ async function executeCode(code, language, testCases = []) {
             testsPassed: 0,
             totalTests: 0
         };
+    }
+
+    // Try Judge0 Execution Engine if configured or explicitly requested
+    if (process.env.USE_JUDGE0 === 'true' || process.env.JUDGE0_URL || process.env.RAPIDAPI_KEY) {
+        try {
+            logger.info('[CODE EXECUTOR] Attempting Judge0 Execution Engine...');
+            const judge0Res = await executeJudge0TestCases(code, language, testCases, wrapCodeWithTestCase);
+            logger.info(`[CODE EXECUTOR] Judge0 finished: ${judge0Res.testsPassed}/${testCases.length} tests passed`);
+            return judge0Res;
+        } catch (jErr) {
+            logger.warn(`[CODE EXECUTOR] Judge0 failed (${jErr.message}), falling back to standard engines`);
+        }
     }
 
     // Use existing Java compiler for Java

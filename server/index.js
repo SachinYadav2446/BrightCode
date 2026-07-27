@@ -4933,12 +4933,34 @@ io.on('connection', (socket) => {
     });
 });
 
-// ── Local Code Execution Engine ─────────────────────────────────────────────
+// ── Code Execution Engine (Judge0 / Piston / Local) ─────────────────────────────────────────────
+const { executeJudge0, JUDGE0_LANGUAGES } = require('./judge0Service');
+
+app.get('/api/judge0/status', (req, res) => {
+    res.json({
+        active: true,
+        url: process.env.JUDGE0_URL || process.env.JUDGE0_HOST || 'https://ce.judge0.com',
+        supportedLanguagesCount: Object.keys(JUDGE0_LANGUAGES).length
+    });
+});
+
 app.post('/execute', async (req, res) => {
-    const { language, files } = req.body;
+    const { language, files, stdin } = req.body;
     if (!files || files.length === 0) return res.status(400).json({ error: 'No files provided' });
 
     const code = files[0]?.content || '';
+
+    // Judge0 Engine (Primary if configured or requested)
+    if (process.env.USE_JUDGE0 === 'true' || process.env.JUDGE0_URL || process.env.RAPIDAPI_KEY) {
+        try {
+            console.log(`[COMPILER] Executing via Judge0 API for ${language}...`);
+            const jRun = await executeJudge0(code, language, stdin || '');
+            return res.json({ run: jRun });
+        } catch (jErr) {
+            console.warn(`[COMPILER] Judge0 execution failed (${jErr.message}), falling back to local/Piston...`);
+        }
+    }
+
     const os = require('os');
     const tmpDir = os.tmpdir();
     const timestamp = Date.now();
