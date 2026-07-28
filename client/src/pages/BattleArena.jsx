@@ -1,124 +1,93 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Swords, Trophy, Users, Zap, ArrowLeft, Settings, Lock } from 'lucide-react';
+import { Swords, Trophy, Users, Zap, ArrowLeft, CheckCircle2, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './BattleArena.css';
 
 const BattleArena = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [selectedContest, setSelectedContest] = useState('code-wars');
+  const [selectedGame, setSelectedGame] = useState('syntax-showdown');
 
-  const contests = [
+  const games = [
     {
-      id: 'code-wars',
+      id: 'syntax-showdown',
       title: 'Syntax Showdown',
-      description: 'Real-time competitive coding battles where you face off against opponents in timed challenges. Test your skills, solve problems under pressure, and climb the leaderboard.',
+      description: 'Real-time competitive coding battles where you face off against opponents in timed challenges.',
       icon: Swords,
-      status: 'active',
-      players: '2-8 Players',
-      duration: '5 min - 1 hr',
-      difficulty: 'All Levels',
+      status: 'READY',
+      players: ['1v1', '2v2', '4v4'],
+      durations: ['5', '15', '30', '60'],
+      difficulties: ['easy', 'medium', 'hard'],
+      gradient: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
       features: [
-        'Live coding battles with real-time synchronization',
-        'AI-generated test cases for dynamic challenges',
-        'Real-time leaderboard and ranking system',
-        'Team collaboration and pair programming',
-        'Multiple programming languages supported',
-        'Instant feedback and code execution'
-      ],
-      gradient: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)',
-      route: '/code-wars'
+        'Live coding battles with real-time sync',
+        'AI-generated test cases',
+        'Real-time leaderboard',
+        'Multiple languages (JS, Python, Java, C++, Go)'
+      ]
     },
     {
       id: 'algorithm-duel',
       title: 'Algorithm Duel',
-      description: 'Head-to-head algorithm optimization challenges where you compete for the fastest and most efficient solution. Master time and space complexity.',
+      description: 'Head-to-head algorithm optimization challenges. Compete for the fastest and most efficient solution.',
       icon: Zap,
-      status: 'coming-soon',
-      players: '1v1',
-      duration: '20 min',
-      difficulty: 'Advanced',
+      status: 'COMING SOON',
+      players: ['1v1'],
+      durations: ['10', '20'],
+      difficulties: ['medium', 'hard'],
+      gradient: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
       features: [
         'Performance optimization challenges',
-        'Time complexity battles and analysis',
-        'Memory efficiency scoring system',
-        'Real-time performance metrics',
-        'Algorithm visualization tools',
-        'Competitive ranking system'
-      ],
-      gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+        'Time complexity battles',
+        'Memory efficiency scoring',
+        'Algorithm visualization'
+      ]
     },
     {
       id: 'hackathon-hub',
       title: 'Hackathon Hub',
-      description: 'Multi-day coding marathons where you build complete projects from scratch. Collaborate with your team and compete for glory.',
+      description: 'Multi-question coding marathons. Build complete solutions in team-based matches.',
       icon: Trophy,
-      status: 'coming-soon',
-      players: 'Teams 2-4',
-      duration: '24-72 hrs',
-      difficulty: 'All Levels',
+      status: 'COMING SOON',
+      players: ['2v2', '4v4'],
+      durations: ['20', '30', '60'],
+      difficulties: ['easy', 'medium', 'hard'],
+      gradient: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
       features: [
-        'Full-stack development challenges',
+        'Multi-question marathon',
         'Team collaboration workspace',
-        'Project showcase and presentation',
-        'Expert judging and feedback',
-        'Prize pools and rewards',
-        'Networking opportunities'
-      ],
-      gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+        'Judge0 automated testing',
+        'Team standings dashboard'
+      ]
     },
     {
       id: 'faction-wars',
       title: 'Faction Wars',
-      description: 'Epic faction vs faction tournaments where you represent your team in massive coding battles. Compete for faction supremacy.',
+      description: 'Epic faction vs faction tournaments. Fight for territory and faction supremacy.',
       icon: Users,
-      status: 'coming-soon',
-      players: 'Faction-wide',
-      duration: '1 week',
-      difficulty: 'All Levels',
+      status: 'COMING SOON',
+      players: ['4v4'],
+      durations: ['30', '60'],
+      difficulties: ['medium', 'hard'],
+      gradient: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)',
       features: [
-        'Faction-based tournament system',
-        'Collective scoring and rankings',
-        'Weekly championship events',
-        'Exclusive faction rewards',
-        'Team strategy and coordination',
-        'Global faction leaderboard'
-      ],
-      gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
+        'Faction-based tournaments',
+        'Collective scoring',
+        'Weekly championships',
+        'Exclusive faction badges'
+      ]
     }
   ];
 
-  const selectedContestData = contests.find(c => c.id === selectedContest);
-  const Icon = selectedContestData?.icon;
+  const selectedGameData = games.find(g => g.id === selectedGame);
+  const Icon = selectedGameData?.icon;
 
   const handleEnterArena = () => {
-    if (selectedContestData?.status === 'active') {
-      navigate(selectedContestData.route);
+    if (selectedGameData.status === 'READY') {
+      navigate(`/arena-lobby?game=${selectedGame}`);
     }
   };
-
-  // Check if user is admin
-  const isAdmin = user?.username === 'admin';
-
-  if (!isAdmin) {
-    return (
-      <div className="battle-arena-page coming-soon-page">
-        <div className="arena-bg">
-          <div className="arena-grid"></div>
-          <div className="arena-glow"></div>
-        </div>
-        <div className="coming-soon-container">
-          <Lock size={64} />
-          <h1>Battle Arena</h1>
-          <p>Coming soon! Stay tuned for epic coding battles!</p>
-          <button className="enter-arena-btn" onClick={() => navigate('/')}>
-            Go Home
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="battle-arena-page">
@@ -135,89 +104,93 @@ const BattleArena = () => {
         </header>
 
         <nav className="sidebar-contests">
-          {contests.map((contest) => {
-            const ContestIcon = contest.icon;
+          {games.map((game) => {
+            const GameIcon = game.icon;
             return (
               <button
-                key={contest.id}
-                className={`sidebar-contest-item ${selectedContest === contest.id ? 'active' : ''}`}
-                onClick={() => setSelectedContest(contest.id)}
+                key={game.id}
+                className={`sidebar-contest-item ${selectedGame === game.id ? 'active' : ''}`}
+                onClick={() => setSelectedGame(game.id)}
               >
-                <div className="sidebar-icon" style={{ background: contest.gradient }}>
-                  <ContestIcon size={20} />
+                <div className="sidebar-icon" style={{ background: game.gradient }}>
+                  <GameIcon size={18} />
                 </div>
-                <span className="sidebar-contest-name">{contest.title}</span>
-                {contest.status === 'coming-soon' && (
-                  <span className="soon-badge">soon</span>
-                )}
+                <span className="sidebar-contest-name">{game.title}</span>
+                <span className="live-badge">{game.status}</span>
               </button>
             );
           })}
         </nav>
 
         <footer className="sidebar-footer">
-          <button className="sidebar-btn" onClick={() => navigate('/factions')}>
+          <button className="sidebar-btn back-btn-full" onClick={() => navigate('/factions')}>
             <ArrowLeft size={18} />
-            <span>Back</span>
-          </button>
-          <button className="sidebar-btn">
-            <Settings size={18} />
-            <span>Settings</span>
+            <span>Back to Factions</span>
           </button>
         </footer>
       </aside>
 
       {/* Main Content */}
       <main className="arena-main-content">
-        {selectedContestData && (
+        {selectedGameData && (
           <div className="contest-detail">
             <div className="contest-layout">
-              {/* Left Column - Contest Info */}
+              {/* Left Column - Game Info */}
               <div className="contest-left">
-                <div className="contest-icon-large" style={{ background: selectedContestData.gradient }}>
+                <div className="contest-icon-large" style={{ background: selectedGameData.gradient }}>
                   <Icon size={48} />
                 </div>
                 
-                <h1 className="contest-title">{selectedContestData.title}</h1>
-                <p className="contest-description">{selectedContestData.description}</p>
+                <h1 className="contest-title">{selectedGameData.title}</h1>
+                <p className="contest-description">{selectedGameData.description}</p>
 
                 <div className="contest-meta-grid">
                   <div className="meta-card">
-                    <span className="meta-card-label">Players</span>
-                    <span className="meta-card-value">{selectedContestData.players}</span>
+                    <span className="meta-card-label">PLAYERS</span>
+                    <span className="meta-card-value">{selectedGameData.players.join(', ')}</span>
                   </div>
                   <div className="meta-card">
-                    <span className="meta-card-label">Duration</span>
-                    <span className="meta-card-value">{selectedContestData.duration}</span>
+                    <span className="meta-card-label">DURATION</span>
+                    <span className="meta-card-value">{selectedGameData.durations[0]} - {selectedGameData.durations[selectedGameData.durations.length - 1]} min</span>
                   </div>
                   <div className="meta-card">
-                    <span className="meta-card-label">Difficulty</span>
-                    <span className="meta-card-value">{selectedContestData.difficulty}</span>
+                    <span className="meta-card-label">DIFFICULTY</span>
+                    <span className="meta-card-value">{selectedGameData.difficulties.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(', ')}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Right Column - Features & Button */}
+              {/* Right Column - Features & Buttons */}
               <div className="contest-right">
                 <div className="contest-features">
                   <h3 className="features-title">Features</h3>
                   <ul className="features-list">
-                    {selectedContestData.features.map((feature, index) => (
+                    {selectedGameData.features.map((feature, index) => (
                       <li key={index} className="feature-item">
-                        <span className="feature-bullet">•</span>
+                        <CheckCircle2 size={16} className="feature-bullet-icon" />
                         <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <button 
-                  className={`enter-arena-btn ${selectedContestData.status === 'coming-soon' ? 'disabled' : ''}`}
-                  onClick={handleEnterArena}
-                  disabled={selectedContestData.status === 'coming-soon'}
-                >
-                  {selectedContestData.status === 'active' ? 'Enter Arena' : 'Coming Soon'}
-                </button>
+                <div className="arena-actions">
+                  {selectedGameData.status === 'READY' ? (
+                    <button 
+                      className="enter-arena-btn"
+                      onClick={handleEnterArena}
+                      style={{ background: selectedGameData.gradient }}
+                    >
+                      <Swords size={20} /> Enter Arena
+                    </button>
+                  ) : (
+                    <div className="coming-soon-message">
+                      <Clock size={24} />
+                      <h3>Coming Soon</h3>
+                      <p>This game mode is under development and will be available soon!</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

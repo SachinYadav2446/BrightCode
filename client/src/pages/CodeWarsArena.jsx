@@ -1,4 +1,4 @@
-﻿import API_URL from '../config';
+import API_URL from '../config';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -69,6 +69,7 @@ const CodeWarsArena = () => {
     // Create room form state
     const [createForm, setCreateForm] = useState({
         name: '',
+        competition: 'code-wars',
         isPrivate: false,
         password: '',
         teamSize: 1,
@@ -1083,85 +1084,199 @@ const RoomCard = ({ room, onJoin }) => {
     );
 };
 
+const COMPETITION_MODES = [
+    {
+        id: 'code-wars',
+        name: 'Syntax Showdown',
+        subtitle: 'Timed battle duels (1v1, 2v2, 4v4)',
+        icon: Swords,
+        color: '#ef4444',
+        defaultTeamSize: 1,
+        teamSizeLocked: false,
+        allowedTeamSizes: [1, 2, 4],
+        defaultQuestions: 3,
+        questionCountLocked: false,
+        allowedQuestions: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        defaultTimeLimit: 600,
+        badgeText: 'Customizable 1v1 / 2v2 / 4v4 room rules'
+    },
+    {
+        id: 'algorithm-duel',
+        name: 'Algorithm Duel',
+        subtitle: '1v1 Speed & Runtime optimization',
+        icon: Zap,
+        color: '#ec4899',
+        defaultTeamSize: 1,
+        teamSizeLocked: true,
+        allowedTeamSizes: [1],
+        defaultQuestions: 1,
+        questionCountLocked: false,
+        allowedQuestions: [1, 2, 3],
+        defaultTimeLimit: 600,
+        badgeText: 'Fixed 1v1 duel — Master speed & runtime complexity'
+    },
+    {
+        id: 'hackathon-hub',
+        name: 'Hackathon Hub',
+        subtitle: 'Multi-question 2v2 & 4v4 marathons',
+        icon: Trophy,
+        color: '#06b6d4',
+        defaultTeamSize: 2,
+        teamSizeLocked: false,
+        allowedTeamSizes: [2, 4],
+        defaultQuestions: 5,
+        questionCountLocked: false,
+        allowedQuestions: [5, 8, 10],
+        defaultTimeLimit: 1800,
+        badgeText: 'Team marathon — Minimum 5 questions in 2v2 or 4v4'
+    },
+    {
+        id: 'faction-wars',
+        name: 'Faction Wars',
+        subtitle: '4v4 Faction Territory battles',
+        icon: Users,
+        color: '#f59e0b',
+        defaultTeamSize: 4,
+        teamSizeLocked: true,
+        allowedTeamSizes: [4],
+        defaultQuestions: 5,
+        questionCountLocked: false,
+        allowedQuestions: [3, 5, 8],
+        defaultTimeLimit: 1200,
+        badgeText: 'Fixed 4v4 Faction Squad Battle for Territory Elo'
+    }
+];
+
 // Create Room Screen Component
-const CreateRoomScreen = ({ form, setForm, onSubmit, onBack, loading }) => (
-    <motion.div
-        key="create"
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -20 }}
-        className="create-room-screen"
-    >
-        <div className="screen-header">
-            <button className="back-btn" onClick={onBack}>
-                <ArrowLeft size={20} />
-                Back
-            </button>
-            <h2>Create Battle Room</h2>
-        </div>
-        
-        <div className="create-form">
-            <div className="form-group">
-                <label>Room Name</label>
-                <input
-                    type="text"
-                    value={form.name}
-                    onChange={(e) => setForm({...form, name: e.target.value})}
-                    placeholder="Epic Battle Arena"
-                    maxLength={30}
-                />
+const CreateRoomScreen = ({ form, setForm, onSubmit, onBack, loading }) => {
+    const currentMode = COMPETITION_MODES.find(m => m.id === (form.competition || 'code-wars')) || COMPETITION_MODES[0];
+
+    return (
+        <motion.div
+            key="create"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="create-room-screen"
+        >
+            <div className="screen-header">
+                <button className="back-btn" onClick={onBack}>
+                    <ArrowLeft size={20} />
+                    Back
+                </button>
+                <h2>Create Battle Room</h2>
             </div>
             
-            <div className="form-row">
+            <div className="create-form">
                 <div className="form-group">
-                    <label>Team Size</label>
-                    <select
-                        value={form.teamSize}
-                        onChange={(e) => setForm({...form, teamSize: parseInt(e.target.value)})}
-                    >
-                        <option value={1}>1v1</option>
-                        <option value={2}>2v2</option>
-                        <option value={4}>4v4</option>
-                    </select>
+                    <label>Select Competition</label>
+                    <div className="competition-selector-grid">
+                        {COMPETITION_MODES.map(mode => {
+                            const ModeIcon = mode.icon;
+                            const isSelected = (form.competition || 'code-wars') === mode.id;
+                            return (
+                                <div
+                                    key={mode.id}
+                                    className={`competition-card ${isSelected ? 'selected' : ''}`}
+                                    onClick={() => {
+                                        setForm({
+                                            ...form,
+                                            competition: mode.id,
+                                            teamSize: mode.defaultTeamSize,
+                                            questionCount: mode.defaultQuestions,
+                                            timeLimit: mode.defaultTimeLimit,
+                                            name: form.name || `${mode.name} Room`
+                                        });
+                                    }}
+                                >
+                                    <div className="comp-card-icon" style={{ background: mode.color }}>
+                                        <ModeIcon size={18} />
+                                    </div>
+                                    <div className="comp-card-info">
+                                        <div className="comp-card-name">{mode.name}</div>
+                                        <div className="comp-card-sub">{mode.subtitle}</div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Mode Rules Banner */}
+                <div className="mode-rules-banner" style={{ borderColor: currentMode.color }}>
+                    <span className="mode-badge-tag" style={{ background: currentMode.color }}>
+                        {currentMode.name}
+                    </span>
+                    <span className="mode-rules-desc">{currentMode.badgeText}</span>
+                </div>
+
+                <div className="form-group">
+                    <label>Room Name</label>
+                    <input
+                        type="text"
+                        value={form.name}
+                        onChange={(e) => setForm({...form, name: e.target.value})}
+                        placeholder="Epic Battle Arena"
+                        maxLength={30}
+                    />
                 </div>
                 
-                <div className="form-group">
-                    <label>Number of Teams</label>
-                    <select
-                        value={form.maxTeams}
-                        onChange={(e) => setForm({...form, maxTeams: parseInt(e.target.value)})}
-                    >
-                        <option value={2}>2 Teams</option>
-                    </select>
+                <div className="form-row">
+                    <div className="form-group">
+                        <label>
+                            Team Size {currentMode.teamSizeLocked && <Lock size={12} className="lock-inline-icon" />}
+                        </label>
+                        <select
+                            value={form.teamSize}
+                            disabled={currentMode.teamSizeLocked}
+                            onChange={(e) => setForm({...form, teamSize: parseInt(e.target.value)})}
+                            className={currentMode.teamSizeLocked ? 'disabled-select' : ''}
+                        >
+                            {currentMode.allowedTeamSizes.map(size => (
+                                <option key={size} value={size}>
+                                    {size}v{size} {currentMode.teamSizeLocked ? '(Fixed)' : ''}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    
+                    <div className="form-group">
+                        <label>Number of Teams</label>
+                        <select
+                            value={form.maxTeams}
+                            onChange={(e) => setForm({...form, maxTeams: parseInt(e.target.value)})}
+                        >
+                            <option value={2}>2 Teams</option>
+                        </select>
+                    </div>
+                    
+                    <div className="form-group">
+                        <label>Questions</label>
+                        <select
+                            value={form.questionCount}
+                            onChange={(e) => setForm({...form, questionCount: parseInt(e.target.value)})}
+                        >
+                            {currentMode.allowedQuestions.map(n => (
+                                <option key={n} value={n}>{n} question{n > 1 ? 's' : ''}</option>
+                            ))}
+                        </select>
+                    </div>
+                    
+                    <div className="form-group">
+                        <label>Time Limit</label>
+                        <select
+                            value={form.timeLimit}
+                            onChange={(e) => setForm({...form, timeLimit: parseInt(e.target.value)})}
+                        >
+                            <option value={300}>5 minutes</option>
+                            <option value={600}>10 minutes</option>
+                            <option value={900}>15 minutes</option>
+                            <option value={1200}>20 minutes</option>
+                            <option value={1800}>30 minutes</option>
+                            <option value={3600}>1 hour</option>
+                        </select>
+                    </div>
                 </div>
-                
-                <div className="form-group">
-                    <label>Questions</label>
-                    <select
-                        value={form.questionCount}
-                        onChange={(e) => setForm({...form, questionCount: parseInt(e.target.value)})}
-                    >
-                        {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                            <option key={n} value={n}>{n} question{n > 1 ? 's' : ''}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div className="form-group">
-                    <label>Time Limit</label>
-                    <select
-                        value={form.timeLimit}
-                        onChange={(e) => setForm({...form, timeLimit: parseInt(e.target.value)})}
-                    >
-                        <option value={300}>5 minutes</option>
-                        <option value={600}>10 minutes</option>
-                        <option value={900}>15 minutes</option>
-                        <option value={1200}>20 minutes</option>
-                        <option value={1800}>30 minutes</option>
-                        <option value={3600}>1 hour</option>
-                    </select>
-                </div>
-            </div>
             
             <div className="form-group">
                 <label>Difficulty</label>
@@ -1244,7 +1359,8 @@ const CreateRoomScreen = ({ form, setForm, onSubmit, onBack, loading }) => (
             </div>
         </div>
     </motion.div>
-);
+    );
+};
 
 // Join Room Screen Component
 const JoinRoomScreen = ({ form, setForm, onSubmit, onBack, loading }) => {

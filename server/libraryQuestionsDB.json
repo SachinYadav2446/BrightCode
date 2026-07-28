@@ -1,0 +1,1637 @@
+{
+  "nodejs": [
+    {
+      "id": "node_1",
+      "difficulty": "Basic",
+      "question": "Which of the following is correct about Node.js?",
+      "options": [
+        "Node.js is a client-side JavaScript library.",
+        "Node.js is a server-side JavaScript runtime built on Chrome's V8 engine.",
+        "Node.js is a database management system.",
+        "Node.js is a browser plugin."
+      ],
+      "answer": 1,
+      "explanation": "Node.js is a cross-platform, open-source JavaScript runtime environment that executes JavaScript code server-side, built on Google's high-performance V8 engine."
+    },
+    {
+      "id": "node_2",
+      "difficulty": "Basic",
+      "question": "Which core module is primarily used for handling file paths in Node.js?",
+      "options": [
+        "fs",
+        "url",
+        "path",
+        "route"
+      ],
+      "answer": 2,
+      "explanation": "The 'path' module provides utilities for working with file and directory paths across different operating systems (Windows vs POSIX)."
+    },
+    {
+      "id": "node_3",
+      "difficulty": "Basic",
+      "question": "How do you import a module in a standard CommonJS environment?",
+      "options": [
+        "import module from 'module';",
+        "require('module');",
+        "load('module');",
+        "fetch('module');"
+      ],
+      "answer": 1,
+      "explanation": "CommonJS uses the global 'require()' function to load modules synchronously, whereas ES Modules use the 'import' syntax."
+    },
+    {
+      "id": "node_4",
+      "difficulty": "Basic",
+      "question": "What npm command is used to initialize a new Node.js project and create a package.json file?",
+      "options": [
+        "npm start",
+        "npm install",
+        "npm init",
+        "npm setup"
+      ],
+      "answer": 2,
+      "explanation": "'npm init' launches an interactive prompt to set up dependencies, project metadata, and create the 'package.json' config file."
+    },
+    {
+      "id": "node_5",
+      "difficulty": "Basic",
+      "question": "Which global object in Node.js provides information about and control over the current execution process?",
+      "options": [
+        "window",
+        "process",
+        "system",
+        "global"
+      ],
+      "answer": 1,
+      "explanation": "The 'process' object is a global that provides information about the current Node.js process (e.g. environment variables, exit codes, and CPU usage)."
+    },
+    {
+      "id": "node_6",
+      "difficulty": "Basic",
+      "question": "What is the primary purpose of the package-lock.json file in a Node.js project?",
+      "options": [
+        "To lock database connections during npm test runs.",
+        "To prevent other developers from modifying package.json.",
+        "To lock the exact version of every installed dependency and its tree.",
+        "To encrypt source files for production deployment."
+      ],
+      "answer": 2,
+      "explanation": "package-lock.json guarantees that installations across different machines install the exact same dependency versions and dependency tree."
+    },
+    {
+      "id": "node_7",
+      "difficulty": "Intermediate",
+      "question": "What describes the non-blocking I/O model of Node.js?",
+      "options": [
+        "Every incoming request spawns a new operating system thread.",
+        "It delegates I/O tasks to the OS or a Libuv threadpool, continuing main thread execution.",
+        "It locks the CPU until filesystem reads finish.",
+        "It runs multiple client scripts in parallel inside the browser engine."
+      ],
+      "answer": 1,
+      "explanation": "Node.js offloads blocking I/O tasks to Libuv threads or system-level async handlers, keeping the single main thread free to handle requests."
+    },
+    {
+      "id": "node_8",
+      "difficulty": "Intermediate",
+      "question": "How does the EventEmitter notify registered listeners in Node.js?",
+      "options": [
+        "Asynchronously in random order.",
+        "Synchronously in the order they were registered.",
+        "By spawning child processes for each listener.",
+        "Through browser WebSocket events."
+      ],
+      "answer": 1,
+      "explanation": "The EventEmitter calls all listeners synchronously in the order they were registered to ensure proper sequencing and avoid race conditions."
+    },
+    {
+      "id": "node_9",
+      "difficulty": "Intermediate",
+      "question": "What is the difference between setImmediate() and process.nextTick()?",
+      "options": [
+        "setImmediate() runs before process.nextTick() on every loop iteration.",
+        "process.nextTick() executes immediately at the end of the current operation, before the event loop continues.",
+        "setImmediate() bypasses the event loop completely.",
+        "There is no difference; they are aliases."
+      ],
+      "answer": 1,
+      "explanation": "process.nextTick() runs immediately after the current script executes, while setImmediate() schedules a callback in the next Event Loop check phase."
+    },
+    {
+      "id": "node_10",
+      "difficulty": "Intermediate",
+      "question": "Which core module is used to spawn sub-processes and execute system terminal commands?",
+      "options": [
+        "process",
+        "child_process",
+        "cluster",
+        "fs"
+      ],
+      "answer": 1,
+      "explanation": "The 'child_process' module provides methods like exec(), spawn(), and fork() to run separate command line processes."
+    },
+    {
+      "id": "node_11",
+      "difficulty": "Intermediate",
+      "question": "What is a Buffer object in Node.js?",
+      "options": [
+        "A string compression utility class.",
+        "A database query cache layer.",
+        "A utility to handle raw binary data allocated outside the V8 heap.",
+        "A network flow regulation middleware."
+      ],
+      "answer": 2,
+      "explanation": "Buffers represent raw binary data allocated in memory outside the V8 heap, essential for reading stream chunks or network packets."
+    },
+    {
+      "id": "node_12",
+      "difficulty": "Intermediate",
+      "question": "How do you handle backpressure in Node.js Streams?",
+      "options": [
+        "By increasing the V8 heap size.",
+        "By pausing the readable stream when the writable write() call returns false.",
+        "By dropping overflowing chunks automatically.",
+        "By converting the stream to a JSON string."
+      ],
+      "answer": 1,
+      "explanation": "Backpressure is handled by monitoring the writable stream's internal buffer threshold. If write() returns false, reading is paused until a 'drain' event fires."
+    },
+    {
+      "id": "node_13",
+      "difficulty": "Intermediate",
+      "question": "What is the default operation mode of read/write stream streams in Node.js?",
+      "options": [
+        "Binary/Buffer mode unless encoding is specified.",
+        "UTF-8 string mode.",
+        "BSON document mode.",
+        "Encrypted array mode."
+      ],
+      "answer": 0,
+      "explanation": "By default, streams operate on Buffers. To read streams as text, you must explicitly set an encoding, e.g. stream.setEncoding('utf8')."
+    },
+    {
+      "id": "node_14",
+      "difficulty": "Advanced",
+      "question": "In which event loop phase are setTimeout() and setInterval() callbacks executed?",
+      "options": [
+        "Poll phase",
+        "Timers phase",
+        "Check phase",
+        "Pending callbacks phase"
+      ],
+      "answer": 1,
+      "explanation": "The event loop starts with the 'timers' phase, executing callbacks scheduled by setTimeout and setInterval whose thresholds have elapsed."
+    },
+    {
+      "id": "node_15",
+      "difficulty": "Advanced",
+      "question": "What is the primary benefit of using the cluster module in Node.js?",
+      "options": [
+        "It replicates databases automatically.",
+        "It splits the code into smaller CommonJS modules.",
+        "It spawns worker processes that share server ports to utilize multi-core CPUs.",
+        "It increases network upload speeds."
+      ],
+      "answer": 2,
+      "explanation": "The cluster module forks the main process into child processes that handle requests on the same port, sharing the load across multiple CPU cores."
+    },
+    {
+      "id": "node_16",
+      "difficulty": "Advanced",
+      "question": "How do worker_threads differ from child_processes in Node.js?",
+      "options": [
+        "worker_threads spawn a new OS process; child_processes do not.",
+        "worker_threads can share memory spaces via SharedArrayBuffer; child_processes communicate via message passing (IPC).",
+        "child_processes are deprecated.",
+        "worker_threads do not run V8 engines."
+      ],
+      "answer": 1,
+      "explanation": "worker_threads execute multiple JS threads in the same process, sharing execution memory via SharedArrayBuffers, whereas child_processes are isolated OS nodes."
+    },
+    {
+      "id": "node_17",
+      "difficulty": "Advanced",
+      "question": "How does Node.js resolve circular dependency references in CommonJS?",
+      "options": [
+        "It throws a CircularDependencyError and halts execution.",
+        "It ignores the second require call, leaving the dependency undefined.",
+        "It returns a partially evaluated exports object before module execution completes.",
+        "It compiles the modules in a separate thread."
+      ],
+      "answer": 2,
+      "explanation": "CommonJS handles circular dependency by returning a snapshot of the exports object as it was when the circular require statement occurred."
+    },
+    {
+      "id": "node_18",
+      "difficulty": "Advanced",
+      "question": "What does util.promisify do in Node.js?",
+      "options": [
+        "It converts standard Promises back to callback functions.",
+        "It transforms error-first callback style functions into Promise-returning functions.",
+        "It runs an asynchronous process synchronously.",
+        "It parses JSON strings into JavaScript objects."
+      ],
+      "answer": 1,
+      "explanation": "util.promisify compiles a standard Node callback function (err, result) into a function that returns a Promise, making it async/await ready."
+    },
+    {
+      "id": "node_19",
+      "difficulty": "Advanced",
+      "question": "What is Libuv in the architecture of Node.js?",
+      "options": [
+        "The JavaScript execution engine.",
+        "An NPM package manager client.",
+        "A C library providing event loops, threadpool management, and async I/O.",
+        "An Express routing middleware."
+      ],
+      "answer": 2,
+      "explanation": "Libuv is a multi-platform C support library written for Node.js, providing the async capabilities, file operations, thread pools, and the main Event Loop."
+    },
+    {
+      "id": "node_20",
+      "difficulty": "Expert",
+      "question": "Which approach is best to diagnose and debug a suspected memory leak in Node.js?",
+      "options": [
+        "Restart the server periodically via a cron job.",
+        "Take heap snapshots using Chrome DevTools or the 'heapdump' module and compare them.",
+        "Use try/catch blocks around all asynchronous operations.",
+        "Migrate modules to ES Modules."
+      ],
+      "answer": 1,
+      "explanation": "Comparing sequential V8 heap snapshots allows you to find retained objects, closure allocations, and memory leaks that are not being garbage collected."
+    },
+    {
+      "id": "node_21",
+      "difficulty": "Expert",
+      "question": "What happens in the 'poll' phase of the Event Loop?",
+      "options": [
+        "It runs close callbacks, such as socket.on('close').",
+        "It runs setImmediate() callbacks.",
+        "It calculates how long it should block and polls for I/O events, executing I/O callbacks.",
+        "It runs expired timers."
+      ],
+      "answer": 2,
+      "explanation": "The poll phase retrieves incoming TCP/HTTP connection events and I/O data, executing their callbacks. It may block if no timers or check queues exist."
+    },
+    {
+      "id": "node_22",
+      "difficulty": "Expert",
+      "question": "How does the V8 Engine Garbage Collector manage memory of short-lived objects in Node.js?",
+      "options": [
+        "By invoking reference counters that delete objects immediately when count is 0.",
+        "Using a Scavenge copy collection algorithm in two Semi-Spaces (New Space).",
+        "Using Mark-Sweep-Compact exclusively across the entire heap space.",
+        "Offloading memory deallocation to Libuv thread pool."
+      ],
+      "answer": 1,
+      "explanation": "V8 allocates short-lived objects in 'New Space', which is collected using Scavenge—a fast copy collector that shifts active objects between From and To spaces."
+    },
+    {
+      "id": "node_23",
+      "difficulty": "Expert",
+      "question": "How does Node.js compute asynchronous crypto and zlib operations?",
+      "options": [
+        "They block the event loop entirely.",
+        "They utilize internal hardware timers.",
+        "They are offloaded to Libuv's threadpool (which has a default size of 4 threads).",
+        "They run inside separate browser service workers."
+      ],
+      "answer": 2,
+      "explanation": "CPU-heavy system operations like fs, crypto, and zlib run asynchronously by delegating to Libuv's worker threadpool rather than blocking the JS main thread."
+    },
+    {
+      "id": "node_24",
+      "difficulty": "Expert",
+      "question": "Which V8 flag enables detailed stack traces for asynchronous code executions in Node.js?",
+      "options": [
+        "--async-stack-traces",
+        "--expose-gc",
+        "--harmony",
+        "--max-old-space-size"
+      ],
+      "answer": 0,
+      "explanation": "The --async-stack-traces flag (enabled by default in modern node versions) stitches stack traces across event loop boundaries for easier tracing."
+    },
+    {
+      "id": "node_25",
+      "difficulty": "Expert",
+      "question": "What is the critical side effect of blocking the main thread with heavy synchronous computations?",
+      "options": [
+        "It immediately crashes the server with an OutOfMemory error.",
+        "It stops the Event Loop, causing incoming connections to time out and pausing all I/O.",
+        "It forces Libuv to spin up 100 extra worker threads.",
+        "It degrades JavaScript code to ES5 syntax."
+      ],
+      "answer": 1,
+      "explanation": "Because Node.js executes JavaScript on a single thread, blocking it locks the Event Loop, preventing any socket read/write, timers, or requests from resolving."
+    }
+  ],
+  "express": [
+    {
+      "id": "express_1",
+      "difficulty": "Basic",
+      "question": "What is Express.js in the context of Node.js development?",
+      "options": [
+        "A compiler that translates JavaScript to Python.",
+        "A minimalist, flexible web application framework.",
+        "A relational database adapter.",
+        "A testing utility for ES6 modules."
+      ],
+      "answer": 1,
+      "explanation": "Express.js is the standard lightweight, unopinionated framework designed to build routing and API logic on top of Node's HTTP module."
+    },
+    {
+      "id": "express_2",
+      "difficulty": "Basic",
+      "question": "How do you specify a route parameter in an Express path definition?",
+      "options": [
+        "app.get('/users/{id}')",
+        "app.get('/users/:id')",
+        "app.get('/users?id=')",
+        "app.get('/users/id')"
+      ],
+      "answer": 1,
+      "explanation": "Express uses the colon prefix (e.g. ':id') to define dynamic parameters which are populated in the req.params object."
+    },
+    {
+      "id": "express_3",
+      "difficulty": "Basic",
+      "question": "Which built-in Express middleware is used to parse incoming requests with JSON payloads?",
+      "options": [
+        "app.use(express.parser())",
+        "app.use(express.json())",
+        "app.use(express.urlencoded())",
+        "app.use(bodyParser.json())"
+      ],
+      "answer": 1,
+      "explanation": "express.json() is Express's built-in body parser middleware (based on body-parser) that processes JSON request payloads."
+    },
+    {
+      "id": "express_4",
+      "difficulty": "Basic",
+      "question": "Which method is used to serve static assets like images, CSS, and JS files in Express?",
+      "options": [
+        "express.serve()",
+        "express.static()",
+        "express.public()",
+        "express.assets()"
+      ],
+      "answer": 1,
+      "explanation": "express.static() is the built-in middleware used to serve static files from a designated directory (e.g. app.use(express.static('public')))."
+    },
+    {
+      "id": "express_5",
+      "difficulty": "Basic",
+      "question": "Which response method ends the response cycle immediately without sending any body payload?",
+      "options": [
+        "res.send()",
+        "res.json()",
+        "res.end()",
+        "res.close()"
+      ],
+      "answer": 2,
+      "explanation": "res.end() terminates the request-response cycle. It is useful for operations like HTTP verification or void requests."
+    },
+    {
+      "id": "express_6",
+      "difficulty": "Basic",
+      "question": "What is the correct syntax to start an Express server listening on port 3000?",
+      "options": [
+        "app.listen(3000)",
+        "app.run(3000)",
+        "app.serve(3000)",
+        "app.start(3000)"
+      ],
+      "answer": 0,
+      "explanation": "app.listen(port, [callback]) binds the server to the port and starts listening for incoming connection requests."
+    },
+    {
+      "id": "express_7",
+      "difficulty": "Intermediate",
+      "question": "What is middleware in Express?",
+      "options": [
+        "A separate database connection client.",
+        "A function with access to the Request, Response, and next middleware function.",
+        "A script that runs on the client-side browser.",
+        "A routing configuration file."
+      ],
+      "answer": 1,
+      "explanation": "Middleware functions execute sequentially during the HTTP request cycle, inspecting, modifying, or terminating requests before they hit final handlers."
+    },
+    {
+      "id": "express_8",
+      "difficulty": "Intermediate",
+      "question": "How do you pass a custom error to the Express default error handler inside a route handler?",
+      "options": [
+        "throw Error('Custom error');",
+        "call next(err) passing the error object.",
+        "return res.status(500).error(err);",
+        "emit an 'error' event."
+      ],
+      "answer": 1,
+      "explanation": "By calling next(err) with any argument, Express skips all subsequent regular route handlers and passes the error directly to the error-handling middleware."
+    },
+    {
+      "id": "express_9",
+      "difficulty": "Intermediate",
+      "question": "What function signature distinguishes error-handling middleware from regular middleware?",
+      "options": [
+        "(req, res, next)",
+        "(err, req, res)",
+        "(err, req, res, next)",
+        "(req, res, err)"
+      ],
+      "answer": 2,
+      "explanation": "Error handlers require exactly four arguments: (err, req, res, next). Express uses the arity of the function to distinguish error middleware."
+    },
+    {
+      "id": "express_10",
+      "difficulty": "Intermediate",
+      "question": "What is the purpose of express.Router?",
+      "options": [
+        "To route SQL database queries automatically.",
+        "To compile JSX templates on the server.",
+        "To create modular, mountable, and isolated route groups.",
+        "To manage multi-process clustering."
+      ],
+      "answer": 2,
+      "explanation": "express.Router acts as a mini-application, keeping routes modular and allowing you to group related API routes together and mount them at a prefix."
+    },
+    {
+      "id": "express_11",
+      "difficulty": "Intermediate",
+      "question": "Which method allows mounting middleware functions globally for all route paths?",
+      "options": [
+        "app.set()",
+        "app.route()",
+        "app.use()",
+        "app.all()"
+      ],
+      "answer": 2,
+      "explanation": "app.use() registers middleware globally or at a specific path prefix, executing it for all matching requests."
+    },
+    {
+      "id": "express_12",
+      "difficulty": "Intermediate",
+      "question": "How does res.json() differ from res.send() in Express?",
+      "options": [
+        "res.json() compiles template views.",
+        "res.json() automatically formats the argument as JSON, sets Content-Type header to application/json, and sends the body.",
+        "res.send() only works for string inputs.",
+        "res.json() is synchronous; res.send() is asynchronous."
+      ],
+      "answer": 1,
+      "explanation": "res.json() calls res.send() internally but ensures the Content-Type header is strictly application/json and formats objects correctly."
+    },
+    {
+      "id": "express_13",
+      "difficulty": "Intermediate",
+      "question": "How do you extract HTTP request headers inside an Express route handler?",
+      "options": [
+        "req.get('Header-Name') or req.headers",
+        "req.params.header",
+        "req.query.headers",
+        "res.getHeader('Header-Name')"
+      ],
+      "answer": 0,
+      "explanation": "req.get() retrieves specific header values case-insensitively, while req.headers holds the raw key-value map of incoming request headers."
+    },
+    {
+      "id": "express_14",
+      "difficulty": "Advanced",
+      "question": "What determines the execution order of route definitions and middleware in Express?",
+      "options": [
+        "They are executed asynchronously based on route complexity.",
+        "They run strictly in alphabetical order of path name.",
+        "They execute sequentially in the exact order they are registered in the source code.",
+        "Middleware runs after routes resolve."
+      ],
+      "answer": 2,
+      "explanation": "Express routing is sequential. Each middleware and route registration is pushed to an execution stack and evaluated in that exact top-to-bottom order."
+    },
+    {
+      "id": "express_15",
+      "difficulty": "Advanced",
+      "question": "In Express 4, how must you handle errors in asynchronous code block callbacks or promises?",
+      "options": [
+        "They are caught by the framework automatically.",
+        "You must wrap the logic in try/catch and invoke next(err) manually.",
+        "By setting the server header to async-fallback.",
+        "By calling process.exit(1)."
+      ],
+      "answer": 1,
+      "explanation": "Express 4 does not automatically catch async throw operations. Unhandled promise rejections will crash the process unless wrapped and passed to next(err)."
+    },
+    {
+      "id": "express_16",
+      "difficulty": "Advanced",
+      "question": "What does the 'helmet' middleware accomplish in an Express application?",
+      "options": [
+        "It compiles client CSS rules.",
+        "It sets secure HTTP response headers to defend against common vulnerabilities.",
+        "It encrypts passwords in the MongoDB pipeline.",
+        "It throttles request rates."
+      ],
+      "answer": 1,
+      "explanation": "Helmet secure-proofs your Express server by setting HTTP response headers (like X-Content-Type-Options, Strict-Transport-Security, and CSP)."
+    },
+    {
+      "id": "express_17",
+      "difficulty": "Advanced",
+      "question": "How does CORS middleware resolve cross-origin access issues?",
+      "options": [
+        "It decrypts incoming payload headers.",
+        "It adds Access-Control-Allow-Origin response headers to allow resource consumption by different domains.",
+        "It blocks non-HTTPS requests.",
+        "It translates client requests to server requests."
+      ],
+      "answer": 1,
+      "explanation": "CORS middleware inspects request origins and writes the appropriate Access-Control-* headers, telling browsers to authorize the cross-origin fetch."
+    },
+    {
+      "id": "express_18",
+      "difficulty": "Advanced",
+      "question": "Which middleware protects Express APIs from brute force or DoS attacks by restricting duplicate requests?",
+      "options": [
+        "express-session",
+        "express-rate-limit",
+        "csurf",
+        "cookie-parser"
+      ],
+      "answer": 1,
+      "explanation": "express-rate-limit tracks requests per IP address and sends 429 Too Many Requests errors if they exceed thresholds."
+    },
+    {
+      "id": "express_19",
+      "difficulty": "Advanced",
+      "question": "What is the purpose of app.param() in Express?",
+      "options": [
+        "To configure database credentials.",
+        "To set global environment variables.",
+        "To trigger callback validation logic for specific route parameters.",
+        "To bind specific port numbers."
+      ],
+      "answer": 2,
+      "explanation": "app.param() defines middleware callbacks that run whenever a route parameter is present, facilitating pre-validation or DB document fetching."
+    },
+    {
+      "id": "express_20",
+      "difficulty": "Expert",
+      "question": "How does Express process routes internally under the hood?",
+      "options": [
+        "It compiles routes into WebAssembly modules.",
+        "It parses routes into a Layer stack array containing matching path regexes and handles dispatcher execution.",
+        "It spawns database instances for each route path.",
+        "It queries the V8 runtime directly for route matches."
+      ],
+      "answer": 1,
+      "explanation": "Express maintains a routing table of 'Layer' instances. Each layer holds a path regex and a handle. The dispatcher traverses this list and runs matches."
+    },
+    {
+      "id": "express_21",
+      "difficulty": "Expert",
+      "question": "Why will throwing an error after response headers are sent trigger socket errors in Express?",
+      "options": [
+        "Express does not allow any try-catch processing.",
+        "Because headers cannot be rewritten, and the HTTP socket state must be closed immediately to prevent half-sent corrupted packets.",
+        "The server is forced to reboot.",
+        "The V8 compiler overflows."
+      ],
+      "answer": 1,
+      "explanation": "If you call next(err) after res.writeHead() or write() is executed, headers are already sent. Express's default error handler closes the connection to fail fast."
+    },
+    {
+      "id": "express_22",
+      "difficulty": "Expert",
+      "question": "How do you connect a custom templating engine to render layouts in Express?",
+      "options": [
+        "By modifying the node_modules directory.",
+        "Using app.engine('ext', callback) to register a view compiler function.",
+        "By converting files to JSON objects.",
+        "Express does not support custom view compilers."
+      ],
+      "answer": 1,
+      "explanation": "app.engine() registers a custom engine handler. The handler is a callback function that reads the file, parses variables, and calls the callback."
+    },
+    {
+      "id": "express_23",
+      "difficulty": "Expert",
+      "question": "What is the cost of nesting dozens of express.Router configurations recursively?",
+      "options": [
+        "It triggers stack overflows in V8 immediately.",
+        "It extends regex path checking times, increasing router latency for deep subroutes.",
+        "It blocks database connection pools.",
+        "It causes cross-compilation errors."
+      ],
+      "answer": 1,
+      "explanation": "Every nested router appends Layers to the dispatch chain. A deep router nesting tree means Express must recursively evaluate regex layers to find a match."
+    },
+    {
+      "id": "express_24",
+      "difficulty": "Expert",
+      "question": "How do you stream a large media file directly to a client response without consuming memory in Express?",
+      "options": [
+        "Read the file synchronously with fs.readFileSync() and use res.send().",
+        "Pipe a read stream from fs.createReadStream() directly into the Response object (res).",
+        "Convert the file to a Base64 string and send it in a JSON payload.",
+        "Compress the file in a separate child process thread."
+      ],
+      "answer": 1,
+      "explanation": "Since res extends stream.Writable, you can use fs.createReadStream('file').pipe(res) to stream files in chunk increments, minimizing RAM use."
+    },
+    {
+      "id": "express_25",
+      "difficulty": "Expert",
+      "question": "How do you achieve Zero-Downtime upgrades of an Express API server in a production cluster?",
+      "options": [
+        "Terminate the process and start it again.",
+        "Use cluster management tools (like PM2) with cluster reload features, rolling restarts one CPU process at a time.",
+        "Host the server on a browser client.",
+        "Change the port number on every reload request."
+      ],
+      "answer": 1,
+      "explanation": "Rolling restarts reload CPU worker processes sequentially. Active workers finish active sockets, while new workers spin up to take new traffic."
+    }
+  ],
+  "mongodb": [
+    {
+      "id": "mongodb_1",
+      "difficulty": "Basic",
+      "question": "What paradigm best describes MongoDB?",
+      "options": [
+        "Relational Table Database",
+        "NoSQL Document Store Database",
+        "Key-Value Memory Cache",
+        "Graph Node Database"
+      ],
+      "answer": 1,
+      "explanation": "MongoDB is a NoSQL schema-flexible document database, storing records as JSON-like documents rather than table rows."
+    },
+    {
+      "id": "mongodb_2",
+      "difficulty": "Basic",
+      "question": "In what format does MongoDB store document data internally on disk?",
+      "options": [
+        "Plain text JSON",
+        "XML files",
+        "BSON (Binary JSON)",
+        "CSV rows"
+      ],
+      "answer": 2,
+      "explanation": "BSON is a binary serialization format that encodes documents. It extends JSON with additional data types like Date and BinData."
+    },
+    {
+      "id": "mongodb_3",
+      "difficulty": "Basic",
+      "question": "Which field acts as the immutable primary key in MongoDB documents?",
+      "options": [
+        "id",
+        "_id",
+        "uuid",
+        "pk"
+      ],
+      "answer": 1,
+      "explanation": "The '_id' field is the primary key. If a document is inserted without one, MongoDB automatically generates a 12-byte ObjectId."
+    },
+    {
+      "id": "mongodb_4",
+      "difficulty": "Basic",
+      "question": "What MongoDB shell command is used to display all active databases?",
+      "options": [
+        "show databases",
+        "list dbs",
+        "show dbs",
+        "get dbs"
+      ],
+      "answer": 2,
+      "explanation": "'show dbs' lists all databases that contain collections with data on your current MongoDB instance."
+    },
+    {
+      "id": "mongodb_5",
+      "difficulty": "Basic",
+      "question": "What is a 'collection' in MongoDB?",
+      "options": [
+        "An index file.",
+        "A grouping of documents (similar to a SQL table).",
+        "A database replica set.",
+        "A backup archive."
+      ],
+      "answer": 1,
+      "explanation": "A collection exists within a database and holds BSON documents. Unlike SQL tables, collections do not enforce rigid table schemas."
+    },
+    {
+      "id": "mongodb_6",
+      "difficulty": "Basic",
+      "question": "Which operator is used to modify values of fields inside a MongoDB document?",
+      "options": [
+        "$update",
+        "$set",
+        "$change",
+        "$modify"
+      ],
+      "answer": 1,
+      "explanation": "The '$set' operator updates or inserts the specified field with the given value without replacing the entire document."
+    },
+    {
+      "id": "mongodb_7",
+      "difficulty": "Intermediate",
+      "question": "What is the MongoDB Aggregation Pipeline?",
+      "options": [
+        "A system to speed up primary key updates.",
+        "A framework for data transformation consisting of sequential processing stages.",
+        "A backup tool for shard keys.",
+        "A driver connection pool management module."
+      ],
+      "answer": 1,
+      "explanation": "The Aggregation Pipeline processes collections through stage flows ($match, $group, etc.) returning transformed, filtered, or joined results."
+    },
+    {
+      "id": "mongodb_8",
+      "difficulty": "Intermediate",
+      "question": "Which aggregation pipeline stage is used to filter documents, acting similarly to a WHERE clause?",
+      "options": [
+        "$filter",
+        "$match",
+        "$where",
+        "$project"
+      ],
+      "answer": 1,
+      "explanation": "The '$match' stage filters document streams, passing only matching documents to the next stage in the pipeline. It can utilize indexes."
+    },
+    {
+      "id": "mongodb_9",
+      "difficulty": "Intermediate",
+      "question": "What is a compound index in MongoDB?",
+      "options": [
+        "An index that encrypts database fields.",
+        "An index consisting of references to multiple fields in a collection.",
+        "An index built across multiple MongoDB databases.",
+        "A primary key copy."
+      ],
+      "answer": 1,
+      "explanation": "Compound indexes hold references to multiple fields in a document, accelerating queries that filter on multiple properties."
+    },
+    {
+      "id": "mongodb_10",
+      "difficulty": "Intermediate",
+      "question": "Which pipeline stage performs a left outer join to aggregate data from another collection?",
+      "options": [
+        "$join",
+        "$lookup",
+        "$merge",
+        "$unwind"
+      ],
+      "answer": 1,
+      "explanation": "The '$lookup' stage joins documents from a target collection, populating them as an array field in the source document."
+    },
+    {
+      "id": "mongodb_11",
+      "difficulty": "Intermediate",
+      "question": "What is Mongoose in Node.js/MongoDB application development?",
+      "options": [
+        "A graphical database administration tool.",
+        "An Object Document Mapper (ODM) that provides schema validation and business logic hooks.",
+        "A MongoDB driver compiler.",
+        "A caching server."
+      ],
+      "answer": 1,
+      "explanation": "Mongoose is a popular ODM library that models application data, provides schemas, type validation, and middleware hooks (pre/post save)."
+    },
+    {
+      "id": "mongodb_12",
+      "difficulty": "Intermediate",
+      "question": "What does a TTL (Time To Live) index do in MongoDB?",
+      "options": [
+        "It limits query execution times.",
+        "It automatically deletes documents after a specified time threshold.",
+        "It measures client connection timeouts.",
+        "It limits database session duration."
+      ],
+      "answer": 1,
+      "explanation": "A TTL index automatically removes documents from a collection when a date field exceeds the defined seconds-to-live parameter."
+    },
+    {
+      "id": "mongodb_13",
+      "difficulty": "Intermediate",
+      "question": "Which operator matches array elements that satisfy all specified query conditions?",
+      "options": [
+        "$all",
+        "$elemMatch",
+        "$in",
+        "$match"
+      ],
+      "answer": 1,
+      "explanation": "$elemMatch limits query matches to arrays containing at least one element that meets all the specified query operators."
+    },
+    {
+      "id": "mongodb_14",
+      "difficulty": "Advanced",
+      "question": "What is the primary architectural purpose of a Replica Set in MongoDB?",
+      "options": [
+        "To partition database documents horizontally across CPUs.",
+        "To provide high availability, automatic failover, and data redundancy.",
+        "To compile BSON into SQL format.",
+        "To cache query outputs."
+      ],
+      "answer": 1,
+      "explanation": "Replica Sets replicate database writes from the Primary node to Secondary nodes, offering data failover in case of Primary hardware failure."
+    },
+    {
+      "id": "mongodb_15",
+      "difficulty": "Advanced",
+      "question": "How does sharding achieve horizontal scalability in MongoDB?",
+      "options": [
+        "By duplicating database instances on a single machine.",
+        "By distributing datasets across multiple machines (shards) using a Shard Key.",
+        "By index compression.",
+        "By caching tables in worker threads."
+      ],
+      "answer": 1,
+      "explanation": "Sharding splits collection datasets across separate cluster nodes (shards). Data routing is handled using range or hash values of a Shard Key."
+    },
+    {
+      "id": "mongodb_16",
+      "difficulty": "Advanced",
+      "question": "What does write concern (e.g. w: 'majority') specify in MongoDB?",
+      "options": [
+        "The security permissions required to write files.",
+        "The level of write acknowledgement requested from cluster nodes before reporting success.",
+        "The speed of database replication.",
+        "The write query index priorities."
+      ],
+      "answer": 1,
+      "explanation": "Write concern sets write safety. 'majority' requires acknowledgement from a majority of replica set members before returning success."
+    },
+    {
+      "id": "mongodb_17",
+      "difficulty": "Advanced",
+      "question": "How do you execute multi-document transactions in MongoDB?",
+      "options": [
+        "MongoDB does not support transactions.",
+        "Using client sessions by starting a session and invoking startTransaction() on it.",
+        "By locking the collection with db.collection.lock().",
+        "By running updateMany() in a single thread."
+      ],
+      "answer": 1,
+      "explanation": "Multi-document transactions require sessions. Operations execute inside a session transaction, committing or aborting as an atomic unit."
+    },
+    {
+      "id": "mongodb_18",
+      "difficulty": "Advanced",
+      "question": "How does a Text Index support search operations in MongoDB?",
+      "options": [
+        "It converts BSON to PDF files.",
+        "It compiles a tokenized word list, ignoring case and common stop words for text search.",
+        "It forces fields to accept only text data.",
+        "It stores strings as numbers."
+      ],
+      "answer": 1,
+      "explanation": "Text indexes parse string fields, stemming words and removing stop words (e.g. 'the', 'a') to enable full-text query capabilities."
+    },
+    {
+      "id": "mongodb_19",
+      "difficulty": "Advanced",
+      "question": "What constitutes a 'covered query' in MongoDB optimization?",
+      "options": [
+        "A query that handles missing fields gracefully.",
+        "A query resolved completely using index keys without reading documents from disk.",
+        "A query that checks security indexes.",
+        "A query wrapper."
+      ],
+      "answer": 1,
+      "explanation": "A query is covered if all matching fields and projection filters exist inside an index, avoiding disk seeks to read document bodies."
+    },
+    {
+      "id": "mongodb_20",
+      "difficulty": "Expert",
+      "question": "How does the default WiredTiger storage engine handle concurrency?",
+      "options": [
+        "It locks the entire database instance for every write query.",
+        "Using document-level concurrency control and Multi-Version Concurrency Control (MVCC).",
+        "It processes writes sequentially in a single thread.",
+        "It locks collections."
+      ],
+      "answer": 1,
+      "explanation": "WiredTiger uses document-level locks and MVCC. Readers read clean document snapshots, avoiding contention locks with concurrent writers."
+    },
+    {
+      "id": "mongodb_21",
+      "difficulty": "Expert",
+      "question": "How do secondary replica nodes replicate primary database writes?",
+      "options": [
+        "They query the primary node's V8 heap memory directly.",
+        "They continuously pull and apply statements recorded in the primary's operations log (oplog).",
+        "By copying database files from disk on every write.",
+        "Through custom triggers."
+      ],
+      "answer": 1,
+      "explanation": "Writes to the Primary are logged in the capped collection 'oplog.rs'. Secondaries replicate and apply this oplog asynchronously to stay in sync."
+    },
+    {
+      "id": "mongodb_22",
+      "difficulty": "Expert",
+      "question": "Which pipeline optimization best avoids running out of memory in an aggregation?",
+      "options": [
+        "Run $lookup stages before $match.",
+        "Place $match and $sort early in the pipeline to filter documents and leverage indexes before grouping.",
+        "Disable indexes in the database config.",
+        "Set V8 heap to unlimited."
+      ],
+      "answer": 1,
+      "explanation": "Placing $match and $sort first restricts input sizes and utilizes indexes. Sorting after grouping can overflow WiredTiger's 100MB query memory limit."
+    },
+    {
+      "id": "mongodb_23",
+      "difficulty": "Expert",
+      "question": "What is GridFS in MongoDB?",
+      "options": [
+        "A grid-style dashboard interface.",
+        "A specification for storing and retrieving files exceeding the 16MB BSON document limit by splitting them into chunks.",
+        "A cloud backup service.",
+        "An index compression algorithm."
+      ],
+      "answer": 1,
+      "explanation": "GridFS splits files exceeding 16MB into distinct chunks (default 255KB) across two collections: fs.files (metadata) and fs.chunks (binary payload)."
+    },
+    {
+      "id": "mongodb_24",
+      "difficulty": "Expert",
+      "question": "How does a MongoDB Replica Set elect a new Primary node during primary failure?",
+      "options": [
+        "It waits for manual admin console reboot.",
+        "It runs a Raft-like consensus protocol where secondary nodes vote based on oplog freshness.",
+        "It defaults to node alphabetical order.",
+        "The first node to reboot becomes the primary."
+      ],
+      "answer": 1,
+      "explanation": "Consensus elections occur when heartbeat links to the Primary drop. Secondaries vote, electing the node with the most recent oplog entries."
+    },
+    {
+      "id": "mongodb_25",
+      "difficulty": "Expert",
+      "question": "What is collation in MongoDB document management?",
+      "options": [
+        "A data compression method.",
+        "Rules for language-specific string comparisons, case sensitivity, and sorting behavior.",
+        "A database replication sync protocol.",
+        "A schema compiler."
+      ],
+      "answer": 1,
+      "explanation": "Collation defines rules for sorting and matching strings, handling language rules, accents, and case-insensitive lookups."
+    }
+  ],
+  "sql": [
+    {
+      "id": "sql_1",
+      "difficulty": "Basic",
+      "question": "What does the abbreviation SQL stand for?",
+      "options": [
+        "System Query Language",
+        "Structured Query Language",
+        "Simple Query Logic",
+        "Sorted Query List"
+      ],
+      "answer": 1,
+      "explanation": "SQL stands for Structured Query Language, the standardized language used to manage and query relational database management systems."
+    },
+    {
+      "id": "sql_2",
+      "difficulty": "Basic",
+      "question": "Which SQL clause is used to filter records, executing before grouping occurs?",
+      "options": [
+        "HAVING",
+        "WHERE",
+        "GROUP BY",
+        "ORDER BY"
+      ],
+      "answer": 1,
+      "explanation": "The WHERE clause filters rows individually before any groupings are formed or aggregate functions are evaluated."
+    },
+    {
+      "id": "sql_3",
+      "difficulty": "Basic",
+      "question": "How do CHAR and VARCHAR datatypes differ in SQL?",
+      "options": [
+        "CHAR is variable length; VARCHAR is fixed.",
+        "CHAR is fixed length (pads trailing spaces); VARCHAR is variable length.",
+        "CHAR only accepts numbers.",
+        "VARCHAR cannot contain symbols."
+      ],
+      "answer": 1,
+      "explanation": "CHAR is fixed-length, padding unused space with characters on disk. VARCHAR is variable-length, utilizing only the storage required by the actual text."
+    },
+    {
+      "id": "sql_4",
+      "difficulty": "Basic",
+      "question": "What is the primary constraint of a PRIMARY KEY in a relational table?",
+      "options": [
+        "It can accept duplicate records but not NULL values.",
+        "It must uniquely identify each record in the table and cannot contain NULL values.",
+        "It can only contain integer values.",
+        "It must link to another table."
+      ],
+      "answer": 1,
+      "explanation": "PRIMARY KEY enforces uniqueness and NOT NULL constraints, ensuring every table row can be identified by that specific column."
+    },
+    {
+      "id": "sql_5",
+      "difficulty": "Basic",
+      "question": "Which DDL statement is used to add a new column to an existing database table?",
+      "options": [
+        "UPDATE TABLE",
+        "ALTER TABLE",
+        "INSERT INTO",
+        "CREATE COLUMN"
+      ],
+      "answer": 1,
+      "explanation": "ALTER TABLE modifies existing table schemas (e.g. ALTER TABLE table_name ADD column_name datatype)."
+    },
+    {
+      "id": "sql_6",
+      "difficulty": "Basic",
+      "question": "Which keyword filters query results to retrieve only unique values from a column?",
+      "options": [
+        "UNIQUE",
+        "DISTINCT",
+        "LIMIT",
+        "ONLY"
+      ],
+      "answer": 1,
+      "explanation": "DISTINCT filters out duplicate records in a SELECT list, returning only unique values."
+    },
+    {
+      "id": "sql_7",
+      "difficulty": "Intermediate",
+      "question": "What is the behavior of an INNER JOIN?",
+      "options": [
+        "It returns all rows from the left table and matching rows from the right table.",
+        "It returns records only when there is a matching key value in both tables.",
+        "It returns all records from both tables.",
+        "It returns non-matching records."
+      ],
+      "answer": 1,
+      "explanation": "INNER JOIN selects records that have matching values in both tables, ignoring rows where the joining condition is not met."
+    },
+    {
+      "id": "sql_8",
+      "difficulty": "Intermediate",
+      "question": "How do WHERE and HAVING clauses differ in SQL?",
+      "options": [
+        "They are interchangeable.",
+        "WHERE filters rows before grouping; HAVING filters aggregated groups created by GROUP BY.",
+        "HAVING is faster than WHERE.",
+        "WHERE only works with aggregate functions."
+      ],
+      "answer": 1,
+      "explanation": "WHERE filters rows before group aggregation. HAVING filters groups based on aggregate criteria (e.g. HAVING COUNT(id) > 5)."
+    },
+    {
+      "id": "sql_9",
+      "difficulty": "Intermediate",
+      "question": "What is a Foreign Key constraint in a relational database schema?",
+      "options": [
+        "A key that decrypts tables.",
+        "A column (or group of columns) that references the primary key of another table to maintain referential integrity.",
+        "An index that accelerates queries.",
+        "A key that handles temporary tables."
+      ],
+      "answer": 1,
+      "explanation": "Foreign Keys enforce relational mapping, preventing actions that would break links between tables (e.g. deleting parent rows before child rows)."
+    },
+    {
+      "id": "sql_10",
+      "difficulty": "Intermediate",
+      "question": "What do the ACID properties of database transactions guarantee?",
+      "options": [
+        "Database speed and connection compression.",
+        "Atomicity, Consistency, Isolation, and Durability of database operations.",
+        "Automatic columns, internal directories, indexes, and database partitions.",
+        "Data encryption standard."
+      ],
+      "answer": 1,
+      "explanation": "ACID properties guarantee that transactions resolve reliably. durably, in isolation, maintaining consistent DB states."
+    },
+    {
+      "id": "sql_11",
+      "difficulty": "Intermediate",
+      "question": "What is a Self-Join in SQL?",
+      "options": [
+        "A join that queries multiple databases.",
+        "A regular join where a table is joined with itself (requires aliasing).",
+        "An index creation statement.",
+        "A join that runs without conditional keys."
+      ],
+      "answer": 1,
+      "explanation": "A self-join matches rows within the same table, useful for hierarchical structures like employee-manager relationships."
+    },
+    {
+      "id": "sql_12",
+      "difficulty": "Intermediate",
+      "question": "What is the behavior of the UNION operator in SQL?",
+      "options": [
+        "It joins two tables horizontally.",
+        "It combines the result sets of two SELECT queries, automatically removing duplicate rows.",
+        "It calculates query sums.",
+        "It duplicates records."
+      ],
+      "answer": 1,
+      "explanation": "UNION appends query outputs vertically. It requires identical column structures and filters duplicates. (Use UNION ALL to keep duplicates)."
+    },
+    {
+      "id": "sql_13",
+      "difficulty": "Intermediate",
+      "question": "Which normal form requires removing transitive functional dependencies?",
+      "options": [
+        "First Normal Form (1NF)",
+        "Second Normal Form (2NF)",
+        "Third Normal Form (3NF)",
+        "Boyce-Codd Normal Form (BCNF)"
+      ],
+      "answer": 2,
+      "explanation": "Third Normal Form (3NF) requires a table to be in 2NF, and no non-primary key column can transitively depend on the primary key."
+    },
+    {
+      "id": "sql_14",
+      "difficulty": "Advanced",
+      "question": "How do Clustered and Non-Clustered indexes differ?",
+      "options": [
+        "Clustered indexes are slower than non-clustered indexes.",
+        "Clustered indexes determine the physical storage order of data rows; Non-Clustered indexes maintain a separate structure pointing to rows.",
+        "A table can have multiple clustered indexes.",
+        "Non-clustered indexes contain actual row files."
+      ],
+      "answer": 1,
+      "explanation": "Clustered index physically sorts data pages, so only one can exist per table. Non-clustered indexes create separate leaf node pointer structures."
+    },
+    {
+      "id": "sql_15",
+      "difficulty": "Advanced",
+      "question": "Under the 'Read Committed' transaction isolation level, what concurrency anomaly is prevented?",
+      "options": [
+        "Dirty Reads (reading uncommitted writes).",
+        "Non-Repeatable Reads (reading changed values).",
+        "Phantom Reads (reading new records).",
+        "Deadlocks."
+      ],
+      "answer": 0,
+      "explanation": "Read Committed prevents Dirty Reads. It ensures a transaction only reads data that has already been committed to disk."
+    },
+    {
+      "id": "sql_16",
+      "difficulty": "Advanced",
+      "question": "What is a Correlated Subquery in SQL query execution?",
+      "options": [
+        "A subquery that runs in a separate database instance.",
+        "A subquery that references and depends on columns from the outer query query block.",
+        "A subquery that executes only once.",
+        "A join optimizer."
+      ],
+      "answer": 1,
+      "explanation": "A correlated subquery executes recursively for every single row parsed by the outer query because it references outer variables."
+    },
+    {
+      "id": "sql_17",
+      "difficulty": "Advanced",
+      "question": "How do Window Functions (e.g. ROW_NUMBER() OVER (...)) differ from GROUP BY operations?",
+      "options": [
+        "They are much slower.",
+        "They perform calculations across a partition of rows without collapsing them into single summary rows.",
+        "They do not support sorting.",
+        "They only work inside UPDATE statements."
+      ],
+      "answer": 1,
+      "explanation": "Window functions calculate running totals or ranks over sections of data, while retaining individual row data outputs."
+    },
+    {
+      "id": "sql_18",
+      "difficulty": "Advanced",
+      "question": "What constitutes a Database Deadlock?",
+      "options": [
+        "A database that runs out of storage space.",
+        "A state where two transactions wait for locks held by each other, blocking both indefinitely.",
+        "An index that has been corrupted.",
+        "An invalid login loop."
+      ],
+      "answer": 1,
+      "explanation": "Deadlocks occur when Transaction A locks Row 1 and waits for Row 2, while Transaction B locks Row 2 and waits for Row 1. Relational engines auto-kill one."
+    },
+    {
+      "id": "sql_19",
+      "difficulty": "Advanced",
+      "question": "What is a Stored Procedure in SQL database systems?",
+      "options": [
+        "A file backup schedule.",
+        "A precompiled collection of SQL statements saved and executed directly on the database engine.",
+        "A script that runs on Express API routing.",
+        "A database logging trigger."
+      ],
+      "answer": 1,
+      "explanation": "Stored Procedures are compiled and cached on the database server, executing tasks efficiently and reducing network overhead."
+    },
+    {
+      "id": "sql_20",
+      "difficulty": "Expert",
+      "question": "What does the 'Serializable' transaction isolation level guarantee?",
+      "options": [
+        "Transactions are compiled as JSON.",
+        "Complete isolation, serial execution behavior, preventing dirty, non-repeatable, and phantom reads.",
+        "Multi-core execution concurrency.",
+        "Instant rollback logs."
+      ],
+      "answer": 1,
+      "explanation": "Serializable is the highest isolation level. It places range locks, preventing phantom reads and ensuring execution results match serial sequencing."
+    },
+    {
+      "id": "sql_21",
+      "difficulty": "Expert",
+      "question": "How does a B-Tree Index locate specific database rows?",
+      "options": [
+        "By scanning every table row sequentially.",
+        "Using a balanced search tree of parent/child nodes, resolving searches in log(N) page traversals.",
+        "Through custom hashing on string variables.",
+        "By querying database cache memory randomly."
+      ],
+      "answer": 1,
+      "explanation": "B-Tree indexes maintain a balanced node structure. Queries traverse from root to branch to leaf nodes, loading few pages from disk."
+    },
+    {
+      "id": "sql_22",
+      "difficulty": "Expert",
+      "question": "What is the role of Write-Ahead Logging (WAL) in database engine recovery?",
+      "options": [
+        "To speed up network data uploads.",
+        "To write transaction updates to log files before committing changes to actual database data pages, securing Durability.",
+        "To write security policies.",
+        "To cache user login sessions."
+      ],
+      "answer": 1,
+      "explanation": "WAL ensures database integrity. If power fails, the engine parses log entries to roll forward committed or roll back uncommitted changes."
+    },
+    {
+      "id": "sql_23",
+      "difficulty": "Expert",
+      "question": "What does the RECURSIVE keyword enable inside a Common Table Expression (CTE)?",
+      "options": [
+        "It forces queries to run forever.",
+        "It allows a query to reference its own output, enabling hierarchical or graph tree structures to be parsed.",
+        "It compresses results.",
+        "It runs multiple joins in separate CPU threads."
+      ],
+      "answer": 1,
+      "explanation": "Recursive CTEs repeat query logic on outputs of prior executions, making them perfect for routing graphs, org charts, and parent-child hierarchies."
+    },
+    {
+      "id": "sql_24",
+      "difficulty": "Expert",
+      "question": "How does the Database Query Optimizer determine a query's execution plan?",
+      "options": [
+        "It selects queries randomly.",
+        "It evaluates table statistics, indexes, and join costs to select optimal paths (e.g. index seeks vs hash joins).",
+        "It compiles SQL into JavaScript functions.",
+        "It locks tables."
+      ],
+      "answer": 1,
+      "explanation": "Optimizers use cost models, matching stats of tables and indexes to assess execution costs and build execution paths."
+    },
+    {
+      "id": "sql_25",
+      "difficulty": "Expert",
+      "question": "How do Database Triggers execute in SQL management systems?",
+      "options": [
+        "They are called explicitly by API routes.",
+        "They automatically execute procedural code in response to INSERT, UPDATE, or DELETE events on a table.",
+        "They run on a cron job timer.",
+        "They execute only on server reboot."
+      ],
+      "answer": 1,
+      "explanation": "Triggers are database-bound event listeners. They execute automatically as part of the transaction block when DML statements hit their targets."
+    }
+  ],
+  "database": [
+    {
+      "id": "db_1",
+      "difficulty": "Basic",
+      "question": "What does the 'I' stand for in ACID properties of databases?",
+      "options": [
+        "Integration",
+        "Isolation",
+        "Indexing",
+        "Inheritance"
+      ],
+      "answer": 1,
+      "explanation": "Isolation ensures that concurrent execution of transactions leaves the database in the same state as if they executed sequentially."
+    },
+    {
+      "id": "db_2",
+      "difficulty": "Basic",
+      "question": "What is NoSQL?",
+      "options": [
+        "A database that does not allow query statements.",
+        "A non-relational database architecture providing flexible schemas and scaling.",
+        "A SQL database that runs in single thread memory.",
+        "An encrypted file storage."
+      ],
+      "answer": 1,
+      "explanation": "NoSQL stands for 'Not Only SQL', representing non-relational database structures (document, key-value, graph, wide-column) designed for scaling."
+    },
+    {
+      "id": "db_3",
+      "difficulty": "Basic",
+      "question": "What is the primary benefit of creating an index on a database table?",
+      "options": [
+        "It reduces the size of the database on disk.",
+        "It increases the speed of data retrieval operations (queries).",
+        "It encrypts sensitive column fields.",
+        "It ensures referential integrity automatically."
+      ],
+      "answer": 1,
+      "explanation": "Indexes provide fast lookup paths (like an index in a textbook), allowing the query engine to find rows without scanning the whole table."
+    },
+    {
+      "id": "db_4",
+      "difficulty": "Basic",
+      "question": "What constraint prevents a column from having two identical values in a table?",
+      "options": [
+        "NOT NULL",
+        "UNIQUE",
+        "CHECK",
+        "FOREIGN KEY"
+      ],
+      "answer": 1,
+      "explanation": "The UNIQUE constraint ensures that all values in a column are distinct, preventing duplicate entries."
+    },
+    {
+      "id": "db_5",
+      "difficulty": "Basic",
+      "question": "What is a schema in database design?",
+      "options": [
+        "A database backup schedule.",
+        "The formal structure and definition of database tables, columns, relations, and types.",
+        "A transaction log file.",
+        "A server memory segment."
+      ],
+      "answer": 1,
+      "explanation": "A schema is the blueprint or structural configuration that defines how data is organized and related within the database."
+    },
+    {
+      "id": "db_6",
+      "difficulty": "Basic",
+      "question": "What DDL statement creates a new database table?",
+      "options": [
+        "ADD TABLE",
+        "CREATE TABLE",
+        "NEW TABLE",
+        "ALTER TABLE"
+      ],
+      "answer": 1,
+      "explanation": "CREATE TABLE is the standard Data Definition Language (DDL) command used to define and instantiate a new table."
+    },
+    {
+      "id": "db_7",
+      "difficulty": "Intermediate",
+      "question": "What is the CAP Theorem definition in distributed databases?",
+      "options": [
+        "Computers, Access, and Processing must be maximized.",
+        "A distributed database can only guarantee two out of three: Consistency, Availability, and Partition Tolerance.",
+        "Caches, Aggregates, and Pipelines must run inside single threads.",
+        "SQL triggers execute before stored procedures."
+      ],
+      "answer": 1,
+      "explanation": "The CAP theorem states that a distributed system partition cannot guarantee both strong consistency (all nodes see same data) and availability simultaneously."
+    },
+    {
+      "id": "db_8",
+      "difficulty": "Intermediate",
+      "question": "What is database normalization?",
+      "options": [
+        "Compensating for timezone differences in date columns.",
+        "Structuring database tables to reduce data redundancy and eliminate anomalies.",
+        "Compressing file storage on disk.",
+        "Replicating tables to secondary nodes."
+      ],
+      "answer": 1,
+      "explanation": "Normalization breaks tables down systematically (1NF, 2NF, 3NF) to isolate data so updates/deletes don't cause anomalies or redundant duplication."
+    },
+    {
+      "id": "db_9",
+      "difficulty": "Intermediate",
+      "question": "How does vertical scaling (Scale-Up) differ from horizontal scaling (Scale-Out)?",
+      "options": [
+        "Vertical scaling is always cheaper.",
+        "Vertical scaling adds power (CPU/RAM) to a single machine; Horizontal scaling adds more machines to a cluster.",
+        "Horizontal scaling is only possible for SQL databases.",
+        "There is no functional difference."
+      ],
+      "answer": 1,
+      "explanation": "Vertical scaling improves the hardware specs of a single server node. Horizontal scaling adds multiple server nodes, clustering data across them."
+    },
+    {
+      "id": "db_10",
+      "difficulty": "Intermediate",
+      "question": "What is a Database View?",
+      "options": [
+        "A graphical user interface layout.",
+        "A virtual table defined by a saved SELECT query that executes dynamically when queried.",
+        "A physical backup copy on another disk.",
+        "An index structure."
+      ],
+      "answer": 1,
+      "explanation": "Views do not store data themselves (except materialized views). They act as a virtual filter, simplifying complex joins or masking sensitive columns."
+    },
+    {
+      "id": "db_11",
+      "difficulty": "Intermediate",
+      "question": "What is a database transaction roll-back?",
+      "options": [
+        "Rebooting the database machine.",
+        "Undoing all modifications made during a transaction if it fails or aborts, restoring the prior consistent state.",
+        "Deleting old index files.",
+        "Upgrading table normal forms."
+      ],
+      "answer": 1,
+      "explanation": "Rollback ensures Atomicity. If a transaction error occurs, all partial writes are reversed, leaving the database completely clean of partial updates."
+    },
+    {
+      "id": "db_12",
+      "difficulty": "Intermediate",
+      "question": "What represents the 'BASE' consistency model in NoSQL databases?",
+      "options": [
+        "Basic Availability, Soft state, Eventual consistency.",
+        "Binary Access, Secure Encryption.",
+        "Buffer Allocation, System Execution.",
+        "Backend Auto-Scaling Engine."
+      ],
+      "answer": 0,
+      "explanation": "BASE stands for Basically Available, Soft state, Eventual consistency, choosing scaling availability over immediate ACID consistency."
+    },
+    {
+      "id": "db_13",
+      "difficulty": "Intermediate",
+      "question": "What is the purpose of connection pooling in database drivers?",
+      "options": [
+        "To encrypt SQL commands.",
+        "To maintain a cache of active database connections, minimizing connection overhead on requests.",
+        "To cluster database storage.",
+        "To run queries in parallel threads."
+      ],
+      "answer": 1,
+      "explanation": "Opening database TCP sockets is slow. Connection pools keep a set of warm connections active, reusing them across client requests."
+    },
+    {
+      "id": "db_14",
+      "difficulty": "Advanced",
+      "question": "What is database sharding?",
+      "options": [
+        "Encrypting database tables.",
+        "Horizontal partitioning that splits a single collection/table database across multiple physical servers.",
+        "Taking automated hourly backups.",
+        "Joining tables recursively."
+      ],
+      "answer": 1,
+      "explanation": "Sharding distributes database segments to different hardware nodes, spreading read/write operations and file storage across the cluster."
+    },
+    {
+      "id": "db_15",
+      "difficulty": "Advanced",
+      "question": "What is Multi-Version Concurrency Control (MVCC)?",
+      "options": [
+        "Running multiple database versions on the same server.",
+        "A concurrency control method that presents transactions with isolated snapshots of data, avoiding lock conflicts.",
+        "A system that runs cluster nodes in sync.",
+        "An auto-save trigger."
+      ],
+      "answer": 1,
+      "explanation": "MVCC provides readers with consistent snapshots of database tables while updates write to new versions, ensuring readers never block writers."
+    },
+    {
+      "id": "db_16",
+      "difficulty": "Advanced",
+      "question": "What is the role of Write-Ahead Logging (WAL) in database engine recovery?",
+      "options": [
+        "To speed up network data uploads.",
+        "To write transaction updates to log files before committing changes to actual database data pages, securing Durability.",
+        "To write security policies.",
+        "To cache user login sessions."
+      ],
+      "answer": 1,
+      "explanation": "WAL ensures database integrity. If power fails, the engine parses log entries to roll forward committed or roll back uncommitted changes."
+    },
+    {
+      "id": "db_17",
+      "difficulty": "Advanced",
+      "question": "What constitutes a Database Deadlock?",
+      "options": [
+        "A database that runs out of storage space.",
+        "A state where two transactions wait for locks held by each other, blocking both indefinitely.",
+        "An index that has been corrupted.",
+        "An invalid login loop."
+      ],
+      "answer": 1,
+      "explanation": "Deadlocks occur when Transaction A locks Row 1 and waits for Row 2, while Transaction B locks Row 2 and waits for Row 1. Relational engines auto-kill one."
+    },
+    {
+      "id": "db_18",
+      "difficulty": "Advanced",
+      "question": "What is the primary role of a B-Tree index in query optimization?",
+      "options": [
+        "To sort tables alphabetically on disk.",
+        "To provide O(log N) search, insert, and delete operations by maintaining a balanced search tree of data pages.",
+        "To partition queries dynamically.",
+        "To automate column normalization."
+      ],
+      "answer": 1,
+      "explanation": "B-Tree structures maintain sorted keys in node groupings. Seeking specific rows requires traversing few index nodes from root to leaf."
+    },
+    {
+      "id": "db_19",
+      "difficulty": "Advanced",
+      "question": "What is a database transaction savepoint?",
+      "options": [
+        "A scheduled backup script.",
+        "A point inside a transaction that allows selective rollback of operations without aborting the entire transaction.",
+        "An index configuration key.",
+        "A security credential token."
+      ],
+      "answer": 1,
+      "explanation": "Savepoints (via SAVEPOINT name / ROLLBACK TO name) let transactions checkpoint updates, backing out of nested failures gracefully."
+    },
+    {
+      "id": "db_20",
+      "difficulty": "Expert",
+      "question": "How do Optimistic and Pessimistic concurrency controls differ in high-contention databases?",
+      "options": [
+        "Optimistic lock-based systems are faster under constant write conflicts.",
+        "Optimistic concurrency control assumes conflicts are rare, checking for updates at commit time; Pessimistic control locks rows immediately.",
+        "Pessimistic control does not support rollbacks.",
+        "There is no difference."
+      ],
+      "answer": 1,
+      "explanation": "Optimistic concurrency uses version checking, failing or retrying at commit time. Pessimistic concurrency locks records immediately, forcing other operations to block."
+    },
+    {
+      "id": "db_21",
+      "difficulty": "Expert",
+      "question": "What is the difference between Read Committed and Serializable isolation levels?",
+      "options": [
+        "Read Committed allows dirty reads; Serializable does not.",
+        "Read Committed only locks written rows; Serializable prevents phantom reads by placing range/predicate locks.",
+        "Serializable is faster than Read Committed.",
+        "Serializable allows dirty reads."
+      ],
+      "answer": 1,
+      "explanation": "Serializable ensures completely isolated execution by placing locks on range indexes, preventing phantom rows from being inserted during a transaction."
+    },
+    {
+      "id": "db_22",
+      "difficulty": "Expert",
+      "question": "How does a distributed database resolve conflicts during network splits (partitions)?",
+      "options": [
+        "By shutting down the entire server pool immediately.",
+        "By either rejecting writes to preserve Consistency (CP) or accepting writes allowing temporary divergence (AP).",
+        "By merging data randomly.",
+        "By compiling all records as text strings."
+      ],
+      "answer": 1,
+      "explanation": "Per CAP, networks can reject writes to stay consistent (CP), or remain available (AP) and use conflict-resolution (vector clocks, last-write-wins) later."
+    },
+    {
+      "id": "db_23",
+      "difficulty": "Expert",
+      "question": "What is a covering index in database optimizer calculations?",
+      "options": [
+        "An index that encrypts database tables.",
+        "An index that contains all columns referenced in the query, allowing data to be retrieved solely from the index page.",
+        "A backup index directory.",
+        "An index covering multiple tables."
+      ],
+      "answer": 1,
+      "explanation": "Covering indexes satisfy the query select, join, and filter criteria completely, avoiding any heap/table data page accesses and improving speed."
+    },
+    {
+      "id": "db_24",
+      "difficulty": "Expert",
+      "question": "What does a cost-based Query Optimizer compile under the hood?",
+      "options": [
+        "It translates SQL into JavaScript functions.",
+        "It analyzes database stats and cost formulas to construct an optimal execution plan (join type, index search vs table scan).",
+        "It sets database session cookies.",
+        "It compiles queries into WebAssembly modules."
+      ],
+      "answer": 1,
+      "explanation": "The optimizer generates alternative plans, estimates CPU/IO cost weights based on data cardinality stats, and selects the lowest-cost plan."
+    },
+    {
+      "id": "db_25",
+      "difficulty": "Expert",
+      "question": "What is log-structured merge-tree (LSM Tree) storage and how does it compare to B-Tree?",
+      "options": [
+        "LSM Trees do not support disk saves.",
+        "LSM Trees optimize write throughput by writing updates sequentially to memory tables and log files before batching to disk.",
+        "LSM Trees are slower for write queries.",
+        "There is no structural difference."
+      ],
+      "answer": 1,
+      "explanation": "LSM trees optimize write performance by handling updates as append-only memory tables (MemTable) flushed to sorted SSTables on disk, avoiding B-Tree random seeks."
+    }
+  ]
+}

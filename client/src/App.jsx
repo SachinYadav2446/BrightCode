@@ -18,6 +18,7 @@ import ProctorArena from './pages/ProctorArena';
 import ProctorPage from './pages/ProctorPage';
 import CreateSessionPage from './pages/CreateSessionPage';
 import BattleArena from './pages/BattleArena';
+import ArenaLobby from './pages/ArenaLobby';
 import UserModule from './pages/UserModule';
 import UserProfile from './pages/UserProfile';
 import ContributePage from './pages/ContributePage';
@@ -53,7 +54,7 @@ const NavbarWrapper = () => {
   const location = useLocation();
   const { navbarHidden } = useAuth();
   
-  const hideOnPaths = ['/auth', '/editor', '/code-wars', '/battle-arena', '/u', '/user-guide'];
+  const hideOnPaths = ['/auth', '/editor', '/code-wars', '/battle-arena', '/arena-lobby', '/u', '/user-guide'];
   const isLanding = location.pathname === '/';
   // Hide navbar during active proctor sessions but not on /proctor hub
   const isActiveSession = /^\/proctor\/.+/.test(location.pathname);
@@ -407,6 +408,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <BattleArena />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/arena-lobby" 
+                element={
+                  <ProtectedRoute>
+                    <ArenaLobby />
                   </ProtectedRoute>
                 } 
               />

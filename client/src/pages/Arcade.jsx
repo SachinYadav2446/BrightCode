@@ -13,6 +13,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Chatbot from '../components/Chatbot';
+import Library from './Library';
 
 import { 
     CSS_LEVELS, LOGIC_LEVELS, REACT_LEVELS, 
@@ -23,7 +24,8 @@ import { JAVA_LEVELS, CPP_LEVELS, PYTHON_LEVELS, GO_LEVELS, LANGUAGE_PHASES, LAN
 // â”€â”€ SIDEBAR TABS CONFIG â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const BASE_TABS = [
     { id: 'frontend', label: 'Frontend', icon: Layout, active: true },
-    { id: 'backend', label: 'Backend', icon: Server, active: false },
+    { id: 'backend', label: 'Backend', icon: Server, active: true },
+    { id: 'database', label: 'Database', icon: Database, active: true },
     { id: 'language', label: 'Language', icon: Code2, active: true },
 ];
 
@@ -338,6 +340,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
         language: 'language', 
         frontend: 'frontend', 
         backend: 'backend',
+        database: 'database',
         curriculum: 'curriculum'
     };
     const currentSection = sections.find(s => s.id === tabToSection[activeTab]);
@@ -455,12 +458,32 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
                         >
                             {currentSection.games.map((game, idx) => {
                                 const solvedCount = (function() {
+                                    if (game.id === 'css-odyssey') return user?.css_level || 0;
+                                    if (game.id === 'logic-lab') return user?.logic_level || 0;
+                                    
+                                    try {
+                                        const libSolved = JSON.parse(localStorage.getItem('library_solved_state') || '{}');
+                                        const countSolved = (prefix) => Object.keys(libSolved).filter(k => k.startsWith(prefix)).length;
+                                        
+                                        if (game.id === 'nodejs') return countSolved('node_');
+                                        if (game.id === 'express') return countSolved('express_');
+                                        if (game.id === 'mongodb') return countSolved('mongodb_');
+                                        if (game.id === 'sql') return countSolved('sql_');
+                                        if (game.id === 'database-systems') return countSolved('db_');
+                                        
+                                        if (game.id === 'java-master') return Math.max(user?.java_level || 0, countSolved('java_'));
+                                        if (game.id === 'cpp-master') return Math.max(user?.cpp_level || 0, countSolved('cpp_'));
+                                        if (game.id === 'python-master') return Math.max(user?.python_level || 0, countSolved('python_'));
+                                        if (game.id === 'go-master') return Math.max(user?.go_level || 0, countSolved('go_'));
+                                        if (game.id === 'react-quest') return Math.max(user?.react_level || 0, countSolved('react_'));
+                                    } catch (e) {
+                                        // fallback to DB levels
+                                    }
+                                    
                                     if (game.id === 'java-master') return user?.java_level || 0;
                                     if (game.id === 'cpp-master') return user?.cpp_level || 0;
                                     if (game.id === 'python-master') return user?.python_level || 0;
                                     if (game.id === 'go-master') return user?.go_level || 0;
-                                    if (game.id === 'css-odyssey') return user?.css_level || 0;
-                                    if (game.id === 'logic-lab') return user?.logic_level || 0;
                                     if (game.id === 'react-quest') return user?.react_level || 0;
                                     return 0;
                                 })();
@@ -620,8 +643,21 @@ const Arcade = () => {
         { 
             id: 'backend', 
             name: 'Backend Development', 
-            description: 'Build robust server-side applications and APIs', 
-            games: [] 
+            description: 'Build robust server-side applications and APIs.', 
+            games: [
+                { id: 'nodejs', title: 'Node.js Core', subtitle: 'Runtime Engine', type: 'mcq', desc: 'Master the event loop, streams, buffer management, cluster configurations, and Libuv thread pool operations.', icon: <Code2 />, progressKey: 'highest_nodejs_level', total: 25 },
+                { id: 'express', title: 'Express.js', subtitle: 'Web Framework', type: 'mcq', desc: 'Build scalable APIs. Deep dive into middleware routing pipelines, advanced async handlers, rate limiting, and core layer design.', icon: <Server />, progressKey: 'highest_express_level', total: 25 }
+            ] 
+        },
+        {
+            id: 'database',
+            name: 'Database Architectures',
+            description: 'Design and optimize query pipelines and storage engines.',
+            games: [
+                { id: 'mongodb', title: 'MongoDB Core', subtitle: 'NoSQL Document Store', type: 'mcq', desc: 'Tune aggregation pipelines, structure sharding keys, configure replica sets, WiredTiger MVCC, and ODM validation layers.', icon: <Database />, progressKey: 'highest_mongodb_level', total: 25 },
+                { id: 'sql', title: 'SQL Relational', subtitle: 'Relational Engines', type: 'mcq', desc: 'Optimize joins, configure transaction isolation levels, resolve deadlocks, parse recursive CTEs, and write-ahead log recovery.', icon: <Brain />, progressKey: 'highest_sql_level', total: 25 },
+                { id: 'database-systems', title: 'Database Systems', subtitle: 'Storage & Concurrency', type: 'mcq', desc: 'Deep dive into transactional ACID properties, MVCC, write-ahead logs, CAP theorem, normal forms, and LSM-tree structures.', icon: <Trophy />, progressKey: 'highest_database_level', total: 25 }
+            ]
         },
         {
             id: 'language',
@@ -1081,7 +1117,15 @@ const Arcade = () => {
         <div className={`arcade-page ${navbarHidden ? 'no-navbar' : ''}`}>
 
 
-            {!activeGame ? (
+            {activeGame && [
+                'nodejs', 'express', 'mongodb', 'sql', 'database-systems',
+                'react-quest', 'java-master', 'cpp-master', 'python-master', 'go-master'
+            ].includes(activeGame) ? (
+                <Library 
+                    initialModule={activeGame === 'database-systems' ? 'database' : activeGame}
+                    onBack={() => { setActiveGame(null); setViewingSections(false); }}
+                />
+            ) : !activeGame ? (
                 <LibraryLobby 
                     sections={sections} 
                     setActiveGame={setActiveGame} 

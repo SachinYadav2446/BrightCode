@@ -47,20 +47,49 @@ const getHeaders = () => {
 async function executeJudge0(code, language, stdin = '') {
     const langKey = String(language).toLowerCase();
     const languageId = JUDGE0_LANGUAGES[langKey] || 63;
-    const baseUrl = getJudge0Url();
+    let baseUrl = getJudge0Url();
     const headers = getHeaders();
 
     logger.info(`[JUDGE0] Submitting code for language: ${language} (ID: ${languageId}) to ${baseUrl}`);
 
     try {
-        const response = await axios.post(`${baseUrl}/submissions?base64_encoded=false&wait=true`, {
-            source_code: code,
-            language_id: languageId,
-            stdin: stdin || ''
-        }, {
-            headers,
-            timeout: 15000
-        });
+        let response;
+        try {
+            response = await axios.post(`${baseUrl}/submissions?base64_encoded=false&wait=true`, {
+                source_code: code,
+                language_id: languageId,
+                stdin: stdin || ''
+            }, {
+                headers,
+                timeout: 15000
+            });
+
+            if (response.data?.status?.id === 13 && baseUrl !== 'https://ce.judge0.com') {
+                logger.warn('[JUDGE0] Local endpoint returned Internal Error (id 13), failing over to https://ce.judge0.com');
+                response = await axios.post(`https://ce.judge0.com/submissions?base64_encoded=false&wait=true`, {
+                    source_code: code,
+                    language_id: languageId,
+                    stdin: stdin || ''
+                }, {
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 15000
+                });
+            }
+        } catch (localErr) {
+            if (baseUrl !== 'https://ce.judge0.com') {
+                logger.warn(`[JUDGE0] Local endpoint error (${localErr.message}), failing over to https://ce.judge0.com`);
+                response = await axios.post(`https://ce.judge0.com/submissions?base64_encoded=false&wait=true`, {
+                    source_code: code,
+                    language_id: languageId,
+                    stdin: stdin || ''
+                }, {
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 15000
+                });
+            } else {
+                throw localErr;
+            }
+        }
 
         const data = response.data;
         const stdout = data.stdout || '';
@@ -84,12 +113,10 @@ async function executeJudge0(code, language, stdin = '') {
 }
 
 /**
- * Execute test cases via Judge0
+ * Execute test cases via Judge0 in parallel for fast evaluation
  */
 async function executeJudge0TestCases(code, language, testCases = [], wrapCodeFn) {
-    const results = [];
-    for (let i = 0; i < testCases.length; i++) {
-        const testCase = testCases[i];
+    const results = await Promise.all(testCases.map(async (testCase) => {
         const wrappedCode = wrapCodeFn ? wrapCodeFn(code, language, testCase) : code;
         const expected = String(testCase.expected).trim();
 
@@ -97,37 +124,44 @@ async function executeJudge0TestCases(code, language, testCases = [], wrapCodeFn
             const execRes = await executeJudge0(
                 wrappedCode, 
                 language, 
-                Array.isArray(testCase.input) ? testCase.input.join('\n') : (testCase.input || '')
+                Array.isArray(testCase.input) ? testCase.input.join('\n') : (testCase.input !== undefined ? String(testCase.input) : '')
             );
             
-            if (execRes.stderr) {
-                results.push({
+            if (execRes.stderr && !execRes.stdout) {
+                return {
                     passed: false,
                     input: testCase.input,
                     expected,
                     actual: null,
-                    error: execRes.stderr
-                });
+                    error: execRes.stderr,
+                    time: execRes.executionTime,
+                    memory: execRes.memoryKb
+                };
             } else {
-                const passed = execRes.stdout.trim() === expected;
-                results.push({
+                const stdoutClean = (execRes.stdout || '').trim();
+                const passed = stdoutClean === expected;
+                return {
                     passed,
                     input: testCase.input,
                     expected,
-                    actual: execRes.stdout.trim(),
-                    error: null
-                });
+                    actual: stdoutClean,
+                    error: execRes.stderr || null,
+                    time: execRes.executionTime,
+                    memory: execRes.memoryKb
+                };
             }
         } catch (err) {
-            results.push({
+            return {
                 passed: false,
                 input: testCase.input,
                 expected,
                 actual: null,
-                error: err.message || 'Judge0 execution error'
-            });
+                error: err.message || 'Judge0 execution error',
+                time: 0,
+                memory: 0
+            };
         }
-    }
+    }));
 
     const allPassed = results.every(r => r.passed);
     const testsPassed = results.filter(r => r.passed).length;

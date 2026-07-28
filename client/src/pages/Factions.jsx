@@ -500,15 +500,11 @@ const Factions = () => {
                                         </button>
                                     ))}
                                 </div>
-                                {user?.username === 'admin' ? (
-                                    <button className="fp-btn-ghost fp-btn-sm" onClick={() => navigate('/battle-arena')}>
-                                        <Swords size={13} /> Battle Arena
-                                    </button>
-                                ) : (
-                                    <button className="fp-btn-ghost fp-btn-sm" disabled>
-                                        <Lock size={13} /> Coming Soon
-                                    </button>
-                                )}
+                                <button className="fp-battle-arena-btn" onClick={() => navigate('/battle-arena')}>
+                                    <Swords size={16} />
+                                    <span>Battle Arena</span>
+                                    <div className="fp-battle-live-dot"></div>
+                                </button>
                             </div>
 
                             <AnimatePresence mode="wait">

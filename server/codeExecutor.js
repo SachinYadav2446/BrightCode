@@ -38,26 +38,26 @@ async function executeCode(code, language, testCases = []) {
         };
     }
 
-    // Try Judge0 Execution Engine if configured or explicitly requested
-    if (process.env.USE_JUDGE0 === 'true' || process.env.JUDGE0_URL || process.env.RAPIDAPI_KEY) {
+    // Try Judge0 Execution Engine as primary brain (unless explicitly disabled)
+    if (process.env.USE_JUDGE0 !== 'false') {
         try {
-            logger.info('[CODE EXECUTOR] Attempting Judge0 Execution Engine...');
+            logger.info('[CODE EXECUTOR] Evaluating via Judge0 Brain...');
             const judge0Res = await executeJudge0TestCases(code, language, testCases, wrapCodeWithTestCase);
-            logger.info(`[CODE EXECUTOR] Judge0 finished: ${judge0Res.testsPassed}/${testCases.length} tests passed`);
+            logger.info(`[CODE EXECUTOR] Judge0 execution complete: ${judge0Res.testsPassed}/${testCases.length} tests passed`);
             return judge0Res;
         } catch (jErr) {
-            logger.warn(`[CODE EXECUTOR] Judge0 failed (${jErr.message}), falling back to standard engines`);
+            logger.warn(`[CODE EXECUTOR] Judge0 brain failed (${jErr.message}), falling back to standard engines`);
         }
     }
 
-    // Use existing Java compiler for Java
+    // Fallback: Use existing Java compiler for Java
     if (language === 'java') {
-        logger.debug('[CODE EXECUTOR] Using Java compiler');
+        logger.debug('[CODE EXECUTOR] Using local Java compiler fallback');
         return await compileAndRunJava(code, testCases);
     }
 
-    // Use Piston API for other languages
-    logger.debug('[CODE EXECUTOR] Using Piston API');
+    // Fallback: Use Piston API for other languages
+    logger.debug('[CODE EXECUTOR] Using Piston API fallback');
     return await executePiston(code, language, testCases);
 }
 
@@ -156,21 +156,77 @@ async function executePiston(code, language, testCases) {
  * Wrap user code with test case execution logic
  */
 function wrapCodeWithTestCase(userCode, language, testCase) {
-    const inputs = testCase.input || [];
+    const inputs = Array.isArray(testCase.input) ? testCase.input : (testCase.input !== undefined ? [testCase.input] : []);
 
     switch (language) {
         case 'python':
             return wrapPython(userCode, inputs);
         
         case 'javascript':
+        case 'js':
             return wrapJavaScript(userCode, inputs);
         
         case 'cpp':
+        case 'c++':
             return wrapCpp(userCode, inputs);
+        
+        case 'java':
+            return wrapJava(userCode, inputs);
         
         default:
             return userCode;
     }
+}
+
+/**
+ * Wrap Java code with test case execution
+ */
+function wrapJava(userCode, inputs) {
+    const argsStr = inputs.map(input => {
+        if (typeof input === 'string') return `"${input}"`;
+        if (Array.isArray(input)) return `new int[]{${input.join(', ')}}`;
+        return String(input);
+    }).join(', ');
+
+    if (userCode.includes('public static void main') || userCode.includes('static void main')) {
+        return userCode;
+    }
+
+    if (userCode.includes('class Solution') || userCode.includes('public class Solution')) {
+        return `
+import java.util.*;
+
+${userCode}
+
+public class Main {
+    public static void main(String[] args) {
+        try {
+            Solution sol = new Solution();
+            Object res = sol.solution(${argsStr});
+            System.out.println(res);
+        } catch (Exception e) {
+            System.out.println("ERROR: " + e.getMessage());
+        }
+    }
+}
+`;
+    }
+
+    return `
+import java.util.*;
+
+public class Main {
+    ${userCode}
+    public static void main(String[] args) {
+        try {
+            Object res = solution(${argsStr});
+            System.out.println(res);
+        } catch (Exception e) {
+            System.out.println("ERROR: " + e.getMessage());
+        }
+    }
+}
+`;
 }
 
 /**

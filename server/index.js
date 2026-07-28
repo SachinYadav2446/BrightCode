@@ -108,6 +108,10 @@ app.use('/api/chat', chatbotAPI);
 // ── Mount Questions API ─────────────────────────────────────
 app.use('/api/questions', questionsAPI);
 
+// ── Mount Library API ───────────────────────────────────────
+const libraryAPI = require('./libraryAPI');
+app.use('/api/library', libraryAPI);
+
 // ── Mount Proctor API ───────────────────────────────────────
 app.use('/api/proctor', proctorAPI);
 
@@ -293,6 +297,11 @@ const initDB = async () => {
                 cpp_level INTEGER DEFAULT 0,
                 python_level INTEGER DEFAULT 0,
                 go_level INTEGER DEFAULT 0,
+                nodejs_level INTEGER DEFAULT 0,
+                express_level INTEGER DEFAULT 0,
+                mongodb_level INTEGER DEFAULT 0,
+                sql_level INTEGER DEFAULT 0,
+                database_level INTEGER DEFAULT 0,
                 level TEXT DEFAULT 'Apprentice',
                 activity JSONB DEFAULT '{}',
                 created_count INTEGER DEFAULT 0,
@@ -304,6 +313,17 @@ const initDB = async () => {
             );
         `);
         
+        // Auto-run schema migrations to add columns to existing local tables
+        try {
+            await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS nodejs_level INTEGER DEFAULT 0;');
+            await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS express_level INTEGER DEFAULT 0;');
+            await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS mongodb_level INTEGER DEFAULT 0;');
+            await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS sql_level INTEGER DEFAULT 0;');
+            await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS database_level INTEGER DEFAULT 0;');
+        } catch (e) {
+            logger.warn('[DB] Note: Could not auto-migrate module level columns. It is okay if they already exist.');
+        }
+
         try {
             await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS session_id TEXT;');
         } catch (e) {
@@ -5895,7 +5915,7 @@ app.get('/code-wars/game/:gameId', authenticateToken, (req, res) => {
 
 // Submit solution
 app.post('/code-wars/submit', authenticateToken, async (req, res) => {
-    const { gameId, questionId, code } = req.body;
+    const { gameId, questionId, code, language = 'java' } = req.body;
     
     if (!gameId || !questionId || !code) {
         return res.status(400).json({ error: 'Missing required fields' });
@@ -5906,7 +5926,8 @@ app.post('/code-wars/submit', authenticateToken, async (req, res) => {
             gameId, 
             req.user.id, 
             questionId, 
-            code
+            code,
+            language
         );
         res.json(result);
     } catch (error) {

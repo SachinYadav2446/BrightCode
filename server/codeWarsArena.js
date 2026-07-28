@@ -1,6 +1,6 @@
 // Code Wars Arena - Main Game System
 const { v4: uuidv4 } = require('uuid');
-const { compileAndRunJava } = require('./javaCompiler');
+const { executeCode } = require('./codeExecutor');
 const { getRandomQuestions, getQuestionById, GAME_MODES, DIFFICULTY_LEVELS } = require('./codeWarQuestions');
 const { CachedLeetCodeAPI } = require('./leetcodeAPI');
 
@@ -512,7 +512,7 @@ class CodeWarsArena {
         }, game.duration * 1000);
     }
 
-    async submitSolution(gameId, userId, questionId, code) {
+    async submitSolution(gameId, userId, questionId, code, language = 'java') {
         const game = this.activeGames.get(gameId);
         if (!game || game.status !== 'active') {
             throw new Error('Game not active');
@@ -534,8 +534,8 @@ class CodeWarsArena {
         }
 
         try {
-            // Compile and test the solution
-            const result = await compileAndRunJava(code, question.testCases);
+            // Compile and test the solution via universal executeCode (Judge0 Brain)
+            const result = await executeCode(code, language, question.testCases);
             
             const submission = {
                 questionId,
