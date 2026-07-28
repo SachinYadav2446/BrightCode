@@ -5956,6 +5956,159 @@ const PORT = process.env.PORT || 5051;
 server.listen(PORT, () => logger.info(`Server running on port ${PORT}`));
 
 
+// ── Arena Management Endpoints ────────────────────────────────────────────────
+
+// In-memory arena store
+const arenaStore = new Map(); // arenaId -> arena
+
+// Get active arenas (for ArenaLobby)
+app.get('/arena/active', authenticateToken, (req, res) => {
+    try {
+        const { game } = req.query; // game parameter like 'syntax-showdown'
+        
+        console.log(`📋 Getting active arenas for game: ${game}`);
+        
+        // Filter active arenas by game type and status
+        const activeArenas = Array.from(arenaStore.values()).filter(arena => 
+            arena.status === 'waiting' && (!game || arena.game === game)
+        );
+        
+        console.log(`✅ Found ${activeArenas.length} active arenas`);
+        
+        res.json({ arenas: activeArenas });
+    } catch (error) {
+        console.error('❌ Error getting active arenas:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get arena details by ID
+app.get('/arena/:arenaId', authenticateToken, (req, res) => {
+    try {
+        const { arenaId } = req.params;
+        
+        console.log(`📋 Getting arena details: ${arenaId}`);
+        
+        const arena = arenaStore.get(arenaId);
+        if (!arena) {
+            return res.status(404).json({ error: 'Arena not found' });
+        }
+        
+        console.log(`✅ Found arena: ${arena.name}`);
+        
+        res.json(arena);
+    } catch (error) {
+        console.error('❌ Error getting arena:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Create arena endpoint (no auth required for MVP)
+app.post('/arena/create', (req, res) => {
+    try {
+        const { name, players, duration, difficulty, isPrivate, passcode, game } = req.body;
+        
+        console.log(`🏗️ Creating arena: ${name} (${game})`);
+        
+        // Validate input
+        if (!name || !name.trim()) {
+            return res.status(400).json({ error: 'Arena name is required' });
+        }
+        
+        if (isPrivate && (!passcode || passcode.trim().length < 4)) {
+            return res.status(400).json({ error: 'Private arenas require a 4+ character passcode' });
+        }
+        
+        // Get user info from auth token if available, otherwise use anonymous
+        let creatorId = 'anonymous';
+        let creatorUsername = 'Anonymous Player';
+        
+        if (req.user) {
+            creatorId = req.user.id;
+            creatorUsername = req.user.username;
+        }
+        
+        // Create arena object
+        const arenaId = `arena_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const arena = {
+            id: arenaId,
+            name,
+            players,
+            duration: parseInt(duration),
+            difficulty,
+            isPrivate,
+            passcode: isPrivate ? passcode : null,
+            game,
+            creatorId,
+            creatorUsername,
+            status: 'waiting',
+            participants: [{
+                id: creatorId,
+                username: creatorUsername
+            }],
+            maxParticipants: parseInt(players.split('v').reduce((a, b) => parseInt(a) + parseInt(b), 0)),
+            createdAt: new Date().toISOString()
+        };
+        
+        // Store arena in memory
+        arenaStore.set(arenaId, arena);
+        
+        console.log(`✅ Arena created: ${arena.id}`);
+        console.log(`📊 Total active arenas: ${arenaStore.size}`);
+        
+        res.json({ success: true, arena });
+    } catch (error) {
+        console.error('❌ Error creating arena:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Join arena endpoint
+app.post('/arena/join', authenticateToken, async (req, res) => {
+    try {
+        const { arenaId, passcode } = req.body;
+        
+        console.log(`👤 User ${req.user.username} joining arena: ${arenaId}`);
+        
+        if (!arenaId) {
+            return res.status(400).json({ error: 'Arena ID is required' });
+        }
+        
+        const arena = arenaStore.get(arenaId);
+        if (!arena) {
+            return res.status(404).json({ error: 'Arena not found' });
+        }
+        
+        // Check if arena is private
+        if (arena.isPrivate && arena.passcode !== passcode) {
+            return res.status(403).json({ error: 'Invalid passcode' });
+        }
+        
+        // Check if arena is full
+        if (arena.participants.length >= arena.maxParticipants) {
+            return res.status(400).json({ error: 'Arena is full' });
+        }
+        
+        // Check if user is already in the arena
+        if (arena.participants.some(p => p.id === req.user.id)) {
+            return res.json({ success: true, message: 'Already in arena' });
+        }
+        
+        // Add user to arena
+        arena.participants.push({
+            id: req.user.id,
+            username: req.user.username
+        });
+        
+        console.log(`✅ User joined arena: ${arena.participants.length}/${arena.maxParticipants}`);
+        
+        res.json({ success: true, message: 'Joined arena successfully', arena });
+    } catch (error) {
+        console.error('❌ Error joining arena:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ── Java Compilation & Execution Endpoint ─────────────────────────────────────
 app.post('/compile-java', async (req, res) => {
     const { code, testCases } = req.body;

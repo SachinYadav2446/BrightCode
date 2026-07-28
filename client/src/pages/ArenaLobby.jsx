@@ -4,9 +4,8 @@ import { Swords, Code2, ArrowLeft, Users, Clock, Zap, Trophy, Lock, Globe, UserC
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import API_URL from '../config';
 import './ArenaLobby.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const ArenaLobby = () => {
   const navigate = useNavigate();
@@ -20,8 +19,8 @@ const ArenaLobby = () => {
     players: '1v1',
     duration: '15',
     difficulty: 'medium',
-    language: 'javascript',
-    timeLimit: '300'
+    isPrivate: false,
+    passcode: ''
   });
 
   // Active arenas from API
@@ -95,16 +94,110 @@ const ArenaLobby = () => {
       ...prev,
       players: currentGame.players[0],
       duration: currentGame.durations[0],
-      difficulty: currentGame.difficulties[0]
+      difficulty: currentGame.difficulties[0],
+      isPrivate: false,
+      passcode: ''
     }));
   }, [gameId]);
 
-  const handleCreateArena = (e) => {
+  const handleCreateArena = async (e) => {
     e.preventDefault();
-    // TODO: API call to create arena
-    console.log('Creating arena:', { game: gameId, ...createForm });
     
-    // Make API call to create arena
+    console.log('handleCreateArena called', { user, createForm, gameId });
+    
+    // Check if user is logged in
+    if (!user) {
+      console.error('User not loaded');
+      toast.error('Please wait for user data to load');
+      return;
+    }
+
+    // Validate form
+    if (!createForm.name || createForm.name.trim() === '') {
+      toast.error('Please enter an arena name');
+      return;
+    }
+
+    if (createForm.isPrivate && (!createForm.passcode || createForm.passcode.length < 4)) {
+      toast.error('Private arenas require a passcode (4-6 characters)');
+      return;
+    }
+    
+    console.log('Creating arena with validated data...');
+    
+    try {
+      // Temporary mock: Generate a temporary arena ID
+      const tempArenaId = `temp_${Date.now()}`;
+      
+      // Get user ID - handle both _id and id
+      const userId = user._id || user.id;
+      const username = user.username || user.name || 'Anonymous';
+      
+      // Store arena data in sessionStorage for the waiting room to use
+      const mockArena = {
+        _id: tempArenaId,
+        name: createForm.name,
+        game: gameId,
+        players: createForm.players,
+        duration: createForm.duration,
+        difficulty: createForm.difficulty,
+        isPrivate: createForm.isPrivate,
+        code: createForm.isPrivate ? generateArenaCode() : null,
+        creator: username,
+        participants: [
+          {
+            id: userId,
+            username: username,
+            ready: true
+          }
+        ],
+        teams: generateTeams(createForm.players, user),
+        createdAt: new Date().toISOString()
+      };
+      
+      console.log('Mock arena created:', mockArena);
+      
+      // Call backend API to create arena
+      try {
+        const response = await axios.post(`${API_URL}/arena/create`, {
+          name: createForm.name,
+          game: gameId,
+          players: createForm.players,
+          duration: createForm.duration,
+          difficulty: createForm.difficulty,
+          isPrivate: createForm.isPrivate,
+          passcode: createForm.passcode
+        }, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        console.log('Arena created on backend:', response.data);
+        
+        // Also store locally for quick access
+        sessionStorage.setItem(`arena_${tempArenaId}`, JSON.stringify(mockArena));
+        toast.success('Arena created successfully!');
+        console.log('Navigating to waiting room...');
+        navigate(`/arena-waiting?arena=${response.data.arena.id}`);
+      } catch (apiError) {
+        console.error('API Error creating arena:', apiError);
+        
+        // If API fails but we have the mock data, use it as fallback
+        if (apiError.response?.status === 401) {
+          console.warn('Authentication failed, using local fallback');
+          toast.warning('Using local arena (not synced across devices)');
+          sessionStorage.setItem(`arena_${tempArenaId}`, JSON.stringify(mockArena));
+          navigate(`/arena-waiting?arena=${tempArenaId}`);
+        } else {
+          console.error('Full error:', apiError);
+          toast.error('Failed to create arena: ' + (apiError.response?.data?.error || apiError.message));
+        }
+      }
+    } catch (error) {
+      console.error('Error creating arena:', error);
+      toast.error('Failed to create arena: ' + error.message);
+    }
+    
+    /* TODO: Replace with real API call
     axios.post(`${API_URL}/arena/create`, {
       game: gameId,
       ...createForm,
@@ -113,19 +206,47 @@ const ArenaLobby = () => {
     })
     .then(response => {
       toast.success('Arena created successfully!');
-      navigate(`/code-wars?arena=${response.data.arenaId || gameId}`);
+      const arenaId = response.data.arenaId || response.data.arena?._id;
+      navigate(`/arena-waiting?arena=${arenaId}`);
     })
     .catch(error => {
       console.error('Error creating arena:', error);
       toast.error(error.response?.data?.message || 'Failed to create arena');
     });
+    */
+  };
+
+  const generateArenaCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  };
+
+  const generateTeams = (playerConfig, creator) => {
+    const [team1Size, team2Size] = playerConfig.split('v').map(Number);
+    const teams = [
+      {
+        members: [{ id: creator._id, username: creator.username, ready: true }]
+      }
+    ];
+    
+    if (team2Size) {
+      teams.push({ members: [] });
+    }
+    
+    return teams;
   };
 
   const handleJoinArena = (e) => {
     e.preventDefault();
     const arenaCode = e.target.arenaCode.value;
     
-    // Make API call to join arena by code
+    toast.error('Join by code: Backend API not implemented yet');
+    
+    /* TODO: Replace with real API call
     axios.post(`${API_URL}/arena/join`, {
       arenaCode,
       userId: user._id,
@@ -133,16 +254,20 @@ const ArenaLobby = () => {
     })
     .then(response => {
       toast.success('Joined arena successfully!');
-      navigate(`/code-wars?join=${arenaCode}`);
+      const arenaId = response.data.arenaId || response.data.arena?._id;
+      navigate(`/arena-waiting?arena=${arenaId}`);
     })
     .catch(error => {
       console.error('Error joining arena:', error);
       toast.error(error.response?.data?.message || 'Failed to join arena');
     });
+    */
   };
 
   const handleJoinArenaById = (arenaId, arenaCode) => {
-    // Make API call to join arena by ID
+    toast.error('Join arena: Backend API not implemented yet');
+    
+    /* TODO: Replace with real API call
     axios.post(`${API_URL}/arena/join`, {
       arenaId,
       arenaCode,
@@ -151,12 +276,13 @@ const ArenaLobby = () => {
     })
     .then(response => {
       toast.success('Joined arena successfully!');
-      navigate(`/code-wars?join=${arenaCode}`);
+      navigate(`/arena-waiting?arena=${arenaId}`);
     })
     .catch(error => {
       console.error('Error joining arena:', error);
       toast.error(error.response?.data?.message || 'Failed to join arena');
     });
+    */
   };
 
   return (
@@ -167,17 +293,11 @@ const ArenaLobby = () => {
         <div className="lobby-glow"></div>
       </div>
 
-      {/* Header */}
-      <header className="lobby-header">
-        <button className="back-btn" onClick={() => navigate('/battle-arena')}>
-          <ArrowLeft size={20} />
-          <span>Back to Arena</span>
-        </button>
-        <div className="game-badge" style={{ background: currentGame.gradient }}>
-          <Icon size={20} />
-          <span>{currentGame.title}</span>
-        </div>
-      </header>
+      {/* Back Button */}
+      <button className="back-btn-floating" onClick={() => navigate('/battle-arena')}>
+        <ArrowLeft size={18} />
+        <span>Back</span>
+      </button>
 
       {/* Main Content */}
       <main className="lobby-content">
@@ -256,32 +376,44 @@ const ArenaLobby = () => {
                     ))}
                   </select>
                 </div>
-
-                <div className="form-group">
-                  <label>Language</label>
-                  <select
-                    value={createForm.language}
-                    onChange={(e) => setCreateForm({...createForm, language: e.target.value})}
-                  >
-                    <option value="javascript">JavaScript</option>
-                    <option value="python">Python</option>
-                    <option value="java">Java</option>
-                    <option value="cpp">C++</option>
-                    <option value="go">Go</option>
-                  </select>
-                </div>
               </div>
 
               <div className="form-group">
-                <label>Time Limit per Problem (seconds)</label>
-                <input
-                  type="number"
-                  value={createForm.timeLimit}
-                  onChange={(e) => setCreateForm({...createForm, timeLimit: e.target.value})}
-                  min="60"
-                  max="600"
-                />
+                <label>Arena Type</label>
+                <div className="privacy-toggle">
+                  <button 
+                    type="button"
+                    className={`privacy-btn ${!createForm.isPrivate ? 'active' : ''}`}
+                    onClick={() => setCreateForm({...createForm, isPrivate: false, passcode: ''})}
+                  >
+                    <Globe size={16} />
+                    Public
+                  </button>
+                  <button 
+                    type="button"
+                    className={`privacy-btn ${createForm.isPrivate ? 'active' : ''}`}
+                    onClick={() => setCreateForm({...createForm, isPrivate: true})}
+                  >
+                    <Lock size={16} />
+                    Private
+                  </button>
+                </div>
               </div>
+
+              {createForm.isPrivate && (
+                <div className="form-group">
+                  <label>Passcode</label>
+                  <input
+                    type="text"
+                    value={createForm.passcode}
+                    onChange={(e) => setCreateForm({...createForm, passcode: e.target.value})}
+                    placeholder="Enter 4-6 digit passcode"
+                    required={createForm.isPrivate}
+                    maxLength={6}
+                  />
+                  <small>Share this passcode with players you want to join</small>
+                </div>
+              )}
 
               <button type="submit" className="submit-btn" style={{ background: currentGame.gradient }}>
                 <Swords size={20} /> Create Arena

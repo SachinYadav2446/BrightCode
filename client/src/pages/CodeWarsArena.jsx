@@ -461,6 +461,11 @@ const CodeWarsArena = () => {
             console.log('âœ… Arena initialization complete');
             setLoading(false);
             
+            // ADDED: Load rooms via HTTP as fallback to ensure visibility across devices
+            setTimeout(() => {
+                loadFactionRoomsViaHTTP(userFaction.id);
+            }, 500);
+            
         } catch (error) {
             console.error('âŒ Failed to initialize arena:', error);
             console.error('Error details:', {
@@ -696,9 +701,9 @@ const CodeWarsArena = () => {
         }
 
         try {
-            console.log('ðŸšª Leaving room via socket...');
-            console.log('ðŸšª Current room:', currentRoom.id);
-            console.log('ðŸšª Current game state:', gameState);
+            console.log('Leaving room via socket...');
+            console.log('Current room:', currentRoom.id);
+            console.log('Current game state:', gameState);
             
             socket.emit('cw-leave-room', {
                 roomId: currentRoom.id,
@@ -708,10 +713,36 @@ const CodeWarsArena = () => {
             
             // Don't do anything here - let the socket events handle the response
             // Either 'cw-game-ended' (forfeit) or 'cw-left-room' (normal leave) will fire
-            console.log('ðŸšª Leave room event emitted, waiting for server response...');
+            console.log('Leave room event emitted, waiting for server response...');
             
         } catch (error) {
             console.error('Leave room error:', error);
+            setCurrentRoom(null);
+            setGameState('menu');
+        }
+    };
+
+    const disbandRoom = async () => {
+        if (!socket || !currentRoom) {
+            setCurrentRoom(null);
+            setGameState('menu');
+            return;
+        }
+
+        try {
+            console.log('Disbanding room via socket...');
+            console.log('Current room:', currentRoom.id);
+            
+            socket.emit('cw-disband-room', {
+                roomId: currentRoom.id,
+                userId: user.id,
+                username: user.username
+            });
+            
+            console.log('Disband room event emitted, waiting for server response...');
+            
+        } catch (error) {
+            console.error('Disband room error:', error);
             setCurrentRoom(null);
             setGameState('menu');
         }
@@ -834,6 +865,7 @@ const CodeWarsArena = () => {
                             room={currentRoom}
                             user={user}
                             onLeave={leaveRoom}
+                            onDisband={disbandRoom}
                             onStart={startGame}
                             onSwitchTeam={switchTeam}
                             onCopyId={copyRoomId}
@@ -1443,7 +1475,7 @@ const JoinRoomScreen = ({ form, setForm, onSubmit, onBack, loading }) => {
 };
 
 // Room Lobby Component
-const RoomLobby = ({ room, user, onLeave, onStart, onSwitchTeam, onCopyId }) => {
+const RoomLobby = ({ room, user, onLeave, onDisband, onStart, onSwitchTeam, onCopyId }) => {
     if (!user || !user.id) {
         return (
             <div className="room-lobby-error">
@@ -1521,10 +1553,17 @@ const RoomLobby = ({ room, user, onLeave, onStart, onSwitchTeam, onCopyId }) => 
                             Start Game
                         </button>
                     )}
-                    <button className="btn-leave" onClick={onLeave}>
-                        <LogOut size={16} />
-                        Leave
-                    </button>
+                    {isCreator ? (
+                        <button className="btn-disband" onClick={onDisband}>
+                            <LogOut size={16} />
+                            Disband Arena
+                        </button>
+                    ) : (
+                        <button className="btn-leave" onClick={onLeave}>
+                            <LogOut size={16} />
+                            Leave
+                        </button>
+                    )}
                 </div>
             </div>
         </motion.div>
@@ -2608,3 +2647,25 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
 
 
 export default CodeWarsArena;
+
+    // ADDED: HTTP fallback to fetch faction rooms
+    const loadFactionRoomsViaHTTP = async (factionId) => {
+        const fId = factionId || myFaction?.id;
+        
+        if (!fId) {
+            console.log('âš ï¸ Cannot load rooms via HTTP: faction ID not available');
+            return;
+        }
+        
+        try {
+            console.log('ðŸ"‹ Fetching faction rooms via HTTP for faction:', fId);
+            const response = await axios.get(`${API_URL}/code-wars/faction-rooms`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            console.log('âœ… Fetched rooms via HTTP:', response.data);
+            setFactionRooms(response.data);
+        } catch (error) {
+            console.error('âŒ Error fetching rooms via HTTP:', error);
+        }
+    };

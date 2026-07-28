@@ -87,6 +87,21 @@ const Factions = () => {
     const [kickModal, setKickModal]             = useState({ show: false, member: null });
     const [pendingRequests, setPendingRequests] = useState(new Set());
 
+    // Load cached faction data on mount
+    useEffect(() => {
+        if (user) {
+            const cachedFactionId = localStorage.getItem(`faction_${user.username}_id`);
+            const cachedFactionName = localStorage.getItem(`faction_${user.username}_name`);
+            const cachedFactionEmblem = localStorage.getItem(`faction_${user.username}_emblem`);
+            
+            if (cachedFactionId && cachedFactionName) {
+                setMyFactionId(cachedFactionId);
+                setMyFactionName(cachedFactionName);
+                setMyFactionEmblem(cachedFactionEmblem || 'swords');
+            }
+        }
+    }, [user]);
+
     useEffect(() => {
         let s = null;
         if (myFactionId && !socket) {
@@ -100,7 +115,7 @@ const Factions = () => {
         return () => { if (s) { s.off('connect'); s.off('chat-history'); s.off('new-chat-message'); s.disconnect(); setSocket(null); setChatMessages([]); } };
     }, [myFactionId]);
 
-    useEffect(() => { fetchFactions(); }, []);
+    useEffect(() => { fetchFactions(); }, [user]);
 
     const fetchFactions = async () => {
         setLoading(true);
@@ -108,11 +123,34 @@ const Factions = () => {
             const res = await axios.get(`${API_URL}/factions`, { timeout: 6000 });
             const list = res.data || [];
             setFactions(list);
+            
             if (user) {
                 const mine = list.find(f => f.members?.some(m => m.username === user.username));
-                setMyFactionId(mine?.id || null); setMyFactionName(mine?.name || null); setMyFactionEmblem(mine?.emblem || null);
+                if (mine) {
+                    // Update state
+                    setMyFactionId(mine.id);
+                    setMyFactionName(mine.name);
+                    setMyFactionEmblem(mine.emblem);
+                    
+                    // Cache faction data
+                    localStorage.setItem(`faction_${user.username}_id`, mine.id);
+                    localStorage.setItem(`faction_${user.username}_name`, mine.name);
+                    localStorage.setItem(`faction_${user.username}_emblem`, mine.emblem || 'swords');
+                } else if (!myFactionId) {
+                    // Only clear cache if we don't have a cached faction
+                    // This prevents race conditions where cache loads after API
+                    setMyFactionId(null);
+                    setMyFactionName(null);
+                    setMyFactionEmblem(null);
+                    localStorage.removeItem(`faction_${user.username}_id`);
+                    localStorage.removeItem(`faction_${user.username}_name`);
+                    localStorage.removeItem(`faction_${user.username}_emblem`);
+                }
             }
-        } catch { } finally { setLoading(false); }
+        } catch (error) { 
+            console.error('Error fetching factions:', error);
+            // Don't clear cache on error - keep showing cached data
+        } finally { setLoading(false); }
     };
 
     const createFaction = async () => {
@@ -120,7 +158,19 @@ const Factions = () => {
         setIsSubmitting(true);
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`${API_URL}/factions/create`, newFaction, { headers: { Authorization: `Bearer ${token}` } });
+            const response = await axios.post(`${API_URL}/factions/create`, newFaction, { headers: { Authorization: `Bearer ${token}` } });
+            
+            // Cache the new faction immediately
+            const createdFaction = response.data.faction;
+            if (createdFaction) {
+                setMyFactionId(createdFaction.id);
+                setMyFactionName(createdFaction.name);
+                setMyFactionEmblem(createdFaction.emblem);
+                localStorage.setItem(`faction_${user.username}_id`, createdFaction.id);
+                localStorage.setItem(`faction_${user.username}_name`, createdFaction.name);
+                localStorage.setItem(`faction_${user.username}_emblem`, createdFaction.emblem || 'swords');
+            }
+            
             setShowCreateModal(false);
             setNewFaction({ name: '', description: '', emblem: 'swords', isPublic: true });
             fetchFactions();
@@ -137,17 +187,77 @@ const Factions = () => {
         try {
             const token = localStorage.getItem('token');
             const res = await axios.post(`${API_URL}/factions/join/${id}`, {}, { headers: { Authorization: `Bearer ${token}` } });
-            if (!res.data.pending) setMyFactionId(id);
+            
+            if (!res.data.pending) {
+                // User was approved immediately (public faction)
+                const joinedFaction = factions.find(f => f.id === id);
+                if (joinedFaction) {
+                    setMyFactionId(id);
+                    setMyFactionName(joinedFaction.name);
+                    setMyFactionEmblem(joinedFaction.emblem);
+                    localStorage.setItem(`faction_${user.username}_id`, id);
+                    localStorage.setItem(`faction_${user.username}_name`, joinedFaction.name);
+                    localStorage.setItem(`faction_${user.username}_emblem`, joinedFaction.emblem || 'swords');
+                    toast.success(`Joined ${joinedFaction.name}!`);
+                }
+            } else {
+                toast.success('Join request sent! Waiting for approval.');
+            }
+            
             fetchFactions();
-        } catch { setPendingRequests(p => { const s = new Set(p); s.delete(id); return s; }); }
+        } catch (err) {
+            setPendingRequests(p => { const s = new Set(p); s.delete(id); return s; });
+            toast.error(err?.response?.data?.error || 'Failed to join faction.');
+        }
     };
 
-    const leaveFaction   = async () => { try { const t = localStorage.getItem('token'); await axios.post(`${API_URL}/factions/leave/${myFactionId}`, {}, { headers: { Authorization: `Bearer ${t}` } }); setMyFactionId(null); fetchFactions(); } catch { } };
+    const leaveFaction   = async () => { 
+        try { 
+            const t = localStorage.getItem('token'); 
+            await axios.post(`${API_URL}/factions/leave/${myFactionId}`, {}, { headers: { Authorization: `Bearer ${t}` } }); 
+            
+            // Clear cached faction data
+            setMyFactionId(null);
+            setMyFactionName(null);
+            setMyFactionEmblem(null);
+            if (user) {
+                localStorage.removeItem(`faction_${user.username}_id`);
+                localStorage.removeItem(`faction_${user.username}_name`);
+                localStorage.removeItem(`faction_${user.username}_emblem`);
+            }
+            
+            fetchFactions(); 
+            toast.success('Left faction successfully.');
+        } catch { 
+            toast.error('Failed to leave faction.');
+        } 
+    };
     const approveMember  = async (uid) => { try { const t = localStorage.getItem('token'); await axios.post(`${API_URL}/factions/${myFactionId}/approve`, { userId: uid }, { headers: { Authorization: `Bearer ${t}` } }); fetchFactions(); } catch { } };
     const declineMember  = async (uid) => { try { const t = localStorage.getItem('token'); await axios.post(`${API_URL}/factions/${myFactionId}/decline`, { userId: uid }, { headers: { Authorization: `Bearer ${t}` } }); fetchFactions(); } catch { } };
     const kickMember     = async (uid) => { try { const t = localStorage.getItem('token'); await axios.post(`${API_URL}/factions/${myFactionId}/kick`, { userId: uid }, { headers: { Authorization: `Bearer ${t}` } }); setKickModal({ show: false, member: null }); fetchFactions(); } catch { } };
     const togglePrivacy  = async () => { try { const t = localStorage.getItem('token'); await axios.post(`${API_URL}/factions/${myFactionId}/toggle-privacy`, {}, { headers: { Authorization: `Bearer ${t}` } }); fetchFactions(); } catch { } };
-    const disbandFaction = async () => { if (!window.confirm('Permanently disband?')) return; try { const t = localStorage.getItem('token'); await axios.post(`${API_URL}/factions/disband/${myFactionId}`, {}, { headers: { Authorization: `Bearer ${t}` } }); setMyFactionId(null); fetchFactions(); } catch { } };
+    const disbandFaction = async () => { 
+        if (!window.confirm('Permanently disband?')) return; 
+        try { 
+            const t = localStorage.getItem('token'); 
+            await axios.post(`${API_URL}/factions/disband/${myFactionId}`, {}, { headers: { Authorization: `Bearer ${t}` } }); 
+            
+            // Clear cached faction data
+            setMyFactionId(null); 
+            setMyFactionName(null);
+            setMyFactionEmblem(null);
+            if (user) {
+                localStorage.removeItem(`faction_${user.username}_id`);
+                localStorage.removeItem(`faction_${user.username}_name`);
+                localStorage.removeItem(`faction_${user.username}_emblem`);
+            }
+            
+            fetchFactions();
+            toast.success('Faction disbanded.');
+        } catch { 
+            toast.error('Failed to disband faction.');
+        } 
+    };
 
     const totalEngineers = factions.reduce((s, f) => s + (f.members?.length || 0), 0);
     const totalXP        = factions.reduce((s, f) => s + (f.totalXp || 0), 0);

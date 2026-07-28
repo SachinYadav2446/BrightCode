@@ -6569,3 +6569,65 @@
     background: rgba(255, 255, 255, 0.02) !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
 }
+
+
+/* ══════════════════════════════════════════════════════
+   ROOM LOBBY BUTTON STYLES
+   ══════════════════════════════════════════════════════ */
+
+.btn-start,
+.btn-leave,
+.btn-disband {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    font-family: var(--font-sans), sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-start {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-start:hover:not(:disabled) {
+    background: var(--primary-dark);
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+    transform: translateY(-2px);
+}
+
+.btn-start:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-leave {
+    background: transparent;
+    border: 1px solid rgba(200, 100, 100, 0.5);
+    color: #ff6b6b;
+}
+
+.btn-leave:hover:not(:disabled) {
+    background: rgba(200, 100, 100, 0.1);
+    border-color: #ff6b6b;
+    transform: translateY(-2px);
+}
+
+.btn-disband {
+    background: transparent;
+    border: 1px solid rgba(200, 100, 100, 0.5);
+    color: #ff6b6b;
+}
+
+.btn-disband:hover:not(:disabled) {
+    background: rgba(200, 100, 100, 0.15);
+    border-color: #ff6b6b;
+    transform: translateY(-2px);
+}
