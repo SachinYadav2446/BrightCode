@@ -202,7 +202,8 @@ export default function NexusTicketDetail() {
                             <span className="ntd-card-label"><Zap size={13}/> Actions</span>
                         </div>
                         <div className="ntd-card-body">
-                            {/* Open workspace */}
+
+                            {/* Open workspace — full prominent button */}
                             {inProgress && (isAuthor || isMentor) && (
                                 <button
                                     className="ntd-workspace-btn"
@@ -240,20 +241,30 @@ export default function NexusTicketDetail() {
                             )}
                             {ticket.status === 'open' && !isAuthor && hasOffered && (
                                 <button className="ntd-btn ntd-btn-pending" disabled>
-                                    <Clock size={15}/> Offer Pending…
+                                    <Clock size={15}/> Pending…
                                 </button>
                             )}
 
-                            {/* Author controls */}
+                            {/* Author controls — compact icon row */}
                             {inProgress && isAuthor && (
-                                <>
-                                    <button className="ntd-btn ntd-btn-resolve" onClick={resolveTicket}>
-                                        <CheckCircle size={15}/> Mark Resolved
+                                <div className="ntd-icon-actions">
+                                    <button
+                                        className="ntd-icon-btn ntd-icon-btn-resolve"
+                                        onClick={resolveTicket}
+                                        title="Mark Resolved"
+                                    >
+                                        <CheckCircle size={16}/>
+                                        <span>Resolve</span>
                                     </button>
-                                    <button className="ntd-btn ntd-btn-revoke" onClick={revokementor}>
-                                        <RefreshCw size={14}/> Reopen Ticket
+                                    <button
+                                        className="ntd-icon-btn ntd-icon-btn-revoke"
+                                        onClick={revokementor}
+                                        title="Reopen Ticket"
+                                    >
+                                        <RefreshCw size={15}/>
+                                        <span>Reopen</span>
                                     </button>
-                                </>
+                                </div>
                             )}
 
                             {/* Active session */}

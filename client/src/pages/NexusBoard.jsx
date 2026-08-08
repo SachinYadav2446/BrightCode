@@ -78,8 +78,8 @@ export default function NexusBoard() {
 
     const handleCreateTicket = async (e) => {
         e.preventDefault();
-        if (!formData.description || formData.description.trim().length < 50) {
-            alert('Description must be at least 50 characters long to provide enough detail for mentors.');
+        if (!formData.description || formData.description.trim().length < 30) {
+            alert('Description must be at least 30 characters long.');
             return;
         }
         try {
@@ -281,15 +281,15 @@ export default function NexusBoard() {
                             <div className="sos-form-group">
                                 <label style={{ display: 'flex', justifyContent: 'space-between' }}>
                                     <span>Description</span>
-                                    <span style={{ color: formData.description.trim().length < 50 ? '#ef4444' : '#22c55e', fontSize: '0.78rem' }}>
-                                        {formData.description.trim().length}/50 chars (min 50)
+                                    <span style={{ color: formData.description.trim().length < 30 ? '#ef4444' : '#22c55e', fontSize: '0.78rem' }}>
+                                        {formData.description.trim().length}/30 chars (min 30)
                                     </span>
                                 </label>
                                 <textarea 
                                     required 
                                     rows="4" 
-                                    minLength={50}
-                                    placeholder="Explain your issue in detail (at least 50 characters required for mentors)..."
+                                    minLength={30}
+                                    placeholder="Explain your issue in detail (at least 30 characters required)..."
                                     value={formData.description}
                                     onChange={(e) => setFormData({...formData, description: e.target.value})}
                                 />
