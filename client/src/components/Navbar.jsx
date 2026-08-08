@@ -37,6 +37,26 @@ const Navbar = () => {
   const [pendingCount, setPendingCount] = useState(0);
   const [hasUnread, setHasUnread] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
+
+  // Hide on scroll down, show on scroll up
+  useEffect(() => {
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const currentY = window.scrollY;
+      if (currentY < 10) {
+        setHidden(false);
+      } else if (currentY > lastY + 4) {
+        setHidden(true);
+        setMenuOpen(false);
+      } else if (currentY < lastY - 4) {
+        setHidden(false);
+      }
+      lastY = currentY;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -81,9 +101,9 @@ const Navbar = () => {
     <>
       <motion.nav 
         className="floating-nav"
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ y: -56, opacity: 0 }}
+        animate={{ y: hidden ? -56 : 0, opacity: hidden ? 0 : 1 }}
+        transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
       >
         <div className="nav-container">
 

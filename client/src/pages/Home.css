@@ -11,7 +11,7 @@
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   position: relative;
   overflow-x: hidden;
-  padding-top: 64px; /* Space for top navigation bar */
+  padding-top: 56px; /* Space for top navigation bar */
   padding-bottom: 80px;
 }
 
@@ -2316,7 +2316,7 @@
 /* For big screens (1280px and up) */
 @media (min-width: 1280px) {
   .home-wrapper {
-    padding-top: 80px;
+    padding-top: 56px;
   }
   
   .profile-header-black {

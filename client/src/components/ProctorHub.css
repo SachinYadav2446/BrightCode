@@ -10,7 +10,7 @@
     background: var(--bg-dark);
     color: #f0f0f0;
     font-family: 'Poppins', 'Inter', system-ui, sans-serif;
-    padding-top: 64px; /* navbar */
+    padding-top: 56px; /* navbar */
     -webkit-font-smoothing: antialiased;
 }
 

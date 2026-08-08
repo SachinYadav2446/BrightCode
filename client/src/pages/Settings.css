@@ -3,7 +3,7 @@
   background: var(--bg-dark);
   color: var(--text-main);
   font-family: var(--font-sans), sans-serif;
-  padding-top: 64px; /* match navbar height */
+  padding-top: 56px; /* match navbar height */
 }
 
 .settings-wrapper {
