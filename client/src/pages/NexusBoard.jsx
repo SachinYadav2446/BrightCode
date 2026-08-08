@@ -1,322 +1,409 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Plus, CheckCircle, Clock, Search, Code, Cpu, MessageCircle, HelpCircle, Bell, UserCheck, Send, Layout, Globe, XCircle } from 'lucide-react';
+import {
+    Plus, Clock, Code, Globe, UserCheck,
+    HelpCircle, X, AlertCircle
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API_URL from '../config';
 import './NexusBoard.css';
 
-const TicketCard = ({ ticket }) => {
-    const navigate = useNavigate();
+/* ── helpers ── */
+const AVATAR_COLORS = ['#e63946','#4a9eff','#10b981','#f59e0b','#8b5cf6','#06b6d4'];
+const avatarColor = (n = '') => AVATAR_COLORS[n.charCodeAt(0) % AVATAR_COLORS.length];
 
-    const timeAgo = (ts) => {
-        const s = Math.floor((Date.now() - new Date(ts)) / 1000);
-        if (s < 60) return `${s}s ago`;
-        if (s < 3600) return `${Math.floor(s/60)}m ago`;
-        if (s < 86400) return `${Math.floor(s/3600)}h ago`;
-        return `${Math.floor(s/86400)}d ago`;
-    };
-
+function MiniAvatar({ name = '' }) {
+    const c = avatarColor(name);
     return (
-        <div className="ticket-card" onClick={() => navigate(`/nexus/ticket/${ticket.id}`)} style={{ cursor: 'pointer' }}>
-            <div className="ticket-header">
-                <h3 className="ticket-title">{ticket.title}</h3>
-                <span className={`ticket-status status-${ticket.status}`}>
-                    {ticket.status === 'open' ? 'Open' : ticket.status === 'in_progress' ? 'In Progress' : 'Resolved'}
-                </span>
+        <div className="nx-mini-avatar"
+             style={{ background: `${c}18`, border: `1px solid ${c}44`, color: c }}>
+            {name.slice(0, 2).toUpperCase() || '??'}
+        </div>
+    );
+}
+
+function StatusPill({ status }) {
+    const map = {
+        open:        { cls: 'nx-s-open',  label: 'Open'        },
+        in_progress: { cls: 'nx-s-prog',  label: 'In Progress' },
+        resolved:    { cls: 'nx-s-done',  label: 'Resolved'    },
+    };
+    const { cls, label } = map[status] ?? map.open;
+    return (
+        <span className={`nx-status ${cls}`}>
+            <span className="nx-status-dot" />
+            {label}
+        </span>
+    );
+}
+
+function timeAgo(ts) {
+    const s = Math.floor((Date.now() - new Date(ts)) / 1000);
+    if (s < 60)   return `${s}s ago`;
+    if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+    if (s < 86400)return `${Math.floor(s / 3600)}h ago`;
+    return `${Math.floor(s / 86400)}d ago`;
+}
+
+/* ── TicketRow ── */
+function TicketRow({ ticket }) {
+    const navigate = useNavigate();
+    return (
+        <div className="nx-row" onClick={() => navigate(`/nexus/ticket/${ticket.id}`)}>
+            <div className="nx-row-title">
+                <span className="nx-row-name">{ticket.title}</span>
+                <div className="nx-row-meta">
+                    <span className="nx-row-lang">
+                        <Code size={11}/> {ticket.language}
+                    </span>
+                    {ticket.tags?.length > 0 && (
+                        <div className="nx-row-tags">
+                            {ticket.tags.slice(0, 3).map((t, i) => (
+                                <span key={i} className="nx-tag">#{t}</span>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
-            
-            <div className="ticket-meta">
-                <span className="meta-item"><Clock size={14}/> {timeAgo(ticket.created_at)}</span>
-                <span className="meta-item"><Code size={14}/> {ticket.language}</span>
+
+            <div className="nx-row-author">
+                <MiniAvatar name={ticket.author_username} />
                 <span>@{ticket.author_username}</span>
             </div>
 
-            <p className="ticket-desc">{ticket.description}</p>
-
-            <div className="ticket-tags">
-                {ticket.tags && ticket.tags.map((tag, idx) => (
-                    <span key={idx} className="ticket-tag">#{tag}</span>
-                ))}
+            <div className="nx-row-time">
+                <Clock size={11} />
+                {timeAgo(ticket.created_at)}
             </div>
-            
-            <div className="ticket-footer">
-                <span className="view-details-btn">View Details & Collaborate</span>
+
+            <div className="nx-row-status">
+                <StatusPill status={ticket.status} />
             </div>
         </div>
     );
-};
+}
 
+/* ── Empty ── */
+function Empty({ icon: Icon, title, sub, action }) {
+    return (
+        <div className="nx-empty">
+            <Icon size={38} strokeWidth={1.2} />
+            <p className="nx-empty-title">{title}</p>
+            <p>{sub}</p>
+            {action}
+        </div>
+    );
+}
+
+/* ═══════════════════════════════════════════════════════════ */
 export default function NexusBoard() {
     const { user } = useAuth();
-    const [tickets, setTickets] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [formData, setFormData] = useState({ title: '', description: '', language: 'javascript', tags: '' });
-    const [activeTab, setActiveTab] = useState('global');
-    const [dashboardTab, setDashboardTab] = useState('raised'); // 'raised' or 'mentored'
+    const navigate = useNavigate();
 
-    const fetchTickets = async () => {
+    const [tickets,      setTickets]      = useState([]);
+    const [loading,      setLoading]      = useState(true);
+    const [modalOpen,    setModalOpen]    = useState(false);
+    const [activeTab,    setActiveTab]    = useState('global');   // global | personal
+    const [dashTab,      setDashTab]      = useState('raised');   // raised | mentored
+    const [form,         setForm]         = useState({ title: '', description: '', language: 'javascript', tags: '' });
+    const [submitting,   setSubmitting]   = useState(false);
+
+    /* fetch */
+    const fetchTickets = async (quiet = false) => {
         try {
             const token = localStorage.getItem('token');
             const res = await axios.get(`${API_URL}/api/nexus/tickets`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setTickets(res.data);
-        } catch (error) {
-            console.error('Error fetching tickets', error);
+        } catch (e) {
+            console.error('Nexus fetch error', e);
         } finally {
-            setLoading(false);
+            if (!quiet) setLoading(false);
         }
     };
 
     useEffect(() => {
         fetchTickets();
-        const interval = setInterval(fetchTickets, 5000);
-        return () => clearInterval(interval);
+        const t = setInterval(() => fetchTickets(true), 6000);
+        return () => clearInterval(t);
     }, []);
 
-    const handleCreateTicket = async (e) => {
+    /* create ticket */
+    const handleCreate = async (e) => {
         e.preventDefault();
-        if (!formData.description || formData.description.trim().length < 30) {
-            alert('Description must be at least 30 characters long.');
+        if (form.description.trim().length < 30) {
+            alert('Description must be at least 30 characters.');
             return;
         }
+        setSubmitting(true);
         try {
             const token = localStorage.getItem('token');
-            const tagsArray = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
-            await axios.post(`${API_URL}/api/nexus/tickets`, {
-                ...formData,
-                tags: tagsArray
-            }, { headers: { Authorization: `Bearer ${token}` }});
-            setIsModalOpen(false);
-            setFormData({ title: '', description: '', language: 'javascript', tags: '' });
+            const tags = form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+            await axios.post(`${API_URL}/api/nexus/tickets`, { ...form, tags }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setModalOpen(false);
+            setForm({ title: '', description: '', language: 'javascript', tags: '' });
             setActiveTab('personal');
             fetchTickets();
-        } catch (error) {
-            console.error('Error creating ticket', error);
-            alert('Failed to create ticket: ' + (error.response?.data?.error || error.message));
+        } catch (e) {
+            alert('Failed to create ticket: ' + (e.response?.data?.error || e.message));
+        } finally {
+            setSubmitting(false);
         }
     };
 
-    const handleRequestMentor = async (id) => {
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_URL}/api/nexus/tickets/${id}/request-mentor`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            fetchTickets();
-        } catch (error) {
-            console.error('Error requesting mentor', error);
-        }
-    };
+    /* derived lists */
+    const openTickets     = tickets.filter(t => t.status === 'open');
+    const myRaised        = tickets.filter(t => t.author_id === user?.id);
+    const myMentored      = tickets.filter(t => t.mentor_id === user?.id);
 
-    const handleAcceptMentor = async (id, mentorId) => {
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_URL}/api/nexus/tickets/${id}/accept-mentor`, { mentor_id: mentorId }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            fetchTickets();
-        } catch (error) {
-            alert(error.response?.data?.error || 'Failed to accept mentor');
-        }
-    };
+    const globalCount  = openTickets.length;
+    const personalCount = myRaised.length + myMentored.length;
 
-    const handleResolveTicket = async (id) => {
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_URL}/api/nexus/tickets/${id}/resolve`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            fetchTickets();
-        } catch (error) {
-            alert(error.response?.data?.error || 'Failed to resolve ticket');
-        }
-    };
-
-    const handleRevokeMentor = async (id) => {
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_URL}/api/nexus/tickets/${id}/revoke-mentor`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            fetchTickets();
-        } catch (error) {
-            alert(error.response?.data?.error || 'Failed to reopen ticket');
-        }
-    };
-
-    const displayedTickets = tickets.filter(t => {
-        if (activeTab === 'global') return true;
-        return t.author_id === user?.id || t.mentor_id === user?.id;
-    });
-
+    /* ── render ── */
     return (
-        <div className="nexus-container">
-            <header className="nexus-header">
-                <div className="nexus-title-section">
-                    <h1>The Nexus</h1>
-                    <p>Mentorship &amp; SOS Directory</p>
-                </div>
-                <button className="btn-post-sos" onClick={() => setIsModalOpen(true)}>
-                    <Plus size={18} strokeWidth={2.5} /> <span className="btn-post-sos-text">Create SOS Ticket</span>
-                </button>
-            </header>
-
-            <div className="nexus-tabs">
-                <button 
-                    className={`nexus-tab ${activeTab === 'global' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('global')}
-                >
-                    <Globe size={16} /> Global Board
-                </button>
-                <button 
-                    className={`nexus-tab ${activeTab === 'personal' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('personal')}
-                >
-                    <UserCheck size={16} /> My Dashboard
-                </button>
+        <div className="nx-page">
+            {/* BG */}
+            <div className="nx-bg">
+                <div className="nx-bg-grid" />
+                <div className="nx-glow nx-glow-1" />
+                <div className="nx-glow nx-glow-2" />
             </div>
 
-            {loading ? (
-                <div style={{color: 'var(--text-muted)', fontSize: '1rem', padding: '20px'}}>
-                    Loading tickets...
-                </div>
-            ) : activeTab === 'global' ? (
-                <div className="tickets-grid">
-                    {tickets.filter(t => t.status === 'open').map(ticket => (
-                        <TicketCard key={ticket.id} ticket={ticket} />
-                    ))}
-                    {tickets.filter(t => t.status === 'open').length === 0 && (
-                        <div className="empty-state">
-                            <HelpCircle size={48} color="var(--border-hi)" />
-                            <p>No active SOS tickets at the moment.</p>
-                        </div>
-                    )}
-                </div>
-            ) : (
-                <div className="personal-dashboard">
-                    {/* ── Dashboard Sub-Navigation ── */}
-                    <div className="dashboard-subnav">
-                        <button 
-                            className={`subnav-btn ${dashboardTab === 'raised' ? 'active raised' : ''}`}
-                            onClick={() => setDashboardTab('raised')}
-                        >
-                            <HelpCircle size={16} /> Issues Raised
-                            <span className="subnav-badge raised-badge">{tickets.filter(t => t.author_id === user?.id).length}</span>
-                        </button>
-                        <button 
-                            className={`subnav-btn ${dashboardTab === 'mentored' ? 'active mentored' : ''}`}
-                            onClick={() => setDashboardTab('mentored')}
-                        >
-                            <UserCheck size={16} /> Issues Mentored
-                            <span className="subnav-badge mentored-badge">{tickets.filter(t => t.mentor_id === user?.id).length}</span>
-                        </button>
+            <div className="nx-main">
+
+                {/* ── PAGE HEADER ── */}
+                <div className="nx-header">
+                    <div className="nx-header-left">
+                        <span className="nx-header-eyebrow">Mentorship Hub</span>
+                        <h1 className="nx-header-title">The Nexus</h1>
+                        <p className="nx-header-sub">Post SOS tickets and get live help from senior devs</p>
                     </div>
-
-                    {/* ── Issues Raised Tab ── */}
-                    {dashboardTab === 'raised' && (
-                        <div className="dashboard-section active-section">
-                            <div className="tickets-grid dashboard-grid">
-                                {tickets.filter(t => t.author_id === user?.id).map(ticket => (
-                                    <TicketCard key={ticket.id} ticket={ticket} />
-                                ))}
-                                {tickets.filter(t => t.author_id === user?.id).length === 0 && (
-                                    <div className="premium-empty-state">
-                                        <div className="empty-icon-wrapper raised-icon">
-                                            <HelpCircle size={40} />
-                                        </div>
-                                        <h3>No Issues Raised</h3>
-                                        <p>You haven't asked for help yet. Create a ticket to get assistance from a mentor.</p>
-                                        <button className="btn-post-sos-sm" onClick={() => setIsModalOpen(true)}>
-                                            <Plus size={16} /> Create SOS Ticket
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* ── Issues Mentored Tab ── */}
-                    {dashboardTab === 'mentored' && (
-                        <div className="dashboard-section active-section">
-                            <div className="tickets-grid dashboard-grid">
-                                {tickets.filter(t => t.mentor_id === user?.id).map(ticket => (
-                                    <TicketCard key={ticket.id} ticket={ticket} />
-                                ))}
-                                {tickets.filter(t => t.mentor_id === user?.id).length === 0 && (
-                                    <div className="premium-empty-state">
-                                        <div className="empty-icon-wrapper mentored-icon">
-                                            <UserCheck size={40} />
-                                        </div>
-                                        <h3>No Mentorships Yet</h3>
-                                        <p>You aren't mentoring anyone right now. Browse the Global Board to offer your expertise!</p>
-                                        <button className="btn-post-sos-sm mentored-btn" onClick={() => setActiveTab('global')}>
-                                            <Globe size={16} /> Browse Global Board
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
+                    <button className="nx-post-btn" onClick={() => setModalOpen(true)}>
+                        <Plus size={15} />
+                        <span>Post SOS Ticket</span>
+                    </button>
                 </div>
-            )}
 
-            {isModalOpen && (
-                <div className="sos-modal-overlay">
-                    <div className="sos-modal">
-                        <h2>New SOS Ticket</h2>
-                        <form onSubmit={handleCreateTicket}>
-                            <div className="sos-form-group">
+                {/* ── TABS ── */}
+                <div className="nx-tabs">
+                    <button
+                        className={`nx-tab ${activeTab === 'global' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('global')}
+                    >
+                        <Globe size={14} /> Global Board
+                        <span className="nx-tab-count">{openTickets.length}</span>
+                    </button>
+                    <button
+                        className={`nx-tab ${activeTab === 'personal' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('personal')}
+                    >
+                        <UserCheck size={14} /> My Dashboard
+                        <span className="nx-tab-count">{personalCount}</span>
+                    </button>
+                </div>
+
+                {loading ? (
+                    <div className="nx-empty" style={{ paddingTop: 80 }}>
+                        <AlertCircle size={32} strokeWidth={1.2} />
+                        <p>Loading tickets…</p>
+                    </div>
+                ) : activeTab === 'global' ? (
+
+                    /* ── GLOBAL BOARD ── */
+                    <>
+                        <div className="nx-section-head">
+                            <span className="nx-section-label">Open Issues</span>
+                            <span className="nx-count-pill">{openTickets.length} active</span>
+                        </div>
+
+                        <div className="nx-list">
+                            <div className="nx-list-header">
+                                <span>Issue</span>
+                                <span>Author</span>
+                                <span>Posted</span>
+                                <span style={{ textAlign: 'right' }}>Status</span>
+                            </div>
+
+                            {openTickets.length === 0 ? (
+                                <Empty
+                                    icon={HelpCircle}
+                                    title="No open issues"
+                                    sub="Be the first to post an SOS ticket."
+                                    action={
+                                        <button className="nx-post-btn" onClick={() => setModalOpen(true)}>
+                                            <Plus size={14}/> Post SOS
+                                        </button>
+                                    }
+                                />
+                            ) : (
+                                openTickets.map(t => <TicketRow key={t.id} ticket={t} />)
+                            )}
+                        </div>
+                    </>
+
+                ) : (
+
+                    /* ── MY BOARD ── */
+                    <>
+                        <div className="nx-dash-tabs">
+                            <button
+                                className={`nx-dash-tab ${dashTab === 'raised' ? 'active-raised' : ''}`}
+                                onClick={() => setDashTab('raised')}
+                            >
+                                <HelpCircle size={14} /> Issues Raised
+                                <span className="nx-dash-badge">{myRaised.length}</span>
+                            </button>
+                            <button
+                                className={`nx-dash-tab ${dashTab === 'mentored' ? 'active-mentored' : ''}`}
+                                onClick={() => setDashTab('mentored')}
+                            >
+                                <UserCheck size={14} /> Mentoring
+                                <span className="nx-dash-badge">{myMentored.length}</span>
+                            </button>
+                        </div>
+
+                        {dashTab === 'raised' ? (
+                            <>
+                                <div className="nx-section-head">
+                                    <span className="nx-section-label">My Issues</span>
+                                    <span className="nx-count-pill">{myRaised.length} tickets</span>
+                                </div>
+                                <div className="nx-list">
+                                    <div className="nx-list-header">
+                                        <span>Issue</span>
+                                        <span>Author</span>
+                                        <span>Posted</span>
+                                        <span style={{ textAlign: 'right' }}>Status</span>
+                                    </div>
+                                    {myRaised.length === 0 ? (
+                                        <Empty
+                                            icon={HelpCircle}
+                                            title="No issues raised yet"
+                                            sub="Post an SOS ticket to get help from a mentor."
+                                            action={
+                                                <button className="nx-post-btn" onClick={() => setModalOpen(true)}>
+                                                    <Plus size={14}/> Post SOS
+                                                </button>
+                                            }
+                                        />
+                                    ) : (
+                                        myRaised.map(t => <TicketRow key={t.id} ticket={t} />)
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="nx-section-head">
+                                    <span className="nx-section-label">Issues I'm Mentoring</span>
+                                    <span className="nx-count-pill">{myMentored.length} active</span>
+                                </div>
+                                <div className="nx-list">
+                                    <div className="nx-list-header">
+                                        <span>Issue</span>
+                                        <span>Author</span>
+                                        <span>Posted</span>
+                                        <span style={{ textAlign: 'right' }}>Status</span>
+                                    </div>
+                                    {myMentored.length === 0 ? (
+                                        <Empty
+                                            icon={UserCheck}
+                                            title="Not mentoring anyone yet"
+                                            sub="Browse the Global Board and offer your expertise."
+                                            action={
+                                                <button className="nx-tab" style={{cursor:'pointer'}} onClick={() => setActiveTab('global')}>
+                                                    <Globe size={13}/> Global Board
+                                                </button>
+                                            }
+                                        />
+                                    ) : (
+                                        myMentored.map(t => <TicketRow key={t.id} ticket={t} />)
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </>
+                )}
+            </div>
+
+            {/* ── CREATE MODAL ── */}
+            {modalOpen && (
+                <div className="nx-modal-overlay" onClick={e => e.target === e.currentTarget && setModalOpen(false)}>
+                    <div className="nx-modal">
+                        <div className="nx-modal-head">
+                            <h2>New SOS Ticket</h2>
+                            <button className="nx-modal-close" onClick={() => setModalOpen(false)}>
+                                <X size={15}/>
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleCreate}>
+                            <div className="nx-field">
                                 <label>Title</label>
-                                <input 
-                                    required 
-                                    type="text" 
+                                <input
+                                    required
+                                    type="text"
                                     placeholder="e.g. Memory leak in React useEffect"
-                                    value={formData.title}
-                                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                                    value={form.title}
+                                    onChange={e => setForm({ ...form, title: e.target.value })}
                                 />
                             </div>
-                            <div className="sos-form-group">
-                                <label style={{ display: 'flex', justifyContent: 'space-between' }}>
+
+                            <div className="nx-field">
+                                <label>
                                     <span>Description</span>
-                                    <span style={{ color: formData.description.trim().length < 30 ? '#ef4444' : '#22c55e', fontSize: '0.78rem' }}>
-                                        {formData.description.trim().length}/30 chars (min 30)
+                                    <span
+                                        className="nx-char-count"
+                                        style={{ color: form.description.trim().length < 30 ? '#ef4444' : '#22c55e' }}
+                                    >
+                                        {form.description.trim().length} / 30 min
                                     </span>
                                 </label>
-                                <textarea 
-                                    required 
-                                    rows="4" 
+                                <textarea
+                                    required
+                                    rows={4}
                                     minLength={30}
-                                    placeholder="Explain your issue in detail (at least 30 characters required)..."
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                    placeholder="Describe the issue in detail…"
+                                    value={form.description}
+                                    onChange={e => setForm({ ...form, description: e.target.value })}
                                 />
                             </div>
-                            <div className="sos-form-group" style={{display: 'flex', gap: '20px'}}>
-                                <div style={{flex: 1}}>
+
+                            <div className="nx-field-row">
+                                <div className="nx-field" style={{ marginBottom: 0 }}>
                                     <label>Language / Framework</label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         placeholder="e.g. React"
-                                        value={formData.language}
-                                        onChange={(e) => setFormData({...formData, language: e.target.value})}
+                                        value={form.language}
+                                        onChange={e => setForm({ ...form, language: e.target.value })}
                                     />
                                 </div>
-                                <div style={{flex: 1}}>
+                                <div className="nx-field" style={{ marginBottom: 0 }}>
                                     <label>Tags (comma separated)</label>
-                                    <input 
-                                        type="text" 
-                                        placeholder="frontend, bug"
-                                        value={formData.tags}
-                                        onChange={(e) => setFormData({...formData, tags: e.target.value})}
+                                    <input
+                                        type="text"
+                                        placeholder="bug, frontend"
+                                        value={form.tags}
+                                        onChange={e => setForm({ ...form, tags: e.target.value })}
                                     />
                                 </div>
                             </div>
-                            <div className="sos-modal-actions">
-                                <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                                <button type="submit" className="btn-submit">Submit Ticket</button>
+
+                            <div className="nx-modal-footer">
+                                <button type="button" className="nx-btn-cancel" onClick={() => setModalOpen(false)}>
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="nx-btn-submit"
+                                    disabled={submitting || form.description.trim().length < 30}
+                                >
+                                    {submitting ? 'Posting…' : 'Post Ticket'}
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -325,4 +412,3 @@ export default function NexusBoard() {
         </div>
     );
 }
-

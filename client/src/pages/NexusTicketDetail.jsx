@@ -150,304 +150,272 @@ export default function NexusTicketDetail() {
     /* ── render ── */
     return (
         <div className="ntd-root">
-            <div className="ntd-grid-bg" />
+            <div className="ntd-shell">
 
-            <div className="ntd-inner">
+                {/* ══════════ LEFT PANE — 65% ══════════ */}
+                <div className="ntd-left">
 
-                {/* ── BACK ── */}
-                <button className="ntd-back" onClick={() => navigate('/nexus')}>
-                    <ArrowLeft size={15} /> Back to Nexus
-                </button>
+                    <button className="ntd-back" onClick={() => navigate('/nexus')}>
+                        <ArrowLeft size={14}/> Back to Nexus
+                    </button>
 
-                {/* ── PAGE HEADER ── */}
-                <div className="ntd-page-header">
-                    <div className="ntd-page-title-row">
-                        <span className="ntd-ticket-id">Ticket #{ticket.id?.slice(-6).toUpperCase()}</span>
-                        <h1 className="ntd-page-title">{ticket.title}</h1>
+                    {/* Hero */}
+                    <div className="ntd-hero">
+                        <div className="ntd-hero-top">
+                            <span className="ntd-eyebrow">Ticket #{ticket.id?.slice(-6).toUpperCase()}</span>
+                            <div className="ntd-hero-badges">
+                                <span className="ntd-lang-chip"><Code size={11}/> {ticket.language}</span>
+                                <StatusBadge status={ticket.status}/>
+                                <span className="ntd-time-chip"><Clock size={11}/> {timeAgo(ticket.created_at)}</span>
+                            </div>
+                        </div>
+                        <h1 className="ntd-title">{ticket.title}</h1>
                     </div>
-                    <div className="ntd-page-badges">
-                        <span className="ntd-lang-chip"><Code size={12}/>{ticket.language}</span>
-                        <StatusBadge status={ticket.status} />
-                        <span className="ntd-time-chip"><Clock size={12}/>{timeAgo(ticket.created_at)}</span>
+
+                    <div className="ntd-divider"/>
+
+                    {/* Description */}
+                    <div className="ntd-section">
+                        <p className="ntd-section-label"><Globe size={13}/> Description</p>
+                        {ticket.description?.trim()
+                            ? <p className="ntd-desc">{ticket.description}</p>
+                            : <p className="ntd-desc-empty">No description provided.</p>
+                        }
+                    </div>
+
+                    {/* Tags */}
+                    {ticket.tags?.length > 0 && (
+                        <div className="ntd-section">
+                            <p className="ntd-section-label"><Hash size={13}/> Tags</p>
+                            <div className="ntd-tags">
+                                {ticket.tags.map((t,i) => <span key={i} className="ntd-tag">#{t}</span>)}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="ntd-divider"/>
+
+                    {/* People */}
+                    <div className="ntd-section">
+                        <p className="ntd-section-label"><User size={13}/> People</p>
+
+                        {/* Author */}
+                        <div className="ntd-person-row">
+                            <Avatar name={ticket.author_username} size={34}/>
+                            <div className="ntd-person-info">
+                                <span className="ntd-person-name">@{ticket.author_username}</span>
+                                <span className="ntd-person-role">Issue Author</span>
+                            </div>
+                            <span className="ntd-role-pill ntd-role-author">Author</span>
+                            {isAuthor && <span className="ntd-you-pill">YOU</span>}
+                        </div>
+
+                        {/* Mentor */}
+                        {ticket.mentor_username ? (
+                            <div className="ntd-person-row">
+                                <Avatar name={ticket.mentor_username} size={34}/>
+                                <div className="ntd-person-info">
+                                    <span className="ntd-person-name">@{ticket.mentor_username}</span>
+                                    <span className="ntd-person-role">Assigned Mentor</span>
+                                </div>
+                                <span className="ntd-role-pill ntd-role-mentor">Mentor</span>
+                                {isMentor && <span className="ntd-you-pill">YOU</span>}
+                                {inProgress && <div className="ntd-live-dot"/>}
+                            </div>
+                        ) : (
+                            <div className="ntd-waiting-mentor">
+                                <UserCheck size={15}/> No mentor assigned yet
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* ── BENTO GRID ── */}
-                <div className="ntd-bento">
+                {/* ══════════ RIGHT PANE — 35% ══════════ */}
+                <div className="ntd-right">
 
-                    {/* ── CARD: Issue Overview ── */}
-                    <div className="ntd-card ntd-card-issue">
-                        <div className="ntd-card-header">
-                            <span className="ntd-card-label"><Hash size={13}/> Issue Overview</span>
+                    {/* Right header: actions */}
+                    <div className="ntd-right-header">
+                        <div className="ntd-right-title-row">
+                            <span className="ntd-right-title">Actions</span>
                         </div>
-                        <div className="ntd-card-body">
-                            <div className="ntd-issue-meta">
-                                <span className="ntd-lang-chip"><Code size={11}/>{ticket.language}</span>
-                                <StatusBadge status={ticket.status} />
-                                <span className="ntd-time-chip"><Clock size={11}/>{timeAgo(ticket.created_at)}</span>
-                            </div>
-                            <h2 className="ntd-issue-title">{ticket.title}</h2>
-                            {ticket.tags?.length > 0 && (
-                                <div className="ntd-tags-row">
-                                    <Tag size={12} className="ntd-tag-icon"/>
-                                    {ticket.tags.map((t, i) => <span key={i} className="ntd-tag">#{t}</span>)}
-                                </div>
-                            )}
-                        </div>
-                    </div>
 
-                    {/* ── CARD: Actions sidebar ── */}
-                    <div className="ntd-card ntd-card-actions">
-                        <div className="ntd-card-header">
-                            <span className="ntd-card-label"><Zap size={13}/> Actions</span>
-                        </div>
-                        <div className="ntd-card-body">
-
-                            {/* Open workspace — full prominent button */}
-                            {inProgress && (isAuthor || isMentor) && (
-                                <button
-                                    className="ntd-workspace-btn"
-                                    onClick={() => navigate(`/editor/${ticket.id}`, {
-                                        state: {
-                                            returnTo: `/nexus/ticket/${ticket.id}`,
-                                            nexusMode: true,
-                                            nexusTicket: {
-                                                id: ticket.id,
-                                                title: ticket.title,
-                                                description: ticket.description,
-                                                language: ticket.language,
-                                                authorUsername: ticket.author_username,
-                                                mentorUsername: ticket.mentor_username,
-                                            }
+                        {/* Open Workspace */}
+                        {inProgress && (isAuthor || isMentor) && (
+                            <button
+                                className="ntd-workspace-btn"
+                                onClick={() => navigate(`/editor/${ticket.id}`, {
+                                    state: {
+                                        returnTo: `/nexus/ticket/${ticket.id}`,
+                                        nexusMode: true,
+                                        nexusTicket: {
+                                            id: ticket.id, title: ticket.title,
+                                            description: ticket.description,
+                                            language: ticket.language,
+                                            authorUsername: ticket.author_username,
+                                            mentorUsername: ticket.mentor_username,
                                         }
-                                    })}
-                                >
-                                    <Layout size={16}/> Open Workspace <Zap size={13} className="ntd-zap"/>
-                                </button>
-                            )}
+                                    }
+                                })}
+                            >
+                                <Layout size={15}/> Open Workspace <Zap size={13} className="ntd-zap"/>
+                            </button>
+                        )}
 
-                            {/* resolved badge */}
-                            {ticket.status === 'resolved' && (
-                                <div className="ntd-resolved-badge">
-                                    <CheckCircle size={17}/> Issue Resolved
-                                </div>
-                            )}
-
-                            {/* Offer help */}
-                            {ticket.status === 'open' && !isAuthor && !hasOffered && (
-                                <button className="ntd-btn ntd-btn-offer" onClick={offerHelp}>
-                                    <Shield size={15}/> Offer Help
-                                </button>
-                            )}
-                            {ticket.status === 'open' && !isAuthor && hasOffered && (
-                                <button className="ntd-btn ntd-btn-pending" disabled>
-                                    <Clock size={15}/> Pending…
-                                </button>
-                            )}
-
-                            {/* Author controls — compact icon row */}
-                            {inProgress && isAuthor && (
-                                <div className="ntd-icon-actions">
-                                    <button
-                                        className="ntd-icon-btn ntd-icon-btn-resolve"
-                                        onClick={resolveTicket}
-                                        title="Mark Resolved"
-                                    >
-                                        <CheckCircle size={16}/>
-                                        <span>Resolve</span>
-                                    </button>
-                                    <button
-                                        className="ntd-icon-btn ntd-icon-btn-revoke"
-                                        onClick={revokementor}
-                                        title="Reopen Ticket"
-                                    >
-                                        <RefreshCw size={15}/>
-                                        <span>Reopen</span>
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* Active session */}
-                            {inProgress && ticket.mentor_username && (
-                                <div className="ntd-session-box">
-                                    <div className="ntd-live-dot"/>
-                                    <Avatar name={ticket.mentor_username} size={28}/>
-                                    <div>
-                                        <span className="ntd-session-mentor">@{ticket.mentor_username}</span>
-                                        <span className="ntd-session-label">Mentor · Active Session</span>
-                                    </div>
-                                </div>
-                            )}
-
-                            {!inProgress && ticket.status === 'open' && isAuthor && (
-                                <p className="ntd-actions-empty">Waiting for a mentor to offer help…</p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* ── CARD: Description ── */}
-                    <div className="ntd-card ntd-card-description">
-                        <div className="ntd-card-header">
-                            <span className="ntd-card-label"><Globe size={13}/> Description</span>
-                        </div>
-                        <div className="ntd-card-body">
-                            <p className="ntd-desc-text">
-                                {ticket.description?.trim() || <span style={{ color: '#52525b', fontStyle: 'italic' }}>No description provided.</span>}
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* ── CARD: People ── */}
-                    <div className="ntd-card ntd-card-people">
-                        <div className="ntd-card-header">
-                            <span className="ntd-card-label"><User size={13}/> People</span>
-                        </div>
-                        <div className="ntd-card-body">
-                            {/* Author */}
-                            <div className="ntd-person-row">
-                                <Avatar name={ticket.author_username} size={34}/>
-                                <div className="ntd-person-info">
-                                    <span className="ntd-person-name">@{ticket.author_username}</span>
-                                    <span className="ntd-person-role">Issue Author</span>
-                                </div>
-                                <span className="ntd-role-pill ntd-role-author">Author</span>
-                                {isAuthor && <span className="ntd-you-pill">YOU</span>}
+                        {/* Resolved */}
+                        {ticket.status === 'resolved' && (
+                            <div className="ntd-resolved-badge">
+                                <CheckCircle size={16}/> Issue Resolved
                             </div>
+                        )}
 
-                            {/* Mentor */}
-                            {ticket.mentor_username ? (
-                                <div className="ntd-person-row">
-                                    <Avatar name={ticket.mentor_username} size={34}/>
-                                    <div className="ntd-person-info">
-                                        <span className="ntd-person-name">@{ticket.mentor_username}</span>
-                                        <span className="ntd-person-role">Assigned Mentor</span>
-                                    </div>
-                                    <span className="ntd-role-pill ntd-role-mentor">Mentor</span>
-                                    {isMentor && <span className="ntd-you-pill">YOU</span>}
-                                    {inProgress && <div className="ntd-live-dot"/>}
+                        {/* Offer help */}
+                        {ticket.status === 'open' && !isAuthor && !hasOffered && (
+                            <button className="ntd-btn ntd-btn-offer" onClick={offerHelp}>
+                                <Shield size={14}/> Offer Help
+                            </button>
+                        )}
+                        {ticket.status === 'open' && !isAuthor && hasOffered && (
+                            <button className="ntd-btn ntd-btn-pending" disabled>
+                                <Clock size={14}/> Offer Pending…
+                            </button>
+                        )}
+
+                        {/* Author controls — compact icon pair */}
+                        {inProgress && isAuthor && (
+                            <div className="ntd-icon-actions">
+                                <button className="ntd-icon-btn ntd-icon-btn-resolve" onClick={resolveTicket} title="Mark Resolved">
+                                    <CheckCircle size={16}/><span>Resolve</span>
+                                </button>
+                                <button className="ntd-icon-btn ntd-icon-btn-revoke" onClick={revokementor} title="Reopen Ticket">
+                                    <RefreshCw size={15}/><span>Reopen</span>
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Active session */}
+                        {inProgress && ticket.mentor_username && (
+                            <div className="ntd-session-box">
+                                <div className="ntd-live-dot"/>
+                                <Avatar name={ticket.mentor_username} size={26}/>
+                                <div>
+                                    <span className="ntd-session-mentor">@{ticket.mentor_username}</span>
+                                    <span className="ntd-session-label">Mentor · Active Session</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {!inProgress && ticket.status === 'open' && isAuthor && (
+                            <p className="ntd-actions-empty">Waiting for a mentor to offer help…</p>
+                        )}
+                    </div>
+
+                    {/* Tabs */}
+                    <div className="ntd-tabs-row">
+                        <button
+                            className={`ntd-tab ${activeTab === 'notifications' ? 'ntd-tab-active' : ''}`}
+                            onClick={() => setActiveTab('notifications')}
+                        >
+                            <Bell size={13}/> Notifications
+                            {notifCount > 0 && <span className="ntd-badge">{notifCount}</span>}
+                        </button>
+                        <button
+                            className={`ntd-tab ${activeTab === 'chat' ? 'ntd-tab-active' : ''} ${!canChat ? 'ntd-tab-off' : ''}`}
+                            onClick={() => canChat && setActiveTab('chat')}
+                            title={!canChat ? 'Available after mentor is assigned' : ''}
+                        >
+                            <MessageCircle size={13}/> Chat
+                            {messages.length > 0 && <span className="ntd-badge ntd-badge-blue">{messages.length}</span>}
+                        </button>
+                    </div>
+
+                    {/* NOTIFICATIONS */}
+                    {activeTab === 'notifications' && (
+                        <div className="ntd-tab-body">
+                            {requests.length === 0 ? (
+                                <div className="ntd-empty">
+                                    <Bell size={30} strokeWidth={1.5}/>
+                                    <p>No offers yet</p>
+                                    <span>Mentors who click "Offer Help" appear here</span>
                                 </div>
                             ) : (
-                                <div className="ntd-waiting-mentor">
-                                    <UserCheck size={16}/> No mentor assigned yet
+                                <div className="ntd-notif-list">
+                                    {requests.map((r, idx) => (
+                                        <div key={r.id} className="ntd-notif-row" style={{ animationDelay: `${idx * 50}ms` }}>
+                                            <Avatar name={r.username} size={38}/>
+                                            <div className="ntd-notif-info">
+                                                <span className="ntd-notif-name">@{r.username}</span>
+                                                <span className="ntd-notif-sub">Offered to mentor</span>
+                                            </div>
+                                            {isAuthor && ticket.status === 'open' && (
+                                                <button className="ntd-accept-btn" onClick={() => acceptMentor(r.id, r.username)}>
+                                                    <CheckCircle size={12}/> Accept
+                                                </button>
+                                            )}
+                                            {ticket.mentor_id === r.id && <span className="ntd-accepted-tag">✓ Accepted</span>}
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
-                    </div>
+                    )}
 
-                    {/* ── CARD: Notifications + Chat tabs ── */}
-                    <div className="ntd-card ntd-card-tabs">
-                        <div className="ntd-tabs-row">
-                            <button
-                                className={`ntd-tab ${activeTab === 'notifications' ? 'ntd-tab-active' : ''}`}
-                                onClick={() => setActiveTab('notifications')}
-                            >
-                                <Bell size={14}/>
-                                Notifications
-                                {notifCount > 0 && <span className="ntd-badge">{notifCount}</span>}
-                            </button>
-                            <button
-                                className={`ntd-tab ${activeTab === 'chat' ? 'ntd-tab-active' : ''} ${!canChat ? 'ntd-tab-off' : ''}`}
-                                onClick={() => canChat && setActiveTab('chat')}
-                                title={!canChat ? 'Available after mentor is assigned' : ''}
-                            >
-                                <MessageCircle size={14}/>
-                                Chat
-                                {messages.length > 0 && <span className="ntd-badge ntd-badge-blue">{messages.length}</span>}
-                            </button>
-                        </div>
-
-                        {/* NOTIFICATIONS TAB */}
-                        {activeTab === 'notifications' && (
-                            <div className="ntd-tab-body">
-                                {requests.length === 0 ? (
-                                    <div className="ntd-empty">
-                                        <Bell size={32} strokeWidth={1.5}/>
-                                        <p>No offers yet</p>
-                                        <span>Mentors who click "Offer Help" will appear here</span>
-                                    </div>
-                                ) : (
-                                    <div className="ntd-notif-list">
-                                        {requests.map((r, idx) => (
-                                            <div key={r.id} className="ntd-notif-row" style={{ animationDelay: `${idx * 50}ms` }}>
-                                                <Avatar name={r.username} size={40}/>
-                                                <div className="ntd-notif-info">
-                                                    <span className="ntd-notif-name">@{r.username}</span>
-                                                    <span className="ntd-notif-sub">Offered to mentor this issue</span>
-                                                </div>
-                                                {isAuthor && ticket.status === 'open' && (
-                                                    <button className="ntd-accept-btn" onClick={() => acceptMentor(r.id, r.username)}>
-                                                        <CheckCircle size={13}/> Accept
-                                                    </button>
-                                                )}
-                                                {ticket.mentor_id === r.id && <span className="ntd-accepted-tag">✓ Accepted</span>}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* CHAT TAB */}
-                        {activeTab === 'chat' && (
-                            <div className="ntd-tab-body ntd-chat-body">
-                                {!canChat ? (
-                                    <div className="ntd-empty">
-                                        <MessageCircle size={32} strokeWidth={1.5}/>
-                                        <p>Chat unlocks when a mentor is assigned</p>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <div className="ntd-chat-header">
-                                            <Avatar name={isAuthor ? ticket.mentor_username : ticket.author_username} size={30}/>
-                                            <div>
-                                                <span className="ntd-chat-peer">@{isAuthor ? ticket.mentor_username : ticket.author_username}</span>
-                                                <span className="ntd-chat-role">{isAuthor ? 'Your Mentor' : 'Issue Author'}</span>
-                                            </div>
-                                            <div className="ntd-live-dot" style={{ marginLeft: 'auto' }}/>
+                    {/* CHAT */}
+                    {activeTab === 'chat' && (
+                        <div className="ntd-tab-body ntd-chat-body">
+                            {!canChat ? (
+                                <div className="ntd-empty">
+                                    <MessageCircle size={30} strokeWidth={1.5}/>
+                                    <p>Chat locked</p>
+                                    <span>Unlocks when a mentor is assigned</span>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="ntd-chat-header">
+                                        <Avatar name={isAuthor ? ticket.mentor_username : ticket.author_username} size={28}/>
+                                        <div>
+                                            <span className="ntd-chat-peer">@{isAuthor ? ticket.mentor_username : ticket.author_username}</span>
+                                            <span className="ntd-chat-role">{isAuthor ? 'Your Mentor' : 'Issue Author'}</span>
                                         </div>
-                                        <div className="ntd-messages">
-                                            {messages.length === 0 && (
-                                                <div className="ntd-chat-empty">
-                                                    <span>👋</span>
-                                                    <p>Session started! Say hello.</p>
-                                                </div>
-                                            )}
-                                            {messages.map((msg, i) => {
-                                                const mine = msg.sender_id === user?.id;
-                                                return (
-                                                    <div key={msg.id || i} className={`ntd-msg ${mine ? 'ntd-msg-mine' : 'ntd-msg-theirs'}`}>
-                                                        {!mine && <Avatar name={msg.sender_username} size={26}/>}
-                                                        <div className={`ntd-bubble ${mine ? 'ntd-bubble-mine' : 'ntd-bubble-theirs'}`}>
-                                                            {!mine && <span className="ntd-bubble-from">{msg.sender_username}</span>}
-                                                            <span className="ntd-bubble-text">{msg.text}</span>
-                                                        </div>
-                                                        {mine && <Avatar name={msg.sender_username} size={26}/>}
+                                        <div className="ntd-live-dot" style={{ marginLeft: 'auto' }}/>
+                                    </div>
+                                    <div className="ntd-messages">
+                                        {messages.length === 0 && (
+                                            <div className="ntd-chat-empty">
+                                                <span>👋</span><p>Session started! Say hello.</p>
+                                            </div>
+                                        )}
+                                        {messages.map((msg, i) => {
+                                            const mine = msg.sender_id === user?.id;
+                                            return (
+                                                <div key={msg.id || i} className={`ntd-msg ${mine ? 'ntd-msg-mine' : ''}`}>
+                                                    {!mine && <Avatar name={msg.sender_username} size={24}/>}
+                                                    <div className={`ntd-bubble ${mine ? 'ntd-bubble-mine' : 'ntd-bubble-theirs'}`}>
+                                                        {!mine && <span className="ntd-bubble-from">{msg.sender_username}</span>}
+                                                        <span className="ntd-bubble-text">{msg.text}</span>
                                                     </div>
-                                                );
-                                            })}
-                                            <div ref={bottomRef}/>
-                                        </div>
-                                        <form className="ntd-chat-form" onSubmit={sendChat}>
-                                            <input
-                                                type="text"
-                                                placeholder="Type a message…"
-                                                value={chatText}
-                                                onChange={e => setChatText(e.target.value)}
-                                                disabled={sending}
-                                                autoFocus
-                                            />
-                                            <button type="submit" disabled={sending || !chatText.trim()}>
-                                                <Send size={15}/>
-                                            </button>
-                                        </form>
-                                    </>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                                                    {mine && <Avatar name={msg.sender_username} size={24}/>}
+                                                </div>
+                                            );
+                                        })}
+                                        <div ref={bottomRef}/>
+                                    </div>
+                                    <form className="ntd-chat-form" onSubmit={sendChat}>
+                                        <input
+                                            type="text" placeholder="Type a message…"
+                                            value={chatText} onChange={e => setChatText(e.target.value)}
+                                            disabled={sending} autoFocus
+                                        />
+                                        <button type="submit" disabled={sending || !chatText.trim()}>
+                                            <Send size={14}/>
+                                        </button>
+                                    </form>
+                                </>
+                            )}
+                        </div>
+                    )}
 
-                </div>{/* end bento */}
-            </div>
+                </div>{/* end right pane */}
+            </div>{/* end shell */}
         </div>
     );
 }
