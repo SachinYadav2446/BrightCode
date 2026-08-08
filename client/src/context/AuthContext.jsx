@@ -187,10 +187,7 @@ export const AuthProvider = ({ children }) => {
           } : null);
         }
       }).catch((err) => {
-        if (err.response?.status === 401 || err.response?.status === 403) {
-          logout();
-          window.location.href = '/auth?error=session_expired';
-        }
+        console.warn('Sync /me warning:', err.message);
       });
     } else {
       setSessionValid(false);
@@ -385,13 +382,9 @@ export const AuthProvider = ({ children }) => {
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (error.response?.status === 401) {
+        if (error.response?.status === 401 && error.response?.data?.code === 'CONCURRENT_LOGIN') {
           logout();
-          if (error.response?.data?.code === 'CONCURRENT_LOGIN') {
-            window.location.href = '/auth?error=concurrent_login';
-          } else {
-            window.location.href = '/auth?error=session_expired';
-          }
+          window.location.href = '/auth?error=concurrent_login';
         }
         return Promise.reject(error);
       }

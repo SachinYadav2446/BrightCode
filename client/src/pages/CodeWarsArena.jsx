@@ -502,36 +502,14 @@ const CodeWarsArena = () => {
 
         try {
             setLoading(true);
-            console.log('ðŸ—ï¸ Creating room...', {
+            console.log('🏗️ Creating room via API...', {
                 userId: user.id,
                 username: user.username,
                 factionId: myFaction?.id,
-                roomConfig: createForm,
-                socketConnected: socket?.connected
+                roomConfig: createForm
             });
-            
-            // Try socket first if connected
-            if (socket && socket.connected) {
-                console.log('ðŸ“¡ Using socket to create room...');
-                socket.emit('cw-create-room', {
-                    roomConfig: createForm,
-                    userId: user.id,
-                    username: user.username,
-                    factionId: myFaction.id
-                });
-                
-                // Set timeout in case socket doesn't respond
-                setTimeout(() => {
-                    if (loading) {
-                        console.warn('â° Socket timeout, falling back to HTTP...');
-                        createRoomViaHTTP();
-                    }
-                }, 5000);
-            } else {
-                // Fallback to HTTP if socket not connected
-                console.log('ðŸ“¡ Socket not connected, using HTTP...');
-                await createRoomViaHTTP();
-            }
+
+            await createRoomViaHTTP();
             
         } catch (error) {
             console.error('Create room error:', error);
@@ -542,31 +520,41 @@ const CodeWarsArena = () => {
     
     const createRoomViaHTTP = async () => {
         try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                toast.error('Session expired. Please log in again.');
+                navigate('/auth');
+                return;
+            }
+
             const response = await axios.post(`${API_URL}/code-wars/create-room`, {
-                name: createForm.name,
+                name: createForm.name || 'Battle Arena',
                 isPrivate: createForm.isPrivate,
                 password: createForm.password,
+                gameMode: createForm.competition || 'QUICK_BATTLE',
                 teamSize: createForm.teamSize,
                 maxTeams: createForm.maxTeams,
                 questionCount: createForm.questionCount,
                 timeLimit: createForm.timeLimit,
                 difficulty: createForm.difficulty,
                 allowSpectators: createForm.allowSpectators,
-                factionId: myFaction.id
+                factionId: myFaction?.id
             }, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
             
-            console.log('âœ… Room created via HTTP:', response.data);
-            setCurrentRoom(response.data.room);
+            console.log('✅ Room created via API:', response.data);
+            const createdRoom = response.data.room;
+            setCurrentRoom(createdRoom);
             setGameState('room');
+            setShowCreateModal(false);
             setLoading(false);
-            toast.success(`Room ${response.data.room.id} created!`);
+            toast.success(`Room ${createdRoom.id} created successfully!`);
             
             // Join socket room if socket is available
             if (socket && socket.connected) {
                 socket.emit('join-code-wars-room', {
-                    roomId: response.data.room.id,
+                    roomId: createdRoom.id,
                     userId: user.id
                 });
             }
@@ -578,13 +566,13 @@ const CodeWarsArena = () => {
             console.error('HTTP create room error:', error);
             setLoading(false);
             
-            if (error.response?.status === 401) {
+            if (error.response?.status === 401 && !localStorage.getItem('token')) {
                 toast.error('Authentication failed. Please log in again.');
                 navigate('/auth');
             } else if (error.message.includes('Network Error')) {
                 toast.error('Cannot connect to server. Please check if the server is running on port 5051.');
             } else {
-                toast.error(error.response?.data?.error || 'Failed to create room');
+                toast.error(error.response?.data?.error || error.message || 'Failed to create room');
             }
         }
     };

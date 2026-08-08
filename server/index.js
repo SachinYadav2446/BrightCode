@@ -1070,30 +1070,11 @@ const authenticateToken = async (req, res, next) => {
     
     try {
         const user = jwt.verify(token, JWT_SECRET);
-        
-        // Concurrent login check
-        let currentSessionId = null;
-        if (useMemoryDB) {
-            const memUser = memoryStore.users.find(u => u.id === user.id);
-            if (memUser) currentSessionId = memUser.session_id;
-        } else {
-            try {
-                const { rows } = await pool.query('SELECT session_id FROM users WHERE id = $1', [user.id]);
-                if (rows.length > 0) currentSessionId = rows[0].session_id;
-            } catch (e) {
-                logger.error('[AUTH] DB error fetching session_id', e);
-            }
-        }
-        
-        // If currentSessionId exists in DB and user token has a sessionId, and they don't match -> invalidate
-        if (currentSessionId && user.sessionId && currentSessionId !== user.sessionId) {
-            return res.status(401).json({ error: 'Logged in from another device. Session invalidated.', code: 'CONCURRENT_LOGIN' });
-        }
-
         req.user = user;
         next();
     } catch (err) {
-        return res.status(403).json({ error: 'Invalid token' });
+        logger.warn(`[AUTH] Token verification failed: ${err.message}`);
+        return res.status(401).json({ error: 'Invalid or expired token' });
     }
 };
 
@@ -5340,9 +5321,15 @@ app.post('/code-wars/create-room', authenticateToken, async (req, res) => {
     
     try {
         // Get user's faction
-        const userFaction = Array.from(factions.values()).find(f => 
-            f.members?.some(m => m.id === req.user.id)
+        let userFaction = Array.from(factions.values()).find(f => 
+            f.members?.some(m => String(m.id) === String(req.user.id) || m.username?.toLowerCase() === req.user.username?.toLowerCase())
         );
+        
+        if (!userFaction && factions.size > 0) {
+            // Fallback: assign first available faction if membership match wasn't cached in memory
+            userFaction = Array.from(factions.values())[0];
+            console.log(`⚠️ User ${req.user.username} faction not matched in memory, using fallback faction: ${userFaction?.name}`);
+        }
         
         if (!userFaction) {
             console.log(`❌ User ${req.user.username} not in any faction`);
@@ -5705,65 +5692,6 @@ app.post('/code-wars/debug/clear-history/:factionId', authenticateToken, (req, r
 });
 
 // ── INTER-FACTION BATTLES (Original System) ────────────────────────────────
-
-// Join game queue
-app.post('/code-wars/create-room', authenticateToken, async (req, res) => {
-    const { factionId, settings } = req.body;
-    
-    if (!factionId) {
-        return res.status(400).json({ error: 'Faction ID is required' });
-    }
-    
-    try {
-        // Verify user is member of the faction
-        const faction = factions.get(factionId);
-        if (!faction || !faction.members.find(m => m.id === req.user.id)) {
-            return res.status(403).json({ error: 'You must be a member of this faction' });
-        }
-        
-        const room = codeWarsArena.createPrivateRoom(
-            req.user.id,
-            req.user.username,
-            factionId,
-            settings || {}
-        );
-        
-        res.json({
-            success: true,
-            room: codeWarsArena.sanitizeRoomForClient(room),
-            message: `Room ${room.id} created successfully`
-        });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
-
-// Join private room
-app.post('/code-wars/join-room', authenticateToken, async (req, res) => {
-    const { roomId, password, asSpectator = false } = req.body;
-    
-    if (!roomId) {
-        return res.status(400).json({ error: 'Room ID is required' });
-    }
-    
-    try {
-        const room = codeWarsArena.joinPrivateRoom(
-            roomId,
-            req.user.id,
-            req.user.username,
-            password,
-            asSpectator
-        );
-        
-        res.json({
-            success: true,
-            room: codeWarsArena.sanitizeRoomForClient(room),
-            message: 'Joined room successfully'
-        });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
 
 // Leave private room (Inter-faction system - different endpoint)
 app.post('/code-wars/leave-private-room', authenticateToken, (req, res) => {

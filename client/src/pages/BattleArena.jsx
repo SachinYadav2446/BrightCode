@@ -15,7 +15,7 @@ const BattleArena = () => {
       title: 'Syntax Showdown',
       description: 'Real-time competitive coding battles where you face off against opponents in timed challenges.',
       icon: Swords,
-      status: 'READY',
+      status: 'COMING SOON',
       players: ['1v1', '2v2', '4v4'],
       durations: ['5', '15', '30', '60'],
       difficulties: ['easy', 'medium', 'hard'],
