@@ -4562,30 +4562,23 @@ io.on('connection', (socket) => {
         try {
             console.log(`🏁 [CW Socket] User ${username} ending contest in room ${roomId}`);
             
+            // endPlayerContest handles XP, ends game, and broadcasts cw-game-ended internally.
+            // If the game is already completed it returns { alreadyEnded: true } silently.
             const result = intraFactionArena.endPlayerContest(roomId, userId);
             
-            console.log(`✅ [CW Socket] Player finished: ${result.finishedCount}/${result.totalPlayers}`);
-            
-            // Notify the player
+            // Only confirm to the calling player — cw-game-ended was already broadcast inside endGame()
             socket.emit('cw-contest-ended', {
                 success: true,
                 ...result
             });
             
-            // If all players finished, game will end automatically
-            // Otherwise, just update room state
-            if (!result.allFinished) {
-                const room = intraFactionArena.getRoomById(roomId);
-                if (room) {
-                    io.to(roomId).emit('cw-room-update', {
-                        room: intraFactionArena.sanitizeRoomForClient(room)
-                    });
-                }
-            }
-            
         } catch (error) {
             console.error(`❌ [CW Socket] End contest error:`, error.message);
-            socket.emit('cw-error', { error: error.message });
+            // Don't surface internal game-state errors to the user as a red toast
+            // Only emit cw-error for unexpected errors, not for race-condition "game not active"
+            if (!error.message?.includes('Game is not active') && !error.message?.includes('not found')) {
+                socket.emit('cw-error', { error: error.message });
+            }
         }
     });
     
@@ -6275,6 +6268,49 @@ app.post('/compile-java', async (req, res) => {
         res.status(500).json({ 
             success: false, 
             error: error.message || 'Execution failed' 
+        });
+    }
+});
+
+// ── Judge0 Free-Form Run Endpoint ─────────────────────────────────────────────
+// Runs arbitrary code with custom stdin. Used by the "Run" button in the
+// Battle Code Editor console panel (no test-case evaluation, just stdout/stderr).
+app.post('/judge0/run', authenticateToken, async (req, res) => {
+    const { code, language = 'javascript', stdin = '' } = req.body;
+
+    if (!code) {
+        return res.status(400).json({ error: 'No code provided' });
+    }
+
+    try {
+        const { executeJudge0 } = require('./judge0Service');
+        const { analyzeCodeComplexity } = require('./codeComplexityAnalyzer');
+        console.log(`⚡ [RUN] Free-form ${language} execution via Judge0...`);
+        const result = await executeJudge0(code, language, stdin);
+        
+        const execTimeMs = result.executionTime || 0;
+        const memKb = result.memoryKb || 0;
+        const complexity = analyzeCodeComplexity(code, language, execTimeMs, memKb);
+
+        res.json({
+            stdout: result.stdout || '',
+            stderr: result.stderr || '',
+            executionTime: execTimeMs,
+            memoryKb: memKb,
+            status: result.status || 'Executed',
+            exitCode: result.code ?? 0,
+            complexity
+        });
+    } catch (error) {
+        console.error('❌ /judge0/run error:', error);
+        res.status(500).json({
+            stdout: '',
+            stderr: error.message || 'Execution failed',
+            executionTime: 0,
+            memoryKb: 0,
+            status: 'Error',
+            exitCode: 1,
+            complexity: null
         });
     }
 });
