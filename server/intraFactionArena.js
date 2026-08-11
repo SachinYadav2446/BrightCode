@@ -783,16 +783,29 @@ class IntraFactionArena {
 
     endGame(roomId) {
         const room = this.activeRooms.get(roomId);
-        if (!room || room.status !== 'active') return;
+        if (!room || room.status === 'completed') return;
         
         room.status = 'completed';
         room.endTime = new Date().toISOString();
+        
+        // Award XP to all participants: 100 base participation XP + team's total score
+        console.log(`🏆 [ARENA] Game ended for room ${roomId}. Awarding XP to all participants...`);
+        room.teams.forEach(team => {
+            const teamScore = (room.scores instanceof Map ? room.scores.get(team.id) : room.scores?.[team.id]) || team.totalScore || 0;
+            const teamXP = 100 + Number(teamScore);
+            team.players.forEach(player => {
+                console.log(`🏆 [ARENA] Awarding ${teamXP} XP to player ${player.username} (100 base + ${teamScore} team score)`);
+                this.updateUserXP(player.id, teamXP);
+                player.xpEarned = teamXP;
+            });
+        });
         
         // Calculate results
         const results = this.calculateRoomResults(room);
         
         // Notify all participants
         this.notifyRoomUpdate(room, 'game-ended', { results });
+        this.notifyRoomUpdate(room, 'cw-game-ended', { results, reason: 'completed' });
         
         // Clean up after 5 minutes
         setTimeout(() => {
@@ -804,13 +817,33 @@ class IntraFactionArena {
     
     endPlayerContest(roomId, userId) {
         const room = this.activeRooms.get(roomId);
-        if (!room || room.status !== 'active') {
-            throw new Error('Game is not active');
+        
+        // If game is already completed (another player ended it), just return success silently
+        if (!room || room.status === 'completed') {
+            return {
+                finished: true,
+                allFinished: true,
+                alreadyEnded: true,
+                finishedCount: 0,
+                totalPlayers: 0
+            };
+        }
+        
+        if (room.status !== 'active') {
+            return {
+                finished: true,
+                allFinished: true,
+                alreadyEnded: true,
+                finishedCount: 0,
+                totalPlayers: 0
+            };
         }
         
         const player = this.findPlayerInRoom(room, userId);
         if (!player || player.role !== 'player') {
-            throw new Error('Player not found in game');
+            // Player not found but don't throw — they may have already been removed
+            console.warn(`[ARENA] endPlayerContest: player ${userId} not found in room ${roomId}`);
+            return { finished: true, allFinished: false, finishedCount: 0, totalPlayers: 0 };
         }
         
         // Mark player as finished
@@ -819,32 +852,16 @@ class IntraFactionArena {
         }
         room.finishedPlayers.add(userId);
         
-        console.log(`[ARENA] Player ${player.player.username} ended their contest early`);
-        console.log(`[ARENA] Finished players: ${room.finishedPlayers.size}/${room.teams.reduce((sum, t) => sum + t.players.length, 0)}`);
+        console.log(`[ARENA] Player ${player.player.username} ended their contest. Ending game for all.`);
         
-        // Check if all players have finished
         const totalPlayers = room.teams.reduce((sum, team) => sum + team.players.length, 0);
-        const allFinished = room.finishedPlayers.size >= totalPlayers;
         
-        if (allFinished) {
-            console.log(`[ARENA] All players finished - ending game`);
-            this.endGame(roomId);
-        } else {
-            // Just notify that this player finished
-            this.notifyRoomUpdate(room, 'player-finished', {
-                userId,
-                username: player.player.username,
-                teamId: player.teamId,
-                finishedCount: room.finishedPlayers.size,
-                totalPlayers: totalPlayers
-            });
-        }
-        
-        this.activeRooms.set(roomId, room);
+        // Immediately end game for all participants
+        this.endGame(roomId);
         
         return {
             finished: true,
-            allFinished: allFinished,
+            allFinished: true,
             finishedCount: room.finishedPlayers.size,
             totalPlayers: totalPlayers
         };
@@ -875,18 +892,25 @@ class IntraFactionArena {
     }
 
     calculateRoomResults(room) {
-        const teamResults = room.teams.map(team => ({
-            teamId: team.id,
-            teamName: team.name,
-            totalScore: room.scores.get(team.id) || 0,
-            questionsCompleted: team.questionsCompleted,
-            failedAttempts: team.failedAttempts || 0,
-            players: team.players.map(p => ({
-                username: p.username,
-                score: p.score,
-                questionsCompleted: p.questionsCompleted
-            }))
-        }));
+        const teamResults = room.teams.map(team => {
+            const teamScore = (room.scores instanceof Map ? room.scores.get(team.id) : room.scores?.[team.id]) || team.totalScore || 0;
+            const teamXP = 100 + Number(teamScore);
+            return {
+                teamId: team.id,
+                teamName: team.name,
+                totalScore: teamScore,
+                xpEarned: teamXP,
+                questionsCompleted: team.questionsCompleted || 0,
+                failedAttempts: team.failedAttempts || 0,
+                players: team.players.map(p => ({
+                    id: p.id,
+                    username: p.username,
+                    score: p.score || 0,
+                    xpEarned: p.xpEarned || teamXP,
+                    questionsCompleted: p.questionsCompleted || 0
+                }))
+            };
+        });
         
         // Sort by score first, then by failed attempts (fewer is better) as tiebreaker
         teamResults.sort((a, b) => {
@@ -944,28 +968,26 @@ class IntraFactionArena {
     
     updateUserXP(userId, xpAmount) {
         try {
-            if (!this.useMemoryDB || !this.memoryStore) {
-                console.warn('[ARENA] Cannot update XP - memory store not available');
-                return;
+            // Update PostgreSQL DB if database pool is available
+            const db = require('./db');
+            if (db && db.pool) {
+                db.query('UPDATE users SET xp = COALESCE(xp, 0) + $1 WHERE id = $2', [xpAmount, userId])
+                  .then(() => console.log(`[ARENA] DB XP updated (+${xpAmount}) for user ${userId}`))
+                  .catch(err => console.error('[ARENA] DB XP update error:', err.message));
             }
-            
-            let userIndex = this.memoryStore.users.findIndex(u => u.id === userId);
-            
-            if (userIndex === -1) {
-                console.warn(`[ARENA] User ${userId} not found in memory store`);
-                return;
+
+            if (this.memoryStore && Array.isArray(this.memoryStore.users)) {
+                let userIndex = this.memoryStore.users.findIndex(u => u.id === userId);
+                if (userIndex !== -1) {
+                    const user = this.memoryStore.users[userIndex];
+                    user.xp = (user.xp || 0) + xpAmount;
+                    console.log(`[ARENA] Added ${xpAmount} XP to memory user ${userId}. New total: ${user.xp}`);
+                    
+                    const today = new Date().toISOString().split('T')[0];
+                    if (!user.activity) user.activity = {};
+                    user.activity[today] = (user.activity[today] || 0) + xpAmount;
+                }
             }
-            
-            const user = this.memoryStore.users[userIndex];
-            user.xp = (user.xp || 0) + xpAmount;
-            
-            console.log(`[ARENA] Added ${xpAmount} XP to user ${userId}. New total: ${user.xp}`);
-            
-            // Track daily activity
-            const today = new Date().toISOString().split('T')[0];
-            if (!user.activity) user.activity = {};
-            user.activity[today] = (user.activity[today] || 0) + xpAmount;
-            
         } catch (error) {
             console.error('[ARENA] Error updating user XP:', error);
         }
