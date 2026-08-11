@@ -161,11 +161,11 @@ const Factions = () => {
             const response = await axios.post(`${API_URL}/factions/create`, newFaction, { headers: { Authorization: `Bearer ${token}` } });
             
             // Cache the new faction immediately
-            const createdFaction = response.data.faction;
-            if (createdFaction) {
+            const createdFaction = response.data.faction || { id: response.data.id, name: response.data.name, emblem: newFaction.emblem };
+            if (createdFaction && createdFaction.id) {
                 setMyFactionId(createdFaction.id);
                 setMyFactionName(createdFaction.name);
-                setMyFactionEmblem(createdFaction.emblem);
+                setMyFactionEmblem(createdFaction.emblem || newFaction.emblem || 'swords');
                 localStorage.setItem(`faction_${user.username}_id`, createdFaction.id);
                 localStorage.setItem(`faction_${user.username}_name`, createdFaction.name);
                 localStorage.setItem(`faction_${user.username}_emblem`, createdFaction.emblem || 'swords');

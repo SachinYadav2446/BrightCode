@@ -122,9 +122,9 @@ export const AuthProvider = ({ children }) => {
     const sessionStart = localStorage.getItem('session_start');
 
     if (token) {
-      // Decode JWT to get user ID
+      // Decode JWT to get user ID safely
       const decodedToken = decodeJWT(token);
-      const userId = decodedToken?.id;
+      const userId = decodedToken?.id || decodedToken?._id || decodedToken?.userId;
       
       // Check if session is still valid (within 1 week)
       const isSessionValid = sessionStart && (Date.now() - parseInt(sessionStart)) < SESSION_DURATION;
@@ -132,7 +132,8 @@ export const AuthProvider = ({ children }) => {
 
       // Set from localStorage immediately (avoids flash of unauthenticated UI)
       setUser({ 
-        id: userId, // Add user ID from JWT token
+        id: userId,
+        _id: userId,
         token, username, email, 
         xp: parseInt(xp || '0'),
         css_level: parseInt(css || '0'),
@@ -201,7 +202,7 @@ export const AuthProvider = ({ children }) => {
       
       // Decode JWT to get user ID
       const decodedToken = decodeJWT(data.token);
-      const userId = decodedToken?.id;
+      const userId = decodedToken?.id || decodedToken?._id || decodedToken?.userId || data.id || data._id;
       
       localStorage.setItem('token', data.token);
       localStorage.setItem('username', data.username);
@@ -228,7 +229,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user_subscription', data.subscription || 'basic');
 
     setUser({ 
-      id: userId, // Add user ID from JWT token
+      id: userId,
+      _id: userId,
       token: data.token, 
       username: data.username, 
       email: data.email, 
