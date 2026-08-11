@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Swords, Code2, ArrowLeft, Users, Clock, Zap, Trophy, Lock, Globe, UserCheck } from 'lucide-react';
+import { Swords, Code2, ArrowLeft, Users, Clock, Zap, Trophy, Lock, Globe, UserCheck, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -26,27 +26,37 @@ const ArenaLobby = () => {
   // Active arenas from API
   const [activeArenas, setActiveArenas] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [joiningId, setJoiningId] = useState(null);     // arena being joined
+  const [passcodeModal, setPasscodeModal] = useState(null); // { arenaId, arenaName }
+  const [passcodeInput, setPasscodeInput] = useState('');
+  const refreshIntervalRef = useRef(null);
 
-  // Fetch active arenas when Join tab is selected
+  // Fetch + auto-refresh when Join tab is active
   useEffect(() => {
     if (activeTab === 'join') {
       fetchActiveArenas();
+      refreshIntervalRef.current = setInterval(fetchActiveArenas, 5000);
+    } else {
+      clearInterval(refreshIntervalRef.current);
     }
+    return () => clearInterval(refreshIntervalRef.current);
   }, [activeTab, gameId]);
 
-  const fetchActiveArenas = async () => {
-    setLoading(true);
+  const fetchActiveArenas = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
+      const token = localStorage.getItem('token');
       const response = await axios.get(`${API_URL}/arena/active`, {
-        params: { game: gameId }
+        params: { game: gameId },
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       setActiveArenas(response.data.arenas || []);
     } catch (error) {
       console.error('Error fetching active arenas:', error);
-      toast.error('Failed to load active arenas');
+      if (!silent) toast.error('Failed to load active arenas');
       setActiveArenas([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -172,25 +182,21 @@ const ArenaLobby = () => {
         });
         
         console.log('Arena created on backend:', response.data);
+        const realArenaId = response.data.arena.id;
         
-        // Also store locally for quick access
-        sessionStorage.setItem(`arena_${tempArenaId}`, JSON.stringify(mockArena));
+        // Merge server arena with local mock (teams, code, etc.) and store under real ID
+        const fullArena = { ...mockArena, ...response.data.arena, teams: mockArena.teams, code: mockArena.code };
+        sessionStorage.setItem(`arena_${realArenaId}`, JSON.stringify(fullArena));
         toast.success('Arena created successfully!');
-        console.log('Navigating to waiting room...');
-        navigate(`/arena-waiting?arena=${response.data.arena.id}`);
+        navigate(`/arena-waiting?arena=${realArenaId}`);
       } catch (apiError) {
         console.error('API Error creating arena:', apiError);
         
-        // If API fails but we have the mock data, use it as fallback
-        if (apiError.response?.status === 401) {
-          console.warn('Authentication failed, using local fallback');
-          toast.warning('Using local arena (not synced across devices)');
-          sessionStorage.setItem(`arena_${tempArenaId}`, JSON.stringify(mockArena));
-          navigate(`/arena-waiting?arena=${tempArenaId}`);
-        } else {
-          console.error('Full error:', apiError);
-          toast.error('Failed to create arena: ' + (apiError.response?.data?.error || apiError.message));
-        }
+        // If API fails, use the temp local fallback
+        console.warn('API failed, using local fallback arena');
+        toast.warning('Using local arena (not synced with server)');
+        sessionStorage.setItem(`arena_${tempArenaId}`, JSON.stringify(mockArena));
+        navigate(`/arena-waiting?arena=${tempArenaId}`);
       }
     } catch (error) {
       console.error('Error creating arena:', error);
@@ -240,49 +246,67 @@ const ArenaLobby = () => {
     return teams;
   };
 
-  const handleJoinArena = (e) => {
-    e.preventDefault();
-    const arenaCode = e.target.arenaCode.value;
-    
-    toast.error('Join by code: Backend API not implemented yet');
-    
-    /* TODO: Replace with real API call
-    axios.post(`${API_URL}/arena/join`, {
-      arenaCode,
-      userId: user._id,
-      username: user.username
-    })
-    .then(response => {
-      toast.success('Joined arena successfully!');
-      const arenaId = response.data.arenaId || response.data.arena?._id;
+  const joinArenaById = async (arenaId, passcode = null) => {
+    setJoiningId(arenaId);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_URL}/arena/join`, { arenaId, passcode }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const arena = response.data.arena;
+      // Cache arena data so the waiting room can load instantly
+      const arenaData = { ...arena };
+      if (!arenaData.teams) {
+        const parts = (arenaData.players || '1v1').split('v').map(Number);
+        arenaData.teams = [
+          { name: 'Team Alpha', color: '#6366f1', maxSize: parts[0], members: arenaData.participants?.slice(0, parts[0]) || [] },
+          { name: 'Team Beta',  color: '#dc2626', maxSize: parts[1]||1, members: arenaData.participants?.slice(parts[0]) || [] }
+        ];
+      }
+      sessionStorage.setItem(`arena_${arenaId}`, JSON.stringify(arenaData));
+      toast.success('Joined arena!');
       navigate(`/arena-waiting?arena=${arenaId}`);
-    })
-    .catch(error => {
-      console.error('Error joining arena:', error);
-      toast.error(error.response?.data?.message || 'Failed to join arena');
-    });
-    */
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Failed to join arena';
+      toast.error(msg);
+    } finally {
+      setJoiningId(null);
+    }
   };
 
-  const handleJoinArenaById = (arenaId, arenaCode) => {
-    toast.error('Join arena: Backend API not implemented yet');
-    
-    /* TODO: Replace with real API call
-    axios.post(`${API_URL}/arena/join`, {
-      arenaId,
-      arenaCode,
-      userId: user._id,
-      username: user.username
-    })
-    .then(response => {
-      toast.success('Joined arena successfully!');
-      navigate(`/arena-waiting?arena=${arenaId}`);
-    })
-    .catch(error => {
-      console.error('Error joining arena:', error);
-      toast.error(error.response?.data?.message || 'Failed to join arena');
-    });
-    */
+  const handleJoinArena = async (e) => {
+    e.preventDefault();
+    const code = e.target.arenaCode.value.trim();
+    if (!code) return;
+    // Find by passcode match in active arenas
+    const match = activeArenas.find(a => a.passcode === code || a.code === code || a.id === code);
+    if (match) {
+      if (match.isPrivate) {
+        setPasscodeModal({ arenaId: match.id, arenaName: match.name });
+      } else {
+        joinArenaById(match.id);
+      }
+    } else {
+      toast.error('Arena not found. Check the code and try again.');
+    }
+  };
+
+  const handleJoinArenaById = (arenaId, isPrivate) => {
+    if (isPrivate) {
+      const arena = activeArenas.find(a => a.id === arenaId);
+      setPasscodeModal({ arenaId, arenaName: arena?.name || 'Arena' });
+      setPasscodeInput('');
+    } else {
+      joinArenaById(arenaId);
+    }
+  };
+
+  const handlePasscodeSubmit = (e) => {
+    e.preventDefault();
+    if (!passcodeInput.trim()) return;
+    joinArenaById(passcodeModal.arenaId, passcodeInput.trim());
+    setPasscodeModal(null);
+    setPasscodeInput('');
   };
 
   return (
@@ -424,8 +448,13 @@ const ArenaLobby = () => {
           {/* Join Arena Form */}
           {activeTab === 'join' && (
             <div className="lobby-form join-section">
-              <h2 className="form-title">Join an Arena</h2>
-              
+              <div className="join-header">
+                <h2 className="form-title">Join an Arena</h2>
+                <button className="refresh-btn" onClick={() => fetchActiveArenas()} title="Refresh">
+                  <RefreshCw size={15} className={loading ? 'spin' : ''}/>
+                </button>
+              </div>
+
               {/* Join by Code */}
               <form onSubmit={handleJoinArena} className="join-by-code">
                 <div className="form-group">
@@ -435,7 +464,6 @@ const ArenaLobby = () => {
                       type="text"
                       name="arenaCode"
                       placeholder="e.g., ABC-123-XYZ"
-                      required
                       autoComplete="off"
                       className="arena-code-input"
                     />
@@ -456,8 +484,8 @@ const ArenaLobby = () => {
               <div className="active-arenas-list">
                 {loading ? (
                   <div className="no-arenas">
-                    <Users size={32} />
-                    <p>Loading arenas...</p>
+                    <div className="arena-spinner"/>
+                    <p>Loading arenas…</p>
                   </div>
                 ) : activeArenas.length === 0 ? (
                   <div className="no-arenas">
@@ -466,65 +494,82 @@ const ArenaLobby = () => {
                     <small>Create one or check back later!</small>
                   </div>
                 ) : (
-                  activeArenas.map(arena => (
-                    <div key={arena._id || arena.id} className="arena-card">
-                      <div className="arena-card-header">
-                        <div className="arena-info">
-                          <h3>{arena.name}</h3>
-                          <span className="arena-creator">by {arena.creatorUsername || arena.creator}</span>
-                        </div>
-                        {arena.isPrivate ? (
-                          <div className="privacy-badge private">
-                            <Lock size={14} />
-                            <span>Private</span>
+                  activeArenas.map(arena => {
+                    const current = arena.participants?.length || 0;
+                    const max     = arena.maxParticipants || parseInt((arena.players||'1v1').split('v').reduce((a,b)=>parseInt(a)+parseInt(b),0));
+                    const isFull  = current >= max;
+                    const isMe    = joiningId === (arena.id || arena._id);
+                    return (
+                      <div key={arena.id || arena._id} className={`arena-card ${isFull ? 'arena-card-full' : ''}`}>
+                        <div className="arena-card-header">
+                          <div className="arena-info">
+                            <h3>{arena.name}</h3>
+                            <span className="arena-creator">by {arena.creatorUsername || arena.creator}</span>
                           </div>
-                        ) : (
-                          <div className="privacy-badge public">
-                            <Globe size={14} />
-                            <span>Public</span>
+                          {arena.isPrivate ? (
+                            <div className="privacy-badge private"><Lock size={12}/><span>Private</span></div>
+                          ) : (
+                            <div className="privacy-badge public"><Globe size={12}/><span>Public</span></div>
+                          )}
+                        </div>
+
+                        <div className="arena-details">
+                          <div className="arena-detail-item"><Users size={14}/><span>{arena.players}</span></div>
+                          <div className="arena-detail-item"><Zap size={14}/><span>{arena.difficulty}</span></div>
+                          <div className="arena-detail-item"><Clock size={14}/><span>{arena.duration}m</span></div>
+                        </div>
+
+                        <div className="arena-card-footer">
+                          <div className="member-count">
+                            <span className={`slot-indicator ${isFull ? 'full' : 'open'}`}/>
+                            <span>{current}/{max} players</span>
                           </div>
-                        )}
-                      </div>
-
-                      <div className="arena-details">
-                        <div className="arena-detail-item">
-                          <Users size={16} />
-                          <span>{arena.players}</span>
-                        </div>
-                        <div className="arena-detail-item">
-                          <Zap size={16} />
-                          <span>{arena.difficulty}</span>
-                        </div>
-                        <div className="arena-detail-item">
-                          <Code2 size={16} />
-                          <span>{arena.language}</span>
+                          <button
+                            className="join-arena-card-btn"
+                            onClick={() => handleJoinArenaById(arena.id || arena._id, arena.isPrivate)}
+                            disabled={isFull || isMe}
+                            style={!isFull ? { background: currentGame.gradient } : {}}
+                          >
+                            {isMe ? 'Joining…' : isFull ? 'Full' : arena.isPrivate ? <><Lock size={12}/> Join</> : 'Join →'}
+                          </button>
                         </div>
                       </div>
-
-                      <div className="arena-card-footer">
-                        <div className="member-count">
-                          <UserCheck size={18} />
-                          <span>{arena.activeMembers || arena.participants?.length || 0}/{arena.maxMembers} Active</span>
-                        </div>
-                        <button 
-                          className="join-arena-card-btn"
-                          onClick={() => handleJoinArenaById(arena._id || arena.id, arena.code || arena.arenaCode)}
-                          disabled={(arena.activeMembers || arena.participants?.length || 0) >= arena.maxMembers}
-                          style={(arena.activeMembers || arena.participants?.length || 0) < arena.maxMembers ? { background: currentGame.gradient } : {}}
-                        >
-                          {(arena.activeMembers || arena.participants?.length || 0) >= arena.maxMembers ? 'Full' : 'Join'}
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
           )}
         </div>
       </main>
+
+      {/* Passcode Modal */}
+      {passcodeModal && (
+        <div className="passcode-overlay" onClick={() => setPasscodeModal(null)}>
+          <div className="passcode-modal" onClick={e => e.stopPropagation()}>
+            <h3><Lock size={16}/> Private Arena</h3>
+            <p>Enter the passcode to join <strong>{passcodeModal.arenaName}</strong></p>
+            <form onSubmit={handlePasscodeSubmit}>
+              <input
+                type="text"
+                className="passcode-input"
+                placeholder="Enter passcode…"
+                value={passcodeInput}
+                onChange={e => setPasscodeInput(e.target.value)}
+                autoFocus
+                maxLength={6}
+              />
+              <div className="passcode-actions">
+                <button type="button" className="passcode-cancel" onClick={() => setPasscodeModal(null)}>Cancel</button>
+                <button type="submit" className="passcode-submit" style={{ background: currentGame.gradient }}>Join Arena</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default ArenaLobby;
+

@@ -572,3 +572,159 @@
         width: 100%;
     }
 }
+
+/* ── Join section header ── */
+.join-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+.join-header .form-title { margin-bottom: 0; }
+
+.refresh-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px; height: 32px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 6px;
+    color: #8b949e;
+    cursor: pointer;
+    transition: all .15s;
+    flex-shrink: 0;
+}
+.refresh-btn:hover { border-color: rgba(99,102,241,.35); color: #6366f1; }
+.refresh-btn .spin { animation: spin-icon .7s linear infinite; }
+@keyframes spin-icon { to { transform: rotate(360deg); } }
+
+/* ── Slot indicator dots ── */
+.slot-indicator {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.slot-indicator.open { background: #22c55e; }
+.slot-indicator.full { background: #6b7280; }
+
+.member-count {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .82rem;
+    color: #8b949e;
+    font-weight: 500;
+}
+
+/* ── Full arena card ── */
+.arena-card-full {
+    opacity: .55;
+}
+
+/* ── Arena spinner ── */
+.arena-spinner {
+    width: 28px; height: 28px;
+    border: 2px solid rgba(255,255,255,.06);
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin-icon .75s linear infinite;
+}
+
+/* ══════════════════════════════════════════════════════
+   PASSCODE MODAL
+   ══════════════════════════════════════════════════════ */
+.passcode-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.65);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.passcode-modal {
+    background: #161b22;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 12px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    box-shadow: 0 24px 64px rgba(0,0,0,.6);
+}
+
+.passcode-modal h3 {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f0f6fc;
+    margin: 0;
+}
+
+.passcode-modal p {
+    font-size: .875rem;
+    color: #8b949e;
+    margin: 0;
+}
+
+.passcode-modal strong { color: #c9d1d9; }
+
+.passcode-input {
+    width: 100%;
+    padding: .7rem 1rem;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 8px;
+    color: #c9d1d9;
+    font-size: .95rem;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    letter-spacing: 3px;
+    outline: none;
+    transition: border-color .15s;
+    box-sizing: border-box;
+}
+.passcode-input:focus { border-color: rgba(99,102,241,.45); }
+.passcode-input::placeholder { letter-spacing: 0; color: #484f58; font-style: italic; }
+
+.passcode-actions {
+    display: flex;
+    gap: .75rem;
+}
+
+.passcode-cancel {
+    flex: 1;
+    padding: .65rem;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 8px;
+    color: #8b949e;
+    font-size: .875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    font-family: inherit;
+}
+.passcode-cancel:hover { background: rgba(255,255,255,.08); color: #c9d1d9; }
+
+.passcode-submit {
+    flex: 2;
+    padding: .65rem;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: .875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .15s;
+    font-family: inherit;
+}
+.passcode-submit:hover { opacity: .9; }
