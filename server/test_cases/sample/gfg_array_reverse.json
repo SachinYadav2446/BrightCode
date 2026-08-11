@@ -1,0 +1,39 @@
+[
+  {
+    "id": "gfg_array_reverse_sample_0",
+    "input": [
+      [
+        1
+      ]
+    ],
+    "expected": "[1]",
+    "difficulty": "easy",
+    "size": 32,
+    "createdAt": "2026-08-11T05:09:47.698Z"
+  },
+  {
+    "id": "gfg_array_reverse_sample_1",
+    "input": [
+      [
+        0
+      ]
+    ],
+    "expected": "[0]",
+    "difficulty": "easy",
+    "size": 32,
+    "createdAt": "2026-08-11T05:09:47.698Z"
+  },
+  {
+    "id": "gfg_array_reverse_sample_2",
+    "input": [
+      [
+        1,
+        2
+      ]
+    ],
+    "expected": "[2, 1]",
+    "difficulty": "easy",
+    "size": 37,
+    "createdAt": "2026-08-11T05:09:47.698Z"
+  }
+]

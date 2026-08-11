@@ -43,8 +43,12 @@ async function executeCode(code, language, testCases = []) {
         try {
             logger.info('[CODE EXECUTOR] Evaluating via Judge0 Brain...');
             const judge0Res = await executeJudge0TestCases(code, language, testCases, wrapCodeWithTestCase);
-            logger.info(`[CODE EXECUTOR] Judge0 execution complete: ${judge0Res.testsPassed}/${testCases.length} tests passed`);
-            return judge0Res;
+            if (judge0Res && judge0Res.results && judge0Res.results.some(r => r.error && r.error.includes('Judge0 execution error'))) {
+                logger.warn('[CODE EXECUTOR] Judge0 returned API errors, falling back to Piston/Local execution');
+            } else {
+                logger.info(`[CODE EXECUTOR] Judge0 execution complete: ${judge0Res.testsPassed}/${testCases.length} tests passed`);
+                return judge0Res;
+            }
         } catch (jErr) {
             logger.warn(`[CODE EXECUTOR] Judge0 brain failed (${jErr.message}), falling back to standard engines`);
         }

@@ -54,11 +54,14 @@ async function executeJudge0(code, language, stdin = '') {
 
     try {
         let response;
+        const b64Code = Buffer.from(code).toString('base64');
+        const b64Stdin = Buffer.from(stdin || '').toString('base64');
+
         try {
-            response = await axios.post(`${baseUrl}/submissions?base64_encoded=false&wait=true`, {
-                source_code: code,
+            response = await axios.post(`${baseUrl}/submissions?base64_encoded=true&wait=true`, {
+                source_code: b64Code,
                 language_id: languageId,
-                stdin: stdin || ''
+                stdin: b64Stdin
             }, {
                 headers,
                 timeout: 15000
@@ -66,10 +69,10 @@ async function executeJudge0(code, language, stdin = '') {
 
             if (response.data?.status?.id === 13 && baseUrl !== 'https://ce.judge0.com') {
                 logger.warn('[JUDGE0] Local endpoint returned Internal Error (id 13), failing over to https://ce.judge0.com');
-                response = await axios.post(`https://ce.judge0.com/submissions?base64_encoded=false&wait=true`, {
-                    source_code: code,
+                response = await axios.post(`https://ce.judge0.com/submissions?base64_encoded=true&wait=true`, {
+                    source_code: b64Code,
                     language_id: languageId,
-                    stdin: stdin || ''
+                    stdin: b64Stdin
                 }, {
                     headers: { 'Content-Type': 'application/json' },
                     timeout: 15000
@@ -78,10 +81,10 @@ async function executeJudge0(code, language, stdin = '') {
         } catch (localErr) {
             if (baseUrl !== 'https://ce.judge0.com') {
                 logger.warn(`[JUDGE0] Local endpoint error (${localErr.message}), failing over to https://ce.judge0.com`);
-                response = await axios.post(`https://ce.judge0.com/submissions?base64_encoded=false&wait=true`, {
-                    source_code: code,
+                response = await axios.post(`https://ce.judge0.com/submissions?base64_encoded=true&wait=true`, {
+                    source_code: b64Code,
                     language_id: languageId,
-                    stdin: stdin || ''
+                    stdin: b64Stdin
                 }, {
                     headers: { 'Content-Type': 'application/json' },
                     timeout: 15000
@@ -92,8 +95,12 @@ async function executeJudge0(code, language, stdin = '') {
         }
 
         const data = response.data;
-        const stdout = data.stdout || '';
-        const stderr = data.stderr || data.compile_output || '';
+        const rawStdout = data.stdout ? (data.is_base64_encoded || true ? Buffer.from(data.stdout, 'base64').toString('utf8') : data.stdout) : '';
+        const rawStderr = data.stderr ? (data.is_base64_encoded || true ? Buffer.from(data.stderr, 'base64').toString('utf8') : data.stderr) : '';
+        const rawCompile = data.compile_output ? (data.is_base64_encoded || true ? Buffer.from(data.compile_output, 'base64').toString('utf8') : data.compile_output) : '';
+        
+        const stdout = rawStdout || '';
+        const stderr = rawStderr || rawCompile || '';
         const statusId = data.status?.id || 3;
         const exitCode = statusId === 3 ? 0 : 1;
 

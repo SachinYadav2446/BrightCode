@@ -1,0 +1,540 @@
+[
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_0",
+    "input": [
+      [
+        0
+      ]
+    ],
+    "expected": "0",
+    "difficulty": "easy",
+    "size": 30,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_1",
+    "input": [
+      [
+        0,
+        0
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 32,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_2",
+    "input": [
+      [
+        2,
+        -2,
+        2,
+        -2
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_3",
+    "input": [
+      [
+        1,
+        -1,
+        1,
+        -1
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_4",
+    "input": [
+      [
+        3,
+        -3,
+        4,
+        -4,
+        5
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 40,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_5",
+    "input": [
+      [
+        10,
+        -10
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 35,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_6",
+    "input": [
+      [
+        5,
+        -5,
+        5
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 35,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_7",
+    "input": [
+      [
+        1,
+        1,
+        -1,
+        -1
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_8",
+    "input": [
+      [
+        2,
+        3,
+        -2,
+        -3
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_9",
+    "input": [
+      [
+        7,
+        -7,
+        8,
+        -8,
+        9,
+        -9
+      ]
+    ],
+    "expected": "3",
+    "difficulty": "easy",
+    "size": 43,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_10",
+    "input": [
+      [
+        100,
+        -100
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 37,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_11",
+    "input": [
+      [
+        -1,
+        -2,
+        -3
+      ]
+    ],
+    "expected": "0",
+    "difficulty": "easy",
+    "size": 37,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_12",
+    "input": [
+      [
+        1,
+        2,
+        3
+      ]
+    ],
+    "expected": "0",
+    "difficulty": "easy",
+    "size": 34,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_13",
+    "input": [
+      [
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 36,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_14",
+    "input": [
+      [
+        4,
+        -4,
+        4,
+        -4
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_15",
+    "input": [
+      [
+        6,
+        -6,
+        1
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 35,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_16",
+    "input": [
+      [
+        8,
+        -8,
+        8
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 35,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_17",
+    "input": [
+      [
+        9,
+        -9,
+        9,
+        -9
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_18",
+    "input": [
+      [
+        1,
+        -1,
+        2,
+        3
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 37,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_19",
+    "input": [
+      [
+        2,
+        -2,
+        4,
+        -4,
+        6
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 40,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_20",
+    "input": [
+      [
+        11,
+        -11
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 35,
+    "createdAt": "2026-08-11T05:09:47.727Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_21",
+    "input": [
+      [
+        12,
+        -12,
+        12,
+        -12
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 42,
+    "createdAt": "2026-08-11T05:09:47.728Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_22",
+    "input": [
+      [
+        13,
+        -13,
+        14
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:09:47.728Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_23",
+    "input": [
+      [
+        14,
+        -14,
+        15,
+        -15
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 42,
+    "createdAt": "2026-08-11T05:09:47.728Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_24",
+    "input": [
+      [
+        16,
+        -16,
+        17,
+        -17,
+        18
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 45,
+    "createdAt": "2026-08-11T05:09:47.728Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_25",
+    "input": [
+      [
+        20,
+        -20
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 35,
+    "createdAt": "2026-08-11T05:09:47.728Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_26",
+    "input": [
+      [
+        1,
+        -1,
+        2,
+        -2,
+        3,
+        -3
+      ]
+    ],
+    "expected": "3",
+    "difficulty": "easy",
+    "size": 43,
+    "createdAt": "2026-08-11T05:09:47.728Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_27",
+    "input": [
+      [
+        5,
+        5,
+        -5,
+        -5
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:09:47.728Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_28",
+    "input": [
+      [
+        7,
+        7,
+        7
+      ]
+    ],
+    "expected": "0",
+    "difficulty": "easy",
+    "size": 34,
+    "createdAt": "2026-08-11T05:09:47.728Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_29",
+    "input": [
+      [
+        -7,
+        -7,
+        7,
+        7
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:09:47.728Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_30",
+    "input": [
+      [
+        1000,
+        -1000
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 39,
+    "createdAt": "2026-08-11T05:09:47.728Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_31",
+    "input": [
+      [
+        50,
+        -50,
+        25,
+        -25
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 42,
+    "createdAt": "2026-08-11T05:09:47.728Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_32",
+    "input": [
+      [
+        30,
+        -30,
+        30
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:09:47.728Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_33",
+    "input": [
+      [
+        1,
+        -1,
+        0,
+        0
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 37,
+    "createdAt": "2026-08-11T05:09:47.728Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_34",
+    "input": [
+      [
+        2,
+        -2,
+        0
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 35,
+    "createdAt": "2026-08-11T05:09:47.728Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_35",
+    "input": [
+      [
+        3,
+        -3,
+        3,
+        -3,
+        3,
+        -3
+      ]
+    ],
+    "expected": "3",
+    "difficulty": "easy",
+    "size": 43,
+    "createdAt": "2026-08-11T05:09:47.728Z"
+  },
+  {
+    "id": "gfg_two_sum_pairs_with_0_sum_hidden_36",
+    "input": [
+      [
+        99,
+        -99
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 35,
+    "createdAt": "2026-08-11T05:09:47.728Z"
+  }
+]

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon --ignore users_db.json index.js"
+    "dev": "nodemon --ignore *.json index.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

@@ -1,0 +1,577 @@
+[
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_0",
+    "input": [
+      [
+        1,
+        2
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 32,
+    "createdAt": "2026-08-11T05:11:50.911Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_1",
+    "input": [
+      [
+        2,
+        1
+      ]
+    ],
+    "expected": "0",
+    "difficulty": "easy",
+    "size": 32,
+    "createdAt": "2026-08-11T05:11:50.911Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_2",
+    "input": [
+      [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    ],
+    "expected": "4",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:11:50.911Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_3",
+    "input": [
+      [
+        5,
+        4,
+        3,
+        2,
+        1
+      ]
+    ],
+    "expected": "0",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:11:50.911Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_4",
+    "input": [
+      [
+        3,
+        3,
+        3,
+        3
+      ]
+    ],
+    "expected": "0",
+    "difficulty": "easy",
+    "size": 36,
+    "createdAt": "2026-08-11T05:11:50.911Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_5",
+    "input": [
+      [
+        2,
+        4,
+        1
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 34,
+    "createdAt": "2026-08-11T05:11:50.911Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_6",
+    "input": [
+      [
+        2,
+        1,
+        2,
+        1,
+        0,
+        1,
+        2
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 42,
+    "createdAt": "2026-08-11T05:11:50.911Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_7",
+    "input": [
+      [
+        10,
+        1,
+        10
+      ]
+    ],
+    "expected": "9",
+    "difficulty": "easy",
+    "size": 36,
+    "createdAt": "2026-08-11T05:11:50.911Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_8",
+    "input": [
+      [
+        1,
+        10,
+        1,
+        10
+      ]
+    ],
+    "expected": "9",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:11:50.911Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_9",
+    "input": [
+      [
+        8,
+        6,
+        7,
+        5,
+        3,
+        0,
+        9
+      ]
+    ],
+    "expected": "9",
+    "difficulty": "easy",
+    "size": 42,
+    "createdAt": "2026-08-11T05:11:50.911Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_10",
+    "input": [
+      [
+        5,
+        1,
+        6,
+        2,
+        7
+      ]
+    ],
+    "expected": "6",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:11:50.911Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_11",
+    "input": [
+      [
+        9,
+        8,
+        7,
+        1,
+        10
+      ]
+    ],
+    "expected": "9",
+    "difficulty": "easy",
+    "size": 39,
+    "createdAt": "2026-08-11T05:11:50.911Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_12",
+    "input": [
+      [
+        1,
+        100
+      ]
+    ],
+    "expected": "99",
+    "difficulty": "easy",
+    "size": 35,
+    "createdAt": "2026-08-11T05:11:50.911Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_13",
+    "input": [
+      [
+        100,
+        1
+      ]
+    ],
+    "expected": "0",
+    "difficulty": "easy",
+    "size": 34,
+    "createdAt": "2026-08-11T05:11:50.911Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_14",
+    "input": [
+      [
+        4,
+        2,
+        6,
+        1,
+        8
+      ]
+    ],
+    "expected": "7",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_15",
+    "input": [
+      [
+        2,
+        5,
+        7,
+        1,
+        4,
+        3,
+        1,
+        3
+      ]
+    ],
+    "expected": "5",
+    "difficulty": "easy",
+    "size": 44,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_16",
+    "input": [
+      [
+        3,
+        2,
+        6,
+        5,
+        0,
+        3
+      ]
+    ],
+    "expected": "4",
+    "difficulty": "easy",
+    "size": 40,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_17",
+    "input": [
+      [
+        1,
+        1,
+        2,
+        2,
+        3,
+        3
+      ]
+    ],
+    "expected": "2",
+    "difficulty": "easy",
+    "size": 40,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_18",
+    "input": [
+      [
+        6,
+        1,
+        3,
+        2,
+        4,
+        7
+      ]
+    ],
+    "expected": "6",
+    "difficulty": "easy",
+    "size": 40,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_19",
+    "input": [
+      [
+        2,
+        10,
+        1,
+        20
+      ]
+    ],
+    "expected": "19",
+    "difficulty": "easy",
+    "size": 39,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_20",
+    "input": [
+      [
+        20,
+        10,
+        5,
+        2
+      ]
+    ],
+    "expected": "0",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_21",
+    "input": [
+      [
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "expected": "0",
+    "difficulty": "easy",
+    "size": 36,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_22",
+    "input": [
+      [
+        0,
+        5,
+        0,
+        10
+      ]
+    ],
+    "expected": "10",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_23",
+    "input": [
+      [
+        9,
+        1,
+        5,
+        10
+      ]
+    ],
+    "expected": "9",
+    "difficulty": "easy",
+    "size": 37,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_24",
+    "input": [
+      [
+        10,
+        9,
+        8,
+        7,
+        20
+      ]
+    ],
+    "expected": "13",
+    "difficulty": "easy",
+    "size": 41,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_25",
+    "input": [
+      [
+        1,
+        3,
+        2,
+        8,
+        4,
+        9
+      ]
+    ],
+    "expected": "8",
+    "difficulty": "easy",
+    "size": 40,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_26",
+    "input": [
+      [
+        5,
+        11,
+        3,
+        50,
+        60,
+        90
+      ]
+    ],
+    "expected": "87",
+    "difficulty": "easy",
+    "size": 45,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_27",
+    "input": [
+      [
+        7,
+        2,
+        5,
+        3,
+        6,
+        1
+      ]
+    ],
+    "expected": "4",
+    "difficulty": "easy",
+    "size": 40,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_28",
+    "input": [
+      [
+        2,
+        2,
+        5
+      ]
+    ],
+    "expected": "3",
+    "difficulty": "easy",
+    "size": 34,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_29",
+    "input": [
+      [
+        1,
+        5,
+        2,
+        10
+      ]
+    ],
+    "expected": "9",
+    "difficulty": "easy",
+    "size": 37,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_30",
+    "input": [
+      [
+        100,
+        180,
+        260,
+        310,
+        40,
+        535,
+        695
+      ]
+    ],
+    "expected": "655",
+    "difficulty": "easy",
+    "size": 57,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_31",
+    "input": [
+      [
+        4,
+        7,
+        2,
+        8
+      ]
+    ],
+    "expected": "6",
+    "difficulty": "easy",
+    "size": 36,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_32",
+    "input": [
+      [
+        1,
+        4,
+        2,
+        7
+      ]
+    ],
+    "expected": "6",
+    "difficulty": "easy",
+    "size": 36,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_33",
+    "input": [
+      [
+        6,
+        5,
+        4,
+        10
+      ]
+    ],
+    "expected": "6",
+    "difficulty": "easy",
+    "size": 37,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_34",
+    "input": [
+      [
+        3,
+        8,
+        1,
+        9
+      ]
+    ],
+    "expected": "8",
+    "difficulty": "easy",
+    "size": 36,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_35",
+    "input": [
+      [
+        9,
+        7,
+        4,
+        1,
+        2
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 38,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  },
+  {
+    "id": "gfg_best_time_to_buy_and_sell_stock_hidden_36",
+    "input": [
+      [
+        2,
+        1,
+        4
+      ]
+    ],
+    "expected": "3",
+    "difficulty": "easy",
+    "size": 34,
+    "createdAt": "2026-08-11T05:11:50.912Z"
+  }
+]

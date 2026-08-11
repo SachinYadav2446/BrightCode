@@ -1,0 +1,51 @@
+[
+  {
+    "id": "gfg_union_of_arrays_with_duplicates_sample_0",
+    "input": [
+      [
+        1
+      ],
+      [
+        1
+      ]
+    ],
+    "expected": "[1]",
+    "difficulty": "easy",
+    "size": 36,
+    "createdAt": "2026-08-11T05:09:47.698Z"
+  },
+  {
+    "id": "gfg_union_of_arrays_with_duplicates_sample_1",
+    "input": [
+      [
+        1
+      ],
+      [
+        2
+      ]
+    ],
+    "expected": "[1, 2]",
+    "difficulty": "easy",
+    "size": 39,
+    "createdAt": "2026-08-11T05:09:47.698Z"
+  },
+  {
+    "id": "gfg_union_of_arrays_with_duplicates_sample_2",
+    "input": [
+      [
+        1,
+        2,
+        3
+      ],
+      [
+        4,
+        5,
+        6
+      ]
+    ],
+    "expected": "[1, 2, 3, 4, 5, 6]",
+    "difficulty": "easy",
+    "size": 59,
+    "createdAt": "2026-08-11T05:09:47.698Z"
+  }
+]
