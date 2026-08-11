@@ -16,6 +16,7 @@ import { initSocket } from '../socket';
 import Editor from '@monaco-editor/react';
 import CollaborativeCodeEditor from '../components/codewars/CollaborativeCodeEditor';
 import ChatPanel from '../components/ChatPanel';
+import BattleCodeEditor from '../components/codewars/BattleCodeEditor';
 import './CodeWarsArena.css';
 
 const GAME_MODES = {
@@ -93,7 +94,7 @@ const CodeWarsArena = () => {
             return;
         }
         
-        console.log('ðŸŽ® CodeWarsArena mounting, user:', user.username);
+        console.log('Ã°Å¸Å½Â® CodeWarsArena mounting, user:', user.username);
         
         // Setup socket first
         const s = setupSocketConnection();
@@ -101,12 +102,12 @@ const CodeWarsArena = () => {
         
         // Wait for socket to connect before initializing
         const initTimeout = setTimeout(() => {
-            console.log('â° Socket connection timeout, initializing anyway...');
+            console.log('Ã¢ÂÂ° Socket connection timeout, initializing anyway...');
             initializeArena(s);
         }, 3000); // Wait 3 seconds for socket
         
         const handleConnect = () => {
-            console.log('âœ… Socket connected, initializing arena...');
+            console.log('Ã¢Å“â€¦ Socket connected, initializing arena...');
             clearTimeout(initTimeout);
             initializeArena(s);
         };
@@ -129,21 +130,21 @@ const CodeWarsArena = () => {
     }, [user]);
 
     const setupSocketConnection = () => {
-        console.log('ðŸ”Œ Setting up socket connection...');
+        console.log('Ã°Å¸â€Å’ Setting up socket connection...');
         const s = initSocket();
         
         // Connection status logging
         s.on('connect', () => {
-            console.log('âœ… Socket connected successfully');
+            console.log('Ã¢Å“â€¦ Socket connected successfully');
         });
         
         s.on('connect_error', (error) => {
-            console.error('âŒ Socket connection error:', error);
+            console.error('Ã¢ÂÅ’ Socket connection error:', error);
             toast.error('Failed to connect to server. Please check if the server is running.');
         });
         
         s.on('disconnect', (reason) => {
-            console.warn('âš ï¸ Socket disconnected:', reason);
+            console.warn('Ã¢Å¡Â Ã¯Â¸Â Socket disconnected:', reason);
             if (reason === 'io server disconnect') {
                 // Server disconnected, try to reconnect
                 s.connect();
@@ -152,7 +153,7 @@ const CodeWarsArena = () => {
         
         // Socket-based room events (like workspace system)
         s.on('cw-room-created', (data) => {
-            console.log('âœ… Room created via socket:', data);
+            console.log('Ã¢Å“â€¦ Room created via socket:', data);
             setLoading(false);
             if (data.success) {
                 setCurrentRoom(data.room);
@@ -168,7 +169,7 @@ const CodeWarsArena = () => {
         });
 
         s.on('cw-room-joined', (data) => {
-            console.log('âœ… Joined room via socket:', data);
+            console.log('Ã¢Å“â€¦ Joined room via socket:', data);
             setLoading(false);
             if (data.success) {
                 setCurrentRoom(data.room);
@@ -180,7 +181,7 @@ const CodeWarsArena = () => {
         });
 
         s.on('cw-player-joined', (data) => {
-            console.log('ðŸ‘‹ Player joined:', data);
+            console.log('Ã°Å¸â€˜â€¹ Player joined:', data);
             toast.success(`${data.username} joined the room!`);
             // Refresh room list to update player counts
             loadFactionRoomsViaSocket(s);
@@ -194,34 +195,20 @@ const CodeWarsArena = () => {
         });
 
         s.on('cw-room-update', (data) => {
-            console.log('ðŸ”„ Room updated:', data);
-            console.log('ðŸ“Š Updated room data:', {
-                scores: data.room?.scores,
-                submissions: data.room?.submissions,
-                teams: data.room?.teams
-            });
-            
-            // Log player scores from teams
-            if (data.room?.teams) {
-                data.room.teams.forEach(team => {
-                    console.log(`Team ${team.id}:`, team.players.map(p => ({
-                        username: p.username,
-                        score: p.score,
-                        questionsCompleted: p.questionsCompleted
-                    })));
-                });
-            }
-            
+            console.log('🔄 Room updated:', data);
             setCurrentRoom(data.room);
+            if (data.room?.status === 'completed') {
+                setGameState('results');
+            }
         });
 
         s.on('cw-game-started', (data) => {
-            console.log('ðŸŽ® Game started:', data);
+            console.log('🎮 Game started:', data);
             setCurrentRoom(data.room);
             setGameState('game');
             setPlayerFinished(false); // Reset finished state
             setGameResults(null); // Reset results
-            toast.success('ðŸŽ® Game Started! Good luck!');
+            toast.success('🎮 Game Started! Good luck!');
         });
 
         s.on('cw-left-room', (data) => {
@@ -240,77 +227,53 @@ const CodeWarsArena = () => {
         });
         
         s.on('cw-contest-ended', (data) => {
-            console.log('ðŸ Contest ended for player:', data);
+            console.log('🏁 Contest ended for player:', data);
             if (data.success) {
                 setPlayerFinished(true);
-                if (data.allFinished) {
-                    // All players finished - go to results immediately
-                    toast.success('All players finished! Showing results...');
-                    setGameState('results');
-                } else {
-                    // This player finished, waiting for others
-                    toast.success(`You finished! ${data.finishedCount}/${data.totalPlayers} players done. Waiting for others...`);
-                    setGameState('waiting'); // New waiting state
-                }
+                if (data.room) setCurrentRoom(data.room);
+                if (data.results) setGameResults(data.results);
+                setGameState('results');
+                toast.success('Contest ended! Showing final standings...', { id: 'cw-game-ended-toast' });
             }
         });
         
         s.on('player-finished', (data) => {
-            console.log('ðŸ‘¤ Player finished:', data);
-            toast.info(`${data.username} finished their contest! (${data.finishedCount}/${data.totalPlayers})`);
+            console.log('👤 Player finished:', data);
+            toast.info(`${data.username} finished their contest! (${data.finishedCount}/${data.totalPlayers})`, { id: `player-finished-${data.userId}` });
         });
 
         s.on('cw-error', (data) => {
-            console.error('âŒ Socket error:', data);
+            console.error('❌ Socket error:', data);
             setLoading(false);
-            toast.error(data.error || 'An error occurred');
+            toast.error(data.error || 'An error occurred', { id: 'cw-error-toast' });
         });
         
         // Room list updates
         s.on('cw-room-list-updated', (data) => {
-            console.log('ðŸ“‹ Room list updated for faction:', data.factionId);
-            // Refresh with the faction ID from the event
+            console.log('📋 Room list updated for faction:', data.factionId);
             loadFactionRoomsViaSocket(s, data.factionId);
         });
         
         s.on('cw-faction-rooms', (data) => {
-            console.log('ðŸ“‹ Received faction rooms:', data.rooms);
-            console.log('ðŸ“‹ Number of rooms:', data.rooms.length);
-            
-            // Only update if this is for our faction
             if (!data.factionId || data.factionId === myFaction?.id) {
                 setFactionRooms(data.rooms);
             }
         });
 
-        // Forfeit handling - this takes priority over everything
+        // Forfeit / Game End handling
         s.on('cw-game-ended', (data) => {
-            console.log('ðŸ Game ended event received:', data);
-            console.log('ðŸ Reason:', data.reason);
-            console.log('ðŸ Results:', data.results);
+            console.log('🏁 Game ended event received:', data);
             
-            // Set flag to prevent cw-left-room from interfering
             processingGameEndRef.current = true;
             
-            // Immediately set results and navigate to results page
-            // This prevents any other navigation from happening
             setCurrentRoom(data.room);
             setGameResults(data.results);
             setGameState('results');
             
-            console.log('ðŸ Game state set to results, showing results page');
-            
-            if (data.reason === 'forfeit') {
-                toast.info(`Match ended - ${data.results.forfeitedTeam} forfeited`);
-            }
-            
-            // Reset the flag after a short delay to allow normal navigation later
             setTimeout(() => {
                 processingGameEndRef.current = false;
-                console.log('ðŸ Reset processing game end flag');
             }, 1000);
             
-            // Clear the current room from socket since game is over
             if (data.room?.id) {
                 s.emit('cw-leave-room', {
                     roomId: data.room.id,
@@ -320,35 +283,38 @@ const CodeWarsArena = () => {
             }
             
             if (data.reason === 'forfeit') {
-                toast.success(`ðŸ† ${data.results.forfeitedTeam} forfeited the match!`, {
+                toast.success(`🏆 ${data.results.forfeitedTeam} forfeited the match!`, {
+                    id: 'cw-game-ended-toast',
                     duration: 5000
                 });
             } else {
-                toast.success('Game completed!');
+                toast.success('Game completed!', { id: 'cw-game-ended-toast' });
             }
         });
 
         s.on('cw-team-forfeited', (data) => {
-            console.log('ðŸ“¢ Team forfeited:', data);
+            console.log('📢 Team forfeited:', data);
             toast.info(`Team ${data.teamName} has left the match. ${data.remainingTeams} teams remaining.`, {
+                id: `forfeit-${data.teamName}`,
                 duration: 4000
             });
         });
 
         // Legacy events for backward compatibility
         s.on('game-ended', (data) => {
-            console.log('ðŸ Game ended:', data);
-            setGameResults(data.results);
+            console.log('🏁 Game ended:', data);
+            if (data.room) setCurrentRoom(data.room);
+            if (data.results) setGameResults(data.results);
             setGameState('results');
-            toast.success('Game completed!');
+            toast.success('Game completed!', { id: 'cw-game-ended-toast' });
         });
 
         s.on('solution-accepted', (data) => {
-            console.log('âœ… Solution accepted:', data);
+            console.log('Ã¢Å“â€¦ Solution accepted:', data);
             toast.success(`${data.username} solved a problem! (+${data.points} points)`);
         });
         
-        console.log('âœ… Socket event listeners registered');
+        console.log('Ã¢Å“â€¦ Socket event listeners registered');
         return s;
     };
 
@@ -357,40 +323,40 @@ const CodeWarsArena = () => {
         const fId = factionId || myFaction?.id;
         
         if (!s) {
-            console.log('âš ï¸ Cannot load rooms: socket not ready');
+            console.log('Ã¢Å¡Â Ã¯Â¸Â Cannot load rooms: socket not ready');
             return;
         }
         
         if (!fId) {
-            console.log('âš ï¸ Cannot load rooms: faction ID not available');
+            console.log('Ã¢Å¡Â Ã¯Â¸Â Cannot load rooms: faction ID not available');
             return;
         }
         
-        console.log('ðŸ“‹ Requesting faction rooms via socket for faction:', fId);
+        console.log('Ã°Å¸â€œâ€¹ Requesting faction rooms via socket for faction:', fId);
         s.emit('cw-get-faction-rooms', { factionId: fId });
     };
 
     const initializeArena = async (socketInstance) => {
         try {
-            console.log('🎮 Initializing Code Wars Arena...');
-            console.log('👤 User:', user?.username, 'ID:', user?.id);
-            console.log('🔌 Socket connected:', socketInstance?.connected);
+            console.log('ðŸŽ® Initializing Code Wars Arena...');
+            console.log('ðŸ‘¤ User:', user?.username, 'ID:', user?.id);
+            console.log('ðŸ”Œ Socket connected:', socketInstance?.connected);
             
             // Get user's faction
-            console.log('📡 Fetching factions from server...');
+            console.log('ðŸ“¡ Fetching factions from server...');
             const factionsRes = await axios.get(`${API_URL}/factions`);
-            console.log('✅ Factions response:', factionsRes.data);
+            console.log('âœ… Factions response:', factionsRes.data);
             
             let userFaction = factionsRes.data.find(f => 
                 f.members?.some(m => m.username === user.username)
             );
             
             if (!userFaction) {
-                console.log('ℹ️ User not in a specific faction, assigning global arena faction');
+                console.log('â„¹ï¸ User not in a specific faction, assigning global arena faction');
                 userFaction = factionsRes.data[0] || { id: 'global_arena', name: 'Global Arena', members: [] };
             }
             
-            console.log('🛡️ User faction loaded:', userFaction.name, 'ID:', userFaction.id);
+            console.log('ðŸ›¡ï¸ User faction loaded:', userFaction.name, 'ID:', userFaction.id);
             setMyFaction(userFaction);
             
             // Check if user requested a specific room/arena via URL parameters or is in a room
@@ -399,7 +365,7 @@ const CodeWarsArena = () => {
                 let targetRoomId = searchParams.get('roomId') || searchParams.get('arena');
 
                 if (targetRoomId) {
-                    console.log('📌 Target room/arena requested via URL:', targetRoomId);
+                    console.log('ðŸ“Œ Target room/arena requested via URL:', targetRoomId);
                     if (targetRoomId.startsWith('arena_')) {
                         try {
                             const startRes = await axios.post(`${API_URL}/arena/start`, { arenaId: targetRoomId }, {
@@ -409,7 +375,7 @@ const CodeWarsArena = () => {
                                 targetRoomId = startRes.data.roomId;
                             }
                         } catch (startErr) {
-                            console.warn('⚠️ Could not start arena from URL param:', startErr.message);
+                            console.warn('âš ï¸ Could not start arena from URL param:', startErr.message);
                         }
                     }
                 }
@@ -424,7 +390,7 @@ const CodeWarsArena = () => {
                             loadedRoom = roomValidation.data.room;
                         }
                     } catch (valErr) {
-                        console.warn('⚠️ Error fetching room by URL target:', valErr.message);
+                        console.warn('âš ï¸ Error fetching room by URL target:', valErr.message);
                     }
                 }
 
@@ -443,12 +409,12 @@ const CodeWarsArena = () => {
                             }
                         }
                     } catch (err) {
-                        console.log('ℹ️ User not in any room (this is normal)');
+                        console.log('â„¹ï¸ User not in any room (this is normal)');
                     }
                 }
 
                 if (loadedRoom) {
-                    console.log('✅ Room loaded successfully:', loadedRoom.id, 'Status:', loadedRoom.status);
+                    console.log('âœ… Room loaded successfully:', loadedRoom.id, 'Status:', loadedRoom.status);
                     setCurrentRoom(loadedRoom);
                     // Force state to 'game' so it lands directly on the Judge0 code editor
                     setGameState(loadedRoom.status === 'active' || loadedRoom.status === 'waiting' || loadedRoom.status === 'completed' ? 'game' : 'room');
@@ -460,35 +426,32 @@ const CodeWarsArena = () => {
                         });
                     }
                 } else {
-                    console.log('ℹ️ No active match found, returning to Battle Arena');
+                    console.log('â„¹ï¸ No active match found, returning to Battle Arena');
                     navigate('/battle-arena');
                     return;
                 }
             } catch (err) {
-                console.log('ℹ️ Room initialization notice:', err.message);
+                console.log('â„¹ï¸ Room initialization notice:', err.message);
                 navigate('/battle-arena');
                 return;
             }
             
             // Get faction rooms via socket - PASS FACTION ID DIRECTLY
             if (socketInstance && socketInstance.connected) {
-                console.log('ðŸ“‹ Loading faction rooms for:', userFaction.id);
+                console.log('Ã°Å¸â€œâ€¹ Loading faction rooms for:', userFaction.id);
                 loadFactionRoomsViaSocket(socketInstance, userFaction.id);
             } else {
-                console.warn('âš ï¸ Socket not connected, cannot load faction rooms');
+                console.warn('Ã¢Å¡Â Ã¯Â¸Â Socket not connected, cannot load faction rooms');
                 toast.error('Socket not connected. Some features may not work.');
             }
             
-            console.log('âœ… Arena initialization complete');
+            console.log('Ã¢Å“â€¦ Arena initialization complete');
             setLoading(false);
             
-            // ADDED: Load rooms via HTTP as fallback to ensure visibility across devices
-            setTimeout(() => {
-                loadFactionRoomsViaHTTP(userFaction.id);
-            }, 500);
+
             
         } catch (error) {
-            console.error('âŒ Failed to initialize arena:', error);
+            console.error('Ã¢ÂÅ’ Failed to initialize arena:', error);
             console.error('Error details:', {
                 message: error.message,
                 response: error.response?.data,
@@ -523,7 +486,7 @@ const CodeWarsArena = () => {
 
         try {
             setLoading(true);
-            console.log('🏗️ Creating room via API...', {
+            console.log('ðŸ—ï¸ Creating room via API...', {
                 userId,
                 username: user.username,
                 factionId: myFaction?.id,
@@ -563,7 +526,7 @@ const CodeWarsArena = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             
-            console.log('✅ Room created via API:', response.data);
+            console.log('âœ… Room created via API:', response.data);
             const createdRoom = response.data.room;
             setCurrentRoom(createdRoom);
             setGameState('room');
@@ -620,7 +583,7 @@ const CodeWarsArena = () => {
                 return;
             }
             
-            console.log('ðŸšª Joining room...', {
+            console.log('Ã°Å¸Å¡Âª Joining room...', {
                 roomId: actualRoomId.toUpperCase().trim(),
                 userId: user.id,
                 username: user.username,
@@ -631,7 +594,7 @@ const CodeWarsArena = () => {
             
             // Try socket first if connected
             if (socket && socket.connected) {
-                console.log('ðŸ“¡ Using socket to join room...');
+                console.log('Ã°Å¸â€œÂ¡ Using socket to join room...');
                 socket.emit('cw-join-room', {
                     roomId: actualRoomId.toUpperCase().trim(),
                     userId: user.id,
@@ -643,13 +606,13 @@ const CodeWarsArena = () => {
                 // Set timeout in case socket doesn't respond
                 setTimeout(() => {
                     if (loading) {
-                        console.warn('â° Socket timeout, falling back to HTTP...');
+                        console.warn('Ã¢ÂÂ° Socket timeout, falling back to HTTP...');
                         joinRoomViaHTTP(actualRoomId, actualPassword);
                     }
                 }, 5000);
             } else {
                 // Fallback to HTTP if socket not connected
-                console.log('ðŸ“¡ Socket not connected, using HTTP...');
+                console.log('Ã°Å¸â€œÂ¡ Socket not connected, using HTTP...');
                 await joinRoomViaHTTP(actualRoomId, actualPassword);
             }
             
@@ -669,7 +632,7 @@ const CodeWarsArena = () => {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
             
-            console.log('âœ… Joined room via HTTP:', response.data);
+            console.log('Ã¢Å“â€¦ Joined room via HTTP:', response.data);
             setCurrentRoom(response.data.room);
             setGameState('room');
             setLoading(false);
@@ -751,7 +714,7 @@ const CodeWarsArena = () => {
         }
 
         try {
-            console.log('ðŸŽ® Starting game via socket...');
+            console.log('Ã°Å¸Å½Â® Starting game via socket...');
             
             socket.emit('cw-start-game', {
                 roomId: currentRoom.id,
@@ -787,7 +750,7 @@ const CodeWarsArena = () => {
             return;
         }
         
-        console.log('ðŸ Ending contest for player...');
+        console.log('Ã°Å¸ÂÂ Ending contest for player...');
         
         socket.emit('cw-end-contest', {
             roomId: currentRoom.id,
@@ -869,8 +832,8 @@ const CodeWarsArena = () => {
                     )}
 
                     {gameState === 'game' && currentRoom && (
-                        <GameInterface 
-                            room={currentRoom} 
+                        <BattleCodeEditor
+                            room={currentRoom}
                             user={user}
                             socket={socket}
                             playerFinished={playerFinished}
@@ -1140,7 +1103,7 @@ const COMPETITION_MODES = [
         questionCountLocked: false,
         allowedQuestions: [1, 2, 3],
         defaultTimeLimit: 600,
-        badgeText: 'Fixed 1v1 duel — Master speed & runtime complexity'
+        badgeText: 'Fixed 1v1 duel â€” Master speed & runtime complexity'
     },
     {
         id: 'hackathon-hub',
@@ -1155,7 +1118,7 @@ const COMPETITION_MODES = [
         questionCountLocked: false,
         allowedQuestions: [5, 8, 10],
         defaultTimeLimit: 1800,
-        badgeText: 'Team marathon — Minimum 5 questions in 2v2 or 4v4'
+        badgeText: 'Team marathon â€” Minimum 5 questions in 2v2 or 4v4'
     },
     {
         id: 'faction-wars',
@@ -1508,9 +1471,9 @@ const RoomLobby = ({ room, user, onLeave, onDisband, onStart, onSwitchTeam, onCo
                     </div>
                     <div className="room-config">
                         <span>{room.teamSize}v{room.teamSize}</span>
-                        <span>•</span>
+                        <span>â€¢</span>
                         <span>{room.questionCount} questions</span>
-                        <span>•</span>
+                        <span>â€¢</span>
                         <span>{Math.floor(room.timeLimit / 60)}m</span>
                     </div>
                     <span className={`badge-privacy ${room.isPrivate ? 'private' : 'public'}`}>
@@ -1721,18 +1684,18 @@ const WaitingForPlayers = ({ room, user }) => {
 };
 
 // Results Screen Component
+// Results Screen Component — Premium Redesign
 const ResultsScreen = ({ room, results, user, onBackToMenu }) => {
-    // Calculate results if not provided
     const gameResults = results || calculateResults(room);
     
     function calculateResults(room) {
-        const teamResults = room.teams.map(team => ({
+        const teamResults = (room.teams || []).map(team => ({
             teamId: team.id,
             teamName: team.name,
             totalScore: room.scores?.[team.id] || 0,
             questionsCompleted: team.questionsCompleted || 0,
             failedAttempts: team.failedAttempts || 0,
-            players: team.players.map(p => ({
+            players: (team.players || []).map(p => ({
                 id: p.id,
                 username: p.username,
                 score: p.score || 0,
@@ -1740,950 +1703,207 @@ const ResultsScreen = ({ room, results, user, onBackToMenu }) => {
             }))
         }));
         
-        // Sort by score first, then by failed attempts (fewer is better) as tiebreaker
         teamResults.sort((a, b) => {
-            if (b.totalScore !== a.totalScore) {
-                return b.totalScore - a.totalScore; // Higher score wins
-            }
-            // Tiebreaker: fewer failed attempts wins
+            if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
             return a.failedAttempts - b.failedAttempts;
         });
         
         return {
-            winner: teamResults[0],
+            winner: teamResults[0] || { teamId: '', teamName: 'No Winner', totalScore: 0 },
             rankings: teamResults,
             gameStats: {
-                totalQuestions: room.questions.length,
-                gameDuration: room.timeLimit,
-                totalPlayers: room.teams.reduce((sum, team) => sum + team.players.length, 0)
+                totalQuestions: room.questions?.length || 0,
+                gameDuration: room.timeLimit || 600,
+                totalPlayers: (room.teams || []).reduce((sum, team) => sum + (team.players?.length || 0), 0)
             }
         };
     }
     
-    const myTeam = room.teams.find(team => 
-        team.players.some(p => p.id === user.id)
+    const myTeam = room?.teams?.find(team => 
+        team.players?.some(p => p.id === user?.id)
     );
     
-    const myPlayer = myTeam?.players.find(p => p.id === user.id);
-    const isWinner = myTeam?.id === gameResults.winner.teamId;
-    
+    const myPlayer = myTeam?.players?.find(p => p.id === user?.id);
+    const isWinner = myTeam?.id === gameResults.winner?.teamId;
+    const questionsTotal = gameResults.gameStats?.totalQuestions || 1;
+    const questionsSolved = myPlayer?.questionsCompleted || 0;
+    const solvePct = Math.round((questionsSolved / questionsTotal) * 100);
+
     return (
         <motion.div
             key="results"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="results-screen"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="results-screen-rebuilt"
         >
-            <div className="results-header">
-                <div className="results-title">
-                    {gameResults.reason === 'forfeit' ? (
-                        <>
-                            <Trophy size={48} className="trophy-icon gold" />
-                            <h1>{isWinner ? 'Victory by Forfeit!' : 'Match Ended'}</h1>
-                            <p>{gameResults.forfeitedTeam} left the match</p>
-                        </>
-                    ) : isWinner ? (
-                        <>
-                            <Trophy size={48} className="trophy-icon gold" />
-                            <h1>Victory!</h1>
-                            <p>Your team won the battle!</p>
-                        </>
+            {/* Victory Hero Header Card */}
+            <div className="results-hero-banner">
+                <div className="results-hero-glow" />
+                
+                <div className="results-hero-icon-wrap">
+                    {isWinner ? (
+                        <div className="results-icon-ring winner">
+                            <Crown size={44} className="hero-crown-icon" />
+                        </div>
                     ) : (
-                        <>
-                            <Award size={48} className="trophy-icon silver" />
-                            <h1>Battle Complete!</h1>
-                            <p>Well fought, warrior!</p>
-                        </>
+                        <div className="results-icon-ring completed">
+                            <Trophy size={40} className="hero-trophy-icon" />
+                        </div>
                     )}
                 </div>
+
+                <div className="results-hero-text-wrap">
+                    <h1 className="results-hero-title">
+                        {gameResults.reason === 'forfeit'
+                            ? (isWinner ? 'VICTORY BY FORFEIT' : 'MATCH TERMINATED')
+                            : isWinner
+                            ? 'VICTORY!'
+                            : 'MATCH COMPLETED'}
+                    </h1>
+                    
+                    <p className="results-hero-sub">
+                        {isWinner
+                            ? 'Outstanding performance! Your team dominated the battle arena.'
+                            : 'Well fought! Review your performance and team rankings below.'}
+                    </p>
+
+                    <div className="results-room-meta-badge">
+                        <Shield size={13} /> {room?.name || 'Battle Arena'} &bull; {room?.gameMode || 'Syntax Showdown'}
+                    </div>
+                </div>
             </div>
-            
-            <div className="results-content">
-                {/* Personal Stats */}
-                <div className="personal-stats">
-                    <h2>Your Performance</h2>
-                    <div className="stats-list">
-                        <div className="stat-row">
-                            <span className="stat-label-text">Points Earned</span>
-                            <span className="stat-value-text">{myPlayer?.score || 0}</span>
+
+            {/* Main Stats & Leaderboard Grid */}
+            <div className="results-grid-container">
+                {/* Left Column: Personal Performance Card */}
+                <div className="results-card personal-perf-card">
+                    <div className="results-card-head">
+                        <Zap size={16} className="card-head-icon" />
+                        <h3>Your Performance</h3>
+                    </div>
+
+                    <div className="perf-big-stat">
+                        <div className="perf-score-val">{myPlayer?.score || 0}</div>
+                        <div className="perf-score-lbl">Total Score Points</div>
+                    </div>
+
+                    <div className="perf-meter-wrap">
+                        <div className="perf-meter-labels">
+                            <span>Questions Solved</span>
+                            <span>{questionsSolved} / {questionsTotal} ({solvePct}%)</span>
                         </div>
-                        
-                        <div className="stat-row">
-                            <span className="stat-label-text">Questions Solved</span>
-                            <span className="stat-value-text">{myPlayer?.questionsCompleted || 0}/{gameResults.gameStats.totalQuestions}</span>
+                        <div className="perf-meter-bar">
+                            <div className="perf-meter-fill" style={{ width: `${solvePct}%` }} />
                         </div>
-                        
-                        <div className="stat-row">
-                            <span className="stat-label-text">Your Team</span>
-                            <span className="stat-value-text">{myTeam?.name}</span>
+                    </div>
+
+                    <div className="perf-meta-list">
+                        <div className="perf-meta-row">
+                            <span className="perf-lbl">Your Team</span>
+                            <span className="perf-val highlight">{myTeam?.name || 'Solo'}</span>
+                        </div>
+                        <div className="perf-meta-row">
+                            <span className="perf-lbl">Match Rank</span>
+                            <span className="perf-val">
+                                {isWinner ? '🥇 1st Place (Winner)' : '🥈 Participant'}
+                            </span>
+                        </div>
+                        <div className="perf-meta-row">
+                            <span className="perf-lbl">XP Awarded</span>
+                            <span className="perf-val" style={{ color: '#22c55e', fontWeight: 800 }}>
+                                +{100 + (gameResults.rankings?.find(r => r.teamId === myTeam?.id)?.totalScore || 0)} XP
+                            </span>
                         </div>
                     </div>
                 </div>
-                
-                {/* Team Rankings */}
-                <div className="team-rankings">
-                    <h2>Final Rankings</h2>
-                    <div className="rankings-list">
-                        {gameResults.rankings.map((team, index) => (
-                            <div 
-                                key={team.teamId} 
-                                className={`ranking-card ${team.teamId === myTeam?.id ? 'my-team' : ''} ${index === 0 ? 'winner' : ''}`}
-                            >
-                                <div className="rank-badge">
-                                    {index === 0 ? <Crown size={24} /> : `#${index + 1}`}
-                                </div>
-                                
-                                <div className="team-info">
-                                    <h3>{team.teamName}</h3>
-                                    <div className="team-score">
-                                        <Trophy size={16} />
-                                        <span>{team.totalScore} points</span>
+
+                {/* Right Column: Team Rankings Leaderboard */}
+                <div className="results-card team-rankings-card">
+                    <div className="results-card-head">
+                        <Trophy size={16} className="card-head-icon" />
+                        <h3>Final Standings</h3>
+                    </div>
+
+                    <div className="rankings-podium-list">
+                        {gameResults.rankings.map((team, index) => {
+                            const isMyTeamCard = team.teamId === myTeam?.id;
+                            const isWinnerTeam = index === 0;
+
+                            return (
+                                <div 
+                                    key={team.teamId || `team_${index}`} 
+                                    className={`podium-card ${isWinnerTeam ? 'gold-winner' : ''} ${isMyTeamCard ? 'my-team-highlight' : ''}`}
+                                >
+                                    <div className="podium-rank">
+                                        {isWinnerTeam ? (
+                                            <div className="crown-badge"><Crown size={18} /></div>
+                                        ) : (
+                                            <div className="rank-num">#{index + 1}</div>
+                                        )}
                                     </div>
-                                    <div className="team-progress">
-                                        <Target size={14} />
-                                        <span>{team.questionsCompleted} questions solved</span>
-                                    </div>
-                                    <div className="team-accuracy">
-                                        <CheckCircle size={14} />
-                                        <span>{team.failedAttempts || 0} failed attempts</span>
-                                    </div>
-                                </div>
-                                
-                                <div className="team-players">
-                                    {team.players.map(player => (
-                                        <div key={player.id} className="player-result">
-                                            <div className="player-avatar-small">
-                                                {player.username.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div className="player-result-info">
-                                                <div className="player-result-name">{player.username}</div>
-                                                <div className="player-result-score">
-                                                    {player.score} pts • {player.questionsCompleted} solved
-                                                </div>
-                                            </div>
+
+                                    <div className="podium-team-details">
+                                        <div className="podium-team-head">
+                                            <span className="podium-team-name">{team.teamName}</span>
+                                            {isMyTeamCard && <span className="your-team-pill">YOUR TEAM</span>}
                                         </div>
-                                    ))}
+
+                                        <div className="podium-stats-row">
+                                            <span className="podium-stat-chip score">
+                                                <Trophy size={12} /> {team.totalScore} pts
+                                            </span>
+                                            <span className="podium-stat-chip solved">
+                                                <Target size={12} /> {team.questionsCompleted} solved
+                                            </span>
+                                            <span className="podium-stat-chip errors">
+                                                <CheckCircle size={12} /> {team.failedAttempts || 0} fails
+                                            </span>
+                                        </div>
+
+                                        {/* Player Avatars Row */}
+                                        <div className="podium-players-row">
+                                            {team.players.map((p, pidx) => (
+                                                <div key={p.id || p.username || `p_${pidx}`} className="podium-player-tag" title={`${p.username}: ${p.score} pts`}>
+                                                    <span className="player-initial">{(p.username || 'P').charAt(0).toUpperCase()}</span>
+                                                    <span className="player-uname">{p.username}</span>
+                                                    <span className="player-pts">{p.score}p</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-                
-                {/* Game Stats */}
-                <div className="game-stats-summary">
-                    <h3>Battle Statistics</h3>
-                    <div className="stats-row">
-                        <div className="stat-item">
-                            <Clock size={20} />
-                            <span>{Math.floor(gameResults.gameStats.gameDuration / 60)} minutes</span>
-                        </div>
-                        <div className="stat-item">
-                            <Target size={20} />
-                            <span>{gameResults.gameStats.totalQuestions} questions</span>
-                        </div>
-                        <div className="stat-item">
-                            <Users size={20} />
-                            <span>{gameResults.gameStats.totalPlayers} players</span>
-                        </div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
-            
-            <div className="results-actions">
-                <button className="back-to-menu-btn" onClick={onBackToMenu}>
-                    <ArrowLeft size={20} />
-                    Back to Arena
+
+            {/* Match Summary Bar */}
+            <div className="results-summary-bar">
+                <div className="sum-stat-item">
+                    <Clock size={16} />
+                    <span>Duration: <strong>{Math.floor(gameResults.gameStats.gameDuration / 60)}m</strong></span>
+                </div>
+                <div className="sum-stat-item">
+                    <Target size={16} />
+                    <span>Questions: <strong>{gameResults.gameStats.totalQuestions}</strong></span>
+                </div>
+                <div className="sum-stat-item">
+                    <Users size={16} />
+                    <span>Players: <strong>{gameResults.gameStats.totalPlayers}</strong></span>
+                </div>
+            </div>
+
+            {/* Results Actions */}
+            <div className="results-actions-bar">
+                <button className="results-btn-primary" onClick={onBackToMenu}>
+                    <ArrowLeft size={16} /> Return to Battle Arena
                 </button>
             </div>
         </motion.div>
     );
 };
 
-// Game Interface Component
-const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => {
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [code, setCode] = useState('');
-    const [selectedLanguage, setSelectedLanguage] = useState('java'); // Default to Java
-    const [submitting, setSubmitting] = useState(false);
-    const [testing, setTesting] = useState(false);
-    const [timeLeft, setTimeLeft] = useState(0);
-    const [showEndConfirm, setShowEndConfirm] = useState(false);
-    const [testResults, setTestResults] = useState(null);
-    const [testResultsCollapsed, setTestResultsCollapsed] = useState(false);
-    const [leftPanelWidth, setLeftPanelWidth] = useState(40); // Percentage width for problem panel
-    const [isResizing, setIsResizing] = useState(false);
-    const [activeTab, setActiveTab] = useState('statement'); // 'statement' or 'chat'
-    const [chatMessages, setChatMessages] = useState([]);
-    
-    // Language-specific default code templates
-    const getDefaultCode = (language) => {
-        const templates = {
-            java: `public static int solution(int n) {
-    // Write your solution here
-    
-}`,
-            python: `def solution(n):
-    # Write your solution here
-    pass`,
-            javascript: `function solution(n) {
-    // Write your solution here
-    
-}`,
-            cpp: `int solution(int n) {
-    // Write your solution here
-    
-}`
-        };
-        return templates[language] || templates.java;
-    };
-    
-    // Update code when language changes
-    const handleLanguageChange = (newLanguage) => {
-        setSelectedLanguage(newLanguage);
-        setCode(getDefaultCode(newLanguage));
-    };
-
-    useEffect(() => {
-        // Calculate time left
-        const endTime = new Date(room.endTime).getTime();
-        const updateTimer = () => {
-            const now = Date.now();
-            const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
-            setTimeLeft(remaining);
-        };
-
-        updateTimer();
-        const timer = setInterval(updateTimer, 1000);
-        return () => clearInterval(timer);
-    }, [room.endTime]);
-    
-    // Load saved code when question changes
-    useEffect(() => {
-        const currentQuestion = room.questions[currentQuestionIndex];
-        if (!currentQuestion) return;
-        
-        const savedCodeKey = `codewars_${room.id}_${user.id}_${currentQuestion.id}_${selectedLanguage}`;
-        const savedCode = localStorage.getItem(savedCodeKey);
-        
-        if (savedCode) {
-            console.log('Loading saved code for question:', currentQuestion.id, 'language:', selectedLanguage);
-            setCode(savedCode);
-        } else {
-            console.log('No saved code, using default template for', selectedLanguage);
-            setCode(getDefaultCode(selectedLanguage));
-        }
-        
-        // Clear test results when changing questions
-        setTestResults(null);
-    }, [currentQuestionIndex, room.id, room.questions, user.id, selectedLanguage]);
-    
-    // Save code to localStorage whenever it changes (debounced)
-    useEffect(() => {
-        const currentQuestion = room.questions[currentQuestionIndex];
-        if (!currentQuestion || !code) return;
-        
-        const saveTimer = setTimeout(() => {
-            const savedCodeKey = `codewars_${room.id}_${user.id}_${currentQuestion.id}_${selectedLanguage}`;
-            localStorage.setItem(savedCodeKey, code);
-            console.log('Code saved for question:', currentQuestion.id, 'language:', selectedLanguage);
-        }, 1000); // Save after 1 second of no changes
-        
-        return () => clearTimeout(saveTimer);
-    }, [code, currentQuestionIndex, room.id, room.questions, user.id, selectedLanguage]);
-
-    const currentQuestion = room.questions[currentQuestionIndex];
-    
-    // Find player info
-    let myPlayer = null;
-    let myTeam = null;
-    for (const team of room.teams) {
-        const player = team.players.find(p => p.id === user.id);
-        if (player) {
-            myPlayer = player;
-            myTeam = team;
-            break;
-        }
-    }
-    
-    // Check if player is finished
-    const isFinished = playerFinished || (Array.isArray(room.finishedPlayers) && room.finishedPlayers.includes(user.id));
-    
-    // Count finished players
-    const finishedCount = Array.isArray(room.finishedPlayers) ? room.finishedPlayers.length : 0;
-    const totalPlayers = room.teams.reduce((sum, team) => sum + team.players.length, 0);
-
-    const submitSolution = async (submittedCode) => {
-        if (isFinished) {
-            toast.error('You have already ended your contest!');
-            return;
-        }
-        
-        // Use submitted code from collaborative editor, or local code state for solo mode
-        const codeToSubmit = submittedCode || code;
-        
-        if (!codeToSubmit || !codeToSubmit.trim()) {
-            toast.error('Please write some code before submitting');
-            return;
-        }
-
-        setSubmitting(true);
-        try {
-            const response = await axios.post(`${API_URL}/code-wars/submit-solution`, {
-                questionId: currentQuestion.id,
-                code: codeToSubmit,
-                language: selectedLanguage
-            }, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            });
-
-            console.log('ðŸ“¤ Submit response:', response.data);
-
-            if (response.data.success || response.data.partialCredit) {
-                const { points, maxPoints, scorePercentage, testsPassed, testsTotal, passedByCategory, totalByCategory } = response.data;
-                
-                console.log('âœ… Submission successful:', {
-                    points,
-                    maxPoints,
-                    scorePercentage,
-                    testsPassed,
-                    testsTotal
-                });
-                
-                if (response.data.success) {
-                    toast.success(`âœ… Perfect! All tests passed! +${points} points`);
-                } else {
-                    toast.success(`âœ“ Partial Credit: ${testsPassed}/${testsTotal} tests passed (${scorePercentage}%) +${points}/${maxPoints} points`);
-                }
-                
-                // Store detailed results for display
-                setTestResults({
-                    success: response.data.success,
-                    partialCredit: response.data.partialCredit,
-                    scorePercentage,
-                    testsPassed,
-                    testsTotal,
-                    passedByCategory,
-                    totalByCategory,
-                    points,
-                    maxPoints
-                });
-                
-                // Move to next question if fully completed
-                if (response.data.success && currentQuestionIndex < room.questions.length - 1) {
-                    setTimeout(() => {
-                        setCurrentQuestionIndex(currentQuestionIndex + 1);
-                        setTestResults(null);
-                    }, 2000);
-                }
-            } else {
-                // Show detailed error message
-                const result = response.data.result;
-                if (result && result.message) {
-                    // Multi-line error message
-                    const lines = result.message.split('\n');
-                    toast.error(
-                        <div style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '12px' }}>
-                            {lines.map((line, i) => <div key={i}>{line}</div>)}
-                        </div>,
-                        { duration: 8000 }
-                    );
-                } else {
-                    toast.error('âŒ Solution failed tests. Try again!');
-                }
-                
-                // Store test results for display
-                if (result && result.results) {
-                    setTestResults(result);
-                    console.log('ðŸ“Š Test Results:', result.results);
-                    console.log(`âœ… Passed: ${result.testsPassed || 0}/${result.totalTests || 0}`);
-                    if (result.methodName) {
-                        console.log(`ðŸ”§ Method detected: ${result.methodName}`);
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('âŒ Submission error:', error);
-            console.error('âŒ Error response:', error.response?.data);
-            console.error('âŒ Error status:', error.response?.status);
-            console.error('âŒ Error message:', error.message);
-            
-            const errorMsg = error.response?.data?.error || error.message || 'Submission failed';
-            toast.error(`Submission failed: ${errorMsg}`);
-        } finally {
-            setSubmitting(false);
-        }
-    };
-    
-    const runTests = async (codeToTest) => {
-        const testCode = codeToTest || code;
-        
-        if (!testCode || !testCode.trim()) {
-            toast.error('Please write some code before testing');
-            return;
-        }
-        
-        setTesting(true);
-        setTestResults(null);
-        
-        try {
-            // Use the compile endpoint to test without submitting
-            const response = await axios.post(`${API_URL}/compile-java`, {
-                code: testCode,
-                language: selectedLanguage,
-                testCases: currentQuestion.testCases
-            });
-            
-            setTestResults(response.data);
-            
-            if (response.data.success) {
-                toast.success(`âœ… All ${response.data.totalTests} test cases passed!`);
-            } else {
-                toast.error(`âŒ ${response.data.testsPassed || 0}/${response.data.totalTests || 0} tests passed`);
-            }
-        } catch (error) {
-            console.error('Test error:', error);
-            toast.error('Failed to run tests');
-        } finally {
-            setTesting(false);
-        }
-    };
-    
-    const handleEndContest = () => {
-        setShowEndConfirm(false);
-        onEndContest();
-    };
-
-    const formatTime = (seconds) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    // Resize handler for split view
-    const handleMouseDown = (e) => {
-        e.preventDefault();
-        setIsResizing(true);
-    };
-
-    useEffect(() => {
-        const handleMouseMove = (e) => {
-            if (!isResizing) return;
-            
-            const container = document.querySelector('.split-view');
-            if (!container) return;
-            
-            const containerRect = container.getBoundingClientRect();
-            const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-            
-            // Limit between 20% and 80%
-            if (newWidth >= 20 && newWidth <= 80) {
-                setLeftPanelWidth(newWidth);
-            }
-        };
-
-        const handleMouseUp = () => {
-            setIsResizing(false);
-        };
-
-        if (isResizing) {
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-        }
-
-        return () => {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        };
-    }, [isResizing]);
-
-    // Chat handlers
-    useEffect(() => {
-        if (!socket || !myTeam) return;
-
-        const handleTeamChat = (data) => {
-            setChatMessages(prev => [...prev, data]);
-        };
-
-        socket.on('cw-team-chat', handleTeamChat);
-
-        return () => {
-            socket.off('cw-team-chat', handleTeamChat);
-        };
-    }, [socket, myTeam]);
-
-    // Helper function to check if a specific question is completed
-    const isQuestionCompleted = (questionId) => {
-        if (!room.submissions || !user?.id) return false;
-        const mySubmissions = room.submissions[user.id] || [];
-        return mySubmissions.some(sub => sub.questionId === questionId && sub.result?.scoreData?.allPassed);
-    };
-
-    const handleSendMessage = (message) => {
-        if (!socket || !myTeam || !message.trim()) return;
-
-        socket.emit('cw-team-chat', {
-            roomId: room.id,
-            teamId: myTeam.id,
-            userId: user.id,
-            username: user.username,
-            message: message.trim(),
-            timestamp: Date.now()
-        });
-    };
-
-    if (!myPlayer) {
-        // Spectator view
-        return (
-            <div className="spectator-view">
-                <div className="spectator-header">
-                    <Eye size={24} />
-                    <h2>Spectating: {room.name}</h2>
-                </div>
-                <div className="teams-scoreboard">
-                    {room.teams.map(team => (
-                        <div key={team.id} className="team-score">
-                            <h3>{team.name}</h3>
-                            <div className="score">{room.scores?.[team.id] || 0} pts</div>
-                            <div className="players">
-                                {team.players.map(p => (
-                                    <span key={p.id}>{p.username}</span>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="game-interface">
-            {/* Top Navigation Bar */}
-            <div className="game-navbar">
-                <div className="navbar-left">
-                    <div className="room-info-compact">
-                        <Swords size={18} />
-                        <span>{room.name}</span>
-                    </div>
-                </div>
-                
-                <div className="navbar-center">
-                    <div className="question-tabs">
-                        {room.questions.map((q, index) => {
-                            const completed = isQuestionCompleted(q.id);
-                            return (
-                                <button
-                                    key={q.id}
-                                    className={`question-tab ${index === currentQuestionIndex ? 'active' : ''} ${
-                                        completed ? 'completed' : ''
-                                    }`}
-                                    onClick={() => !isFinished && setCurrentQuestionIndex(index)}
-                                    disabled={isFinished}
-                                >
-                                    {index + 1}
-                                    {completed && <CheckCircle size={12} className="check-icon" />}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-                
-                <div className="navbar-right">
-                    <div className="timer-display">
-                        <Timer size={18} />
-                        <span className={timeLeft < 120 ? 'urgent' : ''}>{formatTime(timeLeft)}</span>
-                    </div>
-                    <div className="score-display">
-                        <Trophy size={18} />
-                        <span>{myPlayer.score} pts</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Player Finished Overlay */}
-            {isFinished && (
-                <div className="player-finished-overlay">
-                    <div className="finished-message">
-                        <CheckCircle size={48} />
-                        <h2>Contest Ended!</h2>
-                        <p>You have finished your contest.</p>
-                        <p>Waiting for other players... ({finishedCount}/{totalPlayers} done)</p>
-                        <div className="final-score">
-                            <h3>Your Score: {myPlayer.score} points</h3>
-                            <p>Questions Completed: {myPlayer.questionsCompleted}/{room.questions.length}</p>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Main Split View - LeetCode Style */}
-            {/* Unified Header for both panels */}
-            <div className="unified-header">
-                <div className="unified-header-left">
-                    <button 
-                        className={`problem-tab ${activeTab === 'statement' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('statement')}
-                    >
-                        Statement
-                    </button>
-                    {room.teamSize > 1 && (
-                        <button 
-                            className={`problem-tab ${activeTab === 'chat' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('chat')}
-                        >
-                            <MessageSquare size={14} />
-                            Team Chat
-                        </button>
-                    )}
-                </div>
-                <div className="unified-header-right">
-                    <select 
-                        className="language-dropdown"
-                        value={selectedLanguage}
-                        onChange={(e) => handleLanguageChange(e.target.value)}
-                        disabled={isFinished}
-                    >
-                        <option value="java">Java</option>
-                        <option value="python">Python</option>
-                        <option value="javascript">JavaScript</option>
-                        <option value="cpp">C++</option>
-                    </select>
-                    {room.teamSize > 1 && (
-                        <div className="team-indicator">
-                            <Users size={14} />
-                            <span>{myTeam.name}</span>
-                        </div>
-                    )}
-                </div>
-            </div>
-            
-            <div className="split-view">
-                {/* Left Panel - Problem Description, Submissions, or Chat */}
-                <div className="problem-panel" style={{ width: `${leftPanelWidth}%` }}>
-                    {activeTab === 'statement' ? (
-                        <>
-                            <div className="problem-header">
-                                <h2 className="problem-title">{currentQuestion.title}</h2>
-                                <div className="problem-meta">
-                                    <span className={`difficulty-badge ${currentQuestion.difficulty}`}>
-                                        {currentQuestion.difficulty}
-                                    </span>
-                                    <span className="points-badge">
-                                        <Star size={14} />
-                                        {currentQuestion.points} pts
-                                    </span>
-                                    {currentQuestion.source && (
-                                        <span className="source-badge">{currentQuestion.source}</span>
-                                    )}
-                                </div>
-                            </div>
-                            
-                            <div className="problem-content">
-                                <div className="problem-description">
-                                    {currentQuestion.description}
-                                </div>
-                        
-                        {currentQuestion.examples && currentQuestion.examples.length > 0 && (
-                            <div className="problem-examples">
-                                <h3>Examples</h3>
-                                {currentQuestion.examples.map((example, index) => (
-                                    <div key={index} className="example-box">
-                                        <div className="example-label">Example {index + 1}:</div>
-                                        <div className="example-io">
-                                            <div className="io-item">
-                                                <strong>Input:</strong>
-                                                <code>{example.input}</code>
-                                            </div>
-                                            <div className="io-item">
-                                                <strong>Output:</strong>
-                                                <code>{example.output}</code>
-                                            </div>
-                                        </div>
-                                        {example.explanation && (
-                                            <div className="example-explanation">
-                                                <strong>Explanation:</strong> {example.explanation}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        
-                        {currentQuestion.constraints && (
-                            <div className="problem-constraints">
-                                <h3>Constraints</h3>
-                                <ul>
-                                    {Array.isArray(currentQuestion.constraints) ? (
-                                        currentQuestion.constraints.map((constraint, index) => (
-                                            <li key={index}>{typeof constraint === 'object' ? JSON.stringify(constraint) : String(constraint)}</li>
-                                        ))
-                                    ) : typeof currentQuestion.constraints === 'string' ? (
-                                        <li>{currentQuestion.constraints}</li>
-                                    ) : typeof currentQuestion.constraints === 'object' ? (
-                                        Object.values(currentQuestion.constraints).map((constraint, index) => (
-                                            <li key={index}>{String(constraint)}</li>
-                                        ))
-                                    ) : (
-                                        <li>{String(currentQuestion.constraints)}</li>
-                                    )}
-                                </ul>
-                            </div>
-                        )}
-                            </div>
-                        </>
-                    ) : (
-                        <div className="team-chat-container">
-                            <ChatPanel
-                                socket={socket}
-                                roomId={`team_${room.id}_${myTeam.id}`}
-                                user={user}
-                                title={`${myTeam.name} Chat`}
-                                messages={chatMessages}
-                                onSend={handleSendMessage}
-                            />
-                        </div>
-                    )}
-                </div>
-
-                {/* Resizer */}
-                <div 
-                    className={`panel-resizer ${isResizing ? 'resizing' : ''}`}
-                    onMouseDown={handleMouseDown}
-                />
-
-                {/* Right Panel - Code Editor */}
-                <div className="editor-panel" style={{ width: `${100 - leftPanelWidth}%` }}>
-                    {/* Conditional rendering: Collaborative editor for team mode, standard editor for solo */}
-                    {room.teamSize > 1 ? (
-                        <CollaborativeCodeEditor
-                            roomId={room.id}
-                            teamId={myTeam.id}
-                            questionId={currentQuestion.id}
-                            userId={user.id}
-                            username={user.username}
-                            socket={socket}
-                            initialCode={currentQuestion.starterCode || ''}
-                            language={selectedLanguage}
-                            onSubmit={submitSolution}
-                            disabled={isFinished || submitting}
-                        />
-                    ) : (
-                        <div className="solo-editor-container" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-                            <div className="monaco-wrapper" style={{ flex: 1, minHeight: '320px', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
-                                <Editor
-                                    height="100%"
-                                    language={selectedLanguage === 'cpp' ? 'cpp' : selectedLanguage === 'python' ? 'python' : selectedLanguage === 'javascript' ? 'javascript' : 'java'}
-                                    theme="vs-dark"
-                                    value={code}
-                                    onChange={(val) => setCode(val || '')}
-                                    options={{
-                                        fontSize: 14,
-                                        fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
-                                        minimap: { enabled: false },
-                                        scrollBeyondLastLine: false,
-                                        automaticLayout: true,
-                                        tabSize: 4,
-                                        lineNumbers: 'on',
-                                        padding: { top: 12 },
-                                        readOnly: isFinished
-                                    }}
-                                />
-                            </div>
-                            
-                            {/* Enhanced Test Results Display with Categories */}
-                            {testResults && (
-                                <div className={`leetcode-test-results ${testResultsCollapsed ? 'collapsed' : ''}`}>
-                                    <div className="test-results-header">
-                                        <div className="test-results-title">
-                                            {testResults.success ? (
-                                                <>
-                                                    <CheckCircle size={20} className="success-icon" />
-                                                    <span className="success-text">Accepted</span>
-                                                </>
-                                            ) : testResults.partialCredit ? (
-                                                <>
-                                                    <AlertCircle size={20} className="warning-icon" />
-                                                    <span className="warning-text">Partial Credit</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <XCircle size={20} className="error-icon" />
-                                                    <span className="error-text">Wrong Answer</span>
-                                                </>
-                                            )}
-                                        </div>
-                                        <div className="test-results-summary">
-                                            <span className="score-badge">{testResults.scorePercentage}%</span>
-                                            <span className="tests-passed">{testResults.testsPassed}/{testResults.testsTotal} tests passed</span>
-                                            <span className="points-earned">+{testResults.points}/{testResults.maxPoints} pts</span>
-                                        </div>
-                                        <button 
-                                            className="collapse-btn"
-                                            onClick={() => setTestResultsCollapsed(!testResultsCollapsed)}
-                                        >
-                                            {testResultsCollapsed ? (
-                                                <>
-                                                    <ChevronUp size={16} />
-                                                    Expand
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <ChevronDown size={16} />
-                                                    Collapse
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-                                    
-                                    <div className="test-results-body">
-                                        {/* Category Breakdown */}
-                                        <div className="category-breakdown">
-                                            <h4>Test Categories</h4>
-                                            <div className="category-grid">
-                                                {testResults.passedByCategory && Object.entries(testResults.passedByCategory).map(([category, passed]) => {
-                                                    const total = testResults.totalByCategory[category];
-                                                    const percentage = Math.round((passed / total) * 100);
-                                                    const categoryNames = {
-                                                        'sample': 'Sample Cases',
-                                                        'hidden': 'Hidden Cases',
-                                                        'edge': 'Edge Cases',
-                                                        'stress': 'Stress Tests',
-                                                        'random': 'Random Tests'
-                                                    };
-                                                    
-                                                    return (
-                                                        <div key={category} className="category-card">
-                                                            <div className="category-header">
-                                                                <span className="category-name">{categoryNames[category] || category}</span>
-                                                                <span className={`category-status ${passed === total ? 'success' : 'partial'}`}>
-                                                                    {passed}/{total}
-                                                                </span>
-                                                            </div>
-                                                            <div className="category-progress">
-                                                                <div 
-                                                                    className="category-progress-bar" 
-                                                                    style={{ width: `${percentage}%` }}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                        
-                                        {/* Overall Progress Bar */}
-                                        <div className="overall-progress">
-                                            <div className="progress-label">
-                                                <span>Overall Progress</span>
-                                                <span className="progress-percentage">{testResults.scorePercentage}%</span>
-                                            </div>
-                                            <div className="progress-bar-container">
-                                                <div 
-                                                    className={`progress-bar-fill ${testResults.success ? 'success' : testResults.partialCredit ? 'partial' : 'failed'}`}
-                                                    style={{ width: `${testResults.scorePercentage}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                            
-                            {/* Action Buttons */}
-                            <div className="editor-footer">
-                                <button 
-                                    className="prev-question-btn"
-                                    onClick={() => {
-                                        if (currentQuestionIndex > 0) {
-                                            setCurrentQuestionIndex(currentQuestionIndex - 1);
-                                            setTestResults(null);
-                                        }
-                                    }}
-                                    disabled={isFinished || currentQuestionIndex === 0}
-                                >
-                                    Previous
-                                </button>
-                                
-                                <div style={{ display: 'flex', gap: '12px' }}>
-                                    <button 
-                                        className="run-tests-btn"
-                                        onClick={() => runTests()}
-                                        disabled={testing || !code.trim() || isFinished}
-                                    >
-                                        {testing ? (
-                                            <>
-                                                <Loader className="spin" size={16} />
-                                                Testing...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Play size={16} />
-                                                Run
-                                            </>
-                                        )}
-                                    </button>
-                                    
-                                    <button 
-                                        className="submit-solution-btn"
-                                        onClick={() => submitSolution()}
-                                        disabled={submitting || !code.trim() || isFinished}
-                                    >
-                                        {submitting ? (
-                                            <>
-                                                <Loader className="spin" size={16} />
-                                                Submitting...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <CheckCircle size={16} />
-                                                Submit
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-                                
-                                <button 
-                                    className="next-question-btn"
-                                    onClick={() => {
-                                        if (currentQuestionIndex < room.questions.length - 1) {
-                                            setCurrentQuestionIndex(currentQuestionIndex + 1);
-                                            setTestResults(null);
-                                        }
-                                    }}
-                                    disabled={isFinished || currentQuestionIndex >= room.questions.length - 1}
-                                >
-                                    Next
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-};
-
 
 export default CodeWarsArena;
-
-    // ADDED: HTTP fallback to fetch faction rooms
-    const loadFactionRoomsViaHTTP = async (factionId) => {
-        const fId = factionId || myFaction?.id;
-        
-        if (!fId) {
-            console.log('âš ï¸ Cannot load rooms via HTTP: faction ID not available');
-            return;
-        }
-        
-        try {
-            console.log('ðŸ"‹ Fetching faction rooms via HTTP for faction:', fId);
-            const response = await axios.get(`${API_URL}/code-wars/faction-rooms`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            });
-            
-            console.log('âœ… Fetched rooms via HTTP:', response.data);
-            setFactionRooms(response.data);
-        } catch (error) {
-            console.error('âŒ Error fetching rooms via HTTP:', error);
-        }
-    };
