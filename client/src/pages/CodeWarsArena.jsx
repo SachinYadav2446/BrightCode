@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { initSocket } from '../socket';
+import Editor from '@monaco-editor/react';
 import CollaborativeCodeEditor from '../components/codewars/CollaborativeCodeEditor';
 import ChatPanel from '../components/ChatPanel';
 import './CodeWarsArena.css';
@@ -224,23 +225,18 @@ const CodeWarsArena = () => {
         });
 
         s.on('cw-left-room', (data) => {
-            console.log('ðŸšª Left room event received:', data);
-            console.log('ðŸšª Processing game end?', processingGameEndRef.current);
+            console.log('🚪 Left room event received:', data);
             
-            // If we're processing a game-ended event, ignore this
-            if (processingGameEndRef.current) {
-                console.log('ðŸšª Ignoring cw-left-room because we are processing game-ended');
+            // If we're processing a game-ended event or showing results, ignore this
+            if (processingGameEndRef.current || gameState === 'results') {
+                console.log('🚪 Ignoring cw-left-room because results are active');
                 return;
             }
             
-            // Otherwise, go back to menu
-            console.log('ðŸ“Š Going to menu from left-room event');
             toast.success('Left room');
             setCurrentRoom(null);
             setPlayerFinished(false);
-            setGameState('menu');
-            
-            loadFactionRoomsViaSocket(s);
+            navigate('/battle-arena');
         });
         
         s.on('cw-contest-ended', (data) => {
@@ -376,77 +372,102 @@ const CodeWarsArena = () => {
 
     const initializeArena = async (socketInstance) => {
         try {
-            console.log('ðŸŽ® Initializing Code Wars Arena...');
-            console.log('ðŸ‘¤ User:', user?.username, 'ID:', user?.id);
-            console.log('ðŸ”Œ Socket connected:', socketInstance?.connected);
+            console.log('🎮 Initializing Code Wars Arena...');
+            console.log('👤 User:', user?.username, 'ID:', user?.id);
+            console.log('🔌 Socket connected:', socketInstance?.connected);
             
             // Get user's faction
-            console.log('ðŸ“¡ Fetching factions from server...');
+            console.log('📡 Fetching factions from server...');
             const factionsRes = await axios.get(`${API_URL}/factions`);
-            console.log('âœ… Factions response:', factionsRes.data);
+            console.log('✅ Factions response:', factionsRes.data);
             
-            const userFaction = factionsRes.data.find(f => 
+            let userFaction = factionsRes.data.find(f => 
                 f.members?.some(m => m.username === user.username)
             );
             
             if (!userFaction) {
-                console.error('âŒ User not in any faction');
-                toast.error('You must join a faction to participate in Code Wars!');
-                setLoading(false);
-                navigate('/factions');
-                return;
+                console.log('ℹ️ User not in a specific faction, assigning global arena faction');
+                userFaction = factionsRes.data[0] || { id: 'global_arena', name: 'Global Arena', members: [] };
             }
             
-            console.log('ðŸ›ï¸ User faction loaded:', userFaction.name, 'ID:', userFaction.id);
+            console.log('🛡️ User faction loaded:', userFaction.name, 'ID:', userFaction.id);
             setMyFaction(userFaction);
             
-            // Debug: Make faction available globally for debugging
-            window.myFactionDebug = userFaction;
-            window.socketDebug = socketInstance;
-            
-            // Check if already in a room
+            // Check if user requested a specific room/arena via URL parameters or is in a room
             try {
-                console.log('ðŸ” Checking if user is already in a room...');
-                const roomRes = await axios.get(`${API_URL}/code-wars/my-room`, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                });
-                
-                console.log('âœ… User is in room:', roomRes.data.id);
-                
-                // Validate that the room actually exists on the server
-                try {
-                    const roomValidation = await axios.get(`${API_URL}/code-wars/debug/room/${roomRes.data.id}`, {
-                        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                    });
-                    
-                    if (roomValidation.data.roomExists) {
-                        console.log('âœ… Room validated on server');
-                        setCurrentRoom(roomRes.data);
-                        setGameState(roomRes.data.status === 'active' ? 'game' : 'room');
-                        
-                        // Join socket room for real-time updates
-                        if (socketInstance) {
-                            socketInstance.emit('join-code-wars-room', { 
-                                roomId: roomRes.data.id, 
-                                userId: user.id 
+                const searchParams = new URLSearchParams(window.location.search);
+                let targetRoomId = searchParams.get('roomId') || searchParams.get('arena');
+
+                if (targetRoomId) {
+                    console.log('📌 Target room/arena requested via URL:', targetRoomId);
+                    if (targetRoomId.startsWith('arena_')) {
+                        try {
+                            const startRes = await axios.post(`${API_URL}/arena/start`, { arenaId: targetRoomId }, {
+                                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
                             });
+                            if (startRes.data?.roomId) {
+                                targetRoomId = startRes.data.roomId;
+                            }
+                        } catch (startErr) {
+                            console.warn('⚠️ Could not start arena from URL param:', startErr.message);
                         }
-                    } else {
-                        console.log('âš ï¸ Room exists in user data but not on server - clearing stale data');
-                        // Room doesn't exist on server, clear stale data
-                        await axios.post(`${API_URL}/code-wars/leave-room`, {}, {
-                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                        }).catch(() => {}); // Ignore errors since room doesn't exist
                     }
-                } catch (validationError) {
-                    console.log('âš ï¸ Could not validate room, assuming it exists');
-                    // If validation fails, assume room exists (fallback)
-                    setCurrentRoom(roomRes.data);
-                    setGameState(roomRes.data.status === 'active' ? 'game' : 'room');
+                }
+
+                let loadedRoom = null;
+                if (targetRoomId) {
+                    try {
+                        const roomValidation = await axios.get(`${API_URL}/code-wars/debug/room/${targetRoomId}`, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        if (roomValidation.data?.roomExists && roomValidation.data?.room) {
+                            loadedRoom = roomValidation.data.room;
+                        }
+                    } catch (valErr) {
+                        console.warn('⚠️ Error fetching room by URL target:', valErr.message);
+                    }
+                }
+
+                if (!loadedRoom) {
+                    // Fallback: Check if user is already in a room on server
+                    try {
+                        const roomRes = await axios.get(`${API_URL}/code-wars/my-room`, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        if (roomRes.data?.id) {
+                            const roomValidation = await axios.get(`${API_URL}/code-wars/debug/room/${roomRes.data.id}`, {
+                                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                            });
+                            if (roomValidation.data?.roomExists && roomValidation.data?.room) {
+                                loadedRoom = roomValidation.data.room;
+                            }
+                        }
+                    } catch (err) {
+                        console.log('ℹ️ User not in any room (this is normal)');
+                    }
+                }
+
+                if (loadedRoom) {
+                    console.log('✅ Room loaded successfully:', loadedRoom.id, 'Status:', loadedRoom.status);
+                    setCurrentRoom(loadedRoom);
+                    // Force state to 'game' so it lands directly on the Judge0 code editor
+                    setGameState(loadedRoom.status === 'active' || loadedRoom.status === 'waiting' || loadedRoom.status === 'completed' ? 'game' : 'room');
+                    
+                    if (socketInstance) {
+                        socketInstance.emit('join-code-wars-room', { 
+                            roomId: loadedRoom.id, 
+                            userId: user.id || user._id
+                        });
+                    }
+                } else {
+                    console.log('ℹ️ No active match found, returning to Battle Arena');
+                    navigate('/battle-arena');
+                    return;
                 }
             } catch (err) {
-                // Not in a room, that's fine
-                console.log('â„¹ï¸ User not in any room (this is normal)');
+                console.log('ℹ️ Room initialization notice:', err.message);
+                navigate('/battle-arena');
+                return;
             }
             
             // Get faction rooms via socket - PASS FACTION ID DIRECTLY
@@ -494,16 +515,16 @@ const CodeWarsArena = () => {
     };
 
     const createRoom = async () => {
-        if (!user || !user.id) {
-            toast.error('User authentication error. Please log in again.');
-            navigate('/auth');
+        const userId = user?.id || user?._id;
+        if (!user || !userId) {
+            toast.error('User session invalid. Please log in again.');
             return;
         }
 
         try {
             setLoading(true);
             console.log('🏗️ Creating room via API...', {
-                userId: user.id,
+                userId,
                 username: user.username,
                 factionId: myFaction?.id,
                 roomConfig: createForm
@@ -513,7 +534,7 @@ const CodeWarsArena = () => {
             
         } catch (error) {
             console.error('Create room error:', error);
-            toast.error('Failed to create room');
+            toast.error('Failed to create room: ' + (error.response?.data?.error || error.message));
             setLoading(false);
         }
     };
@@ -523,7 +544,6 @@ const CodeWarsArena = () => {
             const token = localStorage.getItem('token');
             if (!token) {
                 toast.error('Session expired. Please log in again.');
-                navigate('/auth');
                 return;
             }
 
@@ -555,7 +575,7 @@ const CodeWarsArena = () => {
             if (socket && socket.connected) {
                 socket.emit('join-code-wars-room', {
                     roomId: createdRoom.id,
-                    userId: user.id
+                    userId: user?.id || user?._id
                 });
             }
             
@@ -568,7 +588,6 @@ const CodeWarsArena = () => {
             
             if (error.response?.status === 401 && !localStorage.getItem('token')) {
                 toast.error('Authentication failed. Please log in again.');
-                navigate('/auth');
             } else if (error.message.includes('Network Error')) {
                 toast.error('Cannot connect to server. Please check if the server is running on port 5051.');
             } else {
@@ -578,9 +597,9 @@ const CodeWarsArena = () => {
     };
 
     const joinRoom = async (roomId, password = '') => {
-        if (!user || !user.id) {
+        const userId = user?.id || user?._id;
+        if (!user || !userId) {
             toast.error('User authentication error. Please log in again.');
-            navigate('/auth');
             return;
         }
         
@@ -684,55 +703,44 @@ const CodeWarsArena = () => {
     const leaveRoom = async () => {
         if (!socket || !currentRoom) {
             setCurrentRoom(null);
-            setGameState('menu');
+            navigate('/battle-arena');
             return;
         }
 
         try {
-            console.log('Leaving room via socket...');
-            console.log('Current room:', currentRoom.id);
-            console.log('Current game state:', gameState);
-            
             socket.emit('cw-leave-room', {
                 roomId: currentRoom.id,
                 userId: user.id,
                 username: user.username
             });
-            
-            // Don't do anything here - let the socket events handle the response
-            // Either 'cw-game-ended' (forfeit) or 'cw-left-room' (normal leave) will fire
-            console.log('Leave room event emitted, waiting for server response...');
-            
+            setCurrentRoom(null);
+            navigate('/battle-arena');
         } catch (error) {
             console.error('Leave room error:', error);
             setCurrentRoom(null);
-            setGameState('menu');
+            navigate('/battle-arena');
         }
     };
 
     const disbandRoom = async () => {
         if (!socket || !currentRoom) {
             setCurrentRoom(null);
-            setGameState('menu');
+            navigate('/battle-arena');
             return;
         }
 
         try {
-            console.log('Disbanding room via socket...');
-            console.log('Current room:', currentRoom.id);
-            
             socket.emit('cw-disband-room', {
                 roomId: currentRoom.id,
                 userId: user.id,
                 username: user.username
             });
-            
-            console.log('Disband room event emitted, waiting for server response...');
-            
+            setCurrentRoom(null);
+            navigate('/battle-arena');
         } catch (error) {
             console.error('Disband room error:', error);
             setCurrentRoom(null);
-            setGameState('menu');
+            navigate('/battle-arena');
         }
     };
 
@@ -884,10 +892,9 @@ const CodeWarsArena = () => {
                             user={user}
                             onBackToMenu={() => {
                                 setCurrentRoom(null);
-                                setGameState('menu');
-                                setPlayerFinished(false);
                                 setGameResults(null);
-                                loadFactionRooms();
+                                setPlayerFinished(false);
+                                navigate('/battle-arena');
                             }}
                         />
                     )}
@@ -2123,6 +2130,7 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
             // Use the compile endpoint to test without submitting
             const response = await axios.post(`${API_URL}/compile-java`, {
                 code: testCode,
+                language: selectedLanguage,
                 testCases: currentQuestion.testCases
             });
             
@@ -2406,9 +2414,19 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
                             <div className="problem-constraints">
                                 <h3>Constraints</h3>
                                 <ul>
-                                    {currentQuestion.constraints.map((constraint, index) => (
-                                        <li key={index}>{constraint}</li>
-                                    ))}
+                                    {Array.isArray(currentQuestion.constraints) ? (
+                                        currentQuestion.constraints.map((constraint, index) => (
+                                            <li key={index}>{typeof constraint === 'object' ? JSON.stringify(constraint) : String(constraint)}</li>
+                                        ))
+                                    ) : typeof currentQuestion.constraints === 'string' ? (
+                                        <li>{currentQuestion.constraints}</li>
+                                    ) : typeof currentQuestion.constraints === 'object' ? (
+                                        Object.values(currentQuestion.constraints).map((constraint, index) => (
+                                            <li key={index}>{String(constraint)}</li>
+                                        ))
+                                    ) : (
+                                        <li>{String(currentQuestion.constraints)}</li>
+                                    )}
                                 </ul>
                             </div>
                         )}
@@ -2451,15 +2469,27 @@ const GameInterface = ({ room, user, socket, playerFinished, onEndContest }) => 
                             disabled={isFinished || submitting}
                         />
                     ) : (
-                        <div className="solo-editor-container">
-                            <textarea
-                                className="code-editor-textarea"
-                                value={code}
-                                onChange={(e) => setCode(e.target.value)}
-                                placeholder={currentQuestion.starterCode || "// Write your solution here"}
-                                spellCheck={false}
-                                disabled={isFinished}
-                            />
+                        <div className="solo-editor-container" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+                            <div className="monaco-wrapper" style={{ flex: 1, minHeight: '320px', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                <Editor
+                                    height="100%"
+                                    language={selectedLanguage === 'cpp' ? 'cpp' : selectedLanguage === 'python' ? 'python' : selectedLanguage === 'javascript' ? 'javascript' : 'java'}
+                                    theme="vs-dark"
+                                    value={code}
+                                    onChange={(val) => setCode(val || '')}
+                                    options={{
+                                        fontSize: 14,
+                                        fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
+                                        minimap: { enabled: false },
+                                        scrollBeyondLastLine: false,
+                                        automaticLayout: true,
+                                        tabSize: 4,
+                                        lineNumbers: 'on',
+                                        padding: { top: 12 },
+                                        readOnly: isFinished
+                                    }}
+                                />
+                            </div>
                             
                             {/* Enhanced Test Results Display with Categories */}
                             {testResults && (
