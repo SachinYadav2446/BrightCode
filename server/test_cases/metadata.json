@@ -191,8 +191,24 @@
         }
       },
       "totalTestCases": 40
+    },
+    "gfg_median_of_an_array": {
+      "title": "Median of an Array",
+      "categories": {
+        "sample": {
+          "count": 3,
+          "file": "sample/gfg_median_of_an_array.json",
+          "lastUpdated": "2026-08-11T06:03:53.335Z"
+        },
+        "hidden": {
+          "count": 37,
+          "file": "hidden/gfg_median_of_an_array.json",
+          "lastUpdated": "2026-08-11T06:03:53.373Z"
+        }
+      },
+      "totalTestCases": 40
     }
   },
-  "totalTestCases": 201,
-  "lastUpdated": "2026-08-11T05:11:50.922Z"
+  "totalTestCases": 241,
+  "lastUpdated": "2026-08-11T06:03:53.373Z"
 }

@@ -1,0 +1,45 @@
+[
+  {
+    "id": "gfg_median_of_an_array_sample_0",
+    "input": [
+      [
+        90,
+        100,
+        78,
+        89,
+        67
+      ]
+    ],
+    "expected": "89",
+    "difficulty": "easy",
+    "size": 45,
+    "createdAt": "2026-08-11T06:03:53.316Z"
+  },
+  {
+    "id": "gfg_median_of_an_array_sample_1",
+    "input": [
+      [
+        56,
+        67,
+        30,
+        79
+      ]
+    ],
+    "expected": "61.5",
+    "difficulty": "easy",
+    "size": 43,
+    "createdAt": "2026-08-11T06:03:53.316Z"
+  },
+  {
+    "id": "gfg_median_of_an_array_sample_2",
+    "input": [
+      [
+        1
+      ]
+    ],
+    "expected": "1",
+    "difficulty": "easy",
+    "size": 30,
+    "createdAt": "2026-08-11T06:03:53.316Z"
+  }
+]
