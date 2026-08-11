@@ -585,7 +585,7 @@ app.post('/login', async (req, res) => {
             await pool.query('UPDATE users SET session_id = $1 WHERE id = $2', [sessionId, user.id]);
         }
 
-        const token = jwt.sign({ id: user.id, username: user.username, sessionId }, JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ id: user.id, username: user.username, sessionId }, JWT_SECRET, { expiresIn: '7d' });
         const activity = user.activity || {};
         res.json({
             token,
@@ -728,7 +728,7 @@ const handleSocialAuthSuccess = async (res, email, name, provider, providerId) =
             await pool.query('UPDATE users SET session_id = $1 WHERE id = $2', [sessionId, user.id]);
         }
         
-        const token = jwt.sign({ id: user.id, username: user.username, sessionId }, JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ id: user.id, username: user.username, sessionId }, JWT_SECRET, { expiresIn: '7d' });
         const activity = user.activity || {};
         
         const params = new URLSearchParams({
@@ -848,7 +848,7 @@ app.post('/api/auth/complete-social-signup', async (req, res) => {
             await pool.query('UPDATE users SET session_id = $1 WHERE id = $2', [sessionId, user.id]);
         }
 
-        const token = jwt.sign({ id: user.id, username: user.username, sessionId }, JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ id: user.id, username: user.username, sessionId }, JWT_SECRET, { expiresIn: '7d' });
         const activity = user.activity || {};
 
         res.json({
@@ -2127,7 +2127,7 @@ app.post('/update-profile', authenticateToken, async (req, res) => {
             normalizeMemoryUser(user);
             saveStore();
 
-            const token = jwt.sign({ id: user.id, username }, JWT_SECRET, { expiresIn: '1d' });
+            const token = jwt.sign({ id: user.id, username }, JWT_SECRET, { expiresIn: '7d' });
             return res.json({
                 token,
                 username: user.username,
@@ -2160,7 +2160,7 @@ app.post('/update-profile', authenticateToken, async (req, res) => {
 
         const stackOut = typeof user.stack === 'string' ? JSON.parse(user.stack) : (user.stack || []);
 
-        const token = jwt.sign({ id: req.user.id, username }, JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ id: req.user.id, username }, JWT_SECRET, { expiresIn: '7d' });
         res.json({
             token,
             username,
@@ -3034,7 +3034,7 @@ app.post('/factions/create', authenticateToken, async (req, res) => {
     };
     factions.set(id, newFaction);
     saveFactions();
-    res.status(201).json({ id, name: newFaction.name, message: `Faction "${name}" established!` });
+    res.status(201).json({ id, name: newFaction.name, faction: newFaction, message: `Faction "${name}" established!` });
 });
 
 
@@ -3620,6 +3620,59 @@ io.on('connection', (socket) => {
     socket.on('arena:accept', ({ toId, fromId, fromUsername, roomId }) => {
         io.to(`user:${toId}`).emit('arena:challenge_accepted', { fromId, fromUsername, roomId });
     });
+
+    // ── Arena Waiting Room Chat ────────────────────────────────────────
+    socket.on('arena:chat:join', ({ arenaId, userId, username, team }) => {
+        socket.join(`arena:${arenaId}`);
+        socket.join(`arena:${arenaId}:${team}`);
+        socket.data.arenaId = arenaId;
+        socket.data.arenaUsername = username;
+        socket.data.arenaTeam = team;
+        socket.data.arenaUserId = userId;
+        socket.to(`arena:${arenaId}`).emit('arena:chat:system', {
+            id: `sys_${Date.now()}`,
+            text: `${username} joined the arena`,
+            timestamp: new Date().toISOString()
+        });
+    });
+
+    socket.on('arena:chat:send', ({ arenaId, message, whisperTo, teamOnly }) => {
+        if (!message?.trim()) return;
+        const msg = {
+            id: `msg_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,
+            fromId: socket.data.arenaUserId,
+            from: socket.data.arenaUsername,
+            team: socket.data.arenaTeam,
+            message: message.trim(),
+            whisperTo: whisperTo || null,
+            teamOnly: teamOnly || false,
+            timestamp: new Date().toISOString()
+        };
+        if (whisperTo) {
+            // Only to target + sender
+            io.sockets.sockets.forEach(s => {
+                if (s.data.arenaId === arenaId && s.data.arenaUsername === whisperTo) s.emit('arena:chat:message', msg);
+            });
+            socket.emit('arena:chat:message', msg);
+        } else if (teamOnly) {
+            io.to(`arena:${arenaId}:${socket.data.arenaTeam}`).emit('arena:chat:message', msg);
+        } else {
+            io.to(`arena:${arenaId}`).emit('arena:chat:message', msg);
+        }
+    });
+
+    socket.on('arena:chat:leave', ({ arenaId }) => {
+        if (arenaId && socket.data.arenaUsername) {
+            socket.leave(`arena:${arenaId}`);
+            socket.leave(`arena:${arenaId}:${socket.data.arenaTeam}`);
+            socket.to(`arena:${arenaId}`).emit('arena:chat:system', {
+                id: `sys_${Date.now()}`,
+                text: `${socket.data.arenaUsername} left`,
+                timestamp: new Date().toISOString()
+            });
+        }
+    });
+    // ──────────────────────────────────────────────────────────────────
 
     socket.on('disconnect', () => {
         const userId = socket.data.userId;
@@ -5332,11 +5385,11 @@ app.post('/code-wars/create-room', authenticateToken, async (req, res) => {
         }
         
         if (!userFaction) {
-            console.log(`❌ User ${req.user.username} not in any faction`);
-            return res.status(400).json({ error: 'You must be in a faction to create a room' });
+            userFaction = { id: 'global_arena', name: 'Global Arena', members: [] };
+            console.log(`ℹ️ User ${req.user.username} created room in Global Arena fallback`);
         }
         
-        console.log(`✅ User is in faction: ${userFaction.name} (${userFaction.id})`);
+        console.log(`✅ User faction for room: ${userFaction.name} (${userFaction.id})`);
         
         // Validate private room requirements
         if (isPrivate && (!password || password.trim().length === 0)) {
@@ -5890,7 +5943,7 @@ server.listen(PORT, () => logger.info(`Server running on port ${PORT}`));
 const arenaStore = new Map(); // arenaId -> arena
 
 // Get active arenas (for ArenaLobby)
-app.get('/arena/active', authenticateToken, (req, res) => {
+app.get('/arena/active', (req, res) => {
     try {
         const { game } = req.query; // game parameter like 'syntax-showdown'
         
@@ -5911,7 +5964,7 @@ app.get('/arena/active', authenticateToken, (req, res) => {
 });
 
 // Get arena details by ID
-app.get('/arena/:arenaId', authenticateToken, (req, res) => {
+app.get('/arena/:arenaId', (req, res) => {
     try {
         const { arenaId } = req.params;
         
@@ -5952,8 +6005,24 @@ app.post('/arena/create', (req, res) => {
         let creatorUsername = 'Anonymous Player';
         
         if (req.user) {
-            creatorId = req.user.id;
+            creatorId = req.user.id || req.user._id;
             creatorUsername = req.user.username;
+        } else {
+            const authHeader = req.headers['authorization'];
+            if (authHeader) {
+                try {
+                    const token = authHeader.split(' ')[1];
+                    if (token) {
+                        const decoded = jwt.verify(token, JWT_SECRET);
+                        if (decoded) {
+                            creatorId = decoded.id || decoded._id;
+                            creatorUsername = decoded.username || 'Anonymous Player';
+                        }
+                    }
+                } catch (authErr) {
+                    console.warn('[ARENA CREATE] Authorization token parse warning:', authErr.message);
+                }
+            }
         }
         
         // Create arena object
@@ -5990,6 +6059,156 @@ app.post('/arena/create', (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// Leave arena endpoint
+app.post('/arena/leave', authenticateToken, (req, res) => {
+    try {
+        const { arenaId } = req.body;
+        const { id: userId, username } = req.user;
+
+        if (!arenaId) return res.status(400).json({ error: 'Arena ID is required' });
+
+        const arena = arenaStore.get(arenaId);
+        if (!arena) return res.status(404).json({ error: 'Arena not found' });
+
+        const isCreator = 
+            (userId && String(arena.creatorId) === String(userId)) ||
+            (username && arena.creatorUsername && String(arena.creatorUsername).toLowerCase() === String(username).toLowerCase()) ||
+            (username && arena.creator && String(arena.creator).toLowerCase() === String(username).toLowerCase());
+
+        if (isCreator) {
+            // Creator left → close the arena for everyone
+            arena.status = 'closed';
+            arenaStore.delete(arenaId);
+            
+            // Clean up associated code-wars room if exists
+            if (arena.cwRoomId) {
+                try {
+                    intraFactionArena.leaveRoom(userId);
+                } catch (_) {}
+            }
+
+            // Notify all sockets in this arena room that it's been closed
+            io.to(`arena:${arenaId}`).emit('arena:closed', {
+                arenaId,
+                reason: 'Host left the arena'
+            });
+            console.log(`🚪 Arena ${arenaId} closed — creator ${username} left`);
+            return res.json({ success: true, closed: true, message: 'Arena closed' });
+        }
+
+        // Non-creator left → remove from participants
+        arena.participants = (arena.participants || []).filter(p => 
+            String(p.id) !== String(userId) && 
+            p.username?.toLowerCase() !== username?.toLowerCase()
+        );
+        console.log(`👋 ${username} left arena ${arenaId} (${arena.participants.length}/${arena.maxParticipants} remaining)`);
+
+        // Broadcast updated participant list to waiting room pollers
+        io.to(`arena:${arenaId}`).emit('arena:participant_left', { arenaId, username, participants: arena.participants });
+
+        res.json({ success: true, closed: false, arena });
+    } catch (error) {
+        console.error('❌ Error leaving arena:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Start match endpoint (creates CodeWars game room & problem set)
+app.post('/arena/start', authenticateToken, async (req, res) => {
+    try {
+        const { arenaId } = req.body;
+        if (!arenaId) return res.status(400).json({ error: 'Arena ID is required' });
+
+        const arena = arenaStore.get(arenaId);
+        if (!arena) return res.status(404).json({ error: 'Arena not found' });
+
+        // If already started, return existing roomId
+        if (arena.status === 'active' && arena.cwRoomId) {
+            const existingRoom = intraFactionArena.getRoomById(arena.cwRoomId);
+            if (existingRoom) {
+                return res.json({ success: true, roomId: arena.cwRoomId });
+            }
+        }
+
+        console.log(`🚀 Starting match for arena ${arenaId} (${arena.name})`);
+
+        const creatorId = req.user.id || req.user._id || arena.creatorId;
+        const creatorUsername = req.user.username || arena.creatorUsername;
+
+        const durationSec = (arena.duration || 15) * 60;
+        const roomConfig = {
+            name: arena.name || `${creatorUsername}'s Battle`,
+            gameMode: 'QUICK_BATTLE',
+            teamSize: Math.max(1, Math.ceil((arena.participants?.length || 2) / 2)),
+            maxTeams: 2,
+            questionCount: 3,
+            timeLimit: durationSec,
+            difficulty: arena.difficulty || 'medium',
+            allowSpectators: true,
+            autoStart: true,
+            showLeaderboard: true
+        };
+
+        // Create room in intraFactionArena
+        const cwRoom = intraFactionArena.createRoom(
+            creatorId,
+            creatorUsername,
+            'global_arena',
+            roomConfig
+        );
+
+        // Partition participants into Team 1 & Team 2
+        const participants = arena.participants && arena.participants.length > 0
+            ? arena.participants
+            : [{ id: creatorId, username: creatorUsername }];
+
+        const half = Math.ceil(participants.length / 2);
+        const team1Players = participants.slice(0, half).map(p => ({
+            id: p.id,
+            username: p.username,
+            isReady: true,
+            isLeader: p.id === creatorId || p.username === creatorUsername
+        }));
+        const team2Players = participants.slice(half).map(p => ({
+            id: p.id,
+            username: p.username,
+            isReady: true,
+            isLeader: false
+        }));
+
+        cwRoom.teams = [
+            { id: 'team-1', name: 'Team Alpha', color: '#6366f1', players: team1Players },
+            { id: 'team-2', name: 'Team Beta',  color: '#dc2626', players: team2Players }
+        ];
+
+        // Register player rooms in intraFactionArena
+        participants.forEach(p => {
+            if (p.id) intraFactionArena.playerRooms.set(p.id, cwRoom.id);
+        });
+
+        // Start game in intraFactionArena (generates DB problems, sets status='active', timer)
+        await intraFactionArena.startGame(cwRoom.id, creatorId);
+
+        arena.status = 'active';
+        arena.cwRoomId = cwRoom.id;
+
+        // Broadcast to all clients in socket room arena:arenaId
+        io.to(`arena:${arenaId}`).emit('arena:match_started', {
+            arenaId,
+            roomId: cwRoom.id
+        });
+
+        console.log(`✅ Match started! CodeWars Room ID: ${cwRoom.id}`);
+
+        res.json({ success: true, roomId: cwRoom.id });
+    } catch (error) {
+        console.error('❌ Error starting arena match:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
 
 // Join arena endpoint
 app.post('/arena/join', authenticateToken, async (req, res) => {
@@ -6037,21 +6256,25 @@ app.post('/arena/join', authenticateToken, async (req, res) => {
     }
 });
 
-// ── Java Compilation & Execution Endpoint ─────────────────────────────────────
+const { executeCode } = require('./codeExecutor');
+
+// ── Code Compilation & Execution Endpoint (Judge0 Engine) ────────────────────
 app.post('/compile-java', async (req, res) => {
-    const { code, testCases } = req.body;
+    const { code, testCases, language = 'java' } = req.body;
     
     if (!code) {
         return res.status(400).json({ error: 'No code provided' });
     }
 
     try {
-        const result = await compileAndRunJava(code, testCases);
+        console.log(`⚡ [EXECUTE] Running ${language} execution via Judge0 API...`);
+        const result = await executeCode(code, language, testCases || []);
         res.json(result);
     } catch (error) {
+        console.error('❌ Code execution error:', error);
         res.status(500).json({ 
             success: false, 
-            error: error.message || 'Compilation failed' 
+            error: error.message || 'Execution failed' 
         });
     }
 });
