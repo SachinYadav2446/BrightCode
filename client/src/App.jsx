@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import StatusBar from './components/StatusBar';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
 import EditorPage from './pages/EditorPage';
@@ -305,30 +305,7 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <ThemeManager />
-          <Toaster 
-            position="top-right"
-            toastOptions={{
-              duration: 3000,
-              style: {
-                background: '#1a1a2e',
-                color: '#fff',
-                border: '1px solid var(--border)',
-                boxShadow: '0 4px 12px rgba(var(--primary-rgb), 0.2)',
-              },
-              success: {
-                iconTheme: {
-                  primary: '#22c55e',
-                  secondary: '#1a1a2e',
-                },
-              },
-              error: {
-                iconTheme: {
-                  primary: 'var(--primary)',
-                  secondary: '#1a1a2e',
-                },
-              },
-            }}
-          />
+          <StatusBar />
           <NavbarWrapper />
           <MobileBottomNav />
           <Routes>
