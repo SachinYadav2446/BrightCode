@@ -252,7 +252,14 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
         try {
             await axios.post(`${API}/friends/request`, { recipientId }, authHeader());
             setSearchResults(prev => prev.map(u => u.id === recipientId ? { ...u, friendStatus: 'pending' } : u));
-        } catch (e) {}
+            setNotification({ msg: 'Friend request sent.', type: 'success' });
+            loadFriends();
+        } catch (e) {
+            setNotification({
+                msg: e.response?.data?.error || 'Could not send the friend request. Please try again.',
+                type: 'info'
+            });
+        }
     };
 
     const acceptRequest = async (requesterId) => {

@@ -1243,22 +1243,50 @@ app.post('/friends/request', authenticateToken, async (req, res) => {
                 (f.requester_id === myId && f.recipient_id === recipientId) ||
                 (f.requester_id === recipientId && f.recipient_id === myId)
             );
-            if (exists) return res.status(409).json({ error: 'Request already exists' });
+            if (exists) {
+                const error = exists.status === 'accepted'
+                    ? 'You are already allies.'
+                    : exists.requester_id === myId
+                        ? 'Your friend request is already pending.'
+                        : 'This user has already sent you a friend request.';
+                return res.status(409).json({ error, code: 'FRIENDSHIP_EXISTS' });
+            }
+            const recipient = memoryStore.users.find(u => u.id === recipientId);
+            if (!recipient) return res.status(404).json({ error: 'User not found' });
             const newReq = { id: uuidV4(), requester_id: myId, recipient_id: recipientId, status: 'pending', created_at: new Date().toISOString() };
             friendsMemoryStore.push(newReq);
             saveFriendsStore();
             // Notify recipient in real-time
             const requesterUser = memoryStore.users.find(u => u.id === myId);
             io.to(`user:${recipientId}`).emit('friend:request', { from: { id: myId, username: requesterUser?.username } });
-            return res.json({ success: true });
+            return res.status(201).json({ success: true, status: 'pending' });
         }
-        await pool.query(
-            `INSERT INTO friends (requester_id, recipient_id, status) VALUES ($1, $2, 'pending') ON CONFLICT DO NOTHING`,
+        const recipient = await getUserPublicProfile(recipientId);
+        if (!recipient) return res.status(404).json({ error: 'User not found' });
+        const inserted = await pool.query(
+            `INSERT INTO friends (requester_id, recipient_id, status)
+             VALUES ($1, $2, 'pending')
+             ON CONFLICT DO NOTHING
+             RETURNING id`,
             [myId, recipientId]
         );
+        if (!inserted.rowCount) {
+            const { rows } = await pool.query(
+                `SELECT requester_id, status FROM friends
+                 WHERE (requester_id=$1 AND recipient_id=$2) OR (requester_id=$2 AND recipient_id=$1)`,
+                [myId, recipientId]
+            );
+            const relationship = rows[0];
+            const error = relationship?.status === 'accepted'
+                ? 'You are already allies.'
+                : relationship?.requester_id === myId
+                    ? 'Your friend request is already pending.'
+                    : 'This user has already sent you a friend request.';
+            return res.status(409).json({ error, code: 'FRIENDSHIP_EXISTS' });
+        }
         const requester = await getUserPublicProfile(myId);
         io.to(`user:${recipientId}`).emit('friend:request', { from: requester });
-        res.json({ success: true });
+        res.status(201).json({ success: true, status: 'pending' });
     } catch (e) {
         logger.error('[FRIENDS] Request error:', e.message);
         res.status(500).json({ error: 'Failed to send request' });
