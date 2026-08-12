@@ -347,3 +347,12 @@
 @media (max-width: 640px) {
   .nav-container { padding: 0 16px; }
 }
+
+@media (max-width: 480px) {
+  .floating-nav { height: 52px; }
+  .nav-container { height: 52px; padding: 0 12px; }
+  .nav-left .logo-text, .user-profile-pill { display: none; }
+  .nav-right { gap: 8px; }
+  .nav-mobile-menu { top: 52px; left: 8px; right: 8px; width: auto; }
+  .nav-mobile-link { min-height: 44px; }
+}

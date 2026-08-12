@@ -3143,3 +3143,14 @@
   margin: 0;
   line-height: 1.5;
 }
+
+@media (max-width: 480px) {
+  .settings-page { padding-top: 52px; }
+  .settings-wrapper { height: auto; min-height: calc(100vh - 52px); flex-direction: column; }
+  .settings-sidebar { width: 100%; padding: 8px 12px; overflow-x: auto; overflow-y: hidden; border-right: 0; border-bottom: 1px solid var(--border-subtle); }
+  .sidebar-nav { flex-direction: row; min-width: max-content; }
+  .nav-item { white-space: nowrap; padding: 9px 10px; }
+  .sidebar-footer { display: none; }
+  .settings-main { padding: 16px 12px 82px; overflow: visible; }
+  .profile-header-card { padding: 16px; align-items: flex-start; gap: 14px; flex-direction: column; }
+}

@@ -643,6 +643,17 @@
   }
 }
 
+@media (max-width: 480px) {
+  .library-container { max-width: 100%; padding: 24px 16px 72px; }
+  .library-header-section { margin-bottom: 28px; }
+  .library-title { font-size: 2rem; }
+  .library-subtitle { font-size: 0.86rem; }
+  .module-card { padding: 22px; border-radius: 16px; }
+  .difficulty-tabs-strip { grid-template-columns: 1fr; }
+  .quiz-left-panel, .quiz-right-panel { padding: 16px; }
+  .library-loader-wrap, .library-error-wrap { padding: 56px 20px; }
+}
+
 /* Loading & Error states */
 .library-loader-wrap {
   display: flex;

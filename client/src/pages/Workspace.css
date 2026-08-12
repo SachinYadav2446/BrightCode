@@ -972,6 +972,19 @@
   .mockup-sidebar { display: none; }
 }
 
+@media (max-width: 480px) {
+  .workspace-page { padding-top: 52px; }
+  .workspace-hero { min-height: auto; padding: 36px 16px 48px; }
+  .workspace-hero > .hero-inner { gap: 30px; }
+  .hero-left h1 { font-size: 2rem; }
+  .hero-left > p { font-size: 0.95rem; }
+  .hero-metrics { width: 100%; justify-content: space-between; gap: 8px; }
+  .metric-value { font-size: 1.25rem; }
+  .hero-features { justify-content: center; }
+  .features-section, .workspace-history { padding-left: 16px; padding-right: 16px; }
+  .history-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+
 /* ============================
    LANGUAGE TICKER — feature 5
    ============================ */

@@ -622,6 +622,14 @@
     }
 }
 
+@media (max-width: 480px) {
+    .arcade-page { padding-top: 52px; }
+    .phase-cards-grid { padding: 16px 12px 80px; gap: 12px; }
+    .phase-card-new { padding: 16px; }
+    .phase-view-header { padding: 16px 12px; }
+    .level-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+}
+
 .phase-cards-grid::-webkit-scrollbar { width: 6px; }
 .phase-cards-grid::-webkit-scrollbar-track { background: transparent; }
 .phase-cards-grid::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 10px; }

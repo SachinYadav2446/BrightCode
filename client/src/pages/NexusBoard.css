@@ -362,6 +362,22 @@
     .nx-header-title { font-size: 1.5rem; }
     .nx-post-btn span { display: none; }
 }
+
+@media (max-width: 480px) {
+    .nx-page { padding-top: 52px; }
+    .nx-main { padding: 20px 12px 84px; }
+    .nx-header { align-items: flex-start; margin-bottom: 20px; padding-bottom: 18px; }
+    .nx-header-sub { font-size: 0.8rem; }
+    .nx-post-btn { padding: 11px; min-width: 42px; min-height: 42px; justify-content: center; }
+    .nx-tabs { gap: 4px; overflow-x: auto; padding-bottom: 3px; }
+    .nx-tab { flex: 1 0 auto; padding: 9px 11px; }
+    .nx-row { padding: 14px 12px; gap: 10px; }
+    .nx-row-meta { flex-wrap: wrap; }
+    .nx-modal-overlay { padding: 12px; align-items: flex-end; }
+    .nx-modal { width: 100%; max-height: calc(100vh - 24px); overflow-y: auto; border-radius: 16px; }
+    .nx-field-row, .nx-modal-footer { flex-direction: column; }
+    .nx-modal-footer > button { width: 100%; min-height: 44px; }
+}
 .nx-form-error {
     margin: 8px 0 0;
     color: #f87171;
