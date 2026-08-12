@@ -55,7 +55,7 @@ const NavbarWrapper = () => {
   const location = useLocation();
   const { navbarHidden } = useAuth();
   
-  const hideOnPaths = ['/auth', '/editor', '/code-wars', '/battle-arena', '/arena-lobby', '/arena-waiting', '/u', '/user-guide', '/nexus/ticket'];
+  const hideOnPaths = ['/auth', '/editor', '/code-wars', '/battle-arena', '/arena-lobby', '/arena-waiting', '/library', '/u', '/user-guide', '/nexus/ticket'];
   const isLanding = location.pathname === '/';
   // Hide navbar during active proctor sessions but not on /proctor hub
   const isActiveSession = /^\/proctor\/.+/.test(location.pathname);

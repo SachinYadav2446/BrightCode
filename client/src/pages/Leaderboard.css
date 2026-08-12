@@ -41,107 +41,144 @@
 }
 
 /* ══════════════════════════════════
-   TOP BAR  — fully transparent, no border, no animation
-   [ ← back ]  [ Hall of Fame title ]  [ spacer ]  [ search ]
+   TOP BAR  — Glassmorphic Bar matching BrightCode Theme
+   [ ← Back ]  [ 🏆 Hall of Fame ]  [ Search Operatives ]
 ══════════════════════════════════ */
 .lb-topbar {
-    position: sticky; top: 0; z-index: 200;
-    background: transparent;
-    border: none;
+    position: sticky; 
+    top: 0; 
+    z-index: 200;
+    background: rgba(14, 10, 10, 0.88);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
     overflow: visible;
 }
 
 .lb-topbar-row {
-    display: flex; flex-direction: row; align-items: center;
-    height: 80px; padding: 0 28px;
-    max-width: 1090px; margin: 0 auto;
+    display: flex; 
+    flex-direction: row; 
+    align-items: center;
+    height: 70px; 
+    padding: 0 28px;
+    max-width: 1180px; 
+    margin: 0 auto;
     position: relative;
 }
 
 /* left side — back button */
 .lb-topbar-left {
     flex: 1;
-    display: flex; align-items: center;
+    display: flex; 
+    align-items: center;
 }
 
 /* centre — title absolutely centred in the bar */
 .lb-topbar-center {
     position: absolute;
-    left: 50%; transform: translateX(-50%);
-    display: flex; align-items: center;
+    left: 50%; 
+    transform: translateX(-50%);
+    display: flex; 
+    align-items: center;
     pointer-events: none;
 }
 
 /* right side — search */
 .lb-topbar-right {
     flex: 1;
-    display: flex; align-items: center; justify-content: flex-end;
+    display: flex; 
+    align-items: center; 
+    justify-content: flex-end;
 }
 
 .lb-topbar-spacer { display: none; }
 
-/* ── back button — pill style, more polished ── */
+/* ── back button — modern glass button ── */
 .lb-back-btn {
     flex-shrink: 0;
-    display: flex; align-items: center; gap: 7px;
-    height: 36px; padding: 0 14px 0 10px;
-    border-radius: 99px;
-    background: var(--border-subtle);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #a1a1aa;
-    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.3px;
+    display: inline-flex; 
+    align-items: center; 
+    gap: 8px;
+    height: 38px; 
+    padding: 0 16px 0 12px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    color: rgba(255, 255, 255, 0.8);
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 0.78rem; 
+    font-weight: 700; 
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
     cursor: pointer;
-    transition: background 0.18s, color 0.18s, border-color 0.18s, box-shadow 0.18s;
+    transition: all 0.2s ease;
     white-space: nowrap;
 }
+
 .lb-back-btn::after { content: 'Back'; }
+
 .lb-back-btn:hover {
-    background: rgba(var(--primary-rgb),0.1);
-    color: #fca5a5;
-    border-color: rgba(var(--primary-rgb),0.3);
-    box-shadow: 0 0 16px rgba(var(--primary-rgb),0.1);
+    background: rgba(239, 68, 68, 0.12);
+    color: #ffffff;
+    border-color: rgba(239, 68, 68, 0.35);
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.2);
+    transform: translateX(-2px);
 }
 
-/* ── Hall of Fame — serif italic, lives in header ── */
+/* ── Hall of Fame Title — Modern Sans-Serif Gaming Style ── */
 .lb-header-title {
-    display: inline-flex; align-items: center; gap: 12px;
-    font-family: 'Playfair Display', 'Georgia', serif;
-    font-size: 3.2rem;
-    font-weight: 500;
-    font-style: italic;
-    letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #e4e4e7 0%, #fbbf24 45%, #f4f4f5 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    margin: 0; line-height: 1; flex-shrink: 0;
+    display: inline-flex; 
+    align-items: center; 
+    gap: 10px;
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 1.65rem;
+    font-weight: 900;
+    font-style: normal;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: #ffffff;
+    margin: 0; 
+    line-height: 1; 
+    flex-shrink: 0;
 }
+
 .lb-hero-trophy {
-    color: #fbbf24;
-    filter: drop-shadow(0 0 14px rgba(251,191,36,0.55));
+    color: #f59e0b;
+    filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.7));
     -webkit-text-fill-color: initial;
     flex-shrink: 0;
 }
 
 /* search */
 .lb-search-wrap {
-    flex-shrink: 0; position: relative;
-    display: flex; flex-direction: row; align-items: center; gap: 10px;
-    width: 260px; height: 40px; padding: 0 16px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 99px;
-    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    flex-shrink: 0; 
+    position: relative;
+    display: flex; 
+    flex-direction: row; 
+    align-items: center; 
+    gap: 10px;
+    width: 250px; 
+    height: 38px; 
+    padding: 0 14px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 9px;
+    transition: all 0.2s ease;
 }
+
 .lb-search-wrap:focus-within {
-    background: var(--border-subtle);
-    border-color: rgba(var(--primary-rgb),0.4);
-    box-shadow: 0 0 0 4px rgba(var(--primary-rgb),0.08), 0 4px 20px rgba(0,0,0,0.3);
+    background: rgba(0, 0, 0, 0.6);
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12), 0 4px 18px rgba(0,0,0,0.4);
 }
-.lb-search-icon { color: #71717a; flex-shrink: 0; transition: color 0.2s; }
-.lb-search-wrap:focus-within .lb-search-icon { color: var(--primary-light); }
+
+.lb-search-icon { color: rgba(255, 255, 255, 0.4); flex-shrink: 0; transition: color 0.2s; }
+.lb-search-wrap:focus-within .lb-search-icon { color: #ef4444; }
 .lb-search-wrap input {
     flex: 1; min-width: 0; background: transparent !important;
     border: none !important; outline: none !important; box-shadow: none !important;
-    color: #f4f4f5; font-size: 0.78rem; font-weight: 400; letter-spacing: 0.3px;
+    color: #ffffff; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.2px;
 }
 .lb-search-wrap input::placeholder { color: #52525b; opacity: 1; }
 .lb-search-clear {

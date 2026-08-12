@@ -5,7 +5,8 @@ import {
   Brain, Trophy, Shield, GitBranch, Users, Terminal,
   Sparkles, Check, Play, CheckCircle, ArrowUpRight,
   Code2, Menu, X, Zap, Activity, Star, TrendingUp, Lock, Crown,
-  User, Settings, ChevronRight, Compass, BookOpen
+  User, Settings, ChevronRight, Compass, BookOpen, Layers,
+  Map, Swords, LifeBuoy, TicketCheck
 } from "lucide-react";
 import API_URL from "../config";
 import CodeBrightLogo from "../components/CodeBrightLogo";
@@ -97,10 +98,10 @@ function Nav({ handleAuth }) {
   }, []);
 
   const navLinks = [
-    { label: "Features", id: "features", icon: Sparkles },
-    { label: "Roadmap", id: "roadmap", icon: Compass },
-    { label: "Modules", id: "modules", icon: BookOpen },
-    { label: "Hall of Fame", id: "arena", icon: Shield }
+    { label: "Features", id: "features", icon: Zap },
+    { label: "Roadmap", id: "roadmap", icon: Map },
+    { label: "Modules", id: "modules", icon: Layers },
+    { label: "Hall of Fame", id: "arena", icon: Trophy }
   ];
 
   return (
@@ -2625,6 +2626,137 @@ function FactionShowcase({ navigate }) {
   );
 }
 
+function NexusShowcase({ navigate }) {
+  const [activeView, setActiveView] = useState("board");
+
+  const views = {
+    board: {
+      label: "Global Board",
+      url: "brightcode.app/nexus",
+      badge: { text: "LIVE", color: "#22c55e" },
+      img: "/nexus-board.png",
+      alt: "Nexus Global Board — Open SOS Tickets",
+    },
+    ticket: {
+      label: "Ticket Detail",
+      url: "brightcode.app/nexus/ticket",
+      badge: { text: "OPEN", color: "#f59e0b" },
+      img: "/nexus-ticket.png",
+      alt: "Nexus Ticket Detail with Mentor Chat",
+    },
+    create: {
+      label: "Post SOS Ticket",
+      url: "brightcode.app/nexus/new",
+      badge: { text: "FORM", color: "#a855f7" },
+      img: "/nexus-modal.png",
+      alt: "Create New SOS Ticket Modal",
+    },
+  };
+
+  const current = views[activeView];
+
+  return (
+    <div className="workspace-showcase-container">
+      {/* LEFT COLUMN */}
+      <div className="workspace-showcase-left">
+        <h3 className="w-title">The Nexus: Mentorship Hub</h3>
+        <p className="w-desc">
+          Post SOS tickets for live help from senior devs. Mentors offer assistance, earn XP, and get real-time chat per ticket.
+        </p>
+
+        <div className="vault-features-list">
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>Post SOS Tickets:</strong> Describe your coding problem with title, description, language, and tags. Senior devs see your ticket on the Global Board instantly.
+            </div>
+          </div>
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>Offer Help & Earn XP:</strong> Mentors browse open issues, click "Offer Help" to appear as candidates, and earn massive XP when accepted.
+            </div>
+          </div>
+          <div className="v-feature-item">
+            <span className="v-feat-icon" />
+            <div className="v-feat-text">
+              <strong>Real-time Ticket Chat:</strong> Once a mentor is assigned, a private live chat channel opens on the ticket. Resolve the issue collaboratively and close the ticket.
+            </div>
+          </div>
+        </div>
+
+        {/* Sub-tab switcher */}
+        <div style={{ display: "flex", gap: "8px", marginTop: "16px", flexWrap: "wrap" }}>
+          {Object.entries(views).map(([key, v]) => (
+            <button
+              key={key}
+              onClick={() => setActiveView(key)}
+              style={{
+                padding: "6px 14px",
+                borderRadius: "8px",
+                fontSize: "0.74rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                border: activeView === key ? "1px solid rgba(239,68,68,0.6)" : "1px solid rgba(255,255,255,0.08)",
+                background: activeView === key ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.03)",
+                color: activeView === key ? "#ef4444" : "rgba(255,255,255,0.6)",
+                transition: "all 0.2s ease",
+              }}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* RIGHT COLUMN — Browser Mockup */}
+      <div className="workspace-showcase-right">
+        <div className="w-browser">
+          <div className="w-browser-header">
+            <div className="w-dots">
+              <span className="w-dot red" />
+              <span className="w-dot yellow" />
+              <span className="w-dot green" />
+            </div>
+            <div className="w-address-bar">{current.url}</div>
+            <div
+              className="w-live-badge"
+              style={{
+                color: current.badge.color,
+                borderColor: `${current.badge.color}30`,
+                background: `${current.badge.color}12`,
+              }}
+            >
+              <span
+                className="w-live-pulse"
+                style={{
+                  backgroundColor: current.badge.color,
+                  boxShadow: `0 0 6px ${current.badge.color}`,
+                }}
+              />
+              {current.badge.text}
+            </div>
+          </div>
+          <div className="w-browser-content">
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={activeView}
+                src={current.img}
+                alt={current.alt}
+                className="w-preview-img"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+              />
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ModulesSection() {
   const [activeTab, setActiveTab] = useState("workspace");
   const ref = useRef(null);
@@ -2635,7 +2767,7 @@ function ModulesSection() {
     { id: "workspace", label: "Workspace & Collaboration" },
     { id: "theme", label: "Themes" },
     { id: "vault", label: "CodeVault" },
-    { id: "guild", label: "The Guild" },
+    { id: "nexus", label: "The Nexus" },
     { id: "allies", label: "Allies & Profiles" },
     { id: "leaderboard", label: "Leaderboard" },
     { id: "faction", label: "Factions" }
@@ -2707,15 +2839,15 @@ function ModulesSection() {
             <VaultShowcase navigate={navigate} />
           </motion.div>
         )}
-        {activeTab === "feed" && (
+        {activeTab === "nexus" && (
           <motion.div
-            key="feed"
+            key="nexus"
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.35 }}
           >
-            <FeedShowcase navigate={navigate} />
+            <NexusShowcase navigate={navigate} />
           </motion.div>
         )}
         {activeTab === "allies" && (
@@ -2777,11 +2909,10 @@ export default function Landing() {
       <BrightCodeCanvas />
       <HeroSection handleAuth={handleAuth} handleHub={handleHub} />
       <Ticker />
-      <InteractivePlayground />
+      <ModulesSection />
       <BentoFeatures />
       <ArcadeRoadmap />
       <AlumniNetwork />
-      <ModulesSection />
       <LeaderboardSection data={leaderboard} loading={lbLoading} />
       <CTASection handleAuth={handleAuth} handleHub={handleHub} />
       <Footer />

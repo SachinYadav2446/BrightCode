@@ -1,4 +1,4 @@
-﻿import API_URL from '../config';
+import API_URL from '../config';
 import React, { useState, useEffect, useRef } from 'react';
 
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
@@ -1736,14 +1736,20 @@ socket.on('chat-message', ({ username, message, timestamp }) => {
 
         const acquire = async () => {
             try {
-                console.log(`[WebRTC - AUDIO DEBUG] Requesting user media... (audio: true)`);
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        autoGainControl: true,
-                    }
-                });
+                console.log(`[WebRTC - AUDIO DEBUG] Requesting user media...`);
+                let stream;
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true,
+                        }
+                    });
+                } catch (constraintErr) {
+                    console.warn('[WebRTC] Strict audio constraints failed, trying basic audio: true', constraintErr);
+                    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                }
                 console.log(`[WebRTC - AUDIO DEBUG] Got local stream:`, stream);
                 console.log(`[WebRTC - AUDIO DEBUG] Local audio tracks:`, stream.getAudioTracks());
 
