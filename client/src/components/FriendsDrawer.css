@@ -578,3 +578,9 @@
     box-shadow: 0 0 6px rgba(var(--primary-rgb),0.6);
     animation: fd-pulse 1.5s ease infinite;
 }
+.fd-search-error {
+    margin: 14px 4px;
+    color: #fca5a5;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}

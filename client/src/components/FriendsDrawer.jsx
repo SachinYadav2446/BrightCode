@@ -53,6 +53,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
     const [searchQ, setSearchQ] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [searching, setSearching] = useState(false);
+    const [searchError, setSearchError] = useState('');
     const [loading, setLoading] = useState(false);
     const [notification, setNotification] = useState(null);
     const [showIncoming, setShowIncoming] = useState(true);
@@ -231,17 +232,20 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
     // Live search
     useEffect(() => {
         if (searchTimeout.current) clearTimeout(searchTimeout.current);
-        if (!searchQ.trim() || searchQ.length < 2) { setSearchResults([]); return; }
+        const query = searchQ.trim();
+        if (!query) { setSearchResults([]); setSearchError(''); return; }
         setSearching(true);
+        setSearchError('');
         searchTimeout.current = setTimeout(async () => {
             try {
                 const token = localStorage.getItem('token');
-                const { data } = await axios.get(`${API}/friends/search?q=${encodeURIComponent(searchQ)}`, {
+                const { data } = await axios.get(`${API}/friends/search?q=${encodeURIComponent(query)}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setSearchResults(Array.isArray(data) ? data : []);
             } catch (e) {
                 setSearchResults([]);
+                setSearchError(e.response?.data?.error || 'Search is unavailable. Please try again.');
             } finally {
                 setSearching(false);
             }
@@ -523,7 +527,8 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                             </div>
                                         </div>
                                     ))}
-                                    {searchQ.length >= 2 && !searching && searchResults.length === 0 && (
+                                    {searchError && <div className="fd-search-error" role="alert">{searchError}</div>}
+                                    {searchQ.trim() && !searching && !searchError && searchResults.length === 0 && (
                                         <div className="fd-empty">
                                             <p>No users found</p>
                                             <span>Try a different username</span>
@@ -532,7 +537,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                     {!searchQ && (
                                         <div className="fd-search-hint">
                                             <Search size={36} color="rgba(255,255,255,0.07)" />
-                                            <span>Type at least 2 characters to search</span>
+                                            <span>Search by username</span>
                                         </div>
                                     )}
                                 </div>

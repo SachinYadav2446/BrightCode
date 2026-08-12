@@ -1186,8 +1186,8 @@ const getUserPublicProfile = async (userId) => {
 
 // Search users by username (excluding self and existing friends)
 app.get('/friends/search', authenticateToken, async (req, res) => {
-    const { q } = req.query;
-    if (!q || q.length < 2) return res.json([]);
+    const q = String(req.query.q || '').trim();
+    if (!q) return res.json([]);
     const myId = req.user.id;
     logger.debug(`[FRIENDS SEARCH] q="${q}" myId="${myId}" useMemoryDB=${useMemoryDB} totalUsers=${memoryStore.users.length}`);
     try {
@@ -1195,12 +1195,17 @@ app.get('/friends/search', authenticateToken, async (req, res) => {
         if (useMemoryDB) {
             users = memoryStore.users
                 .filter(u => u.id !== myId && u.username?.toLowerCase().includes(q.toLowerCase()))
-                .slice(0, 10)
+                .sort((a, b) => a.username.localeCompare(b.username))
+                .slice(0, 20)
                 .map(u => ({ id: u.id, username: u.username, xp: u.xp || 0, level: u.level || 'Novice' }));
             logger.debug(`[FRIENDS SEARCH] Memory filter found ${users.length} users`);
         } else {
             const { rows } = await pool.query(
-                `SELECT id, username, xp, level FROM users WHERE id != $1 AND username ILIKE $2 LIMIT 10`,
+                `SELECT id, username, xp, level
+                 FROM users
+                 WHERE id != $1 AND username ILIKE $2
+                 ORDER BY username ASC
+                 LIMIT 20`,
                 [myId, `%${q}%`]
             );
             users = rows;
