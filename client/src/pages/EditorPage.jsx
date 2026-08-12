@@ -288,6 +288,7 @@ const EditorPage = () => {
     const [isVideoCallOpen, setIsVideoCallOpen] = useState(true); // Always open by default
     const [isCallActive, setIsCallActive] = useState(false);
     const [isMuted, setIsMuted] = useState(true); // Mic off by default
+    const [micPermission, setMicPermission] = useState('prompt');
     const [callParticipants, setCallParticipants] = useState({}); // socketId -> { username, stream, isMuted }
     const [localStream, setLocalStream] = useState(null); // Track local stream in state for re-renders
     const localStreamRef = useRef(null);
@@ -2863,7 +2864,7 @@ socket.on('chat-message', ({ username, message, timestamp }) => {
                             <button
                                 className={`nav-icon-btn ${isMuted ? 'muted' : ''}`}
                                 onClick={toggleMute}
-                                title={isMuted ? 'Unmute' : 'Mute'}
+                                title={micPermission === 'denied' ? 'Microphone permission blocked — click to try again' : (isMuted ? 'Unmute' : 'Mute')}
                             >
                                 {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
                             </button>
