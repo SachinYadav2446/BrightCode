@@ -3,9 +3,7 @@
     "greeting": {
       "patterns": ["hello", "hi", "hey", "sup", "yo", "good morning", "good afternoon", "good evening", "howdy", "greetings"],
       "responses": [
-        "Greetings. I am Pal, your dedicated AI companion for BrightCode. How may I assist you with your development today?",
-        "Hello. Welcome to BrightCode. What specific feature or task can I help you navigate?",
-        "Greetings! I'm here to provide professional assistance with any coding challenges or platform features you might be exploring."
+        "Hey — I’m Pal. I can help you understand BrightCode, work through a coding problem, or point you to the right feature. What are you working on?"
       ],
       "slots": [],
       "followUp": "Please let me know how I can help."
@@ -22,10 +20,22 @@
       ]
     },
     "ask_about_nexus": {
-      "patterns": ["nexus", "global board", "ticket", "tickets", "mentorship", "mentor", "help board", "dashboard"],
+      "patterns": ["nexus", "nexus feature", "sos", "sos ticket", "global board", "sos board", "post a ticket", "raise a ticket", "ticket", "tickets", "mentorship", "mentor", "help board", "dashboard"],
       "entityType": "feature",
       "responses": [
-        "The Nexus is BrightCode's advanced mentorship and collaboration hub. It features a Global Board where developers can post code issues, and experienced mentors can offer real-time assistance. Recent updates include a glassmorphic Ticket Detail page, streamlined Dashboard sub-tabs for 'Mentored' and 'Raised' issues, and live Collaborative Workspaces for immediate debugging. Would you like to know how to raise a ticket or offer mentorship?"
+        "The Nexus is BrightCode's mentorship hub for getting unstuck with real coding issues. Its Global Board lists open SOS tickets, while My Dashboard keeps your raised tickets and mentoring work organized.\n\nTo get help, post a ticket with a clear title, description, language, and optional tags. Other developers can request to mentor you; you choose a mentor, and the ticket moves from Open to In Progress. BrightCode then gives the pair a shared collaborative workspace for live debugging. When the issue is solved, the ticket can be marked Resolved.\n\nYou can also use The Nexus as a mentor: browse open tickets, offer help on one that matches your skills, and collaborate after the author accepts your request."
+      ]
+    },
+    "ask_how_to_post_sos": {
+      "patterns": ["how do i post an sos ticket", "how to post an sos ticket", "how do i raise a ticket", "how to raise a ticket", "post an sos ticket", "raise an sos ticket"],
+      "responses": [
+        "To ask for help through The Nexus:\n\n1. Open The Nexus from the main navigation.\n2. Select Post SOS Ticket.\n3. Write a specific title, explain what you tried and where it fails, then choose the relevant language and tags. Descriptions need at least 30 characters, but a clear reproduction path will help mentors much more.\n4. Submit the ticket. It appears on the Global Board as Open.\n5. Review mentor requests on the ticket, accept the developer you want to work with, and use the shared workspace to debug together.\n\nA strong SOS ticket includes the expected result, actual result, error text, and a small code example when possible."
+      ]
+    },
+    "ask_how_to_mentor": {
+      "patterns": ["how do i mentor", "how can i mentor", "how to mentor", "mentor someone", "help someone on nexus", "become a mentor", "offer mentorship"],
+      "responses": [
+        "To mentor someone on The Nexus, open the Global Board and select an Open ticket that matches your skills. Read the issue carefully, choose Offer to Mentor, and wait for the ticket author to accept your request. Once accepted, the ticket becomes In Progress and both of you can use the linked shared workspace for real-time debugging. Keep the discussion focused on the reported issue, and mark the ticket Resolved once the author confirms the fix."
       ]
     },
     "ask_about_glassmorphism": {
@@ -40,13 +50,6 @@
       "entityType": "feature",
       "responses": [
         "The Library is a comprehensive algorithmic training ground. It offers hundreds of curated challenges across multiple languages (Java, Python, JavaScript, C++, Go, Rust). Problems are rigorously categorized by data structures and paradigms (e.g., Dynamic Programming, Graphs). Solving these yields XP, which contributes to your global ranking. What specific algorithm category are you looking to practice?"
-      ],
-      "slots": [
-        {
-          "name": "language",
-          "entityType": "language",
-          "prompt": "Which programming language environment would you prefer?"
-        }
       ]
     },
     "ask_about_codewars": {
@@ -54,13 +57,6 @@
       "entityType": "feature",
       "responses": [
         "Code Wars is our competitive, time-boxed multiplayer environment. Teams (1v1, 2v2, or 4v4) compete to solve algorithmic challenges under strict time constraints. The system utilizes weighted scoring against edge cases and stress tests to accurately evaluate optimal solutions. Collaboration occurs in real-time within a shared Monaco editor."
-      ],
-      "slots": [
-        {
-          "name": "teamSize",
-          "entityType": "teamSize",
-          "prompt": "What team configuration are you interested in analyzing? (1v1, 2v2, 4v4)"
-        }
       ]
     },
     "ask_about_workspace": {
@@ -114,7 +110,7 @@
     "small_talk": {
       "patterns": ["how are you", "what's up", "how's it going", "what are you doing", "what's new"],
       "responses": [
-        "I am operating optimally. All systems are functional. How may I assist with your engineering tasks today?"
+        "I’m doing well — thanks for asking. I’m ready to help you debug something, understand a BrightCode feature, or plan your next coding step."
       ]
     },
     "thanking": {
@@ -147,7 +143,7 @@
       "workspace": ["workspace", "pair programming", "collaboration"],
       "codevault": ["codevault", "notes", "note taking", "documentation"],
       "factions": ["factions", "team", "faction"],
-      "nexus": ["nexus", "global board", "tickets", "mentorship", "dashboard"],
+      "nexus": ["nexus", "sos", "sos ticket", "global board", "tickets", "mentorship", "mentor", "dashboard"],
       "design": ["glassmorphism", "ui", "design"]
     },
     "language": {
@@ -166,7 +162,7 @@
     },
     "faq": {
       "howToSignUp": ["how do i sign up", "sign up", "create account", "register"],
-      "isFree": ["is brightcode free", "free", "cost", "price", "how much"],
+      "isFree": ["is brightcode free", "is it free", "free", "cost", "price"],
       "supportedLanguages": ["what languages are supported", "supported languages", "languages available"],
       "howToAddFriends": ["how do i add friends", "add friends", "friend system"],
       "howToContact": ["how to contact", "contact support", "email", "support"]

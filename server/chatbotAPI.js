@@ -10,12 +10,17 @@ let knowledgeEmbeddings = [];
 
 // --- Helper Functions ---
 function fixTypos(query) {
-  let corrected = query.toLowerCase();
+  let corrected = query.toLowerCase().replace(/[^a-z0-9+#]+/g, ' ').replace(/\s+/g, ' ').trim();
   for (const [typo, fix] of Object.entries(knowledge.typoFixes)) {
     const regex = new RegExp(`\\b${typo}\\b`, 'gi');
     corrected = corrected.replace(regex, fix);
   }
   return corrected;
+}
+
+function phraseMatches(query, phrase) {
+  const escapedPhrase = phrase.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?:^|\\s)${escapedPhrase}(?=$|\\s)`, 'i').test(query);
 }
 
 function extractEntity(query, entityType) {
@@ -24,7 +29,7 @@ function extractEntity(query, entityType) {
   
   for (const [entity, patterns] of Object.entries(entities)) {
     for (const pattern of patterns) {
-      if (query.toLowerCase().includes(pattern.toLowerCase())) {
+      if (phraseMatches(query, pattern)) {
         return entity;
       }
     }
@@ -34,28 +39,37 @@ function extractEntity(query, entityType) {
 
 function recognizeIntent(query) {
   const cleanedQuery = fixTypos(query);
-  
-  // Check FAQ first
-  const faqEntity = extractEntity(cleanedQuery, 'faq');
-  if (faqEntity && knowledge.faqs[faqEntity]) {
-    return { name: 'faq', entity: faqEntity };
-  }
-  
-  // Check other intents
+  let bestMatch = { name: 'fallback', entity: null, score: 0 };
+
   for (const [intentName, intentData] of Object.entries(knowledge.intents)) {
-    if (intentData.patterns) {
-      for (const pattern of intentData.patterns) {
-        if (cleanedQuery.includes(pattern.toLowerCase())) {
-          const entity = intentData.entityType 
-            ? extractEntity(cleanedQuery, intentData.entityType) 
-            : null;
-          return { name: intentName, entity };
+    for (const pattern of intentData.patterns || []) {
+      if (phraseMatches(cleanedQuery, pattern)) {
+        const entity = intentData.entityType
+          ? extractEntity(cleanedQuery, intentData.entityType)
+          : null;
+        // Generic FAQ openers (for example, "can I") are not an intent until
+        // they identify a supported FAQ topic.
+        if (intentName === 'faq' && !entity) continue;
+        const score = pattern.split(' ').length * 10 + (entity ? 5 : 0);
+        if (score > bestMatch.score) {
+          bestMatch = { name: intentName, entity, score };
         }
       }
     }
   }
-  
-  return { name: 'fallback', entity: null };
+
+  // A named BrightCode feature beats generic wording such as "what is", but not a
+  // more specific action request such as "how do I post an SOS ticket?".
+  const feature = extractEntity(cleanedQuery, 'feature');
+  if (feature && (bestMatch.name === 'ask_about_feature' || bestMatch.name === 'fallback')) {
+    const featureIntent = `ask_about_${feature}`;
+    if (knowledge.intents[featureIntent]) return { name: featureIntent, entity: feature };
+  }
+
+  const faqEntity = extractEntity(cleanedQuery, 'faq');
+  if (faqEntity && knowledge.faqs[faqEntity]) return { name: 'faq', entity: faqEntity };
+
+  return bestMatch;
 }
 
 function getRandomResponse(intentName) {
@@ -64,6 +78,13 @@ function getRandomResponse(intentName) {
     return intent.responses[Math.floor(Math.random() * intent.responses.length)];
   }
   return knowledge.intents.fallback.responses[0];
+}
+
+function resolveFeatureIntent(intentName, entity) {
+  if (intentName !== 'ask_about_feature' || !entity) return intentName;
+
+  const featureIntent = `ask_about_${entity}`;
+  return knowledge.intents[featureIntent] ? featureIntent : intentName;
 }
 
 // --- Initialize Embedder ---
@@ -218,14 +239,21 @@ router.post('/', async (req, res) => {
     
     // If no response yet, process normally
     if (!response) {
-      const { name: intentName, entity } = recognizeIntent(lastUserMessage);
+      const recognizedIntent = recognizeIntent(lastUserMessage);
+      const entity = recognizedIntent.entity;
+      const intentName = resolveFeatureIntent(recognizedIntent.name, entity);
       conversation.currentIntent = intentName;
+      conversation.slots = {};
+      conversation.waitingForSlot = null;
       
       // Handle FAQ intent
       if (intentName === 'faq' && entity && knowledge.faqs[entity]) {
         response = knowledge.faqs[entity];
       } 
-      // Try semantic search first
+      // Named intents are authoritative. Semantic search is reserved for unknown wording.
+      else if (intentName !== 'fallback') {
+        response = getRandomResponse(intentName);
+      }
       else if (embedder) {
         try {
           const queryEmbedding = await getEmbedding(lastUserMessage);
@@ -263,11 +291,6 @@ router.post('/', async (req, res) => {
           }
         }
       }
-    }
-    
-    // Add a friendly follow-up sometimes (but not if waiting for slot)
-    if (!conversation.waitingForSlot && Math.random() < 0.25) {
-      response += "\n\nIs there anything else I can help you with?";
     }
     
     // Save assistant response to conversation

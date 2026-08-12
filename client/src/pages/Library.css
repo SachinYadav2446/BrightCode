@@ -4,7 +4,7 @@
   color: var(--text-main);
   display: flex;
   flex-direction: column;
-  padding-top: 56px;
+  padding-top: 0;
   position: relative;
   overflow-x: hidden;
   font-family: 'Poppins', sans-serif;

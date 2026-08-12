@@ -307,8 +307,14 @@ const initDB = async () => {
                 created_count INTEGER DEFAULT 0,
                 joined_count INTEGER DEFAULT 0,
                 avatar TEXT,
+                avatar_id TEXT DEFAULT 'Sniper',
+                banner_id TEXT DEFAULT 'crimson',
                 bio TEXT DEFAULT '',
                 stack JSONB DEFAULT '[]',
+                github TEXT DEFAULT '',
+                leetcode TEXT DEFAULT '',
+                project1 TEXT DEFAULT '',
+                project2 TEXT DEFAULT '',
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         `);
@@ -320,6 +326,12 @@ const initDB = async () => {
             await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS mongodb_level INTEGER DEFAULT 0;');
             await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS sql_level INTEGER DEFAULT 0;');
             await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS database_level INTEGER DEFAULT 0;');
+            await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_id TEXT DEFAULT 'Sniper';");
+            await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS banner_id TEXT DEFAULT 'crimson';");
+            await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS github TEXT DEFAULT ''; ");
+            await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS leetcode TEXT DEFAULT ''; ");
+            await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS project1 TEXT DEFAULT ''; ");
+            await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS project2 TEXT DEFAULT ''; ");
         } catch (e) {
             logger.warn('[DB] Note: Could not auto-migrate module level columns. It is okay if they already exist.');
         }
@@ -2151,8 +2163,21 @@ app.post('/update-profile', authenticateToken, async (req, res) => {
         const stackJson = JSON.stringify(parsedStack);
 
         const result = await pool.query(
-            'UPDATE users SET username = $1, bio = $2, stack = $3::jsonb WHERE id = $4 RETURNING email, xp, bio, stack, created_at',
-            [username, bio || '', stackJson, req.user.id]
+            `UPDATE users
+             SET username = $1, bio = $2, stack = $3::jsonb,
+                 avatar_id = COALESCE($4, avatar_id),
+                 banner_id = COALESCE($5, banner_id),
+                 github = COALESCE($6, github),
+                 leetcode = COALESCE($7, leetcode),
+                 project1 = COALESCE($8, project1),
+                 project2 = COALESCE($9, project2)
+             WHERE id = $10
+             RETURNING email, xp, bio, stack, avatar_id, banner_id, github, leetcode, project1, project2, created_at`,
+            [
+                username, bio || '', stackJson, avatarId ?? null, bannerId ?? null,
+                github ?? null, leetcode ?? null, project1 ?? null, project2 ?? null,
+                req.user.id
+            ]
         );
 
         const user = result.rows[0];
@@ -2168,6 +2193,12 @@ app.post('/update-profile', authenticateToken, async (req, res) => {
             xp: user.xp,
             bio: user.bio,
             stack: stackOut,
+            avatarId: user.avatar_id || 'Sniper',
+            bannerId: user.banner_id || 'crimson',
+            github: user.github || '',
+            leetcode: user.leetcode || '',
+            project1: user.project1 || '',
+            project2: user.project2 || '',
             createdAt: user.created_at
         });
     } catch (err) {

@@ -318,14 +318,9 @@ const CurriculumSubjectPage = ({ subject, onBack }) => {
 // â”€â”€ LIBRARY LOBBY (Sidebar + Content) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentLvlIdx }) => {
-    const { user, setNavbarHidden } = useAuth();
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('frontend');
     const [activeSubject, setActiveSubject] = useState(null);
-
-    useEffect(() => {
-        setNavbarHidden(!!activeSubject);
-        return () => setNavbarHidden(false);
-    }, [activeSubject, setNavbarHidden]);
 
     // Dynamic Sidebar Tabs based on user email
     const isMedhaviUser = user?.email?.endsWith('@medhaviskillsuniversity.edu.in');
@@ -574,7 +569,7 @@ const LibraryLobby = ({ sections, setActiveGame, setViewingSections, setCurrentL
 
 
 const Arcade = () => {
-    const { user, updateXP, navbarHidden, setNavbarHidden } = useAuth();
+    const { user, updateXP, navbarHidden } = useAuth();
     
     const navigate = useNavigate();
     const location = useLocation();
@@ -602,12 +597,6 @@ const Arcade = () => {
     const [testResults, setTestResults] = useState(null); // For logic lab feedback
     const [showModal, setShowModal] = useState(false);
     const [modalConfig, setModalConfig] = useState({ type: 'success', title: '', message: '' });
-
-    useEffect(() => {
-        // Hide navbar if any game is active (either in phase selection or playing)
-        setNavbarHidden(!!activeGame);
-        return () => setNavbarHidden(false);
-    }, [activeGame, setNavbarHidden]);
 
     const gameMap = {
         'java-master': JAVA_LEVELS,

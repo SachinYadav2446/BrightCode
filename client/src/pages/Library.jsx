@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, ChevronLeft, ArrowRight, Award, Brain, Database, Server, Cpu, Check, X, ShieldAlert, Loader, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Navbar from '../components/Navbar';
 import API_URL from '../config';
 import { useAuth } from '../context/AuthContext';
 import { JAVA_LEVELS, CPP_LEVELS, PYTHON_LEVELS, GO_LEVELS } from '../data/languageData';
@@ -286,8 +285,6 @@ const Library = ({ initialModule = null, onBack = null }) => {
 
   return (
     <div className="library-page">
-      <Navbar />
-
       <div className="library-glow-bg">
         <div className="glow-orb orb-lib-1"></div>
         <div className="glow-orb orb-lib-2"></div>
