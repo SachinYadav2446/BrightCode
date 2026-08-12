@@ -3586,6 +3586,16 @@ io.on('connection', (socket) => {
     // ── Presence tracking + unread DM delivery ─────────────────────────
     socket.on('presence:join', async (userId) => {
         if (!userId) return;
+        const previousUserId = socket.data.userId;
+        if (previousUserId && previousUserId !== userId) {
+            const previousSockets = onlineUsers.get(previousUserId);
+            previousSockets?.delete(socket.id);
+            socket.leave(`user:${previousUserId}`);
+            if (previousSockets?.size === 0) {
+                onlineUsers.delete(previousUserId);
+                io.emit('friend:offline', { userId: previousUserId });
+            }
+        }
         socket.data.userId = userId;
         socket.join(`user:${userId}`);
         if (!onlineUsers.has(userId)) onlineUsers.set(userId, new Set());
@@ -5376,6 +5386,71 @@ YOUR RULES:
 // ═══ CODE WARS ARENA API ═══════════════════════════════════════════════════
 
 // ── INTRA-FACTION BATTLES ──────────────────────────────────────────────────
+
+// Create a ready-to-play 1v1 room for an online ally. Direct challenges use
+// their own arena scope so friends from different factions can play together.
+app.post('/code-wars/direct-challenge', authenticateToken, async (req, res) => {
+    const { friendId } = req.body;
+    const myId = req.user.id;
+
+    if (!friendId || String(friendId) === String(myId)) {
+        return res.status(400).json({ error: 'Choose an online ally to challenge.' });
+    }
+
+    try {
+        let areFriends = false;
+        if (useMemoryDB) {
+            areFriends = friendsMemoryStore.some(friend =>
+                friend.status === 'accepted' &&
+                ((String(friend.requester_id) === String(myId) && String(friend.recipient_id) === String(friendId)) ||
+                 (String(friend.recipient_id) === String(myId) && String(friend.requester_id) === String(friendId)))
+            );
+        } else {
+            const { rows } = await pool.query(
+                `SELECT 1 FROM friends
+                 WHERE status = 'accepted'
+                   AND ((requester_id = $1 AND recipient_id = $2) OR (requester_id = $2 AND recipient_id = $1))`,
+                [myId, friendId]
+            );
+            areFriends = rows.length > 0;
+        }
+
+        if (!areFriends) return res.status(403).json({ error: 'You can only challenge confirmed allies.' });
+        if (!onlineUsers.has(friendId)) return res.status(409).json({ error: 'That ally is no longer online.' });
+        if (intraFactionArena.playerRooms.has(myId) || intraFactionArena.playerRooms.has(friendId)) {
+            return res.status(409).json({ error: 'One of the players is already in a battle room.' });
+        }
+
+        const friend = await getUserPublicProfile(friendId);
+        if (!friend) return res.status(404).json({ error: 'Ally not found.' });
+
+        const room = intraFactionArena.createRoom(myId, req.user.username, 'direct_arena', {
+            name: `${req.user.username} vs ${friend.username}`,
+            gameMode: 'SYNTAX_SHOWDOWN',
+            teamSize: 1,
+            maxTeams: 2,
+            questionCount: 3,
+            timeLimit: 600,
+            difficulty: 'mixed',
+            allowSpectators: false,
+            autoStart: false,
+            showLeaderboard: true
+        });
+
+        intraFactionArena.joinRoom(friendId, friend.username, 'direct_arena', room.id);
+        io.to(`user:${friendId}`).emit('arena:challenge_received', {
+            fromId: myId,
+            fromUsername: req.user.username,
+            roomId: room.id,
+            game: 'syntax-showdown'
+        });
+
+        res.json({ success: true, room });
+    } catch (error) {
+        logger.error('[CODE WARS] Direct challenge error:', error.message);
+        res.status(500).json({ error: 'Could not create the Syntax Showdown room.' });
+    }
+});
 
 // Create a custom room
 app.post('/code-wars/create-room', authenticateToken, async (req, res) => {

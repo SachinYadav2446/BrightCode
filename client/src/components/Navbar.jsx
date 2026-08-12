@@ -32,7 +32,7 @@ const NAV_ITEMS = [
 ];
 
 const Navbar = () => {
-  const { user, friendsDrawerOpen, setFriendsDrawerOpen } = useAuth();
+  const { user, friendsDrawerOpen, setFriendsDrawerOpen, friendRequestRevision } = useAuth();
   const location = useLocation();
   const [pendingCount, setPendingCount] = useState(0);
   const [hasUnread, setHasUnread] = useState(false);
@@ -95,7 +95,7 @@ const Navbar = () => {
     fetchPending();
     const interval = setInterval(fetchPending, 30000);
     return () => clearInterval(interval);
-  }, [user?.token]);
+  }, [user?.token, friendRequestRevision]);
 
   return (
     <>

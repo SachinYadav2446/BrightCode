@@ -29,7 +29,7 @@
     "ask_how_to_post_sos": {
       "patterns": ["how do i post an sos ticket", "how to post an sos ticket", "how do i raise a ticket", "how to raise a ticket", "post an sos ticket", "raise an sos ticket"],
       "responses": [
-        "To ask for help through The Nexus:\n\n1. Open The Nexus from the main navigation.\n2. Select Post SOS Ticket.\n3. Write a specific title, explain what you tried and where it fails, then choose the relevant language and tags. Descriptions need at least 30 characters, but a clear reproduction path will help mentors much more.\n4. Submit the ticket. It appears on the Global Board as Open.\n5. Review mentor requests on the ticket, accept the developer you want to work with, and use the shared workspace to debug together.\n\nA strong SOS ticket includes the expected result, actual result, error text, and a small code example when possible."
+        "To ask for help through The Nexus:\n\n1. Open The Nexus from the main navigation.\n2. Select Post SOS Ticket.\n3. Write a specific title, explain what you tried and where it fails, then choose the relevant language and tags. Descriptions need at least 50 characters, but a clear reproduction path will help mentors much more.\n4. Submit the ticket. It appears on the Global Board as Open.\n5. Review mentor requests on the ticket, accept the developer you want to work with, and use the shared workspace to debug together.\n\nA strong SOS ticket includes the expected result, actual result, error text, and a small code example when possible."
       ]
     },
     "ask_how_to_mentor": {

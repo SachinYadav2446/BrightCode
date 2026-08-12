@@ -1,6 +1,6 @@
 ﻿import API_URL from '../config';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +8,7 @@ import { initSocket } from '../socket';
 import {
     Users, Search, UserPlus, UserCheck, UserX, X,
     Clock, Zap, Check, ChevronDown, ChevronUp,
-    MessageSquare, Send, ArrowLeft
+    MessageSquare, Send, ArrowLeft, Swords
 } from 'lucide-react';
 import './FriendsDrawer.css';
 
@@ -43,6 +43,7 @@ const Avatar = ({ username, size = 36, online }) => (
 
 export default function FriendsDrawer({ open, onClose, onUnread }) {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const socketRef = useRef(null);
 
     const [tab, setTab] = useState('friends'); // 'friends' | 'search' | 'chat'
@@ -141,6 +142,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
         };
         const handleFriendRequest = ({ from }) => {
             setNotification({ msg: `${from.username} sent you a friend request!`, type: 'info' });
+            if (!openRef.current && onUnread) onUnread();
             loadFriends();
         };
         const handleFriendAccepted = ({ by }) => {
@@ -184,8 +186,10 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
             });
         };
 
-        const handleArenaChallengeReceived = (data) => {
-            // challenge feature removed
+        const handleArenaChallengeReceived = ({ fromUsername, roomId }) => {
+            setNotification({ msg: `${fromUsername} started a Syntax Showdown. Joining room…`, type: 'success' });
+            onClose?.();
+            navigate(`/code-wars?roomId=${roomId}`);
         };
         const handleArenaChallengeAccepted = (data) => {
             // challenge feature removed
@@ -211,7 +215,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
             socket.off('arena:challenge_received', handleArenaChallengeReceived);
             socket.off('arena:challenge_accepted', handleArenaChallengeAccepted);
         };
-    }, [user?.id]);
+    }, [user?.id, loadFriends, navigate, onClose, onUnread]);
 
     useEffect(() => {
         if (open && user?.token) loadFriends();
@@ -272,6 +276,19 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
         setTab('chat');
         setUnreadDms(prev => { const n = new Set(prev); n.delete(target.id); return n; });
         loadChatHistory(target.id);
+    };
+
+    const startSyntaxShowdown = async (friend) => {
+        try {
+            const { data } = await axios.post(`${API}/code-wars/direct-challenge`, {
+                friendId: friend.id
+            }, authHeader());
+            setNotification({ msg: `Syntax Showdown room ${data.room.id} created.`, type: 'success' });
+            onClose?.();
+            navigate(`/code-wars?roomId=${data.room.id}`);
+        } catch (e) {
+            setNotification({ msg: e.response?.data?.error || 'Could not create the battle room.', type: 'info' });
+        }
     };
 
     // Send a message (works for both online and offline friends)
@@ -425,7 +442,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
                                             </div>
                                             {onlineFriends.map(f => (
                                                 <FriendRow key={f.id} friend={f} onRemove={removeOrReject} onClose={onClose}
-                                                    onWhisper={openChat} unread={unreadDms.has(f.id)} />
+                                                    onWhisper={openChat} onChallenge={startSyntaxShowdown} unread={unreadDms.has(f.id)} />
                                             ))}
                                         </div>
                                     )}
@@ -564,7 +581,7 @@ export default function FriendsDrawer({ open, onClose, onUnread }) {
     );
 }
 
-const FriendRow = ({ friend, onRemove, onClose, onWhisper, unread }) => {
+const FriendRow = ({ friend, onRemove, onClose, onWhisper, onChallenge, unread }) => {
     const [hovering, setHovering] = useState(false);
     return (
         <div
@@ -592,6 +609,15 @@ const FriendRow = ({ friend, onRemove, onClose, onWhisper, unread }) => {
                         <MessageSquare size={13} />
                         {unread && <span className="fd-unread-dot" />}
                     </button>
+                    {friend.online && (
+                        <button
+                            className="fd-btn showdown"
+                            title="Start Syntax Showdown"
+                            onClick={() => onChallenge(friend)}
+                        >
+                            <Swords size={13} />
+                        </button>
+                    )}
                     <button className="fd-btn reject" title="Remove ally" onClick={() => onRemove(friend.id)}>
                         <UserX size={13} />
                     </button>

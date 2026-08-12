@@ -362,3 +362,9 @@
     .nx-header-title { font-size: 1.5rem; }
     .nx-post-btn span { display: none; }
 }
+.nx-form-error {
+    margin: 8px 0 0;
+    color: #f87171;
+    font-size: 0.78rem;
+    line-height: 1.4;
+}

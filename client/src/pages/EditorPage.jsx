@@ -1014,8 +1014,22 @@ socket.on('chat-message', ({ username, message, timestamp }) => {
 
     // Ã¢â€â‚¬Ã¢â€â‚¬ Core Handlers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
-    // Optimization: Debounce code changes to prevent lag in collaborative mode
-    const debouncedCodeEmitRef = useRef(null);
+    // Send the first edit immediately, then cap follow-up updates at 20 fps. A
+    // trailing debounce made continuous typing invisible to collaborators until
+    // the author paused, which felt laggy in a real-time workspace.
+    const codeEmitTimerRef = useRef(null);
+    const lastCodeEmitAtRef = useRef(0);
+    const pendingCodeChangeRef = useRef(null);
+    const CODE_SYNC_INTERVAL_MS = 50;
+
+    const emitCodeChange = () => {
+        const pendingChange = pendingCodeChangeRef.current;
+        if (!pendingChange || !socketRef.current?.connected) return;
+
+        socketRef.current.emit('code-change', pendingChange);
+        pendingCodeChangeRef.current = null;
+        lastCodeEmitAtRef.current = Date.now();
+    };
 
     const handleCodeChange = (value) => {
         if (!activeFile || !socketRef.current) return;
@@ -1027,19 +1041,30 @@ socket.on('chat-message', ({ username, message, timestamp }) => {
             files[activeFile].content = value; // Mutate ref directly â€” safe here
         }
 
-        // 2. Debounce the socket emission to prevent flooding the server
-        if (debouncedCodeEmitRef.current) {
-            clearTimeout(debouncedCodeEmitRef.current);
+        // 2. Deliver code with bounded frequency instead of waiting for a pause.
+        pendingCodeChangeRef.current = { roomId, fileName: activeFile, content: value };
+        const elapsed = Date.now() - lastCodeEmitAtRef.current;
+
+        if (elapsed >= CODE_SYNC_INTERVAL_MS) {
+            if (codeEmitTimerRef.current) {
+                clearTimeout(codeEmitTimerRef.current);
+                codeEmitTimerRef.current = null;
+            }
+            emitCodeChange();
+            return;
         }
 
-        debouncedCodeEmitRef.current = setTimeout(() => {
-            socketRef.current.emit('code-change', { 
-                roomId, 
-                fileName: activeFile, 
-                content: value 
-            });
-        }, 150); // 150ms debounce
+        if (!codeEmitTimerRef.current) {
+            codeEmitTimerRef.current = setTimeout(() => {
+                codeEmitTimerRef.current = null;
+                emitCodeChange();
+            }, CODE_SYNC_INTERVAL_MS - elapsed);
+        }
     };
+
+    useEffect(() => () => {
+        if (codeEmitTimerRef.current) clearTimeout(codeEmitTimerRef.current);
+    }, []);
 
     // Optimization: Debounce cursor changes
     const debouncedCursorEmitRef = useRef(null);

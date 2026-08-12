@@ -255,6 +255,8 @@
 .fd-btn.add:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
 .fd-btn.whisper { background: rgba(245, 240, 220, 0.1); border-color: rgba(245, 240, 220, 0.25); color: #f5f0dc; }
 .fd-btn.whisper:hover { background: #f5f0dc; color: #1a1a1a; border-color: #f5f0dc; }
+.fd-btn.showdown { background: rgba(249, 115, 22, 0.12); border-color: rgba(249, 115, 22, 0.35); color: #fb923c; }
+.fd-btn.showdown:hover { background: #f97316; color: #fff; border-color: #f97316; }
 
 .fd-status-chip {
     display: flex;

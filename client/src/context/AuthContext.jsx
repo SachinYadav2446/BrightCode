@@ -1,6 +1,7 @@
 import API_URL from '../config';
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
+import { disconnectSocket, initSocket } from '../socket';
 
 const AuthContext = createContext({});
 
@@ -28,6 +29,7 @@ export const AuthProvider = ({ children }) => {
   const [sessionValid, setSessionValid] = useState(false);
   const [navbarHidden, setNavbarHidden] = useState(false);
   const [friendsDrawerOpen, setFriendsDrawerOpen] = useState(false);
+  const [friendRequestRevision, setFriendRequestRevision] = useState(0);
 
   const logout = () => {
     localStorage.removeItem('token');
@@ -57,9 +59,29 @@ export const AuthProvider = ({ children }) => {
         }
     });
 
+    disconnectSocket();
     setUser(null);
     setSessionValid(false);
   };
+
+  // Presence must follow the authenticated session, not the navbar. Some pages
+  // intentionally hide the navbar, but their users must still receive requests.
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const socket = initSocket();
+    const joinPresence = () => socket.emit('presence:join', user.id);
+    const handleFriendRequest = () => setFriendRequestRevision(revision => revision + 1);
+
+    if (socket.connected) joinPresence();
+    socket.on('connect', joinPresence);
+    socket.on('friend:request', handleFriendRequest);
+
+    return () => {
+      socket.off('connect', joinPresence);
+      socket.off('friend:request', handleFriendRequest);
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     const savedDrawerOpen = sessionStorage.getItem('drawerOpen') === 'true';
@@ -412,7 +434,8 @@ export const AuthProvider = ({ children }) => {
       navbarHidden, 
       setNavbarHidden, 
       friendsDrawerOpen, 
-      setFriendsDrawerOpen
+      setFriendsDrawerOpen,
+      friendRequestRevision
     }}>
       {children}
     </AuthContext.Provider>

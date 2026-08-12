@@ -108,6 +108,7 @@ export default function NexusBoard() {
     const [dashTab,      setDashTab]      = useState('raised');   // raised | mentored
     const [form,         setForm]         = useState({ title: '', description: '', language: 'javascript', tags: '' });
     const [submitting,   setSubmitting]   = useState(false);
+    const [formError,    setFormError]    = useState('');
 
     /* fetch */
     const fetchTickets = async (quiet = false) => {
@@ -133,10 +134,11 @@ export default function NexusBoard() {
     /* create ticket */
     const handleCreate = async (e) => {
         e.preventDefault();
-        if (form.description.trim().length < 30) {
-            alert('Description must be at least 30 characters.');
+        if (form.description.trim().length < 50) {
+            setFormError('Please add at least 50 characters so mentors have enough context to help.');
             return;
         }
+        setFormError('');
         setSubmitting(true);
         try {
             const token = localStorage.getItem('token');
@@ -146,10 +148,11 @@ export default function NexusBoard() {
             });
             setModalOpen(false);
             setForm({ title: '', description: '', language: 'javascript', tags: '' });
+            setFormError('');
             setActiveTab('personal');
             fetchTickets();
         } catch (e) {
-            alert('Failed to create ticket: ' + (e.response?.data?.error || e.message));
+            setFormError(e.response?.data?.error || 'Unable to create the ticket. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -182,7 +185,7 @@ export default function NexusBoard() {
                         <h1 className="nx-header-title">The Nexus</h1>
                         <p className="nx-header-sub">Post SOS tickets and get live help from senior devs</p>
                     </div>
-                    <button className="nx-post-btn" onClick={() => setModalOpen(true)}>
+                    <button className="nx-post-btn" onClick={() => { setFormError(''); setModalOpen(true); }}>
                         <Plus size={15} />
                         <span>Post SOS Ticket</span>
                     </button>
@@ -234,7 +237,7 @@ export default function NexusBoard() {
                                     title="No open issues"
                                     sub="Be the first to post an SOS ticket."
                                     action={
-                                        <button className="nx-post-btn" onClick={() => setModalOpen(true)}>
+                                        <button className="nx-post-btn" onClick={() => { setFormError(''); setModalOpen(true); }}>
                                             <Plus size={14}/> Post SOS
                                         </button>
                                     }
@@ -335,7 +338,7 @@ export default function NexusBoard() {
                     <div className="nx-modal">
                         <div className="nx-modal-head">
                             <h2>New SOS Ticket</h2>
-                            <button className="nx-modal-close" onClick={() => setModalOpen(false)}>
+                            <button className="nx-modal-close" onClick={() => { setFormError(''); setModalOpen(false); }}>
                                 <X size={15}/>
                             </button>
                         </div>
@@ -357,19 +360,20 @@ export default function NexusBoard() {
                                     <span>Description</span>
                                     <span
                                         className="nx-char-count"
-                                        style={{ color: form.description.trim().length < 30 ? '#ef4444' : '#22c55e' }}
+                                        style={{ color: form.description.trim().length < 50 ? '#ef4444' : '#22c55e' }}
                                     >
-                                        {form.description.trim().length} / 30 min
+                                        {form.description.trim().length} / 50 characters minimum
                                     </span>
                                 </label>
                                 <textarea
                                     required
                                     rows={4}
-                                    minLength={30}
+                                    minLength={50}
                                     placeholder="Describe the issue in detail…"
                                     value={form.description}
                                     onChange={e => setForm({ ...form, description: e.target.value })}
                                 />
+                                {formError && <p className="nx-form-error" role="alert">{formError}</p>}
                             </div>
 
                             <div className="nx-field-row">
@@ -394,13 +398,13 @@ export default function NexusBoard() {
                             </div>
 
                             <div className="nx-modal-footer">
-                                <button type="button" className="nx-btn-cancel" onClick={() => setModalOpen(false)}>
+                                <button type="button" className="nx-btn-cancel" onClick={() => { setFormError(''); setModalOpen(false); }}>
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     className="nx-btn-submit"
-                                    disabled={submitting || form.description.trim().length < 30}
+                                    disabled={submitting || form.description.trim().length < 50}
                                 >
                                     {submitting ? 'Posting…' : 'Post Ticket'}
                                 </button>
