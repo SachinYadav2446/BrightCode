@@ -622,6 +622,11 @@
 }
 
 /* Responsive grid modifications */
+/* For big screens (1280px and up) */
+@media (min-width: 1280px) {
+  .library-app-container { max-width: 1400px; margin: 0 auto; }
+}
+
 @media (max-width: 1024px) {
   .quiz-main-container {
     grid-template-columns: 1fr;
