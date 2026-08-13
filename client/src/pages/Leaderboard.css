@@ -531,6 +531,12 @@
 /* ══════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════ */
+
+/* For big screens (1280px and up) */
+@media (min-width: 1280px) {
+    .lb-app-container { max-width: 1400px; margin: 0 auto; }
+}
+
 @media (max-width: 768px) {
     .lb-topbar-row { padding: 0 14px; gap: 12px; height: 68px; }
     .lb-header-title { font-size: 2rem; }

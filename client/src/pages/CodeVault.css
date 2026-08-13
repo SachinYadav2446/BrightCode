@@ -839,6 +839,11 @@
    RESPONSIVE
    ============================ */
 
+/* For big screens (1280px and up) */
+@media (min-width: 1280px) {
+  .vault-app-container { max-width: 1400px; margin: 0 auto; }
+}
+
 /* Mobile Sidebar Toggle Button */
 .vault-sidebar-toggle-btn {
   position: fixed;
