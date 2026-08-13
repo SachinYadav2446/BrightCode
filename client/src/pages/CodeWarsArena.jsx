@@ -1812,7 +1812,7 @@ const ResultsScreen = ({ room, results, user, onBackToMenu }) => {
                         <div className="perf-meta-row">
                             <span className="perf-lbl">XP Awarded</span>
                             <span className="perf-val" style={{ color: '#22c55e', fontWeight: 800 }}>
-                                +{100 + (gameResults.rankings?.find(r => r.teamId === myTeam?.id)?.totalScore || 0)} XP
+                                +{200 + (gameResults.rankings?.find(r => r.teamId === myTeam?.id)?.totalScore || 0) + (isWinner ? 100 : 0)} XP
                             </span>
                         </div>
                     </div>
