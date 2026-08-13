@@ -5,9 +5,11 @@ const { getRandomQuestions, getQuestionById, GAME_MODES, DIFFICULTY_LEVELS } = r
 const { CachedLeetCodeAPI } = require('./leetcodeAPI');
 
 class CodeWarsArena {
-    constructor(io, factions) {
+    constructor(io, factions, memoryStore, useMemoryDB) {
         this.io = io;
         this.factions = factions;
+        this.memoryStore = memoryStore;
+        this.useMemoryDB = useMemoryDB;
         this.activeGames = new Map(); // gameId -> gameSession
         this.privateRooms = new Map(); // roomId -> room info
         this.playerQueues = new Map(); // factionId -> queue info (for inter-faction battles)
@@ -560,6 +562,10 @@ class CodeWarsArena {
                 factionScore.totalPoints += question.points;
                 factionScore.questionsCompleted++;
 
+                // Award XP for this question solve
+                this.updateUserXP(userId, question.points);
+                console.log(`[CODEWARS] Question solved: +${question.points} XP to ${participant.username}`);
+
                 // Broadcast success to all players
                 this.io.to(`game_${gameId}`).emit('solution-accepted', {
                     userId,
@@ -655,24 +661,19 @@ class CodeWarsArena {
     }
 
     awardGameXP(game, results) {
-        // Award XP based on performance
-        const baseXP = 50;
+        const baseXP = 200;
         const winnerBonus = 100;
-        const completionBonus = 25;
 
         game.participants.forEach(participant => {
-            let xp = baseXP;
+            let xp = baseXP + Number(participant.totalScore || 0);
             
-            // Completion bonus
-            xp += participant.completedQuestions.length * completionBonus;
-            
-            // Winner bonus
-            if (participant.factionId === results.winner.factionId) {
+            if (results.winner && participant.factionId === results.winner.factionId) {
                 xp += winnerBonus;
             }
 
-            // TODO: Add XP to user account
-            console.log(`Award ${xp} XP to ${participant.username}`);
+            participant.xpEarned = xp;
+            this.updateUserXP(participant.userId, xp);
+            console.log(`🏆 [CODEWARS] Awarded ${xp} XP to ${participant.username} (200 base + ${participant.totalScore || 0} score + ${participant.factionId === results.winner?.factionId ? winnerBonus : 0} winner bonus)`);
         });
     }
 
@@ -758,6 +759,32 @@ class CodeWarsArena {
             if (queue.players.length === 0) {
                 this.playerQueues.delete(factionId);
             }
+        }
+    }
+
+    updateUserXP(userId, xpAmount) {
+        try {
+            const db = require('./db');
+            if (db && db.pool) {
+                db.query('UPDATE users SET xp = COALESCE(xp, 0) + $1 WHERE id = $2', [xpAmount, userId])
+                  .then(() => console.log(`[CODEWARS] DB XP updated (+${xpAmount}) for user ${userId}`))
+                  .catch(err => console.error('[CODEWARS] DB XP update error:', err.message));
+            }
+
+            if (this.memoryStore && Array.isArray(this.memoryStore.users)) {
+                let userIndex = this.memoryStore.users.findIndex(u => u.id === userId);
+                if (userIndex !== -1) {
+                    const user = this.memoryStore.users[userIndex];
+                    user.xp = (user.xp || 0) + xpAmount;
+                    console.log(`[CODEWARS] Added ${xpAmount} XP to memory user ${userId}. New total: ${user.xp}`);
+                    
+                    const today = new Date().toISOString().split('T')[0];
+                    if (!user.activity) user.activity = {};
+                    user.activity[today] = (user.activity[today] || 0) + xpAmount;
+                }
+            }
+        } catch (error) {
+            console.error('[CODEWARS] Error updating user XP:', error);
         }
     }
 }

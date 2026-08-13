@@ -207,7 +207,7 @@ const saveFactions = () => {
 loadFactions();
 
 // ── Initialize Code Wars Arena ──────────────────────────────────────────────
-const codeWarsArena = new CodeWarsArena(io, factions);
+const codeWarsArena = new CodeWarsArena(io, factions, memoryStore, useMemoryDB);
 const intraFactionArena = new IntraFactionArena(io, factions, memoryStore, useMemoryDB);
 const proctorSocket = new ProctorSocket(io);
 

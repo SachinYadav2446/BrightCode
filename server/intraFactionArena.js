@@ -788,13 +788,13 @@ class IntraFactionArena {
         room.status = 'completed';
         room.endTime = new Date().toISOString();
         
-        // Award XP to all participants: 100 base participation XP + team's total score
+        // Award XP to all participants: 200 base participation XP + team's total score
         console.log(`🏆 [ARENA] Game ended for room ${roomId}. Awarding XP to all participants...`);
         room.teams.forEach(team => {
             const teamScore = (room.scores instanceof Map ? room.scores.get(team.id) : room.scores?.[team.id]) || team.totalScore || 0;
-            const teamXP = 100 + Number(teamScore);
+            const teamXP = 200 + Number(teamScore);
             team.players.forEach(player => {
-                console.log(`🏆 [ARENA] Awarding ${teamXP} XP to player ${player.username} (100 base + ${teamScore} team score)`);
+                console.log(`🏆 [ARENA] Awarding ${teamXP} XP to player ${player.username} (200 base + ${teamScore} team score)`);
                 this.updateUserXP(player.id, teamXP);
                 player.xpEarned = teamXP;
             });
