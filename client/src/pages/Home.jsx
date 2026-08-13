@@ -129,7 +129,7 @@ const Home = () => {
     : xp >= 5000 ? { label: 'Expert', color: '#f59e0b', next: 10000 }
     : xp >= 2000 ? { label: 'Advanced', color: '#3b82f6', next: 5000 }
     : xp >= 500 ? { label: 'Apprentice', color: '#10b981', next: 2000 }
-    : { label: 'Initiate', color: '#a1a1aa', next: 500 };
+    : { label: 'Novice', color: '#a1a1aa', next: 500 };
 
   const xpPercent = levelInfo.next
     ? Math.min(((xp - (xp >= 5000 ? 5000 : xp >= 2000 ? 2000 : xp >= 500 ? 500 : 0)) /

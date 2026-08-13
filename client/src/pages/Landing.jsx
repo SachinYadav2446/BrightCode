@@ -919,9 +919,9 @@ function ArcadeRoadmap() {
       level: 1,
       tier: "Novice",
       topic: "Code Library & Basic logic",
-      desc: "The starting rank for all users. Solve easy problems in the Library to earn your first XP points (+50 XP per solve) and establish your Logic Level (logic_level) or CSS Level (css_level).",
-      stats: "0+ XP • Library Access • +50 XP per Easy solve",
-      badge: "Initiate Shield",
+      desc: "The starting rank for all users. Solve easy problems in the Library to earn your first XP points (+10 XP per solve) and establish your Logic Level (logic_level) or CSS Level (css_level).",
+      stats: "0+ XP • Library Access • +10 XP per Library/Arcade solve",
+      badge: "Novice Shield",
       tracks: [
         { name: "Variables & Loops", progress: 100, target: "Syntax logic: Complete basic arithmetic and looping quests." },
         { name: "CSS Flexbox & Box Model", progress: 90, target: "Layout control: Align page elements dynamically inside sandbox nodes." },
@@ -932,8 +932,8 @@ function ArcadeRoadmap() {
       level: 2,
       tier: "Apprentice",
       topic: "Intermediate Structures & 1v1 Arena",
-      desc: "Unlock intermediate challenges once you cross 500 XP. Participate in 1v1 Arena Matches in Code Wars and climb language specific ratings (cpp_level, python_level).",
-      stats: "500+ XP • Code Wars Access • +80 XP per Medium solve",
+      desc: "Unlock intermediate challenges once you cross 500 XP. Participate in 1v1 Arena Matches in Code Wars and climb language specific ratings (cpp_level, python_level). Each battle awards 200 base XP + question score.",
+      stats: "500+ XP • Code Wars Access • +200 XP base per Battle + question score",
       badge: "Data Sentinel",
       tracks: [
         { name: "Arrays & Strings", progress: 80, target: "String parsing: Implement fast prefix searching and substring matching." },
@@ -945,8 +945,8 @@ function ArcadeRoadmap() {
       level: 3,
       tier: "Advanced",
       topic: "Fullstack Projects & CodeVault Notes",
-      desc: "Reaching 2000 XP unlocks advanced stack modules. Level up React Level (react_level) and MERN Level (mern_level), and organize notes in CodeVault using Markdown.",
-      stats: "2000+ XP • CodeVault Markdown Editor • +150 XP per Hard solve",
+      desc: "Reaching 2000 XP unlocks advanced stack modules. Level up React Level (react_level) and MERN Level (mern_level), and organize notes in CodeVault using Markdown. Epic Siege battles award 200 XP base + 100 winner bonus + question score.",
+      stats: "2000+ XP • CodeVault Markdown Editor • +200 XP base per Battle + question score",
       badge: "Apprentice Crest",
       tracks: [
         { name: "React State & Hooks", progress: 0, target: "State management: Coordinate interactive data streams dynamically." },
@@ -958,7 +958,7 @@ function ArcadeRoadmap() {
       level: 4,
       tier: "Expert",
       topic: "Concurrency & Collaborative Code Wars",
-      desc: "Crossing 5000 XP unlocks Expert-level challenges. Work with teammates inside live Monaco sync workspaces to tackle Code Wars passing all 15 weighted test cases.",
+      desc: "Crossing 5000 XP unlocks Expert-level challenges. Work with teammates inside live Monaco sync workspaces to tackle Code Wars passing all 15 weighted test cases. Win bonus 100 XP per battle victory.",
       stats: "5000+ XP • 15 Test Cases/Problem • Weighted Test Scoring",
       badge: "Master Code",
       tracks: [

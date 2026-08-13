@@ -1,4 +1,4 @@
-﻿import API_URL from '../config';
+import API_URL from '../config';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Crown, ArrowLeft, Zap, Search, Shield, X, UserPlus, Eye, Clock, Check, UserCheck, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -15,7 +15,7 @@ const getLevelInfo = (xp) => {
     if (xp >= 5000)  return { label: 'Expert',      color: '#818cf8', bg: 'rgba(99,102,241,0.15)',  border: 'rgba(99,102,241,0.35)',  glow: 'rgba(99,102,241,0.4)' };
     if (xp >= 2000)  return { label: 'Advanced',    color: '#34d399', bg: 'rgba(16,185,129,0.15)',  border: 'rgba(16,185,129,0.35)',  glow: 'rgba(16,185,129,0.4)' };
     if (xp >= 500)   return { label: 'Apprentice',  color: '#60a5fa', bg: 'rgba(59,130,246,0.15)',  border: 'rgba(59,130,246,0.35)',  glow: 'rgba(59,130,246,0.4)' };
-    return             { label: 'Initiate',   color: '#9ca3af', bg: 'rgba(156,163,175,0.1)',  border: 'rgba(156,163,175,0.2)',  glow: 'rgba(156,163,175,0.2)' };
+    return             { label: 'Novice',     color: '#9ca3af', bg: 'rgba(156,163,175,0.1)',  border: 'rgba(156,163,175,0.2)',  glow: 'rgba(156,163,175,0.2)' };
 };
 
 const PODIUM_ORDER = [
