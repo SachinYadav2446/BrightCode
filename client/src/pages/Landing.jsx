@@ -69,158 +69,206 @@ function AnimCounter({ target, suffix = "", duration = 2000 }) {
 function Nav({ handleAuth }) {
   const [open, setOpen] = useState(false);
   const [activeLink, setActiveLink] = useState(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY < 120) {
+      const scrollY = window.scrollY;
+      setIsScrolled(scrollY > 24);
+
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalHeight > 0) {
+        setScrollProgress(Math.min(100, Math.max(0, (scrollY / totalHeight) * 100)));
+      }
+
+      if (scrollY < 120) {
         setActiveLink(null);
         return;
       }
-      const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 80;
+      const isAtBottom = window.innerHeight + scrollY >= document.documentElement.scrollHeight - 80;
       if (isAtBottom) {
         setActiveLink("arena");
         return;
       }
-      const sections = ["features", "roadmap", "modules", "arena"];
+      const sections = ["features", "playground", "roadmap", "modules", "arena"];
       for (const sec of sections) {
         const el = document.getElementById(sec);
         if (el) {
           const rect = el.getBoundingClientRect();
-          if (rect.top <= 150 && rect.bottom >= 150) {
+          if (rect.top <= 200 && rect.bottom >= 120) {
             setActiveLink(sec);
             break;
           }
         }
       }
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const navLinks = [
     { label: "Features", id: "features", icon: Zap },
+    { label: "Playground", id: "playground", icon: Terminal },
     { label: "Roadmap", id: "roadmap", icon: Map },
     { label: "Modules", id: "modules", icon: Layers },
     { label: "Hall of Fame", id: "arena", icon: Trophy }
   ];
 
   return (
-    <>
-      <motion.nav 
-        className="floating-nav"
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <div className="nav-container">
-          {/* LEFT: Logo */}
-          <div className="nav-left">
-            <a className="lnav-logo" href="#" onClick={e => e.preventDefault()}>
-              <CodeBrightLogo size="small" />
-            </a>
-          </div>
+    <motion.header
+      className={`landing-nav-wrapper ${isScrolled ? "scrolled" : ""}`}
+      initial={{ y: -70, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <div className="landing-nav-capsule">
+        {/* Subtle top edge glow */}
+        <div className="landing-nav-ambient-glow" />
 
-          {/* CENTER: Nav links */}
-          <div className="nav-center">
-            {navLinks.map(link => {
-              const Icon = link.icon;
-              const isActive = activeLink === link.id;
-              return (
-                <a
-                  key={link.id}
-                  href={`#${link.id}`}
-                  className={`nav-link-item ${isActive ? "active" : ""}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setActiveLink(link.id);
-                    document.getElementById(link.id)?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                >
-                  <Icon size={14} className="nav-link-icon" />
-                  <span>{link.label}</span>
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeNavPillLanding"
-                      className="nav-active-bg"
-                      transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                    />
-                  )}
-                </a>
-              );
-            })}
-          </div>
-
-          {/* RIGHT: Actions / CTAs */}
-          <div className="nav-right">
-            <motion.button 
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.94 }}
-              className="nav-link-item" 
-              onClick={() => handleAuth("login")}
-              style={{ background: "none", border: "none", cursor: "pointer" }}
-            >
-              Sign In
-            </motion.button>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <button className="shiny-btn" onClick={() => handleAuth("register")}>
-                Get Started
-              </button>
-            </motion.div>
-
-            {/* Mobile Hamburger toggle */}
-            <button
-              className="nav-mobile-toggle"
-              onClick={() => setOpen(!open)}
-              aria-label="Toggle menu"
-            >
-              {open ? <X size={20} /> : <Menu size={20} />}
-            </button>
-          </div>
+        {/* LEFT: Logo + Live Version Pill */}
+        <div className="landing-nav-left">
+          <a
+            className="landing-nav-logo"
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            title="BrightCode - Back to top"
+          >
+            <CodeBrightLogo size="small" />
+          </a>
         </div>
 
-        {/* Mobile menu dropdown drawer */}
+        {/* CENTER: Floating Nav Links */}
+        <nav className="landing-nav-center">
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            const isActive = activeLink === link.id;
+            return (
+              <a
+                key={link.id}
+                href={`#${link.id}`}
+                className={`landing-nav-link ${isActive ? "active" : ""}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveLink(link.id);
+                  document.getElementById(link.id)?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                <Icon size={14} className="landing-nav-icon" />
+                <span>{link.label}</span>
+                {isActive && (
+                  <motion.div
+                    layoutId="activeLandingNavPill"
+                    className="landing-nav-pill-active"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </a>
+            );
+          })}
+        </nav>
+
+        {/* RIGHT: Actions */}
+        <div className="landing-nav-right">
+          <button
+            className="landing-nav-btn-signin"
+            onClick={() => handleAuth("login")}
+          >
+            Sign In
+          </button>
+
+          <button
+            className="landing-nav-btn-cta"
+            onClick={() => handleAuth("register")}
+          >
+            <span>Get Started</span>
+            <ArrowUpRight size={14} className="landing-nav-cta-arrow" />
+            <div className="landing-nav-cta-shine" />
+          </button>
+
+          {/* Mobile hamburger */}
+          <button
+            className="landing-nav-mobile-toggle"
+            onClick={() => setOpen(!open)}
+            aria-label="Toggle navigation menu"
+          >
+            {open ? <X size={19} /> : <Menu size={19} />}
+          </button>
+        </div>
+
+        {/* Bottom scroll progress laser beam */}
+        <div className="landing-nav-progress-track">
+          <div
+            className="landing-nav-progress-bar"
+            style={{ width: `${scrollProgress}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Mobile Drawer */}
+      <AnimatePresence>
         {open && (
-          <div className="nav-mobile-menu">
-            {navLinks.map(link => {
-              const Icon = link.icon;
-              const isActive = activeLink === link.id;
-              return (
-                <a
-                  key={link.id}
-                  href={`#${link.id}`}
-                  className={`nav-mobile-link ${isActive ? "active" : ""}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setOpen(false);
-                    setActiveLink(link.id);
-                    document.getElementById(link.id)?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                >
-                  <Icon size={16} />
-                  <span>{link.label}</span>
-                </a>
-              );
-            })}
-            <div style={{ display: "flex", gap: "8px", marginTop: "12px", padding: "0 16px" }}>
-              <button 
-                className="nav-mobile-link" 
-                onClick={() => { handleAuth("login"); setOpen(false); }}
-                style={{ flex: 1, justifyContent: "center", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer" }}
+          <motion.div
+            className="landing-nav-drawer"
+            initial={{ opacity: 0, y: -12, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -12, scale: 0.98 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+          >
+            <div className="landing-nav-drawer-links">
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                const isActive = activeLink === link.id;
+                return (
+                  <a
+                    key={link.id}
+                    href={`#${link.id}`}
+                    className={`landing-nav-drawer-item ${isActive ? "active" : ""}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setOpen(false);
+                      setActiveLink(link.id);
+                      document.getElementById(link.id)?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                  >
+                    <div className="landing-nav-drawer-icon-box">
+                      <Icon size={16} />
+                    </div>
+                    <span className="landing-nav-drawer-label">{link.label}</span>
+                    <ChevronRight size={14} className="landing-nav-drawer-chevron" />
+                  </a>
+                );
+              })}
+            </div>
+
+            <div className="landing-nav-drawer-actions">
+              <button
+                className="landing-nav-btn-signin drawer"
+                onClick={() => {
+                  handleAuth("login");
+                  setOpen(false);
+                }}
               >
                 Sign In
               </button>
-              <button 
-                className="shiny-btn" 
-                onClick={() => { handleAuth("register"); setOpen(false); }}
-                style={{ flex: 1, justifyContent: "center" }}
+              <button
+                className="landing-nav-btn-cta drawer"
+                onClick={() => {
+                  handleAuth("register");
+                  setOpen(false);
+                }}
               >
-                Get Started
+                <span>Get Started</span>
+                <ArrowUpRight size={14} />
               </button>
             </div>
-          </div>
+          </motion.div>
         )}
-      </motion.nav>
-    </>
+      </AnimatePresence>
+    </motion.header>
   );
 }
 
