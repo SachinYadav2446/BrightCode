@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="brightcode-cover.png" alt="BrightCode Banner" width="100%" style="max-width: 900px; border-radius: 12px; margin-bottom: 20px;" />
+
 # BrightCode
 
 **A next-generation collaborative coding platform for developers who want to learn, compete, and grow together.**

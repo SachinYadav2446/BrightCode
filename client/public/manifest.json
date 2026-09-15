@@ -1,0 +1,22 @@
+﻿{
+  "short_name": "BrightCode",
+  "name": "BrightCode — Learn | Practice | Grow",
+  "description": "Next-generation collaborative coding platform for developers to learn, compete, and grow together.",
+  "icons": [
+    {
+      "src": "/brightcode-cover.png",
+      "type": "image/png",
+      "sizes": "192x192 512x512 1200x630"
+    },
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#09060b",
+  "theme_color": "#ef4444",
+  "display": "standalone",
+  "orientation": "portrait"
+}
