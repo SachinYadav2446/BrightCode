@@ -237,17 +237,18 @@ const Workspace = () => {
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   useEffect(() => {
-    const historyKey = `workspaceHistory_${user?.username || 'guest'}`;
-    const statsKey   = `workspaceStats_${user?.username || 'guest'}`;
-    const history    = JSON.parse(localStorage.getItem(historyKey) || '[]');
-    setWorkspaceHistory(history);
+    const currentUsername = user?.username || 'guest';
+    const historyKey = `workspaceHistory_${currentUsername}`;
+    const statsKey   = `workspaceStats_${currentUsername}`;
+    const localHistory = JSON.parse(localStorage.getItem(historyKey) || '[]');
+    setWorkspaceHistory(localHistory);
 
     // Seed stats from history if stats key doesn't exist yet
-    if (!localStorage.getItem(statsKey) && history.length > 0) {
+    if (!localStorage.getItem(statsKey) && localHistory.length > 0) {
       const seeded = {
-        total:    history.length,
-        asAdmin:  history.filter(w => w.isAdmin).length,
-        asMember: history.filter(w => !w.isAdmin).length,
+        total:    localHistory.length,
+        asAdmin:  localHistory.filter(w => w.isAdmin).length,
+        asMember: localHistory.filter(w => !w.isAdmin).length,
       };
       localStorage.setItem(statsKey, JSON.stringify(seeded));
     }
@@ -287,7 +288,8 @@ const Workspace = () => {
 
     // Fetch real status for all rooms in history using bulk endpoint
     const fetchRoomsStatus = async (hist) => {
-      const ids = (hist || history).map(w => w.id);
+      const currentList = hist || localHistory;
+      const ids = currentList.map(w => w.id);
       if (ids.length === 0) return;
       try {
         const res  = await fetch(`${API_URL}/rooms-status`, {
@@ -302,38 +304,110 @@ const Workspace = () => {
       }
     };
 
-    fetchRoomsStatus(history);
-    const interval = setInterval(() => fetchRoomsStatus(
-      JSON.parse(localStorage.getItem(`workspaceHistory_${user?.username || 'guest'}`) || '[]')
-    ), 10000);
+    fetchRoomsStatus(localHistory);
+
+    // If authenticated user, fetch from cloud account and auto-sync
+    if (user?.username) {
+      fetch(`${API_URL}/api/user-workspaces?username=${encodeURIComponent(user.username)}`)
+        .then(res => res.json())
+        .then(async (data) => {
+          if (data && data.success) {
+            let serverList = data.workspaces || [];
+            const serverIds = new Set(serverList.map(w => w.id));
+
+            // Any local workspace not yet stored on server (e.g. from existing normal tab session)
+            const missingOnServer = localHistory.filter(w => !serverIds.has(w.id));
+
+            if (missingOnServer.length > 0) {
+              try {
+                const syncRes = await fetch(`${API_URL}/api/user-workspaces/sync`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    username: user.username,
+                    workspaces: localHistory,
+                  }),
+                });
+                const syncData = await syncRes.json();
+                if (syncData && syncData.success && syncData.workspaces) {
+                  serverList = syncData.workspaces;
+                }
+              } catch (syncErr) {
+                console.warn('[WORKSPACE SYNC] Failed to sync local workspaces to server:', syncErr);
+              }
+            }
+
+            // Merge local and server items, prioritizing cloud and newer lastVisited
+            const map = new Map();
+            localHistory.forEach(item => map.set(item.id, item));
+            serverList.forEach(item => {
+              const prev = map.get(item.id);
+              if (!prev) {
+                map.set(item.id, item);
+              } else {
+                map.set(item.id, {
+                  ...prev,
+                  ...item,
+                  lastVisited: (new Date(item.lastVisited || 0) > new Date(prev.lastVisited || 0))
+                    ? item.lastVisited
+                    : prev.lastVisited,
+                });
+              }
+            });
+
+            const merged = Array.from(map.values()).sort(
+              (a, b) => new Date(b.lastVisited || 0).getTime() - new Date(a.lastVisited || 0).getTime()
+            );
+
+            setWorkspaceHistory(merged);
+            localStorage.setItem(historyKey, JSON.stringify(merged));
+
+            // Sync terminated sessions if any
+            const serverTerminated = merged.filter(w => w.terminated).map(w => w.id);
+            if (serverTerminated.length > 0) {
+              const key = 'terminatedSessions';
+              const existing = JSON.parse(localStorage.getItem(key) || '[]');
+              const mergedTerm = [...new Set([...existing, ...serverTerminated])];
+              localStorage.setItem(key, JSON.stringify(mergedTerm));
+              setTerminatedSessions(mergedTerm);
+            }
+
+            // Sync stats
+            const stats = JSON.parse(localStorage.getItem(statsKey) || '{"total":0,"asAdmin":0,"asMember":0}');
+            stats.total = Math.max(stats.total, merged.length);
+            stats.asAdmin = Math.max(stats.asAdmin, merged.filter(w => w.isAdmin).length);
+            stats.asMember = Math.max(stats.asMember, merged.filter(w => !w.isAdmin).length);
+            localStorage.setItem(statsKey, JSON.stringify(stats));
+
+            fetchRoomsStatus(merged);
+          }
+        })
+        .catch(err => console.warn('[WORKSPACE] Cloud fetch error:', err));
+    }
+
+    const interval = setInterval(() => {
+      const currentHist = JSON.parse(localStorage.getItem(`workspaceHistory_${user?.username || 'guest'}`) || '[]');
+      fetchRoomsStatus(currentHist);
+    }, 10000);
 
     return () => {
       clearInterval(interval);
       socket.disconnect();
     };
-  }, []);
+  }, [user?.username]);
 
   const saveToHistory = (workspaceId, wsName, isAdmin) => {
     const newEntry = { id: workspaceId, name: wsName, lastVisited: new Date().toISOString(), isAdmin, visitCount: 1 };
-    const historyKey  = `workspaceHistory_${user?.username || 'guest'}`;
-    const statsKey    = `workspaceStats_${user?.username || 'guest'}`;
+    const currentUsername = user?.username || 'guest';
+    const historyKey  = `workspaceHistory_${currentUsername}`;
+    const statsKey    = `workspaceStats_${currentUsername}`;
     const existing    = JSON.parse(localStorage.getItem(historyKey) || '[]');
 
     // Check if this is a brand-new workspace (not already in history)
     const isNew = !existing.find(item => item.id === workspaceId);
 
     const filtered    = existing.filter(item => item.id !== workspaceId);
-    const updated     = [newEntry, ...filtered].slice(0, 10);
-
-    // Any IDs that got pushed out of the recent-10 window → auto-terminate
-    const kept        = new Set(updated.map(w => w.id));
-    const pushedOut   = filtered.filter(w => !kept.has(w.id)).map(w => w.id);
-    if (pushedOut.length > 0) {
-      const terminated = JSON.parse(localStorage.getItem('terminatedSessions') || '[]');
-      const merged     = [...new Set([...terminated, ...pushedOut])];
-      localStorage.setItem('terminatedSessions', JSON.stringify(merged));
-      setTerminatedSessions(merged);
-    }
+    const updated     = [newEntry, ...filtered].slice(0, 50);
 
     // Persist running total independently (never trimmed)
     if (isNew) {
@@ -346,6 +420,20 @@ const Workspace = () => {
 
     localStorage.setItem(historyKey, JSON.stringify(updated));
     setWorkspaceHistory(updated);
+
+    // Sync visit with backend cloud store
+    if (user?.username) {
+      fetch(`${API_URL}/api/user-workspaces/visit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workspaceId,
+          username: user.username,
+          name: wsName,
+          isAdmin,
+        }),
+      }).catch(() => {});
+    }
   };
 
   const formatTimeAgo = (dateString) => {
@@ -731,11 +819,17 @@ const Workspace = () => {
                         {isTerminated ? (
                           <span className="ws-card-terminated-action">No longer available</span>
                         ) : isLive ? (
-                          <button className="ws-card-btn ws-card-btn--resume" onClick={() => navigate(`/editor/${ws.id}`)}>
+                          <button className="ws-card-btn ws-card-btn--resume" onClick={() => {
+                            saveToHistory(ws.id, ws.name, ws.isAdmin);
+                            navigate(`/editor/${ws.id}`);
+                          }}>
                             Resume <ArrowRight size={13} />
                           </button>
                         ) : (
-                          <button className="ws-card-btn ws-card-btn--open" onClick={() => navigate(`/editor/${ws.id}`)}>
+                          <button className="ws-card-btn ws-card-btn--open" onClick={() => {
+                            saveToHistory(ws.id, ws.name, ws.isAdmin);
+                            navigate(`/editor/${ws.id}`);
+                          }}>
                             Rejoin <ExternalLink size={12} />
                           </button>
                         )}

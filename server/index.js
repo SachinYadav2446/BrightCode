@@ -184,6 +184,32 @@ const saveStore = () => {
     }
 };
 
+// ── Persistent User Workspaces Store (for memory / offline mode) ───────────
+const WORKSPACES_DB_FILE = path.join(__dirname, 'workspaces_db.json');
+let workspacesMemoryStore = [];
+
+const loadWorkspacesStore = () => {
+    if (fs.existsSync(WORKSPACES_DB_FILE)) {
+        try {
+            workspacesMemoryStore = JSON.parse(fs.readFileSync(WORKSPACES_DB_FILE, 'utf8'));
+            logger.info(`[WORKSPACES PERSISTENCE] Loaded ${workspacesMemoryStore.length} workspaces from workspaces_db.json`);
+        } catch (e) {
+            logger.error('[WORKSPACES PERSISTENCE] Error loading workspaces DB file:', e);
+        }
+    }
+};
+
+const saveWorkspacesStore = () => {
+    if (!useMemoryDB) return;
+    try {
+        fs.writeFileSync(WORKSPACES_DB_FILE, JSON.stringify(workspacesMemoryStore, null, 2));
+    } catch (e) {
+        logger.error('[WORKSPACES PERSISTENCE] Error saving workspaces DB file:', e);
+    }
+};
+
+loadWorkspacesStore();
+
 // ── Persistent Factions Store ────────────────────────────────
 const FACTIONS_FILE = path.join(__dirname, 'factions_db.json');
 const factions = new Map();
@@ -379,16 +405,37 @@ const initDB = async () => {
             logger.warn('[DB] Note: Could not create contributed_problems table:', e.message);
         }
         
+        try {
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS user_workspace_history (
+                    id SERIAL PRIMARY KEY,
+                    username TEXT NOT NULL,
+                    workspace_id TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    is_admin BOOLEAN DEFAULT FALSE,
+                    last_visited TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    terminated BOOLEAN DEFAULT FALSE,
+                    UNIQUE(username, workspace_id)
+                );
+                CREATE INDEX IF NOT EXISTS idx_uwh_username ON user_workspace_history(LOWER(username));
+            `);
+            logger.info('[DB] ✅ User workspace history table created');
+        } catch (e) {
+            logger.warn('[DB] Note: Could not create user_workspace_history table:', e.message);
+        }
+        
         // Initialize CodeVault notes and folders tables (we'll handle migrations manually for now)
         logger.info('[DB] PostgreSQL Tables Initialized');
         logger.info('[DB] Database initialization complete!');
     } catch (err) {
         logger.error('DATABASE INIT ERROR:', err);
         logger.error('Full error:', err.stack);
-        logger.warn('--- SWAPPING TO MEMORY FALLBACK MODE (USING PERSISTENT users_db.json + notes_db.json) ---');
+        logger.warn('--- SWAPPING TO MEMORY FALLBACK MODE (USING PERSISTENT users_db.json + notes_db.json + workspaces_db.json) ---');
         useMemoryDB = true;
         loadStore();
         loadNotesStore();
+        loadWorkspacesStore();
     }
 };
 initDB();
@@ -3513,26 +3560,130 @@ const getUserSubscriptionByUsername = async (username) => {
     }
 };
 
-const getWorkspaceCountForUser = (username) => {
+const getWorkspaceCountForUser = async (username) => {
     if (!username) return 0;
-    let count = 0;
-    const storeDir = path.join(__dirname, 'workspace_store');
-    if (fs.existsSync(storeDir)) {
-        try {
-            const files = fs.readdirSync(storeDir);
-            for (const file of files) {
-                if (file.endsWith('.json')) {
-                    try {
-                        const data = JSON.parse(fs.readFileSync(path.join(storeDir, file), 'utf8'));
-                        if (data.owner?.toLowerCase() === username.toLowerCase()) {
-                            count++;
-                        }
-                    } catch (e) {}
-                }
-            }
-        } catch (e) {}
+    const cleanUser = username.trim().toLowerCase();
+    if (useMemoryDB) {
+        return workspacesMemoryStore.filter(w => w.username && w.username.toLowerCase() === cleanUser && !w.terminated && w.isAdmin).length;
     }
-    return count;
+    try {
+        const { rows } = await pool.query(
+            'SELECT COUNT(*)::int as cnt FROM user_workspace_history WHERE LOWER(username) = LOWER($1) AND is_admin = TRUE AND terminated = FALSE',
+            [cleanUser]
+        );
+        return rows[0]?.cnt || 0;
+    } catch (e) {
+        return 0;
+    }
+};
+
+const upsertUserWorkspaceRecord = async ({ username, workspaceId, name, isAdmin, lastVisited, terminated }) => {
+    if (!username || !workspaceId) return null;
+    const cleanUser = username.trim();
+    const cleanId = workspaceId.trim();
+    const wsName = (name || `Workspace ${cleanId.slice(0, 12)}...`).trim();
+    const visitedAt = lastVisited ? new Date(lastVisited).toISOString() : new Date().toISOString();
+
+    if (useMemoryDB) {
+        const existingIdx = workspacesMemoryStore.findIndex(
+            w => w.username && w.username.toLowerCase() === cleanUser.toLowerCase() && w.id === cleanId
+        );
+        if (existingIdx !== -1) {
+            workspacesMemoryStore[existingIdx] = {
+                ...workspacesMemoryStore[existingIdx],
+                name: wsName,
+                isAdmin: isAdmin !== undefined ? Boolean(isAdmin) : workspacesMemoryStore[existingIdx].isAdmin,
+                lastVisited: visitedAt,
+                terminated: terminated !== undefined ? Boolean(terminated) : workspacesMemoryStore[existingIdx].terminated,
+            };
+        } else {
+            workspacesMemoryStore.push({
+                username: cleanUser,
+                id: cleanId,
+                name: wsName,
+                isAdmin: Boolean(isAdmin),
+                lastVisited: visitedAt,
+                createdAt: visitedAt,
+                terminated: Boolean(terminated),
+                visitCount: 1,
+            });
+        }
+        saveWorkspacesStore();
+        return;
+    }
+
+    try {
+        await pool.query(`
+            INSERT INTO user_workspace_history (username, workspace_id, name, is_admin, last_visited, terminated)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (username, workspace_id)
+            DO UPDATE SET
+                name = EXCLUDED.name,
+                is_admin = CASE WHEN EXCLUDED.is_admin = TRUE THEN TRUE ELSE user_workspace_history.is_admin END,
+                last_visited = EXCLUDED.last_visited,
+                terminated = CASE WHEN EXCLUDED.terminated = TRUE THEN TRUE ELSE user_workspace_history.terminated END
+        `, [cleanUser, cleanId, wsName, Boolean(isAdmin), visitedAt, Boolean(terminated)]);
+    } catch (err) {
+        logger.error('[DB] Failed to upsert user workspace record:', err.message);
+    }
+};
+
+const markWorkspaceTerminatedInDB = async (workspaceId) => {
+    if (!workspaceId) return;
+    if (useMemoryDB) {
+        let changed = false;
+        workspacesMemoryStore.forEach(w => {
+            if (w.id === workspaceId) {
+                w.terminated = true;
+                changed = true;
+            }
+        });
+        if (changed) saveWorkspacesStore();
+        return;
+    }
+    try {
+        await pool.query('UPDATE user_workspace_history SET terminated = TRUE WHERE workspace_id = $1', [workspaceId]);
+    } catch (err) {
+        logger.error('[DB] Failed to mark workspace terminated in DB:', err.message);
+    }
+};
+
+const getUserWorkspacesList = async (username) => {
+    if (!username) return [];
+    const cleanUser = username.trim().toLowerCase();
+
+    if (useMemoryDB) {
+        return workspacesMemoryStore
+            .filter(w => w.username && w.username.toLowerCase() === cleanUser)
+            .sort((a, b) => new Date(b.lastVisited || 0).getTime() - new Date(a.lastVisited || 0).getTime())
+            .slice(0, 50)
+            .map(w => ({
+                id: w.id,
+                name: w.name,
+                isAdmin: Boolean(w.isAdmin),
+                lastVisited: w.lastVisited,
+                createdAt: w.createdAt || w.lastVisited,
+                terminated: Boolean(w.terminated),
+                visitCount: w.visitCount || 1,
+            }));
+    }
+
+    try {
+        const { rows } = await pool.query(`
+            SELECT workspace_id as id, name, is_admin as "isAdmin", last_visited as "lastVisited", created_at as "createdAt", terminated
+            FROM user_workspace_history
+            WHERE LOWER(username) = LOWER($1)
+            ORDER BY last_visited DESC
+            LIMIT 50
+        `, [cleanUser]);
+        return rows.map(r => ({
+            ...r,
+            visitCount: 1,
+        }));
+    } catch (err) {
+        logger.error('[DB] Failed to get user workspaces:', err.message);
+        return [];
+    }
 };
 
 // Create workspace endpoint
@@ -3545,7 +3696,7 @@ app.post('/create-workspace', async (req, res) => {
 
     try {
         const sub = await getUserSubscriptionByUsername(admin);
-        const count = getWorkspaceCountForUser(admin);
+        const count = await getWorkspaceCountForUser(admin);
         const limit = sub === 'elite' ? 99999 : (sub === 'pro' ? 50 : 10);
         if (count >= limit) {
             return res.status(403).json({
@@ -3565,15 +3716,151 @@ app.post('/create-workspace', async (req, res) => {
     });
 
     saveRoomState(workspaceId, { owner: admin, snapshots: [], workspaceName: name });
+
+    await upsertUserWorkspaceRecord({
+        username: admin,
+        workspaceId,
+        name,
+        isAdmin: true,
+        lastVisited: new Date().toISOString(),
+    });
     
     res.json({ success: true, workspace: workspaceMetadata.get(workspaceId) });
 });
 
-// Get workspace info endpoint
-app.get('/workspace/:id', (req, res) => {
+// ── User Workspaces API ──────────────────────────────────────────────────
+app.get('/api/user-workspaces', async (req, res) => {
+    const { username } = req.query;
+    if (!username) return res.status(400).json({ error: 'Username is required' });
+    try {
+        const list = await getUserWorkspacesList(username);
+        res.json({ success: true, workspaces: list });
+    } catch (err) {
+        logger.error('[USER WORKSPACES] Fetch error:', err);
+        res.status(500).json({ error: 'Failed to fetch workspaces' });
+    }
+});
+
+app.post('/api/user-workspaces/sync', async (req, res) => {
+    const { username, workspaces } = req.body;
+    if (!username || !Array.isArray(workspaces)) {
+        return res.status(400).json({ error: 'Username and workspaces array required' });
+    }
+    try {
+        for (const item of workspaces) {
+            if (item && item.id) {
+                await upsertUserWorkspaceRecord({
+                    username,
+                    workspaceId: item.id,
+                    name: item.name,
+                    isAdmin: item.isAdmin,
+                    lastVisited: item.lastVisited,
+                    terminated: item.terminated,
+                });
+
+                if (!workspaceMetadata.has(item.id)) {
+                    workspaceMetadata.set(item.id, {
+                        id: item.id,
+                        name: item.name || `Workspace ${item.id.slice(0, 12)}...`,
+                        admin: item.isAdmin ? username : 'unknown',
+                        createdAt: item.lastVisited || new Date().toISOString(),
+                        members: [username],
+                    });
+                }
+            }
+        }
+        const list = await getUserWorkspacesList(username);
+        res.json({ success: true, workspaces: list });
+    } catch (err) {
+        logger.error('[USER WORKSPACES] Sync error:', err);
+        res.status(500).json({ error: 'Failed to sync workspaces' });
+    }
+});
+
+app.post('/api/user-workspaces/visit', async (req, res) => {
+    const { workspaceId, username, name, isAdmin } = req.body;
+    if (!workspaceId || !username) {
+        return res.status(400).json({ error: 'workspaceId and username required' });
+    }
+    try {
+        await upsertUserWorkspaceRecord({
+            username,
+            workspaceId,
+            name,
+            isAdmin,
+            lastVisited: new Date().toISOString(),
+        });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to record visit' });
+    }
+});
+
+app.delete('/api/user-workspaces/:id', async (req, res) => {
     const { id } = req.params;
-    const workspace = workspaceMetadata.get(id);
+    const { username } = req.query;
+    if (!id || !username) return res.status(400).json({ error: 'id and username required' });
+    const cleanUser = username.trim().toLowerCase();
+    try {
+        if (useMemoryDB) {
+            workspacesMemoryStore = workspacesMemoryStore.filter(
+                w => !(w.id === id && w.username && w.username.toLowerCase() === cleanUser)
+            );
+            saveWorkspacesStore();
+        } else {
+            await pool.query('DELETE FROM user_workspace_history WHERE workspace_id = $1 AND LOWER(username) = LOWER($2)', [id, cleanUser]);
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete workspace record' });
+    }
+});
+
+// Get workspace info endpoint
+app.get('/workspace/:id', async (req, res) => {
+    const { id } = req.params;
+    let workspace = workspaceMetadata.get(id);
     
+    if (!workspace) {
+        const roomState = loadRoomState(id);
+        if (roomState) {
+            workspace = {
+                id,
+                name: roomState.workspaceName || `Workspace ${id.slice(0, 12)}...`,
+                admin: roomState.owner,
+                createdAt: roomState.savedAt || new Date().toISOString(),
+                members: [roomState.owner].filter(Boolean),
+            };
+            workspaceMetadata.set(id, workspace);
+        } else if (useMemoryDB) {
+            const memWs = workspacesMemoryStore.find(w => w.id === id);
+            if (memWs) {
+                workspace = {
+                    id,
+                    name: memWs.name,
+                    admin: memWs.username,
+                    createdAt: memWs.createdAt || memWs.lastVisited,
+                    members: [memWs.username],
+                };
+                workspaceMetadata.set(id, workspace);
+            }
+        } else if (pool) {
+            try {
+                const { rows } = await pool.query('SELECT * FROM user_workspace_history WHERE workspace_id = $1 LIMIT 1', [id]);
+                if (rows.length > 0) {
+                    workspace = {
+                        id,
+                        name: rows[0].name,
+                        admin: rows[0].username,
+                        createdAt: rows[0].created_at,
+                        members: [rows[0].username],
+                    };
+                    workspaceMetadata.set(id, workspace);
+                }
+            } catch (e) {}
+        }
+    }
+
     if (!workspace) {
         // If workspace doesn't exist in metadata but might exist as active room
         if (rooms.has(id)) {
@@ -4272,6 +4559,9 @@ io.on('connection', (socket) => {
             
             // Delete workspace metadata
             workspaceMetadata.delete(roomId);
+
+            // Mark terminated in DB / persistent memory
+            markWorkspaceTerminatedInDB(roomId);
 
             // Only wipe persisted files when admin explicitly ends the session
             deleteRoomState(roomId);

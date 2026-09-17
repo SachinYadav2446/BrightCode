@@ -190,9 +190,10 @@ const EditorPage = () => {
     const saveWorkspaceToHistory = (workspaceId, wsName, owner) => {
         if (!workspaceId) return;
         const isAdmin = user?.username === owner;
+        const resolvedName = wsName || `Workspace ${workspaceId.slice(0, 12)}...`;
         const newEntry = { 
             id: workspaceId, 
-            name: wsName || `Workspace ${workspaceId.slice(0, 12)}...`, 
+            name: resolvedName, 
             lastVisited: new Date().toISOString(), 
             isAdmin, 
             visitCount: 1 
@@ -206,16 +207,7 @@ const EditorPage = () => {
         const isNew = !existing.find(item => item.id === workspaceId);
 
         const filtered    = existing.filter(item => item.id !== workspaceId);
-        const updated     = [newEntry, ...filtered].slice(0, 10);
-
-        // Any IDs that got pushed out of the recent-10 window â†’ auto-terminate
-        const kept        = new Set(updated.map(w => w.id));
-        const pushedOut   = filtered.filter(w => !kept.has(w.id)).map(w => w.id);
-        if (pushedOut.length > 0) {
-            const terminated = JSON.parse(localStorage.getItem('terminatedSessions') || '[]');
-            const merged     = [...new Set([...terminated, ...pushedOut])];
-            localStorage.setItem('terminatedSessions', JSON.stringify(merged));
-        }
+        const updated     = [newEntry, ...filtered].slice(0, 50);
 
         // Persist running total independently (never trimmed)
         if (isNew) {
@@ -227,6 +219,20 @@ const EditorPage = () => {
         }
 
         localStorage.setItem(historyKey, JSON.stringify(updated));
+
+        // Sync visit to cloud
+        if (user?.username) {
+            fetch(`${API_URL}/api/user-workspaces/visit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    workspaceId,
+                    username: user.username,
+                    name: resolvedName,
+                    isAdmin,
+                }),
+            }).catch(() => {});
+        }
     };
 
     // Text tool states
