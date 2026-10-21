@@ -24,16 +24,18 @@ import UserModule from './pages/UserModule';
 import UserProfile from './pages/UserProfile';
 import ContributePage from './pages/ContributePage';
 import NexusBoard from './pages/NexusBoard';
+import CollegeAdmin from './pages/CollegeAdmin';
+import StudentExamHub from './pages/StudentExamHub';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import MobileBottomNav from './components/MobileBottomNav';
 import { useLocation } from 'react-router-dom';
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, collegeAuth = false }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (!user) return <Navigate to="/auth" />;
+  if (!user) return <Navigate to={collegeAuth ? "/portal" : "/auth"} />;
   return children;
 };
 
@@ -55,7 +57,11 @@ const NavbarWrapper = () => {
   const location = useLocation();
   const { navbarHidden } = useAuth();
   
-  const hideOnPaths = ['/auth', '/editor', '/code-wars', '/battle-arena', '/arena-lobby', '/arena-waiting', '/u', '/user-guide', '/nexus/ticket'];
+  const hideOnPaths = [
+    '/auth', '/editor', '/code-wars', '/battle-arena', '/arena-lobby', 
+    '/arena-waiting', '/u', '/user-guide', '/nexus/ticket',
+    '/portal', '/college-login', '/college-admin'
+  ];
   const isLanding = location.pathname === '/';
   // Hide navbar during active proctor sessions but not on /proctor hub
   const isActiveSession = /^\/proctor\/.+/.test(location.pathname);
@@ -452,6 +458,22 @@ function App() {
                     <ContributePage />
                   </ProtectedRoute>
                 } 
+              />
+
+              {/* College & Institutional Portal Routes (B2B SaaS) */}
+              <Route path="/portal" element={<Auth defaultTab="student" />} />
+              <Route path="/college-login" element={<Auth defaultTab="faculty" />} />
+              <Route 
+                path="/college-admin" 
+                element={
+                  <ProtectedRoute collegeAuth>
+                    <CollegeAdmin />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/student-portal" 
+                element={<Navigate to="/hub" replace />} 
               />
 
               {/* Catch-all: redirect any unknown path to landing */}
