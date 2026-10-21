@@ -4,7 +4,7 @@ import {
   Building2, Users, FileText, ShieldAlert, Download, Plus, Search,
   RefreshCw, Trash2, KeyRound, Play, CheckCircle2, AlertTriangle,
   UploadCloud, FileSpreadsheet, Sparkles, School, BarChart3, Clock,
-  LogOut, ArrowRight, Check, Copy, Eye, Award
+  LogOut, ArrowRight, Check, Copy, Eye, Award, BookOpen
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import API_URL from '../config';
