@@ -118,6 +118,10 @@ app.use('/api/proctor', proctorAPI);
 // ── Mount Contribute API ────────────────────────────────────
 app.use('/api/contribute', contributeAPI);
 
+// ── Mount College B2B Institutional API ─────────────────────
+const collegeAPI = require('./collegeAPI');
+app.use('/api/college', collegeAPI);
+
 // Memory Fallback (for when PostgreSQL is offline)
 let memoryStore = { users: [] };
 
@@ -155,6 +159,28 @@ const normalizeMemoryUser = (user) => {
     if (!Array.isArray(user.stack)) user.stack = [];
     if (!user.created_at && user.joinedAt) user.created_at = user.joinedAt;
     if (!user.joinedAt && user.created_at) user.joinedAt = user.created_at;
+    if (user.username === 'apex_21cs001' || user.roll_no === '21CS001') {
+        user.role = 'student';
+        user.org_id = 'demo_college';
+        user.roll_no = '21CS001';
+        user.branch = 'CSE';
+        user.batch = '2026';
+        user.subscription = 'campus_student';
+    } else if (user.username === 'prof_sharma') {
+        user.role = 'college_admin';
+        user.org_id = 'demo_college';
+        user.roll_no = 'FACULTY01';
+        user.branch = 'CSE';
+        user.batch = 'FACULTY';
+        user.subscription = 'elite';
+    } else {
+        if (user.role === undefined) user.role = user.username === 'admin' ? 'super_admin' : 'individual';
+        if (user.org_id === undefined) user.org_id = null;
+        if (user.roll_no === undefined) user.roll_no = null;
+        if (user.branch === undefined) user.branch = null;
+        if (user.batch === undefined) user.batch = null;
+    }
+    if (user.is_temp_password === undefined) user.is_temp_password = false;
     if (user.username === 'admin') {
         user.subscription = 'elite';
     } else if (user.subscription === undefined) {
@@ -173,6 +199,70 @@ const loadStore = () => {
             logger.error('[PERSISTENCE] Error loading memory DB file:', e);
         }
     }
+
+    if (!memoryStore.users) memoryStore.users = [];
+    const adminHash = bcrypt.hashSync('Admin@123', 10);
+    const studentHash = bcrypt.hashSync('Bright@21CS001', 10);
+
+    let prof = memoryStore.users.find(u => u.username === 'prof_sharma');
+    if (!prof) {
+        memoryStore.users.push({
+            id: 'apex_faculty_admin_1',
+            username: 'prof_sharma',
+            email: 'admin@apex.edu',
+            password: adminHash,
+            role: 'college_admin',
+            org_id: 'demo_college',
+            roll_no: 'FACULTY01',
+            branch: 'CSE',
+            batch: 'FACULTY',
+            subscription: 'elite',
+            xp: 1000,
+            created_at: new Date().toISOString()
+        });
+    } else {
+        prof.password = adminHash;
+        prof.role = 'college_admin';
+        prof.org_id = 'demo_college';
+        prof.roll_no = 'FACULTY01';
+        prof.branch = 'CSE';
+        prof.batch = 'FACULTY';
+        prof.subscription = 'elite';
+    }
+
+    let student = memoryStore.users.find(u => u.username === 'apex_21cs001' || u.roll_no === '21CS001');
+    if (!student) {
+        memoryStore.users.push({
+            id: 'apex_demo_student_1',
+            username: 'apex_21cs001',
+            name: 'Aryan Sharma',
+            email: '21cs001@apex.edu',
+            password: studentHash,
+            role: 'student',
+            org_id: 'demo_college',
+            roll_no: '21CS001',
+            branch: 'CSE',
+            batch: '2026',
+            subscription: 'campus_student',
+            xp: 150,
+            is_temp_password: true,
+            created_at: new Date().toISOString()
+        });
+    } else {
+        student.password = studentHash;
+        student.role = 'student';
+        student.org_id = 'demo_college';
+        student.roll_no = '21CS001';
+        student.branch = 'CSE';
+        student.batch = '2026';
+        student.subscription = 'campus_student';
+    }
+
+    try {
+        fs.writeFileSync(DB_FILE, JSON.stringify(memoryStore, null, 2));
+    } catch (e) {
+        logger.error('[PERSISTENCE] Error saving memory DB file:', e);
+    }
 };
 
 const saveStore = () => {
@@ -183,6 +273,8 @@ const saveStore = () => {
         logger.error('[PERSISTENCE] Error saving memory DB file:', e);
     }
 };
+
+loadStore();
 
 // ── Persistent User Workspaces Store (for memory / offline mode) ───────────
 const WORKSPACES_DB_FILE = path.join(__dirname, 'workspaces_db.json');
@@ -621,9 +713,17 @@ app.post('/login', async (req, res) => {
     try {
         let user;
         if (useMemoryDB) {
-            user = memoryStore.users.find(u => u.email === email);
+            user = memoryStore.users.find(u => 
+                (u.email && u.email.toLowerCase() === email) ||
+                (u.username && u.username.toLowerCase() === email) ||
+                (u.roll_no && u.roll_no.toLowerCase() === email)
+            );
         } else {
-            const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+            const result = await pool.query(`
+                SELECT * FROM users 
+                WHERE LOWER(email) = $1 OR LOWER(username) = $1 OR LOWER(roll_no) = $1 
+                LIMIT 1
+            `, [email]);
             user = result.rows[0];
         }
 
@@ -644,12 +744,23 @@ app.post('/login', async (req, res) => {
             await pool.query('UPDATE users SET session_id = $1 WHERE id = $2', [sessionId, user.id]);
         }
 
-        const token = jwt.sign({ id: user.id, username: user.username, sessionId }, JWT_SECRET, { expiresIn: '7d' });
+        const token = jwt.sign({ 
+            id: user.id, 
+            username: user.username, 
+            sessionId,
+            role: user.role || 'individual',
+            org_id: user.org_id || null
+        }, JWT_SECRET, { expiresIn: '7d' });
         const activity = user.activity || {};
         res.json({
             token,
             username: user.username,
             email: user.email,
+            role: user.role || 'individual',
+            orgId: user.org_id || null,
+            rollNo: user.roll_no || '',
+            branch: user.branch || '',
+            batch: user.batch || '',
             xp: user.xp || 0,
             css_level: user.css_level || 0,
             logic_level: user.logic_level || 0,
@@ -2393,6 +2504,11 @@ app.get('/me', authenticateToken, async (req, res) => {
                 id: u.id,
                 username: u.username,
                 email: u.email,
+                role: u.role || 'user',
+                org_id: u.org_id || null,
+                roll_no: u.roll_no || null,
+                branch: u.branch || null,
+                batch: u.batch || null,
                 xp: u.xp || 0,
                 level: computeLevel(u.xp || 0),
                 css_level: u.css_level || 0,
@@ -2411,13 +2527,18 @@ app.get('/me', authenticateToken, async (req, res) => {
             });
         }
         const result = await pool.query(
-            'SELECT id, username, email, xp, css_level, logic_level, react_level, mern_level, activity, created_count, joined_count, bio, stack, subscription, created_at FROM users WHERE id = $1',
+            'SELECT id, username, email, role, org_id, roll_no, branch, batch, xp, css_level, logic_level, react_level, mern_level, activity, created_count, joined_count, bio, stack, subscription, created_at FROM users WHERE id = $1',
             [req.user.id]
         );
         if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
         const u = result.rows[0];
         res.json({
             ...u,
+            role: u.role || 'user',
+            org_id: u.org_id || null,
+            roll_no: u.roll_no || null,
+            branch: u.branch || null,
+            batch: u.batch || null,
             xp: u.xp || 0,
             level: computeLevel(u.xp || 0),
             activity: u.activity || {},
