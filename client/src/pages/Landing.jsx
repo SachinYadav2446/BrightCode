@@ -6,7 +6,7 @@ import {
   Sparkles, Check, Play, CheckCircle, ArrowUpRight,
   Code2, Menu, X, Zap, Activity, Star, TrendingUp, Lock, Crown,
   User, Settings, ChevronRight, Compass, BookOpen, Layers,
-  Map, Swords, LifeBuoy, TicketCheck
+  Map, Swords, LifeBuoy, TicketCheck, School
 } from "lucide-react";
 import API_URL from "../config";
 import CodeBrightLogo from "../components/CodeBrightLogo";
@@ -173,6 +173,29 @@ function Nav({ handleAuth }) {
 
         {/* RIGHT: Actions */}
         <div className="landing-nav-right">
+          <a
+            href="/portal"
+            className="landing-nav-btn-campus"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
+              color: '#f87171',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              fontSize: '0.82rem',
+              fontWeight: '600',
+              textDecoration: 'none',
+              transition: 'all 0.2s'
+            }}
+            title="Institutional Testing & College Lab Exams"
+          >
+            <School size={14} />
+            <span>Campus Portal</span>
+          </a>
+
           <button
             className="landing-nav-btn-signin"
             onClick={() => handleAuth("login")}
@@ -245,6 +268,22 @@ function Nav({ handleAuth }) {
             </div>
 
             <div className="landing-nav-drawer-actions">
+              <a
+                href="/portal"
+                className="landing-nav-btn-signin drawer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  borderColor: 'rgba(239, 68, 68, 0.4)',
+                  color: '#f87171'
+                }}
+              >
+                <School size={15} />
+                <span>Campus / College Portal</span>
+              </a>
               <button
                 className="landing-nav-btn-signin drawer"
                 onClick={() => {
