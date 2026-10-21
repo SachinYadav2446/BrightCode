@@ -15,7 +15,8 @@ import {
   Terminal,
   Lock,
   Shield,
-  Compass
+  Compass,
+  School
 } from 'lucide-react';
 import './Navbar.css';
 import './FriendsDrawer.css';
@@ -139,6 +140,25 @@ const Navbar = () => {
 
           {/* RIGHT: Actions */}
           <div className="nav-right">
+            {/* Faculty Coordinator Dashboard Shortcut */}
+            {(user?.role === 'college_admin' || user?.role === 'super_admin') && (
+              <Link 
+                to="/college-admin" 
+                className="fd-nav-btn" 
+                title="Faculty Coordinator Dashboard"
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  color: '#c084fc',
+                  background: 'rgba(168, 85, 247, 0.1)',
+                  border: '1px solid rgba(168, 85, 247, 0.3)'
+                }}
+              >
+                <School size={15} />
+              </Link>
+            )}
+
             {user && (
               <motion.button
                 whileHover={{ scale: 1.08 }}
