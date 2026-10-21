@@ -43,8 +43,8 @@
 
 html {
   font-size: 80%;
-  scroll-behavior: smooth;
   scrollbar-gutter: stable;
+  overflow-x: clip;
 }
 
 /* Mobile screens (600px and below) */
@@ -94,7 +94,7 @@ body {
   background-color: var(--bg-dark);
   color: var(--text-main);
   line-height: 1.5;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 button {
