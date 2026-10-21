@@ -171,3 +171,477 @@
   transform: scale(0.97);
 }
 
+/* ── Horizontal Story Section (580vh on desktop) ── */
+.bc-story-section {
+  position: relative;
+  min-height: 100vh;
+}
+
+@media (min-width: 768px) {
+  .bc-story-section {
+    height: 580vh;
+  }
+}
+
+.bc-story-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .bc-story-sticky {
+    display: block;
+  }
+}
+
+.bc-story-canvas {
+  position: relative;
+  height: 100%;
+  will-change: transform;
+}
+
+.bc-canvas-content {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+}
+
+/* ── Scene 1: Dual-Core Genesis (Hero Stage) ── */
+.bc-scene-1 {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  user-select: none;
+}
+
+.bc-scene-box {
+  max-width: 950px;
+  transition: all 0.8s ease;
+  opacity: 1;
+  transform: scale(1);
+}
+
+.bc-scene-box.revealed {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.bc-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(24, 24, 27, 0.6);
+  padding: 0.35rem 1.1rem;
+  backdrop-filter: blur(8px);
+}
+
+.bc-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f43f5e;
+}
+
+.bc-status-dot.pulse {
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.bc-tag-label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #a1a1aa;
+}
+
+.bc-hero-title {
+  font-family: "Newsreader", serif;
+  font-size: clamp(3.2rem, 7vw, 6rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  line-height: 1.05;
+  margin: 1.25rem 0 0 0;
+}
+
+.bc-title-italic {
+  font-style: italic;
+  font-weight: 400;
+  color: #a1a1aa;
+}
+
+.bc-hero-desc {
+  margin: 1.6rem auto 0 auto;
+  max-width: 700px;
+  font-size: clamp(1rem, 1.8vw, 1.18rem);
+  font-weight: 300;
+  color: #a1a1aa;
+  line-height: 1.65;
+}
+
+.bc-hero-ctas {
+  margin-top: 2.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.bc-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(24, 24, 27, 0.85);
+  padding: 0.85rem 1.75rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.875rem;
+  color: #e4e4e7;
+  text-decoration: none;
+  transition: all 0.25s;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.bc-btn-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.bc-hero-telemetry-bar {
+  margin-top: 2.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.bc-telemetry-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(18, 18, 22, 0.6);
+  padding: 0.35rem 0.95rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.725rem;
+  color: #a1a1aa;
+  letter-spacing: 0.04em;
+}
+
+.chip-icon { color: #a1a1aa; }
+.chip-icon.rose { color: #fb7185; }
+.chip-icon.emerald { color: #34d399; }
+
+.bc-scroll-indicator {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  animation: nudge 2s ease-in-out infinite;
+}
+
+.bc-arrow-down {
+  font-size: 1rem;
+}
+
+/* ── Scene 2, 3, 4 (Calibrated Coordinates) ── */
+.bc-scene-2 {
+  position: absolute;
+  top: 20vh;
+  left: 125vw;
+  width: 44vw;
+  max-width: 640px;
+}
+
+.bc-scene-3 {
+  position: absolute;
+  top: 20vh;
+  left: 215vw;
+  width: 44vw;
+  max-width: 640px;
+}
+
+.bc-scene-4 {
+  position: absolute;
+  top: 22vh;
+  left: 305vw;
+  width: 50vw;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.bc-scene-card {
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(18, 18, 22, 0.85);
+  padding: 2.25rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.7);
+}
+
+.bc-launch-card {
+  border-radius: 1.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(18, 18, 22, 0.9);
+  padding: 3rem;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bc-scene-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+}
+
+.bc-scene-tag.rose { color: #fb7185; }
+.bc-scene-tag.emerald { color: #34d399; }
+.bc-scene-tag.zinc { color: #a1a1aa; }
+.text-rose { color: #fb7185; }
+
+.bc-scene-heading {
+  font-family: "Newsreader", serif;
+  font-size: clamp(2.2rem, 3.2vw, 3rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.bc-launch-heading {
+  font-family: "Newsreader", serif;
+  font-size: clamp(2.8rem, 4vw, 3.8rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.bc-scene-text {
+  margin: 1.15rem 0 0 0;
+  font-size: 0.95rem;
+  font-weight: 300;
+  color: #a1a1aa;
+  line-height: 1.65;
+}
+
+.bc-scene-text.centered {
+  max-width: 540px;
+  text-align: center;
+}
+
+/* Simulation Snippet Box */
+.bc-snippet-box {
+  margin-top: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #111114;
+  padding: 1rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+}
+
+.bc-snippet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 0.5rem;
+  color: #71717a;
+  font-size: 0.7rem;
+}
+
+.bc-snippet-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f43f5e;
+  margin-right: 0.4rem;
+}
+
+.bc-snippet-dot.emerald {
+  background: #34d399;
+}
+
+.bc-ping-pill {
+  border-radius: 9999px;
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  background: rgba(244, 63, 94, 0.1);
+  padding: 0.1rem 0.45rem;
+  color: #fb7185;
+}
+
+.bc-ping-pill.emerald {
+  border-color: rgba(52, 211, 153, 0.3);
+  background: rgba(52, 211, 153, 0.1);
+  color: #34d399;
+}
+
+.bc-snippet-body {
+  margin-top: 0.65rem;
+  line-height: 1.6;
+  color: #d4d4d8;
+}
+
+.bc-badge-row {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.bc-badge {
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(24, 24, 27, 0.85);
+  padding: 0.3rem 0.7rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+  color: #d4d4d8;
+}
+
+.bc-launch-ctas {
+  margin-top: 2.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.bc-btn-ghost {
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(24, 24, 27, 0.85);
+  padding: 0.85rem 1.85rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.875rem;
+  color: #d4d4d8;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bc-btn-ghost:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+}
+
+/* ── Mobile Story Flow (< 768px) ── */
+.bc-mobile-story {
+  display: flex;
+  flex-direction: column;
+  gap: 4.5rem;
+  padding: 7rem 1.5rem 4rem 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .bc-mobile-story {
+    display: none;
+  }
+}
+
+.bc-mobile-card {
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #121215;
+  padding: 1.75rem;
+}
+
+.bc-mobile-card.hero {
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: center;
+}
+
+.bc-mobile-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e11d48;
+  margin-bottom: 0.75rem;
+}
+
+.bc-mobile-title {
+  font-family: "Newsreader", serif;
+  font-size: 2.75rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.bc-mobile-h2 {
+  font-family: "Newsreader", serif;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #ffffff;
+  margin: 0.5rem 0 0 0;
+}
+
+.bc-mobile-text {
+  font-size: 0.875rem;
+  color: #a1a1aa;
+  font-weight: 300;
+  line-height: 1.5;
+  margin-top: 0.75rem;
+}
+
+.bc-mobile-ctas {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bc-btn-signin.full,
+.bc-btn-portal.full {
+  width: 100%;
+  justify-content: center;
+  padding: 0.75rem 1.25rem;
+}
+
