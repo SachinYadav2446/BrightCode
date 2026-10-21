@@ -645,3 +645,242 @@
   padding: 0.75rem 1.25rem;
 }
 
+/* ── Parallax Layers ── */
+.bc-parallax-env {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bc-parallax-deep {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 300vw;
+  will-change: transform;
+}
+
+.bc-grid-bg-pattern {
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background-image: 
+    radial-gradient(circle, #ffffff 1px, transparent 1px),
+    linear-gradient(to right, #ffffff 1px, transparent 1px),
+    linear-gradient(to bottom, #ffffff 1px, transparent 1px);
+  background-size: 60px 60px, 120px 120px, 120px 120px;
+}
+
+.bc-ambient-pool {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  filter: blur(150px);
+}
+
+.bc-pool-1 {
+  left: 70vw;
+  top: 20vh;
+  width: 600px;
+  height: 600px;
+  background: rgba(225, 29, 72, 0.14);
+}
+
+.bc-pool-2 {
+  left: 140vw;
+  top: 60vh;
+  width: 550px;
+  height: 550px;
+  background: rgba(39, 39, 42, 0.3);
+}
+
+.bc-pool-3 {
+  left: 220vw;
+  top: 30vh;
+  width: 650px;
+  height: 650px;
+  background: rgba(190, 18, 60, 0.12);
+}
+
+.bc-parallax-warp {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 35vw;
+  width: 80vw;
+  will-change: transform;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.bc-warp-bloom {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 45vw;
+  height: 90vh;
+  border-radius: 50%;
+  background: linear-gradient(90deg, rgba(225, 29, 72, 0.05), rgba(255, 255, 255, 0.08), rgba(225, 29, 72, 0.05));
+  filter: blur(80px);
+}
+
+.bc-warp-lines {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  opacity: 0.2;
+}
+
+.bc-warp-line {
+  width: 1px;
+}
+
+.bc-warp-line.full {
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.bc-warp-line.mid {
+  height: 75%;
+  background: linear-gradient(to bottom, transparent, rgba(244, 63, 94, 0.3), transparent);
+}
+
+.bc-parallax-mid {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 380vw;
+  will-change: transform;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: rgba(161, 161, 170, 0.35);
+  user-select: none;
+}
+
+.bc-parallax-mid span {
+  position: absolute;
+}
+
+.bc-parallax-stars {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 560vw;
+  will-change: transform;
+}
+
+.bc-star-particle {
+  position: absolute;
+  border-radius: 50%;
+}
+
+/* ── StringLine SVG ── */
+.bc-string-svg {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.bc-tip-pulse {
+  fill: none;
+  stroke: #fb7185;
+  stroke-width: 1.5;
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.bc-tip-halo {
+  fill: rgba(244, 63, 94, 0.25);
+  stroke: rgba(255, 255, 255, 0.6);
+  stroke-width: 1;
+}
+
+.bc-tip-core {
+  fill: #ffffff;
+  filter: drop-shadow(0 0 6px #ffffff);
+}
+
+/* ── Rabbit Hole Button & Singularity ── */
+.bc-rabbit-hole-btn {
+  display: inline-flex;
+  min-width: 15rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: #09090b;
+  color: #ffffff;
+  padding: 0.85rem 1.85rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.bc-rabbit-hole-btn.hovered {
+  background: #ffffff;
+  color: #09090b;
+  font-weight: 600;
+  transform: scale(1.05) rotate(-1deg);
+  border-color: #ffffff;
+}
+
+.bc-rabbit-hole-btn.jumping {
+  background: transparent;
+  color: #ffffff;
+}
+
+.bc-btn-arrow {
+  transition: transform 0.3s ease;
+}
+
+.bc-rabbit-hole-btn.hovered .bc-btn-arrow {
+  transform: translateX(4px);
+}
+
+.bc-fall-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  overflow: hidden;
+  pointer-events: auto;
+  background: rgba(9, 9, 11, 0.95);
+  backdrop-filter: blur(16px);
+}
+
+.bc-fall-vortex {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(225, 29, 72, 0.4), #18181b, #000000);
+  filter: blur(30px);
+}
+
+.bc-fall-core {
+  position: absolute;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 80px #ffffff;
+}
+
+.bc-debris-item {
+  position: absolute;
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 700;
+  color: #ffffff;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(0 0 10px rgba(225, 29, 72, 0.8));
+}
+
