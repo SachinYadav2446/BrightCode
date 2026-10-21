@@ -63,6 +63,16 @@ export default function Landing() {
     }, 400);
   }, []);
 
+  // Support horizontal trackpad swipe gestures to scroll story horizontally
+  useEffect(() => {
+    const handleWheel = (e) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        window.scrollBy({ top: e.deltaX, behavior: "auto" });
+      }
+    };
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, []);
 
   // Horizontal scroll animation frame loop
   useEffect(() => {
