@@ -51,6 +51,13 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user_joined');
     localStorage.removeItem('session_start');
     localStorage.removeItem('user_subscription');
+    localStorage.removeItem('user_role');
+    localStorage.removeItem('college_org_id');
+    localStorage.removeItem('college_org_name');
+    localStorage.removeItem('college_org_code');
+    localStorage.removeItem('college_roll_no');
+    localStorage.removeItem('college_branch');
+    localStorage.removeItem('college_batch');
     
     // Clear all game-specific progress to prevent leaking to other users
     Object.keys(localStorage).forEach(key => {
@@ -153,10 +160,20 @@ export const AuthProvider = ({ children }) => {
       setSessionValid(isSessionValid);
 
       // Set from localStorage immediately (avoids flash of unauthenticated UI)
+      const userRole = localStorage.getItem('user_role') || 'user';
+      const orgId = localStorage.getItem('college_org_id') || null;
+      const orgName = localStorage.getItem('college_org_name') || null;
+      const orgCode = localStorage.getItem('college_org_code') || null;
+      const rollNo = localStorage.getItem('college_roll_no') || null;
+      const branch = localStorage.getItem('college_branch') || null;
+      const batch = localStorage.getItem('college_batch') || null;
+
       setUser({ 
         id: userId,
         _id: userId,
         token, username, email, 
+        role: userRole,
+        orgId, orgName, orgCode, rollNo, branch, batch,
         xp: parseInt(xp || '0'),
         css_level: parseInt(css || '0'),
         logic_level: parseInt(logic || '0'),
@@ -203,10 +220,22 @@ export const AuthProvider = ({ children }) => {
           if (d.project1 !== undefined) localStorage.setItem('user_project1', d.project1);
           if (d.project2 !== undefined) localStorage.setItem('user_project2', d.project2);
           if (d.createdAt !== undefined) localStorage.setItem('user_joined', d.createdAt);
+          if (d.role) localStorage.setItem('user_role', d.role);
+          if (d.org_id || d.orgId) localStorage.setItem('college_org_id', d.org_id || d.orgId);
+          if (d.roll_no || d.rollNo) localStorage.setItem('college_roll_no', d.roll_no || d.rollNo);
+          if (d.branch) localStorage.setItem('college_branch', d.branch);
+          if (d.batch) localStorage.setItem('college_batch', d.batch);
           
           setUser(prev => prev ? { 
             ...prev, 
-            ...d
+            ...d,
+            role: d.role || prev.role || userRole,
+            orgId: d.org_id || d.orgId || prev.orgId || orgId,
+            orgName: d.org_name || d.orgName || prev.orgName || orgName,
+            orgCode: d.org_code || d.orgCode || prev.orgCode || orgCode,
+            rollNo: d.roll_no || d.rollNo || prev.rollNo || rollNo,
+            branch: d.branch || prev.branch || branch,
+            batch: d.batch || prev.batch || batch
           } : null);
         }
       }).catch((err) => {
@@ -386,6 +415,11 @@ export const AuthProvider = ({ children }) => {
     } : null);
   };
 
+  const setSessionUser = (userData) => {
+    setUser(userData);
+    setSessionValid(true);
+  };
+
   const syncUser = async () => {
     const token = localStorage.getItem('token') || user?.token;
     if (!token) return;
@@ -393,7 +427,8 @@ export const AuthProvider = ({ children }) => {
       const { data } = await axios.get(`${API_URL}/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setUser(prev => prev ? { ...prev, ...data } : null);
+      setUser(prev => prev ? { ...prev, ...data } : { ...data, token });
+      setSessionValid(true);
       if (data.subscription !== undefined) {
         localStorage.setItem('user_subscription', data.subscription);
       }
@@ -429,6 +464,7 @@ export const AuthProvider = ({ children }) => {
       changePassword, 
       updateXP, 
       syncUser, 
+      setSessionUser,
       loading, 
       sessionValid, 
       navbarHidden, 
