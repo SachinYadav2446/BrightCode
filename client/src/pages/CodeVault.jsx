@@ -739,7 +739,50 @@ const CodeVault = () => {
                   isFaculty={user?.role === 'college_admin' || user?.role === 'faculty'}
                 />
               </motion.div>
-            ) : (
+            ) : vaultMode === 'faculty' && isCollegeStudent ? (
+              <motion.div
+                key="faculty-hub"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="vault-welcome faculty-hub-welcome"
+              >
+                <div className="fac-hub-container">
+                  <div className="fac-hub-hero">
+                    <div className="fac-hub-college-pill">
+                      <School size={13} />
+                      <span>{collegeName} Official Codex</span>
+                    </div>
+                    <h2>Classroom Notes & Faculty Guides</h2>
+                    <p>
+                      Verified study guides, lecture summaries, and algorithmic references published directly by your college faculty.
+                    </p>
+                  </div>
+
+                  {facultyLoading ? (
+                    <div className="loading-state-vault">
+                      <div className="spinner-vault"></div>
+                      <p>Loading published notes...</p>
+                    </div>
+                  ) : filteredFacultyNotes.length === 0 ? (
+                    <div className="empty-state-vault">
+                      <div className="ev-icon-ring">
+                        <div className="ev-icon-inner">
+                          <BookOpen size={36} />
+                        </div>
+                      </div>
+                      <h3>No Lecture Notes Published Yet</h3>
+                      <p>
+                        Your professors have not published any course notes or lab guides yet. When they do, they will appear here in real-time.
+                      </p>
+                      <button
+                        className="fac-hub-refresh-btn"
+                        onClick={loadFacultyNotes}
+                      >
+                        <RefreshCw size={14} /> Refresh Codex
+                      </button>
+                    </div>
+                  ) : (
                     <div className="fac-hub-cards-grid">
                       {filteredFacultyNotes.map(fNote => {
                         const dateStr = fNote.published_at || fNote.updated_at
@@ -887,7 +930,7 @@ const CodeVault = () => {
       <CommandPalette
         isOpen={showSearchModal}
         onClose={() => setShowSearchModal(false)}
-        notes={[...notes, ...facultyNotes.map(fn => ({ ...fn, isFacultyNote: true }))]}
+        notes={notes}
         folders={folders}
         onSelectNote={(note) => {
           setActiveNote(note);
