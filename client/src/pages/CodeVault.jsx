@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -15,7 +15,14 @@ import {
   Trash2,
   MoreVertical,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  School,
+  GraduationCap,
+  BookOpen,
+  Sparkles,
+  CheckCircle2,
+  ArrowRight,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NoteEditor from '../components/codevault/NoteEditor';
@@ -31,7 +38,8 @@ import {
   updateFolder,
   deleteFolder,
   updateNote,
-  deleteNote
+  deleteNote,
+  fetchFacultyNotes
 } from '../services/notesService';
 import toast from 'react-hot-toast';
 import './CodeVault.css';
@@ -71,9 +79,28 @@ const CodeVault = () => {
   const [selectedFacultyTag, setSelectedFacultyTag] = useState(null);
 
 
+  const loadFacultyNotes = useCallback(async () => {
+    try {
+      setFacultyLoading(true);
+      const orgId = user?.orgId || user?.org_id || localStorage.getItem('college_org_id') || 'demo_college';
+      const branch = user?.branch || 'ALL';
+      const batch = user?.batch || 'ALL';
+      const res = await fetchFacultyNotes(orgId, branch, batch);
+      setFacultyNotes(res?.notes || []);
+    } catch (e) {
+      console.error('Failed to load faculty notes:', e);
+      setFacultyNotes([]);
+    } finally {
+      setFacultyLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => {
     loadData();
-  }, []);
+    if (isCollegeStudent) {
+      loadFacultyNotes();
+    }
+  }, [isCollegeStudent, loadFacultyNotes]);
 
   const loadData = async () => {
     try {
@@ -99,6 +126,22 @@ const CodeVault = () => {
       setLoading(false);
     }
   };
+
+  const filteredFacultyNotes = useMemo(() => {
+    return facultyNotes.filter(n => {
+      const q = facultySearch.toLowerCase();
+      const matchesSearch = !facultySearch ||
+        (n.title || '').toLowerCase().includes(q) ||
+        (n.content || '').toLowerCase().includes(q) ||
+        (n.author_name || '').toLowerCase().includes(q);
+      const matchesTag = !selectedFacultyTag || (Array.isArray(n.tags) && n.tags.includes(selectedFacultyTag));
+      return matchesSearch && matchesTag;
+    });
+  }, [facultyNotes, facultySearch, selectedFacultyTag]);
+
+  const facultyTags = useMemo(() => {
+    return [...new Set(facultyNotes.flatMap(n => Array.isArray(n.tags) ? n.tags : []))].sort();
+  }, [facultyNotes]);
 
   const handleFolderCreateSubmit = async (e) => {
     if (e) e.preventDefault();
@@ -387,24 +430,146 @@ const CodeVault = () => {
             <h1 className="vault-logo">CODE VAULT</h1>
           </Link>
 
-          {/* Sort Filter in Sidebar */}
-          <div className="sidebar-filter">
-            <div className="sort-select-wrapper">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="sort-select-sidebar"
+          {/* Institutional Mode Switcher */}
+          {isCollegeStudent && (
+            <div className="vault-mode-switch-bar">
+              <button
+                type="button"
+                className={`vault-mode-tab-btn ${vaultMode === 'faculty' ? 'active' : ''}`}
+                onClick={() => {
+                  setVaultMode('faculty');
+                  setActiveNote(null);
+                }}
               >
-                <option value="updated">Last Updated</option>
-                <option value="created">Date Created</option>
-                <option value="title">Title (A-Z)</option>
-              </select>
-              <ChevronDown size={14} className="sort-arrow" />
+                <School size={13} />
+                <span>Faculty Codex</span>
+                {facultyNotes.length > 0 && <span className="vault-tab-count-badge">{facultyNotes.length}</span>}
+              </button>
+              <button
+                type="button"
+                className={`vault-mode-tab-btn ${vaultMode === 'personal' ? 'active' : ''}`}
+                onClick={() => {
+                  setVaultMode('personal');
+                  setActiveNote(null);
+                }}
+              >
+                <Folder size={13} />
+                <span>My Notes</span>
+                <span className="vault-tab-count-badge">{notes.length}</span>
+              </button>
             </div>
-          </div>
+          )}
 
-          {/* Folder Tree */}
-          <div className="folder-tree">
+          {/* FACULTY MODE SIDEBAR VIEW */}
+          {vaultMode === 'faculty' && isCollegeStudent ? (
+            <>
+              <div className="sidebar-filter">
+                <div className="fac-notes-sidebar-search">
+                  <Search size={13} className="fac-sidebar-search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search faculty notes..."
+                    value={facultySearch}
+                    onChange={(e) => setFacultySearch(e.target.value)}
+                    className="fac-sidebar-search-input"
+                  />
+                  {facultySearch && (
+                    <button className="fac-sidebar-search-clear" onClick={() => setFacultySearch('')}>
+                      <XIcon size={11} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="folder-tree">
+                <div className="tree-section">
+                  <div className="tree-section-header">
+                    <span>LECTURE NOTES ({filteredFacultyNotes.length})</span>
+                    <button
+                      className="btn-add-folder"
+                      onClick={loadFacultyNotes}
+                      title="Refresh notes"
+                    >
+                      <RefreshCw size={11} className={facultyLoading ? 'spin' : ''} />
+                    </button>
+                  </div>
+
+                  {facultyLoading ? (
+                    <div className="fac-sidebar-loading-box">
+                      <div className="spinner-vault-sm" />
+                      <p>Loading notes...</p>
+                    </div>
+                  ) : filteredFacultyNotes.length === 0 ? (
+                    <div className="empty-folders">
+                      <p>{facultySearch ? 'No notes match search' : 'No notes published yet'}</p>
+                    </div>
+                  ) : (
+                    filteredFacultyNotes.map(fNote => {
+                      const isSelected = activeNote?.id === fNote.id;
+                      return (
+                        <div key={fNote.id} className="file-item-wrapper">
+                          <button
+                            className={`file-item faculty-file-item ${isSelected ? 'active' : ''}`}
+                            onClick={() => {
+                              setActiveNote({ ...fNote, isFacultyNote: true });
+                              setSidebarOpen(false);
+                            }}
+                          >
+                            <BookOpen size={14} className="file-icon text-accent" />
+                            <div className="fac-note-nav-info">
+                              <span className="fac-note-nav-title">{fNote.title || 'Untitled Note'}</span>
+                              <span className="fac-note-nav-author">By {fNote.author_name || 'Faculty'}</span>
+                            </div>
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {facultyTags.length > 0 && (
+                  <div className="tree-section">
+                    <div className="tree-section-header">
+                      <span>TOPICS & TAGS</span>
+                    </div>
+                    {facultyTags.slice(0, 10).map(tag => (
+                      <button
+                        key={tag}
+                        className={`tree-item ${selectedFacultyTag === tag ? 'active' : ''}`}
+                        onClick={() => setSelectedFacultyTag(selectedFacultyTag === tag ? null : tag)}
+                      >
+                        <Hash size={15} />
+                        <span>{tag}</span>
+                        <span className="item-count">
+                          {facultyNotes.filter(n => n.tags && n.tags.includes(tag)).length}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            /* PERSONAL MODE SIDEBAR VIEW */
+            <>
+              {/* Sort Filter in Sidebar */}
+              <div className="sidebar-filter">
+                <div className="sort-select-wrapper">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="sort-select-sidebar"
+                  >
+                    <option value="updated">Last Updated</option>
+                    <option value="created">Date Created</option>
+                    <option value="title">Title (A-Z)</option>
+                  </select>
+                  <ChevronDown size={14} className="sort-arrow" />
+                </div>
+              </div>
+
+              {/* Folder Tree */}
+              <div className="folder-tree">
             {/* Folders Section - Always at top */}
             <div className="tree-section">
               <div className="tree-section-header">
@@ -550,13 +715,16 @@ const CodeVault = () => {
               </div>
             )}
           </div>
-        </aside>
+        </>
+      )}
+    </aside>
 
         {/* Main Content Area */}
         <main className="vault-main">
           <AnimatePresence mode="wait">
             {activeNote ? (
               <motion.div
+                key={activeNote.id}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
@@ -564,15 +732,82 @@ const CodeVault = () => {
               >
                 <NoteEditor
                   note={activeNote}
-                  onNoteUpdate={handleNoteUpdate}
-                  onNoteDelete={handleNoteDelete}
+                  onNoteUpdate={activeNote.isFacultyNote ? null : handleNoteUpdate}
+                  onNoteDelete={activeNote.isFacultyNote ? null : handleNoteDelete}
                   onClose={() => setActiveNote(null)}
+                  readOnly={Boolean(activeNote.isFacultyNote)}
+                  isFaculty={user?.role === 'college_admin' || user?.role === 'faculty'}
                 />
               </motion.div>
             ) : (
+                    <div className="fac-hub-cards-grid">
+                      {filteredFacultyNotes.map(fNote => {
+                        const dateStr = fNote.published_at || fNote.updated_at
+                          ? new Date(fNote.published_at || fNote.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                          : 'Recent';
+                        const snippet = (fNote.content || '')
+                          .replace(/<[^>]*>/g, ' ')
+                          .replace(/\s+/g, ' ')
+                          .trim()
+                          .slice(0, 150);
+
+                        return (
+                          <div
+                            key={fNote.id}
+                            className="fac-hub-card"
+                            onClick={() => setActiveNote({ ...fNote, isFacultyNote: true })}
+                          >
+                            <div className="fac-hub-card-header">
+                              <div className="fac-hub-card-badges">
+                                <span className="fac-hub-cohort-badge">
+                                  {fNote.target_branch || 'ALL'} {fNote.target_batch && fNote.target_batch !== 'ALL' ? `• ${fNote.target_batch}` : ''}
+                                </span>
+                                <span className="fac-hub-verified-badge">
+                                  <CheckCircle2 size={11} /> Verified
+                                </span>
+                              </div>
+                              <span className="fac-hub-card-date">{dateStr}</span>
+                            </div>
+
+                            <h3 className="fac-hub-card-title">{fNote.title || 'Untitled Note'}</h3>
+
+                            {snippet && (
+                              <p className="fac-hub-card-snippet">{snippet}...</p>
+                            )}
+
+                            {fNote.tags && fNote.tags.length > 0 && (
+                              <div className="fac-hub-card-tags">
+                                {fNote.tags.map(t => (
+                                  <span key={t} className="fac-hub-tag-chip">#{t}</span>
+                                ))}
+                              </div>
+                            )}
+
+                            <div className="fac-hub-card-footer">
+                              <div className="fac-hub-author-info">
+                                <div className="fac-hub-author-avatar">
+                                  {(fNote.author_name || 'F')[0].toUpperCase()}
+                                </div>
+                                <span>{fNote.author_name || 'Faculty Professor'}</span>
+                              </div>
+                              <button className="fac-hub-open-btn">
+                                <span>Read Note</span>
+                                <ArrowRight size={13} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            ) : (
               <motion.div
+                key="personal-welcome"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 className="vault-welcome"
               >
                 <div className="notes-list-main">
@@ -652,12 +887,14 @@ const CodeVault = () => {
       <CommandPalette
         isOpen={showSearchModal}
         onClose={() => setShowSearchModal(false)}
-        notes={notes}
+        notes={[...notes, ...facultyNotes.map(fn => ({ ...fn, isFacultyNote: true }))]}
         folders={folders}
         onSelectNote={(note) => {
           setActiveNote(note);
-          setSelectedFolder(note.folder_id);
-          setExpandedFolders(prev => ({ ...prev, [note.folder_id]: true }));
+          if (note.folder_id) {
+            setSelectedFolder(note.folder_id);
+            setExpandedFolders(prev => ({ ...prev, [note.folder_id]: true }));
+          }
           setSidebarOpen(false);
         }}
         onAction={handleCommandAction}
