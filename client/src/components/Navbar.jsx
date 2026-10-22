@@ -98,6 +98,16 @@ const Navbar = () => {
     return () => clearInterval(interval);
   }, [user?.token, friendRequestRevision]);
 
+  const isInstitutionalUser = Boolean(
+    (user?.role === 'student' && (user?.orgId || user?.org_id)) ||
+    user?.role === 'college_admin' ||
+    user?.role === 'super_admin'
+  );
+
+  const collegeName = isInstitutionalUser
+    ? (user?.orgName || user?.org_name || (user?.orgId ? localStorage.getItem('college_org_name') : null))
+    : null;
+
   return (
     <>
       <motion.nav 
@@ -108,9 +118,20 @@ const Navbar = () => {
       >
         <div className="nav-container">
 
-          {/* LEFT: Logo */}
+          {/* LEFT: College Name in Reddish Theme for Institutional Students & Faculty, or Logo for standard coders */}
           <div className="nav-left">
-            <CodeBrightLogo size="small" />
+            {collegeName ? (
+              <Link to={user?.role === 'college_admin' ? '/college-admin' : '/hub'} className="college-brand-banner" title={collegeName}>
+                <div className="college-brand-icon-wrap">
+                  <School size={15} />
+                </div>
+                <span className="college-brand-text">{collegeName}</span>
+              </Link>
+            ) : (
+              <Link to="/hub" style={{ textDecoration: 'none' }}>
+                <CodeBrightLogo />
+              </Link>
+            )}
           </div>
 
           {/* CENTER: Nav links with spring sliding indicator */}
