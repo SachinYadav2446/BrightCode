@@ -908,3 +908,388 @@
     transition: opacity 0.3s ease;
   }
 }
+
+/* ==========================================================================
+   FACULTY CODEX STYLES (STUDENT & CAMPUS VIEW)
+   ========================================================================== */
+
+/* Mode Switcher Pill Bar in Sidebar */
+.vault-mode-switch-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--cv-border);
+}
+
+.vault-mode-tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--cv-text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.vault-mode-tab-btn:hover {
+  color: var(--cv-text-primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.vault-mode-tab-btn.active {
+  color: #fff;
+  background: rgba(var(--primary-rgb), 0.15);
+  border-color: rgba(var(--primary-rgb), 0.35);
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.2);
+}
+
+.vault-tab-count-badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cv-text-secondary);
+}
+
+.vault-mode-tab-btn.active .vault-tab-count-badge {
+  background: rgba(var(--primary-rgb), 0.4);
+  color: #fff;
+}
+
+/* Faculty search box in sidebar */
+.fac-notes-sidebar-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.fac-sidebar-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--cv-text-muted);
+  pointer-events: none;
+}
+
+.fac-sidebar-search-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--cv-border);
+  border-radius: 8px;
+  padding: 8px 30px 8px 32px;
+  color: var(--cv-text-primary);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.fac-sidebar-search-input:focus {
+  border-color: var(--cv-accent);
+}
+
+.fac-sidebar-search-clear {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--cv-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+/* Faculty file item in sidebar */
+.faculty-file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  width: 100%;
+  text-align: left;
+}
+
+.fac-note-nav-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 2px;
+}
+
+.fac-note-nav-title {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--cv-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fac-note-nav-author {
+  font-size: 10.5px;
+  color: var(--cv-text-muted);
+}
+
+.fac-sidebar-loading-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 12px;
+  color: var(--cv-text-muted);
+  font-size: 11.5px;
+}
+
+.spinner-vault-sm {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--cv-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ── Faculty Notes Hub Welcome / Grid View ────────────────────────────── */
+.faculty-hub-welcome {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  padding: 32px;
+}
+
+.fac-hub-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.fac-hub-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fac-hub-college-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(var(--primary-rgb), 0.12);
+  border: 1px solid rgba(var(--primary-rgb), 0.28);
+  color: var(--cv-accent);
+  font-size: 12px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.fac-hub-hero h2 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.fac-hub-hero p {
+  font-size: 14px;
+  color: var(--cv-text-secondary);
+  max-width: 640px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.fac-hub-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.fac-hub-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--cv-border);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.fac-hub-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(var(--primary-rgb), 0.35);
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.5), 0 0 16px rgba(var(--primary-rgb), 0.1);
+}
+
+.fac-hub-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fac-hub-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fac-hub-cohort-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--cv-text-secondary);
+  text-transform: uppercase;
+}
+
+.fac-hub-verified-badge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  color: #4ade80;
+}
+
+.fac-hub-card-date {
+  font-size: 11px;
+  color: var(--cv-text-muted);
+}
+
+.fac-hub-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.fac-hub-card-snippet {
+  font-size: 12.5px;
+  color: var(--cv-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.fac-hub-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.fac-hub-tag-chip {
+  font-size: 10.5px;
+  color: var(--cv-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.fac-hub-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid var(--cv-border);
+  margin-top: auto;
+}
+
+.fac-hub-author-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--cv-text-secondary);
+  font-weight: 500;
+}
+
+.fac-hub-author-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(var(--primary-rgb), 0.2);
+  border: 1px solid rgba(var(--primary-rgb), 0.4);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.fac-hub-open-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cv-accent);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.fac-hub-card:hover .fac-hub-open-btn {
+  transform: translateX(3px);
+}
+
+.fac-hub-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  gap: 12px;
+  color: var(--cv-text-muted);
+}
+
+.fac-hub-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--cv-border);
+  color: var(--cv-text-primary);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.2s;
+}
+
+.fac-hub-refresh-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
