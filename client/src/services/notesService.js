@@ -203,3 +203,38 @@ export const fetchRelatedNotes = async (challengeId) => {
   
   return response.json();
 };
+
+// Faculty Publishing API
+export const togglePublishNote = async (id, publishData = {}) => {
+  const response = await fetch(`${API_URL}/api/notes/${id}/publish`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(publishData),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: 'Failed to update note publication' }));
+    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+// Students fetch published faculty notes
+export const fetchFacultyNotes = async (orgId = '', branch = 'ALL', batch = 'ALL') => {
+  const params = new URLSearchParams();
+  if (orgId) params.append('orgId', orgId);
+  if (branch) params.append('branch', branch);
+  if (batch) params.append('batch', batch);
+
+  const response = await fetch(`${API_URL}/api/notes/faculty?${params.toString()}`, {
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch faculty notes');
+  }
+
+  return response.json();
+};
+
