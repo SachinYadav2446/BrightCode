@@ -2950,6 +2950,41 @@ app.put('/api/notes/:id', authenticateToken, async (req, res) => {
     }
 });
 
+// PATCH /api/notes/:id/publish - Quick publish toggle
+app.patch('/api/notes/:id/publish', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    const { isPublished, is_published, targetBranch, targetBatch } = req.body;
+
+    if (useMemoryDB) {
+        const note = notesMemoryStore.find(n => n.id === id && (n.user_id === req.user.id || req.user.role === 'college_admin') && !n.deleted_at);
+        if (!note) return res.status(404).json({ error: 'Note not found' });
+
+        const targetState = isPublished !== undefined ? !!isPublished : is_published !== undefined ? !!is_published : !note.is_published;
+        note.is_published = targetState;
+        note.published_at = targetState ? new Date().toISOString() : null;
+        if (targetBranch) note.target_branch = targetBranch.toUpperCase();
+        if (targetBatch) note.target_batch = targetBatch.toUpperCase();
+        note.updated_at = new Date().toISOString();
+        saveNotesStore();
+
+        logger.info(`[NOTES] Note "${note.title}" publication set to ${note.is_published ? 'PUBLISHED' : 'DRAFT'}`);
+        return res.json({ success: true, is_published: note.is_published, note });
+    }
+
+    try {
+        const check = await pool.query('SELECT * FROM notes WHERE id = $1 AND (user_id = $2 OR $3 = true) AND deleted_at IS NULL', [id, req.user.id, req.user.role === 'college_admin']);
+        if (check.rows.length === 0) return res.status(404).json({ error: 'Note not found' });
+        const existing = check.rows[0];
+        const targetState = isPublished !== undefined ? !!isPublished : is_published !== undefined ? !!is_published : !existing.is_published;
+        const result = await pool.query(
+            `UPDATE notes SET is_published = $1, published_at = $2, updated_at = NOW() WHERE id = $3 RETURNING *`,
+            [targetState, targetState ? new Date() : null, id]
+        );
+        res.json({ success: true, is_published: targetState, note: result.rows[0] });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to update note publication' });
+    }
+});
 
 // DELETE /api/notes/:id - Soft delete note
 app.delete('/api/notes/:id', authenticateToken, async (req, res) => {
