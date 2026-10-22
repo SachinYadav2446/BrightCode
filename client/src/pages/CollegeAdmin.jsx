@@ -2194,12 +2194,358 @@ const CollegeAdmin = () => {
 
               {/* VIEW 2: COURSE NOTES & CODEX (CodeVault Architecture) */}
               {notesSubTab === 'notes' && (
-      <div className="fac-empty-box" style={{ padding: '40px', textAlign: 'center' }}>
-        <p>Notes & Codex view loading...</p>
-      </div>
-    )}
-    </div>
-    )}
+                <div className="fac-notes-workspace">
+                  {/* Notes Sidebar */}
+                  <div className="fac-notes-sidebar">
+                    {/* Search & Actions */}
+                    <div className="fac-notes-search-wrap">
+                      <Search size={14} className="fac-notes-search-icon" />
+                      <input
+                        type="text"
+                        placeholder="Search notes & codex..."
+                        value={vaultSearchQuery}
+                        onChange={(e) => setVaultSearchQuery(e.target.value)}
+                        className="fac-notes-search-input"
+                      />
+                      {vaultSearchQuery && (
+                        <button className="fac-search-clear-btn" onClick={() => setVaultSearchQuery('')}>
+                          <X size={12} />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="fac-notes-actions-row">
+                      <button className="fac-notes-btn-action primary" onClick={handleCreateVaultNote}>
+                        <Plus size={14} /> <span>New Note</span>
+                      </button>
+                      <button className="fac-notes-btn-action secondary" onClick={() => setShowFolderModal(true)} title="New Folder">
+                        <FolderPlus size={14} /> <span>New Folder</span>
+                      </button>
+                    </div>
+
+                    {/* Folders / Repositories Strip */}
+                    <div className="fac-folders-bar">
+                      <button
+                        className={`fac-folder-item ${!vaultSelectedFolder ? 'active' : ''}`}
+                        onClick={() => setVaultSelectedFolder(null)}
+                      >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Layers size={13} /> All Notes
+                        </span>
+                        <span className="fac-badge-count">{vaultNotes.length}</span>
+                      </button>
+                      {vaultFolders.map(f => {
+                        const count = vaultNotes.filter(n => n.folder_id === f.id).length;
+                        return (
+                          <div key={f.id} className="fac-folder-item-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <button
+                              className={`fac-folder-item ${vaultSelectedFolder === f.id ? 'active' : ''}`}
+                              onClick={() => setVaultSelectedFolder(f.id)}
+                              style={{ flex: 1 }}
+                            >
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <FolderOpen size={13} /> {f.name}
+                              </span>
+                              <span className="fac-badge-count">{count}</span>
+                            </button>
+                            <button
+                              className="fac-folder-del-btn"
+                              onClick={(e) => { e.stopPropagation(); handleVaultFolderDelete(f.id); }}
+                              title="Delete folder"
+                              style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '4px' }}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Filter Pills for Notes */}
+                    <div className="fac-notes-filter-pills">
+                      <button
+                        className={`filter-pill ${vaultNotesFilter === 'ALL' ? 'active' : ''}`}
+                        onClick={() => setVaultNotesFilter('ALL')}
+                      >
+                        All ({vaultNotes.length})
+                      </button>
+                      <button
+                        className={`filter-pill ${vaultNotesFilter === 'published' ? 'active' : ''}`}
+                        onClick={() => setVaultNotesFilter('published')}
+                      >
+                        Published ({vaultNotes.filter(n => n.is_published).length})
+                      </button>
+                      <button
+                        className={`filter-pill ${vaultNotesFilter === 'draft' ? 'active' : ''}`}
+                        onClick={() => setVaultNotesFilter('draft')}
+                      >
+                        Drafts ({vaultNotes.filter(n => !n.is_published).length})
+                      </button>
+                    </div>
+
+                    {/* Notes List in Folder */}
+                    <div className="fac-notes-scroll-list">
+                      {vaultLoading ? (
+                        <div className="fac-empty-box" style={{ padding: '24px 0', textAlign: 'center' }}>
+                          <RefreshCw size={24} className="spin text-blue" style={{ margin: '0 auto' }} />
+                          <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '8px' }}>Loading notes...</p>
+                        </div>
+                      ) : (
+                        (() => {
+                          const filtered = vaultNotes.filter(n => {
+                            const matchesSearch = !vaultSearchQuery || (n.title || '').toLowerCase().includes(vaultSearchQuery.toLowerCase()) || (n.content || '').toLowerCase().includes(vaultSearchQuery.toLowerCase());
+                            const matchesFolder = !vaultSelectedFolder || n.folder_id === vaultSelectedFolder;
+                            const matchesFilter = vaultNotesFilter === 'published' ? Boolean(n.is_published) : vaultNotesFilter === 'draft' ? !n.is_published : true;
+                            return matchesSearch && matchesFolder && matchesFilter;
+                          });
+
+                          if (filtered.length === 0) {
+                            return (
+                              <div className="fac-empty-box" style={{ padding: '32px 10px', textAlign: 'center' }}>
+                                <FileText size={28} style={{ opacity: 0.3, margin: '0 auto' }} />
+                                <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '6px' }}>
+                                  {vaultSearchQuery ? 'No notes match your search.' : vaultNotesFilter === 'published' ? 'No published notes yet.' : 'No notes in this view.'}
+                                </p>
+                              </div>
+                            );
+                          }
+
+                          return filtered.map(note => {
+                            const isSelected = vaultActiveNote?.id === note.id;
+                            const updatedStr = note.updated_at ? new Date(note.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Recent';
+                            const isPub = Boolean(note.is_published);
+                            return (
+                              <div
+                                key={note.id}
+                                className={`fac-note-card ${isSelected ? 'active' : ''}`}
+                                onClick={() => setVaultActiveNote(note)}
+                              >
+                                <div className="fac-note-card-top-row">
+                                  <span className="fac-note-card-title">{note.title || 'Untitled Note'}</span>
+                                  <span className={`fac-note-status-badge ${isPub ? 'pub' : 'draft'}`}>
+                                    {isPub ? 'PUBLISHED' : 'DRAFT'}
+                                  </span>
+                                </div>
+                                <div className="fac-note-card-meta">
+                                  <span>{updatedStr}</span>
+                                  {note.tags && note.tags.length > 0 && (
+                                    <span className="fac-note-tag-chip">{note.tags[0]}</span>
+                                  )}
+                                  {note.target_branch && note.target_branch !== 'ALL' && (
+                                    <span className="fac-note-tag-chip">{note.target_branch}</span>
+                                  )}
+                                </div>
+                                <div className="fac-note-card-actions">
+                                  <button
+                                    className={`fac-note-quick-pub-btn ${isPub ? 'pub' : 'draft'}`}
+                                    onClick={(e) => { e.stopPropagation(); handleTogglePublishQuick(note); }}
+                                    title={isPub ? 'Unpublish to Draft' : 'Publish to Students'}
+                                  >
+                                    {isPub ? <CheckCircle2 size={12} /> : <Send size={12} />}
+                                  </button>
+                                  <button
+                                    className="fac-note-del-btn"
+                                    onClick={(e) => { e.stopPropagation(); handleVaultNoteDelete(note.id); }}
+                                    title="Delete note"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Main Editor Pane */}
+                  <div className="fac-notes-editor-pane">
+                    {vaultActiveNote ? (
+                      <NoteEditor
+                        note={vaultActiveNote}
+                        onNoteUpdate={handleVaultNoteUpdate}
+                        onNoteDelete={handleVaultNoteDelete}
+                        onClose={() => setVaultActiveNote(null)}
+                        isFaculty={true}
+                      />
+                    ) : (
+                      <div className="fac-notes-empty-state">
+                        <div className="fac-empty-icon-ring">
+                          <FileText size={36} />
+                        </div>
+                        <h3>No Note Selected</h3>
+                        <p style={{ color: '#94a3b8', maxWidth: '360px', fontSize: '0.9rem' }}>
+                          Select any lecture guide or syllabus note from the sidebar, or create a new note to start writing.
+                        </p>
+                        <button className="fac-primary-btn" onClick={handleCreateVaultNote}>
+                          <Plus size={16} /> <span>Create New Note</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Create Repository / Folder Modal */}
+              <AnimatePresence>
+                {showFolderModal && (
+                  <motion.div
+                    className="vault-modal-overlay"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setShowFolderModal(false)}
+                  >
+                    <motion.div
+                      className="vault-modal"
+                      initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                      animate={{ scale: 1, opacity: 1, y: 0 }}
+                      exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="vault-modal-header">
+                        <h3>Create New Folder</h3>
+                        <button
+                          className="vault-modal-close"
+                          onClick={() => setShowFolderModal(false)}
+                        >
+                          <X size={20} />
+                        </button>
+                      </div>
+                      <form onSubmit={handleVaultFolderCreate} className="vault-modal-form">
+                        <div className="vault-modal-body">
+                          <label>Folder / Repository Name</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Algorithms Lab, Midterm Guides..."
+                            value={newVaultFolderName}
+                            onChange={(e) => setNewVaultFolderName(e.target.value)}
+                            autoFocus
+                          />
+                          <p className="modal-hint">Organize your departmental lecture notes and lab templates.</p>
+                        </div>
+                        <div className="vault-modal-footer">
+                          <button
+                            type="button"
+                            className="vault-modal-btn cancel"
+                            onClick={() => setShowFolderModal(false)}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="vault-modal-btn confirm"
+                            disabled={!newVaultFolderName.trim()}
+                          >
+                            Create Folder
+                          </button>
+                        </div>
+                      </form>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════════
+              PAGE 5: LEADERBOARD & STUDENT DIRECTORY
+              ══════════════════════════════════════════════════════════════════════ */}
+          {activeNav === 'leaderboard' && (
+            <motion.div
+              key="leaderboard"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              className="fac-section-view"
+            >
+              <div className="fac-page-header">
+                <span className="fac-tagline">ACADEMIC TELEMETRY • CAMPUS RANKINGS</span>
+                <h1 className="fac-title">Campus Leaderboard & Student Directory</h1>
+                <p className="fac-subtitle">
+                  Real-time student XP rankings, podium champions, and 1-click bulk student account provisioning.
+                </p>
+              </div>
+
+              {/* Subtabs: Leaderboard vs Student Directory */}
+              <div className="fac-subtabs-strip">
+                <button
+                  className={`subtab-btn ${rosterSubTab === 'leaderboard' ? 'active' : ''}`}
+                  onClick={() => setRosterSubTab('leaderboard')}
+                >
+                  <Trophy size={15} /> <span>Campus Leaderboard & Podium</span>
+                </button>
+                <button
+                  className={`subtab-btn ${rosterSubTab === 'students' ? 'active' : ''}`}
+                  onClick={() => setRosterSubTab('students')}
+                >
+                  <Users size={15} /> <span>Student Directory & CSV Onboard ({studentsList.length})</span>
+                </button>
+              </div>
+
+              {/* SUBTAB 1: CAMPUS LEADERBOARD & 3D PODIUM */}
+              {rosterSubTab === 'leaderboard' && (
+                <div className="fac-card">
+                  <div className="fac-card-head">
+                    <div>
+                      <span className="fac-card-tag">DEPARTMENT EXCELLENCE</span>
+                      <h2>Academic Rankings</h2>
+                    </div>
+                    <div className="fac-lb-filter">
+                      <select
+                        value={leaderboardFilter}
+                        onChange={(e) => setLeaderboardFilter(e.target.value)}
+                        className="fac-select"
+                      >
+                        <option value="ALL">All Departments</option>
+                        <option value="CSE">CSE Department</option>
+                        <option value="IT">IT Department</option>
+                        <option value="ECE">ECE Department</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* 3D Grand Podium */}
+                  {leaderboard.length >= 1 && (
+                    <div className="fac-grand-podium">
+                      {/* Rank 2 - Silver */}
+                      {leaderboard[1] && (
+                        <div className="podium-pillar silver">
+                          <div className="podium-badge"><Award size={20} /> #2</div>
+                          <div className="podium-avatar">{leaderboard[1].name?.charAt(0) || '2'}</div>
+                          <div className="podium-name">{leaderboard[1].name}</div>
+                          <div className="podium-roll">{leaderboard[1].rollNo} ({leaderboard[1].branch})</div>
+                          <div className="podium-xp"><Zap size={14} /> {leaderboard[1].xp} XP</div>
+                          <div className="pillar-block block-silver">2nd Place</div>
+                        </div>
+                      )}
+
+                      {/* Rank 1 - Gold */}
+                      {leaderboard[0] && (
+                        <div className="podium-pillar gold">
+                          <div className="podium-badge crown"><Crown size={24} /> #1</div>
+                          <div className="podium-avatar gold-avatar">{leaderboard[0].name?.charAt(0) || '1'}</div>
+                          <div className="podium-name">{leaderboard[0].name}</div>
+                          <div className="podium-roll">{leaderboard[0].rollNo} ({leaderboard[0].branch})</div>
+                          <div className="podium-xp gold-xp"><Zap size={15} /> {leaderboard[0].xp} XP</div>
+                          <div className="pillar-block block-gold">CAMPUS CHAMPION</div>
+                        </div>
+                      )}
+
+                      {/* Rank 3 - Bronze */}
+                      {leaderboard[2] && (
+                        <div className="podium-pillar bronze">
+                          <div className="podium-badge"><Award size={20} /> #3</div>
+                          <div className="podium-avatar">{leaderboard[2].name?.charAt(0) || '3'}</div>
+                          <div className="podium-name">{leaderboard[2].name}</div>
+                          <div className="podium-roll">{leaderboard[2].rollNo} ({leaderboard[2].branch})</div>
+                          <div className="podium-xp"><Zap size={14} /> {leaderboard[2].xp} XP</div>
+                          <div className="pillar-block block-bronze">3rd Place</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Leaderboard Table */}
                   <div className="fac-table-container">
