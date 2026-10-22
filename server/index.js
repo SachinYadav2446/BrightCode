@@ -2785,15 +2785,19 @@ app.get('/api/notes/faculty', authenticateToken, async (req, res) => {
 // GET /api/notes/:id - Get single note
 app.get('/api/notes/:id', authenticateToken, async (req, res) => {
     if (useMemoryDB) {
-        const note = notesMemoryStore.find(n => n.id === req.params.id && n.user_id === req.user.id && !n.deleted_at);
+        const note = notesMemoryStore.find(n => n.id === req.params.id && (
+            n.user_id === req.user.id || 
+            req.user.role === 'college_admin' || 
+            (n.is_published && (!n.org_id || n.org_id === req.user.org_id))
+        ) && !n.deleted_at);
         if (!note) return res.status(404).json({ error: 'Note not found' });
         const { deleted_at, ...safeNote } = note;
         return res.json(safeNote);
     }
     try {
         const result = await pool.query(
-            'SELECT * FROM notes WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
-            [req.params.id, req.user.id]
+            'SELECT * FROM notes WHERE id = $1 AND (user_id = $2 OR is_published = true OR $3 = true) AND deleted_at IS NULL',
+            [req.params.id, req.user.id, req.user.role === 'college_admin']
         );
         if (result.rows.length === 0) return res.status(404).json({ error: 'Note not found' });
         res.json(result.rows[0]);
@@ -2877,17 +2881,35 @@ app.post('/api/notes', authenticateToken, async (req, res) => {
 
 // PUT /api/notes/:id - Update note
 app.put('/api/notes/:id', authenticateToken, async (req, res) => {
-    const { title, content, tags, folderId } = req.body;
+    const { title, content, tags, folderId, isPublished, is_published, targetBranch, target_branch, targetBatch, target_batch } = req.body;
     if (title && title.length > 200) return res.status(400).json({ error: 'Title too long (max 200 characters)' });
     if (content && content.length > 20000000) return res.status(400).json({ error: 'Content too large (max 20MB)' });
 
     if (useMemoryDB) {
-        const idx = notesMemoryStore.findIndex(n => n.id === req.params.id && n.user_id === req.user.id && !n.deleted_at);
+        const idx = notesMemoryStore.findIndex(n => n.id === req.params.id && (n.user_id === req.user.id || req.user.role === 'college_admin') && !n.deleted_at);
         if (idx === -1) return res.status(404).json({ error: 'Note not found' });
         if (title !== undefined) notesMemoryStore[idx].title = title;
         if (content !== undefined) notesMemoryStore[idx].content = content;
         if (tags !== undefined) notesMemoryStore[idx].tags = tags;
         if (folderId !== undefined) notesMemoryStore[idx].folder_id = folderId || null;
+
+        const pubChange = isPublished !== undefined ? isPublished : is_published;
+        if (pubChange !== undefined) {
+            const nextPub = Boolean(pubChange);
+            if (nextPub && !notesMemoryStore[idx].is_published) {
+                notesMemoryStore[idx].published_at = new Date().toISOString();
+            } else if (!nextPub) {
+                notesMemoryStore[idx].published_at = null;
+            }
+            notesMemoryStore[idx].is_published = nextPub;
+        }
+
+        const bTarget = targetBranch || target_branch;
+        if (bTarget !== undefined) notesMemoryStore[idx].target_branch = (bTarget || 'ALL').toUpperCase();
+
+        const bBatch = targetBatch || target_batch;
+        if (bBatch !== undefined) notesMemoryStore[idx].target_batch = (bBatch || 'ALL').toUpperCase();
+
         notesMemoryStore[idx].updated_at = new Date().toISOString();
         saveNotesStore();
         const { deleted_at, user_id, ...safeNote } = notesMemoryStore[idx];
@@ -2896,20 +2918,30 @@ app.put('/api/notes/:id', authenticateToken, async (req, res) => {
 
     try {
         const checkResult = await pool.query(
-            'SELECT id FROM notes WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
-            [req.params.id, req.user.id]
+            'SELECT id, is_published FROM notes WHERE id = $1 AND (user_id = $2 OR $3 = true) AND deleted_at IS NULL',
+            [req.params.id, req.user.id, req.user.role === 'college_admin']
         );
         if (checkResult.rows.length === 0) return res.status(404).json({ error: 'Note not found' });
+
+        const existing = checkResult.rows[0];
+        const pubChange = isPublished !== undefined ? isPublished : is_published;
+        let newPublishedAt = null;
+        if (pubChange !== undefined && Boolean(pubChange) && !existing.is_published) {
+            newPublishedAt = new Date();
+        }
 
         const result = await pool.query(
             `UPDATE notes
              SET title = COALESCE($1, title),
                  content = COALESCE($2, content),
                  tags = COALESCE($3, tags),
-                 folder_id = COALESCE($4, folder_id)
-             WHERE id = $5 AND user_id = $6
-             RETURNING id, title, content, folder_id, tags, challenge_id, challenge_module, created_at, updated_at`,
-            [title, content, tags, folderId, req.params.id, req.user.id]
+                 folder_id = COALESCE($4, folder_id),
+                 is_published = COALESCE($5, is_published),
+                 published_at = CASE WHEN $5 = true AND is_published = false THEN NOW() WHEN $5 = false THEN NULL ELSE published_at END,
+                 updated_at = NOW()
+             WHERE id = $6
+             RETURNING id, title, content, folder_id, tags, challenge_id, challenge_module, is_published, org_id, author_id, author_name, target_branch, target_batch, published_at, created_at, updated_at`,
+            [title, content, tags, folderId, pubChange !== undefined ? Boolean(pubChange) : null, req.params.id]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -2917,6 +2949,7 @@ app.put('/api/notes/:id', authenticateToken, async (req, res) => {
         res.status(500).json({ error: 'Failed to update note' });
     }
 });
+
 
 // DELETE /api/notes/:id - Soft delete note
 app.delete('/api/notes/:id', authenticateToken, async (req, res) => {
