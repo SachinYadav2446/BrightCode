@@ -56,6 +56,20 @@ const CodeVault = () => {
   const [modalConfig, setModalConfig] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Institutional student detection
+  const isCollegeStudent = Boolean(
+    (user?.role === 'student' && (user?.orgId || user?.org_id)) ||
+    user?.subscription === 'campus_student' ||
+    localStorage.getItem('college_org_id')
+  );
+  const collegeName = user?.orgName || user?.org_name || localStorage.getItem('college_org_name') || 'Campus Faculty';
+
+  const [vaultMode, setVaultMode] = useState(isCollegeStudent ? 'faculty' : 'personal'); // 'faculty' | 'personal'
+  const [facultyNotes, setFacultyNotes] = useState([]);
+  const [facultyLoading, setFacultyLoading] = useState(false);
+  const [facultySearch, setFacultySearch] = useState('');
+  const [selectedFacultyTag, setSelectedFacultyTag] = useState(null);
+
 
   useEffect(() => {
     loadData();
