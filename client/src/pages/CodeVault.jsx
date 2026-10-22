@@ -930,7 +930,7 @@ const CodeVault = () => {
       <CommandPalette
         isOpen={showSearchModal}
         onClose={() => setShowSearchModal(false)}
-        notes={notes}
+        notes={[...notes, ...facultyNotes.map(fn => ({ ...fn, isFacultyNote: true }))]}
         folders={folders}
         onSelectNote={(note) => {
           setActiveNote(note);
