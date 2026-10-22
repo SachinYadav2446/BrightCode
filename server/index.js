@@ -2752,6 +2752,36 @@ app.get('/api/notes/related/:challengeId', authenticateToken, async (req, res) =
     }
 });
 
+// GET /api/notes/faculty - Students get published notes from their college faculty
+app.get('/api/notes/faculty', authenticateToken, async (req, res) => {
+    try {
+        const orgId = req.user.org_id || req.query.orgId || req.query.collegeId || 'demo_college';
+        const studentBranch = (req.user.branch || req.query.branch || 'ALL').toUpperCase();
+        const studentBatch = (req.user.batch || req.query.batch || 'ALL').toUpperCase();
+
+        if (useMemoryDB) {
+            const facultyNotes = notesMemoryStore.filter(n => {
+                if (!n.is_published || n.deleted_at) return false;
+                if (n.org_id && orgId && n.org_id !== orgId) return false;
+                if (n.target_branch && n.target_branch !== 'ALL' && studentBranch !== 'ALL' && n.target_branch.toUpperCase() !== studentBranch) return false;
+                if (n.target_batch && n.target_batch !== 'ALL' && studentBatch !== 'ALL' && n.target_batch.toUpperCase() !== studentBatch) return false;
+                return true;
+            });
+            facultyNotes.sort((a, b) => new Date(b.published_at || b.updated_at) - new Date(a.published_at || a.updated_at));
+            return res.json({ success: true, count: facultyNotes.length, notes: facultyNotes.map(({ deleted_at, ...n }) => n) });
+        }
+
+        const result = await pool.query(
+            `SELECT * FROM notes WHERE (org_id = $1 OR org_id IS NULL) AND is_published = true AND deleted_at IS NULL ORDER BY updated_at DESC`,
+            [orgId]
+        );
+        res.json({ success: true, count: result.rows.length, notes: result.rows });
+    } catch (err) {
+        logger.error('GET /api/notes/faculty ERROR:', err);
+        res.status(500).json({ error: 'Failed to fetch faculty notes' });
+    }
+});
+
 // GET /api/notes/:id - Get single note
 app.get('/api/notes/:id', authenticateToken, async (req, res) => {
     if (useMemoryDB) {
