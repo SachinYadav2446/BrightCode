@@ -1,7 +1,7 @@
 import API_URL from '../config';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Crown, ArrowLeft, Zap, Search, Shield, X, UserPlus, Eye, Clock, Check, UserCheck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trophy, Crown, ArrowLeft, Zap, Search, Shield, X, UserPlus, Eye, Clock, Check, UserCheck, ChevronLeft, ChevronRight, School } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { io } from 'socket.io-client';
@@ -27,6 +27,8 @@ const PODIUM_ORDER = [
 const Leaderboard = () => {
     const navigate = useNavigate();
     const { user, updateXP, setNavbarHidden } = useAuth();
+    const isCollegeUser = user?.role === 'college_admin' || user?.role === 'faculty' || !!user?.org_id || !!user?.collegeId || !!localStorage.getItem('college_id');
+    const [scope, setScope] = useState(isCollegeUser ? 'campus' : 'global');
 
     useEffect(() => {
         setNavbarHidden(true);
@@ -45,6 +47,38 @@ const Leaderboard = () => {
     const [friendStatuses, setFriendStatuses] = useState({});
     const [actionLoading, setActionLoading]   = useState({});
     const socketRef = useRef(null);
+
+    const handleBack = () => {
+        if (user?.role === 'college_admin' || user?.role === 'faculty') {
+            navigate('/college-admin');
+        } else if (window.history.length > 1) {
+            navigate(-1);
+        } else {
+            navigate('/');
+        }
+    };
+
+    const fetchCampusLeaderboard = async () => {
+        setListLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`${API_URL}/api/college/leaderboard`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+                timeout: 8000
+            });
+            const list = res.data?.leaderboard || [];
+            setPodiumUsers(list.slice(0, 3));
+            setRankers(list);
+            setTotal(list.length);
+            setDbError(null);
+        } catch (err) {
+            console.error('Campus leaderboard error:', err);
+            setDbError('Campus leaderboard unavailable. Check connection.');
+        } finally {
+            setListLoading(false);
+            setLoading(false);
+        }
+    };
 
     const fetchPodium = async () => {
         try {
@@ -94,18 +128,24 @@ const Leaderboard = () => {
 
     useEffect(() => {
         window.scrollTo(0, 0);
-        fetchPodium();
-        fetchPage(1);
+        if (scope === 'campus') {
+            fetchCampusLeaderboard();
+        } else {
+            fetchPodium();
+            fetchPage(1);
+        }
         syncMyXP();
-        const minTimer = setTimeout(() => setMinLoadingComplete(true), 2500);
+        const minTimer = setTimeout(() => setMinLoadingComplete(true), 2000);
         const socket = io(`${API_URL}`, { transports: ['websocket'] });
         socketRef.current = socket;
         socket.on('leaderboard-update', (freshData) => {
-            if (Array.isArray(freshData) && freshData.length > 0) setPodiumUsers(freshData.slice(0, 3));
-            if (currentPage === 1) setRankers(Array.isArray(freshData) ? freshData.slice(0, PAGE_SIZE) : []);
+            if (scope === 'global') {
+                if (Array.isArray(freshData) && freshData.length > 0) setPodiumUsers(freshData.slice(0, 3));
+                if (currentPage === 1) setRankers(Array.isArray(freshData) ? freshData.slice(0, PAGE_SIZE) : []);
+            }
         });
         return () => { clearTimeout(minTimer); socket.disconnect(); socketRef.current = null; };
-    }, []);
+    }, [scope]);
 
     useEffect(() => { if (rankers.length > 0) fetchFriendStatuses(rankers); }, [rankers]);
 
@@ -166,8 +206,9 @@ const Leaderboard = () => {
                     <div className="lb-topbar-left">
                         <button
                             className="lb-back-btn"
-                            onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')}
+                            onClick={handleBack}
                             aria-label="Go back"
+                            title={user?.role === 'college_admin' ? 'Back to Faculty Console' : 'Go back'}
                         >
                             <ArrowLeft size={18}/>
                         </button>
@@ -177,7 +218,7 @@ const Leaderboard = () => {
                     <div className="lb-topbar-center">
                         <h1 className="lb-header-title">
                             <Trophy size={28} className="lb-hero-trophy"/>
-                            Hall of Fame
+                            {scope === 'campus' ? `${user?.orgName || 'Campus'} Hall of Fame` : 'Hall of Fame'}
                         </h1>
                     </div>
 
@@ -250,6 +291,29 @@ const Leaderboard = () => {
 
             <main className="lb-main">
 
+                {/* ── scope switcher (Campus vs Global) ── */}
+                {isCollegeUser && (
+                    <div className="lb-scope-strip">
+                        <button 
+                            type="button"
+                            className={`lb-scope-tab ${scope === 'campus' ? 'active' : ''}`}
+                            onClick={() => { setScope('campus'); setCurrentPage(1); }}
+                        >
+                            <School size={15} />
+                            <span>Campus Cohort Rankings</span>
+                            <span className="lb-scope-badge">CAMPUS</span>
+                        </button>
+                        <button 
+                            type="button"
+                            className={`lb-scope-tab ${scope === 'global' ? 'active' : ''}`}
+                            onClick={() => { setScope('global'); setCurrentPage(1); }}
+                        >
+                            <Trophy size={15} />
+                            <span>BrightCode Global Arena</span>
+                        </button>
+                    </div>
+                )}
+
                 {/* ── podium ── */}
                 <section className="lb-podium-section">
                     {loading ? (
@@ -262,8 +326,9 @@ const Leaderboard = () => {
                                 const u = displayPodium[idx];
                                 const lvl = u ? getLevelInfo(u.xp || 0) : null;
                                 const isMe = user && u?.username === user.username;
+                                const displayName = u?.name || u?.username;
                                 return u ? (
-                                    <motion.div key={u.username}
+                                    <motion.div key={u.username || u.id || idx}
                                         initial={{y:80,opacity:0}} animate={{y:0,opacity:1}}
                                         transition={{delay:cfg.delay,type:'spring',stiffness:70,damping:14}}
                                         className={`lb-podium-item lb-podium-${cfg.rank}${isMe?' lb-podium-me':''}`}
@@ -275,10 +340,11 @@ const Leaderboard = () => {
                                             style={{boxShadow:`0 0 30px ${lvl.glow}, 0 0 60px ${lvl.glow}33`}}
                                             whileHover={{scale:1.08}}
                                         >
-                                            {u.username?.charAt(0)?.toUpperCase()}
+                                            {displayName?.charAt(0)?.toUpperCase()}
                                             {isMe && <div className="lb-podium-me-ring"/>}
                                         </motion.div>
-                                        <h4 className="lb-podium-name">{u.username}</h4>
+                                        <h4 className="lb-podium-name">{displayName}</h4>
+                                        {u.branch && <span className="lb-branch-chip">{u.branch} {u.batch ? `'${String(u.batch).slice(-2)}` : ''}</span>}
                                         <span className="lb-level-pill" style={{background:lvl.bg,color:lvl.color,border:`1px solid ${lvl.border}`}}>
                                             {lvl.label}
                                         </span>
@@ -353,10 +419,11 @@ const Leaderboard = () => {
                                         {/* player — avatar + name */}
                                         <div className="lb-col lb-col-user">
                                             <div className="lb-avatar-block" style={{'--c': lvl.color, '--b': lvl.border}}>
-                                                <span className="lb-avatar-letter">{u?.username?.charAt(0)?.toUpperCase()}</span>
+                                                <span className="lb-avatar-letter">{(u?.name || u?.username)?.charAt(0)?.toUpperCase()}</span>
                                             </div>
                                             <div className="lb-user-info">
-                                                <span className="lb-username">{u?.username}</span>
+                                                <span className="lb-username">{u?.name || u?.username}</span>
+                                                {u?.rollNo && <span className="lb-sub-tag">{u.rollNo} • {u.branch || 'CSE'}</span>}
                                                 {isMe && <span className="lb-you-badge">YOU</span>}
                                             </div>
                                         </div>
