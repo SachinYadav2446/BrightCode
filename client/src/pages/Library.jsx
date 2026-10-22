@@ -149,7 +149,8 @@ const Library = ({ initialModule = null, onBack = null }) => {
         try {
           setLoadingCollegeModules(true);
           const token = localStorage.getItem('token');
-          const res = await fetch(`${API_URL}/api/college/student/library-modules`, {
+          const studentOrgId = user?.orgId || user?.org_id || localStorage.getItem('college_org_id') || '';
+          const res = await fetch(`${API_URL}/api/college/student/library-modules?orgId=${encodeURIComponent(studentOrgId)}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
