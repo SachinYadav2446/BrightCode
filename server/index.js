@@ -2784,7 +2784,7 @@ app.post('/api/notes', authenticateToken, async (req, res) => {
         });
     }
 
-    let { title, content, folderId, tags, challengeId, challengeModule } = req.body;
+    let { title, content, folderId, tags, challengeId, challengeModule, isPublished, is_published, targetBranch, target_branch, targetBatch, target_batch } = req.body;
 
     if (!title || title.trim().length === 0) {
         if (content && content.trim().length > 0) {
@@ -2795,6 +2795,13 @@ app.post('/api/notes', authenticateToken, async (req, res) => {
     }
     if (title.length > 200) return res.status(400).json({ error: 'Title too long (max 200 characters)' });
     if (content && content.length > 20000000) return res.status(400).json({ error: 'Content too large (max 20MB)' });
+
+    const isFaculty = req.user.role === 'college_admin' || req.user.role === 'super_admin';
+    const orgId = req.user.org_id || (isFaculty ? 'demo_college' : null);
+    const authorName = req.user.name || req.user.username || 'Faculty';
+    const isPub = Boolean(isPublished !== undefined ? isPublished : is_published);
+    const branchTarget = (targetBranch || target_branch || 'ALL').toUpperCase();
+    const batchTarget = (targetBatch || target_batch || 'ALL').toUpperCase();
 
     if (useMemoryDB) {
         const now = new Date().toISOString();
@@ -2807,6 +2814,13 @@ app.post('/api/notes', authenticateToken, async (req, res) => {
             tags: tags || [],
             challenge_id: challengeId || null,
             challenge_module: challengeModule || null,
+            is_published: isPub,
+            org_id: orgId,
+            author_id: req.user.id,
+            author_name: authorName,
+            target_branch: branchTarget,
+            target_batch: batchTarget,
+            published_at: isPub ? now : null,
             created_at: now,
             updated_at: now,
             deleted_at: null
@@ -2819,10 +2833,10 @@ app.post('/api/notes', authenticateToken, async (req, res) => {
 
     try {
         const result = await pool.query(
-            `INSERT INTO notes (user_id, title, content, folder_id, tags, challenge_id, challenge_module)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
-             RETURNING id, title, content, folder_id, tags, challenge_id, challenge_module, created_at, updated_at`,
-            [req.user.id, title, content || '', folderId || null, tags || [], challengeId || null, challengeModule || null]
+            `INSERT INTO notes (user_id, title, content, folder_id, tags, challenge_id, challenge_module, is_published, org_id, author_id, author_name, target_branch, target_batch, published_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+             RETURNING id, title, content, folder_id, tags, challenge_id, challenge_module, is_published, org_id, author_id, author_name, target_branch, target_batch, published_at, created_at, updated_at`,
+            [req.user.id, title, content || '', folderId || null, tags || [], challengeId || null, challengeModule || null, isPub, orgId, req.user.id, authorName, branchTarget, batchTarget, isPub ? new Date() : null]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
