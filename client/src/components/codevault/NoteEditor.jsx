@@ -24,7 +24,7 @@ import { updateNote, deleteNote, togglePublishNote } from '../../services/notesS
 import toast from 'react-hot-toast';
 import './NoteEditor.css';
 
-const NoteEditor = ({ note, onNoteUpdate, onClose, onNoteDelete, readOnly = false }) => {
+const NoteEditor = ({ note, onNoteUpdate, onClose, onNoteDelete, isFaculty = false, readOnly = false }) => {
   const [title, setTitle] = useState(note?.title || '');
   const [content, setContent] = useState(note?.content || '');
   const [isPublished, setIsPublished] = useState(Boolean(note?.is_published));
@@ -195,7 +195,33 @@ const NoteEditor = ({ note, onNoteUpdate, onClose, onNoteDelete, readOnly = fals
             />
           )}
 
-          
+          {isFaculty && !readOnly && (
+            <div className="fac-note-publish-toolbar">
+              <button
+                className={`btn-note-publish ${isPublished ? 'published' : 'draft'}`}
+                onClick={handleTogglePublish}
+                disabled={publishing}
+                title={isPublished ? 'Click to unpublish note' : 'Publish note to students'}
+              >
+                {isPublished ? (
+                  <>
+                    <CheckCircle2 size={13} />
+                    <span>PUBLISHED</span>
+                  </>
+                ) : (
+                  <>
+                    <Send size={13} />
+                    <span>Publish to Students</span>
+                  </>
+                )}
+              </button>
+              {isPublished && (
+                <span className="note-cohort-pill">
+                  {targetBranch} • {targetBatch}
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="editor-actions-inline">
             {!readOnly && (
