@@ -185,10 +185,6 @@ const loadCollegeStores = () => {
         if (fs.existsSync(MODULES_FILE)) {
             collegeModulesMemoryStore = JSON.parse(fs.readFileSync(MODULES_FILE, 'utf8')) || [];
         }
-        if (!collegeModulesMemoryStore.find(m => m.id === DEFAULT_MODULE.id)) {
-            collegeModulesMemoryStore.push(DEFAULT_MODULE);
-            saveModules();
-        }
         logger.info(`[COLLEGE] Loaded ${collegeModulesMemoryStore.length} college library modules`);
     } catch (e) {
         logger.error('[COLLEGE] Error loading college JSON stores:', e.message);
@@ -641,6 +637,8 @@ router.get('/stats', auth, requireCollegeAdmin, async (req, res) => {
         let totalExamsCount = 0;
         let totalSubmissions = 0;
         let totalViolations = 0;
+        const activityMap = {};
+        const submissionsByDate = {};
 
         if (useMemoryDB) {
             const orgExams = collegeExamsMemoryStore.filter(e => e.org_id === org.id);
@@ -651,6 +649,34 @@ router.get('/stats', auth, requireCollegeAdmin, async (req, res) => {
             const orgResults = collegeResultsMemoryStore.filter(r => r.org_id === org.id);
             totalSubmissions = orgResults.filter(r => r.status === 'submitted').length;
             totalViolations = orgResults.reduce((acc, r) => acc + (r.violations_count || 0), 0);
+
+            // 1. Aggregate exam submissions by date
+            orgResults.forEach(r => {
+                if (r.status === 'submitted') {
+                    const submitDate = (r.submitted_at || r.created_at || '').slice(0, 10);
+                    if (submitDate && submitDate.length === 10) {
+                        submissionsByDate[submitDate] = (submissionsByDate[submitDate] || 0) + 1;
+                        activityMap[submitDate] = (activityMap[submitDate] || 0) + (Number(r.score) || 50);
+                    }
+                }
+            });
+
+            // 2. Aggregate student daily activity from user records
+            let usersData = { users: [] };
+            if (fs.existsSync(USERS_FILE)) {
+                try { usersData = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8')); } catch (e) {}
+            }
+            const orgStudents = (usersData.users || []).filter(u => u.org_id === org.id);
+            orgStudents.forEach(u => {
+                if (u.activity && typeof u.activity === 'object') {
+                    Object.entries(u.activity).forEach(([dKey, xpVal]) => {
+                        if (dKey && dKey.length === 10) {
+                            activityMap[dKey] = (activityMap[dKey] || 0) + (Number(xpVal) || 0);
+                            submissionsByDate[dKey] = (submissionsByDate[dKey] || 0) + 1;
+                        }
+                    });
+                }
+            });
         } else {
             const examsRes = await pool.query(
                 'SELECT COUNT(*)::int as total, COUNT(CASE WHEN end_time IS NULL OR end_time > NOW() THEN 1 END)::int as active FROM college_exams WHERE org_id = $1',
@@ -665,6 +691,48 @@ router.get('/stats', auth, requireCollegeAdmin, async (req, res) => {
             );
             totalSubmissions = resRes.rows[0]?.submissions || 0;
             totalViolations = resRes.rows[0]?.violations || 0;
+
+            // 1. Aggregate exam submissions by date
+            const resultsDatesRes = await pool.query(
+                "SELECT TO_CHAR(COALESCE(submitted_at, created_at), 'YYYY-MM-DD') as sub_date, COUNT(*)::int as count, COALESCE(SUM(score), 0)::int as total_score FROM college_exam_results WHERE org_id = $1 AND status = 'submitted' GROUP BY sub_date",
+                [org.id]
+            );
+            (resultsDatesRes.rows || []).forEach(r => {
+                if (r.sub_date) {
+                    submissionsByDate[r.sub_date] = (submissionsByDate[r.sub_date] || 0) + r.count;
+                    activityMap[r.sub_date] = (activityMap[r.sub_date] || 0) + r.total_score;
+                }
+            });
+
+            // 2. Aggregate student daily activity from Postgres
+            const userActivityRes = await pool.query(
+                "SELECT activity FROM users WHERE org_id = $1 AND activity IS NOT NULL",
+                [org.id]
+            );
+            (userActivityRes.rows || []).forEach(row => {
+                let act = row.activity;
+                if (typeof act === 'string') {
+                    try { act = JSON.parse(act); } catch (e) { act = {}; }
+                }
+                if (act && typeof act === 'object') {
+                    Object.entries(act).forEach(([dKey, xpVal]) => {
+                        if (dKey && dKey.length === 10) {
+                            activityMap[dKey] = (activityMap[dKey] || 0) + (Number(xpVal) || 0);
+                            submissionsByDate[dKey] = (submissionsByDate[dKey] || 0) + 1;
+                        }
+                    });
+                }
+            });
+        }
+
+        // 3. Include faculty coordinator's own platform activity if present
+        if (req.user?.activity && typeof req.user.activity === 'object') {
+            Object.entries(req.user.activity).forEach(([dKey, xpVal]) => {
+                if (dKey && dKey.length === 10) {
+                    activityMap[dKey] = (activityMap[dKey] || 0) + (Number(xpVal) || 0);
+                    submissionsByDate[dKey] = (submissionsByDate[dKey] || 0) + 1;
+                }
+            });
         }
 
         res.json({
@@ -686,7 +754,9 @@ router.get('/stats', auth, requireCollegeAdmin, async (req, res) => {
                 totalViolations,
                 avgViolationsPerSubmission: totalSubmissions > 0 ? (totalViolations / totalSubmissions).toFixed(1) : '0.0',
                 publishedModules: collegeModulesMemoryStore.filter(m => m.org_id === org.id && m.is_published).length,
-                totalModules: collegeModulesMemoryStore.filter(m => m.org_id === org.id).length
+                totalModules: collegeModulesMemoryStore.filter(m => m.org_id === org.id).length,
+                activity: activityMap,
+                submissionsByDate
             }
         });
     } catch (err) {
@@ -1639,19 +1709,23 @@ router.delete('/library/modules/:id', auth, requireCollegeAdmin, async (req, res
 // GET /api/college/student/library-modules - Student gets published modules for their college
 router.get('/student/library-modules', auth, async (req, res) => {
     try {
-        const orgId = req.user.org_id;
-        if (!orgId) {
+        const rawOrgId = req.user?.org_id || req.user?.orgId || req.query?.orgId || req.query?.collegeId;
+        if (!rawOrgId) {
             return res.json({ success: true, isCollegeStudent: false, modules: [] });
         }
 
-        const studentBranch = req.user.branch || 'ALL';
-        const studentBatch = req.user.batch || 'ALL';
+        const org = await getOrg(rawOrgId);
+        const orgId = org ? org.id : rawOrgId;
+
+        const studentBranch = (req.user?.branch || req.query?.branch || 'ALL').toUpperCase();
+        const studentBatch = (req.user?.batch || req.query?.batch || 'ALL').toUpperCase();
 
         // Only return published modules targeting student's branch/batch
         const modules = collegeModulesMemoryStore.filter(m => {
-            if (m.org_id !== orgId || !m.is_published) return false;
-            if (m.target_branch && m.target_branch !== 'ALL' && studentBranch !== 'ALL' && m.target_branch !== studentBranch) return false;
-            if (m.target_batch && m.target_batch !== 'ALL' && studentBatch !== 'ALL' && m.target_batch !== studentBatch) return false;
+            if (!m.is_published) return false;
+            if (m.org_id !== orgId && m.org_id !== rawOrgId && (!org || m.org_id !== org.code)) return false;
+            if (m.target_branch && m.target_branch !== 'ALL' && studentBranch !== 'ALL' && m.target_branch.toUpperCase() !== studentBranch) return false;
+            if (m.target_batch && m.target_batch !== 'ALL' && studentBatch !== 'ALL' && m.target_batch.toUpperCase() !== studentBatch) return false;
             return true;
         });
 
