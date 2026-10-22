@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Eye,
   Edit3,
@@ -10,19 +10,27 @@ import {
   Trash2,
   ArrowLeft,
   Download,
-  Share2
+  Share2,
+  Send,
+  Globe,
+  CheckCircle2,
+  School
 } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 import TurndownService from 'turndown';
 import RichEditor from './RichEditor';
 import MarkdownPreview from './MarkdownPreview';
-import { updateNote, deleteNote } from '../../services/notesService';
+import { updateNote, deleteNote, togglePublishNote } from '../../services/notesService';
 import toast from 'react-hot-toast';
 import './NoteEditor.css';
 
-const NoteEditor = ({ note, onNoteUpdate, onClose, onNoteDelete }) => {
+const NoteEditor = ({ note, onNoteUpdate, onClose, onNoteDelete, readOnly = false }) => {
   const [title, setTitle] = useState(note?.title || '');
   const [content, setContent] = useState(note?.content || '');
+  const [isPublished, setIsPublished] = useState(Boolean(note?.is_published));
+  const [targetBranch, setTargetBranch] = useState(note?.target_branch || 'ALL');
+  const [targetBatch, setTargetBatch] = useState(note?.target_batch || 'ALL');
+  const [publishing, setPublishing] = useState(false);
   const [saveStatus, setSaveStatus] = useState('saved'); // 'saved', 'saving', 'error'
   const saveTimeoutRef = useRef(null);
 
@@ -30,9 +38,34 @@ const NoteEditor = ({ note, onNoteUpdate, onClose, onNoteDelete }) => {
     if (note) {
       setTitle(note.title);
       setContent(note.content || '');
+      setIsPublished(Boolean(note.is_published));
+      setTargetBranch(note.target_branch || 'ALL');
+      setTargetBatch(note.target_batch || 'ALL');
       setSaveStatus('saved');
     }
   }, [note?.id]);
+
+  const handleTogglePublish = async () => {
+    if (!note) return;
+    try {
+      setPublishing(true);
+      const targetState = !isPublished;
+      const res = await togglePublishNote(note.id, {
+        isPublished: targetState,
+        targetBranch,
+        targetBatch
+      });
+      if (res && res.success) {
+        setIsPublished(res.is_published);
+        toast.success(res.is_published ? 'Lecture note published to students!' : 'Note unpublished (saved to drafts)');
+        if (onNoteUpdate) onNoteUpdate(res.note);
+      }
+    } catch (err) {
+      toast.error('Failed to update publication: ' + err.message);
+    } finally {
+      setPublishing(false);
+    }
+  };
 
   const handleExportPDF = useCallback(() => {
     if (!content) return toast.error('Nothing to export');
@@ -85,9 +118,9 @@ const NoteEditor = ({ note, onNoteUpdate, onClose, onNoteDelete }) => {
     };
   }, [note?.id, handleExportPDF, handleExportMD]);
 
-  // Auto-save on content changes
+  // Auto-save on content changes (disabled in readOnly mode)
   useEffect(() => {
-    if (!note) return;
+    if (!note || readOnly) return;
 
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -112,7 +145,7 @@ const NoteEditor = ({ note, onNoteUpdate, onClose, onNoteDelete }) => {
     }, 1500);
 
     return () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); };
-  }, [title, content, note]);
+  }, [title, content, note, readOnly]);
 
   const handleDelete = async () => {
     if (!window.confirm(`Delete note "${note.title}"? This action cannot be undone.`)) return;
@@ -144,35 +177,49 @@ const NoteEditor = ({ note, onNoteUpdate, onClose, onNoteDelete }) => {
             </button>
           )}
 
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="editor-title-input compact-title"
-            placeholder="Untitled Note"
-          />
+          {readOnly ? (
+            <div className="editor-title-readonly-wrap">
+              <span className="editor-title-readonly-text">{title || 'Faculty Lecture Note'}</span>
+              <span className="faculty-author-badge">
+                <School size={12} />
+                <span>By {note?.author_name || 'Department Faculty'} • Verified Campus Note</span>
+              </span>
+            </div>
+          ) : (
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="editor-title-input compact-title"
+              placeholder="Untitled Note"
+            />
+          )}
+
+          
 
           <div className="editor-actions-inline">
-            <div className="save-status">
-              {saveStatus === 'saving' && (
-                <span className="status-saving">
-                  <RefreshCw size={10} className="spin" style={{ marginRight: 4 }} />
-                  Saving...
-                </span>
-              )}
-              {saveStatus === 'saved' && (
-                <span className="status-saved">
-                  <Check size={10} style={{ marginRight: 4 }} />
-                  Saved
-                </span>
-              )}
-              {saveStatus === 'error' && (
-                <span className="status-error">
-                  <AlertCircle size={10} style={{ marginRight: 4 }} />
-                  Error
-                </span>
-              )}
-            </div>
+            {!readOnly && (
+              <div className="save-status">
+                {saveStatus === 'saving' && (
+                  <span className="status-saving">
+                    <RefreshCw size={10} className="spin" style={{ marginRight: 4 }} />
+                    Saving...
+                  </span>
+                )}
+                {saveStatus === 'saved' && (
+                  <span className="status-saved">
+                    <Check size={10} style={{ marginRight: 4 }} />
+                    Saved
+                  </span>
+                )}
+                {saveStatus === 'error' && (
+                  <span className="status-error">
+                    <AlertCircle size={10} style={{ marginRight: 4 }} />
+                    Error
+                  </span>
+                )}
+              </div>
+            )}
 
             <div className="action-divider"></div>
 
@@ -182,9 +229,11 @@ const NoteEditor = ({ note, onNoteUpdate, onClose, onNoteDelete }) => {
             <button className="btn-action-icon" onClick={handleExportMD} title="Export to Markdown">
               <Download size={13} /> MD
             </button>
-            <button className="btn-delete-note" onClick={handleDelete} title="Delete Note">
-              <Trash2 size={13} />
-            </button>
+            {!readOnly && (
+              <button className="btn-delete-note" onClick={handleDelete} title="Delete Note">
+                <Trash2 size={13} />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -196,7 +245,7 @@ const NoteEditor = ({ note, onNoteUpdate, onClose, onNoteDelete }) => {
         <RichEditor
           content={content}
           onChange={setContent}
-          editable={true}
+          editable={!readOnly}
         />
       </div>
     </div>
