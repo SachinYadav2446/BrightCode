@@ -220,22 +220,32 @@ export const AuthProvider = ({ children }) => {
           if (d.project1 !== undefined) localStorage.setItem('user_project1', d.project1);
           if (d.project2 !== undefined) localStorage.setItem('user_project2', d.project2);
           if (d.createdAt !== undefined) localStorage.setItem('user_joined', d.createdAt);
-          if (d.role) localStorage.setItem('user_role', d.role);
-          if (d.org_id || d.orgId) localStorage.setItem('college_org_id', d.org_id || d.orgId);
-          if (d.roll_no || d.rollNo) localStorage.setItem('college_roll_no', d.roll_no || d.rollNo);
-          if (d.branch) localStorage.setItem('college_branch', d.branch);
-          if (d.batch) localStorage.setItem('college_batch', d.batch);
+          if (d.org_id || d.orgId) {
+            localStorage.setItem('college_org_id', d.org_id || d.orgId);
+            if (d.org_name || d.orgName) localStorage.setItem('college_org_name', d.org_name || d.orgName);
+            if (d.org_code || d.orgCode) localStorage.setItem('college_org_code', d.org_code || d.orgCode);
+            if (d.roll_no || d.rollNo) localStorage.setItem('college_roll_no', d.roll_no || d.rollNo);
+            if (d.branch) localStorage.setItem('college_branch', d.branch);
+            if (d.batch) localStorage.setItem('college_batch', d.batch);
+          } else {
+            localStorage.removeItem('college_org_id');
+            localStorage.removeItem('college_org_name');
+            localStorage.removeItem('college_org_code');
+            localStorage.removeItem('college_roll_no');
+            localStorage.removeItem('college_branch');
+            localStorage.removeItem('college_batch');
+          }
           
           setUser(prev => prev ? { 
             ...prev, 
             ...d,
             role: d.role || prev.role || userRole,
-            orgId: d.org_id || d.orgId || prev.orgId || orgId,
-            orgName: d.org_name || d.orgName || prev.orgName || orgName,
-            orgCode: d.org_code || d.orgCode || prev.orgCode || orgCode,
-            rollNo: d.roll_no || d.rollNo || prev.rollNo || rollNo,
-            branch: d.branch || prev.branch || branch,
-            batch: d.batch || prev.batch || batch
+            orgId: (d.org_id || d.orgId) ? (d.org_id || d.orgId) : null,
+            orgName: (d.org_id || d.orgId) ? (d.org_name || d.orgName || prev.orgName || orgName) : null,
+            orgCode: (d.org_id || d.orgId) ? (d.org_code || d.orgCode || prev.orgCode || orgCode) : null,
+            rollNo: (d.org_id || d.orgId) ? (d.roll_no || d.rollNo || prev.rollNo || rollNo) : null,
+            branch: (d.org_id || d.orgId) ? (d.branch || prev.branch || branch) : null,
+            batch: (d.org_id || d.orgId) ? (d.batch || prev.batch || batch) : null
           } : null);
         }
       }).catch((err) => {
