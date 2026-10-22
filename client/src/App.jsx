@@ -388,6 +388,14 @@ function App() {
                 } 
               />
               <Route 
+                path="/notes" 
+                element={
+                  <ProtectedRoute>
+                    <Navigate to="/codevault" replace />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
                 path="/battle-arena" 
                 element={
                   <ProtectedRoute>
