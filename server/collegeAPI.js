@@ -20,11 +20,13 @@ const EXAMS_FILE = path.join(__dirname, 'college_exams_db.json');
 const RESULTS_FILE = path.join(__dirname, 'college_results_db.json');
 const ASSIGNMENTS_FILE = path.join(__dirname, 'college_assignments_db.json');
 const USERS_FILE = path.join(__dirname, 'users_db.json');
+const MODULES_FILE = path.join(__dirname, 'college_modules_db.json');
 
 let organizationsMemoryStore = [];
 let collegeExamsMemoryStore = [];
 let collegeResultsMemoryStore = [];
 let collegeAssignmentsMemoryStore = [];
+let collegeModulesMemoryStore = [];
 
 // ── Default Seed Organization (Apex Institute of Technology) ────────────────
 const DEFAULT_ORG = {
@@ -69,6 +71,60 @@ const DEFAULT_EXAM = {
             constraints: '1 <= N <= 10^5\n1 <= A[i] <= 10^12',
             testCases: [
                 { input: '6\n3 2 1 56 10000 167', expectedOutput: '1 10000' }
+            ]
+        }
+    ]
+};
+
+
+const DEFAULT_MODULE = {
+    id: 'mod_apex_dsa_core',
+    org_id: 'demo_college',
+    title: 'Data Structures & Algorithms in C++',
+    description: 'Core semester lab modules covering pointers, dynamic arrays, linked lists, and algorithm complexity.',
+    category: 'Computer Science',
+    color: '#ef4444',
+    icon: 'Binary',
+    target_branch: 'ALL',
+    target_batch: '2026',
+    created_by: 'apex_faculty_admin_1',
+    is_published: true,
+    created_at: '2026-01-01T00:00:00.000Z',
+    published_at: '2026-01-01T00:00:00.000Z',
+    topics: [
+        {
+            id: 'top_1',
+            title: '1. Pointers & Dynamic Memory Management',
+            content: '### Pointers in C++\nPointers are variables that store the memory address of another variable.\n\n```cpp\nint val = 42;\nint* ptr = &val;\ncout << *ptr << endl; // Prints 42\n```\n\n#### Key Rules:\n1. Always initialize pointers.\n2. Delete dynamically allocated memory with `delete` or `delete[]` to prevent memory leaks.\n3. Prefer smart pointers (`std::unique_ptr`, `std::shared_ptr`) in modern C++.',
+            questions: [
+                {
+                    id: 'q1',
+                    question: 'What is the output of *ptr when ptr points to int x = 100?',
+                    options: ['100', 'Memory address of x', 'Compiler Error', 'Garbage value'],
+                    answer: 0,
+                    explanation: 'Dereferencing (*ptr) accesses the actual value stored at the address pointed to by ptr.'
+                },
+                {
+                    id: 'q2',
+                    question: 'Which operator is used to deallocate dynamic memory in C++?',
+                    options: ['free()', 'delete', 'remove', 'dispose'],
+                    answer: 1,
+                    explanation: 'In C++, delete and delete[] are the operators used to release heap-allocated memory.'
+                }
+            ]
+        },
+        {
+            id: 'top_2',
+            title: '2. Array Traversals & Kadane\'s Algorithm',
+            content: '### Kadane\'s Algorithm (Maximum Subarray Sum)\nKadane\'s algorithm operates in O(N) time and O(1) auxiliary space by keeping track of the current subarray sum and resetting it whenever it drops below zero.\n\n```cpp\nint maxSubArray(vector<int>& nums) {\n    int maxSum = nums[0], curSum = 0;\n    for (int x : nums) {\n        curSum = max(x, curSum + x);\n        maxSum = max(maxSum, curSum);\n    }\n    return maxSum;\n}\n```',
+            questions: [
+                {
+                    id: 'q3',
+                    question: 'What is the time complexity of Kadane\'s Algorithm?',
+                    options: ['O(N)', 'O(N log N)', 'O(N^2)', 'O(1)'],
+                    answer: 0,
+                    explanation: 'Kadane\'s algorithm processes each array element in a single pass, resulting in linear O(N) complexity.'
+                }
             ]
         }
     ]
@@ -125,6 +181,15 @@ const loadCollegeStores = () => {
             collegeResultsMemoryStore = JSON.parse(fs.readFileSync(RESULTS_FILE, 'utf8')) || [];
         }
         logger.info(`[COLLEGE] Loaded ${collegeResultsMemoryStore.length} exam results`);
+
+        if (fs.existsSync(MODULES_FILE)) {
+            collegeModulesMemoryStore = JSON.parse(fs.readFileSync(MODULES_FILE, 'utf8')) || [];
+        }
+        if (!collegeModulesMemoryStore.find(m => m.id === DEFAULT_MODULE.id)) {
+            collegeModulesMemoryStore.push(DEFAULT_MODULE);
+            saveModules();
+        }
+        logger.info(`[COLLEGE] Loaded ${collegeModulesMemoryStore.length} college library modules`);
     } catch (e) {
         logger.error('[COLLEGE] Error loading college JSON stores:', e.message);
     }
@@ -148,6 +213,12 @@ const saveAssignments = () => {
     } catch (e) { logger.error('[COLLEGE] Failed to save assignments:', e); }
 };
 
+const saveModules = () => {
+    try {
+        fs.writeFileSync(MODULES_FILE, JSON.stringify(collegeModulesMemoryStore, null, 2));
+    } catch (e) { logger.error('[COLLEGE] Failed to save modules:', e); }
+};
+
 const saveResults = () => {
     try {
         fs.writeFileSync(RESULTS_FILE, JSON.stringify(collegeResultsMemoryStore, null, 2));
@@ -155,6 +226,15 @@ const saveResults = () => {
 };
 
 loadCollegeStores();
+
+
+function getRankLevel(xp) {
+    if (xp >= 10000) return { title: 'Grandmaster', badgeClass: 'lvl-grandmaster' };
+    if (xp >= 5000) return { title: 'Expert', badgeClass: 'lvl-expert' };
+    if (xp >= 2000) return { title: 'Advanced', badgeClass: 'lvl-advanced' };
+    if (xp >= 500) return { title: 'Apprentice', badgeClass: 'lvl-apprentice' };
+    return { title: 'Novice', badgeClass: 'lvl-novice' };
+}
 
 // ── Database Initialization (PostgreSQL) ────────────────────────────────────
 async function initCollegeDB() {
@@ -439,7 +519,9 @@ router.get('/orgs/public', async (req, res) => {
 // POST /api/college/login - Closed institutional student & faculty login
 // Supports Roll Number, College Email, or Username
 router.post('/login', async (req, res) => {
-    let { orgCode, identifier, password } = req.body;
+    let orgCode = req.body.orgCode || req.body.collegeCode;
+    let identifier = req.body.identifier || req.body.rollNo;
+    let password = req.body.password;
     if (!orgCode || !identifier || !password) {
         return res.status(400).json({ error: 'College Code, Student Roll Number / Email, and Password are required.' });
     }
@@ -511,7 +593,8 @@ router.post('/login', async (req, res) => {
             org_name: org.name,
             org_code: org.code,
             roll_no: user.roll_no || '',
-            branch: user.branch || ''
+            branch: user.branch || 'ALL',
+            batch: user.batch || 'ALL'
         }, JWT_SECRET, { expiresIn: '7d' });
 
         res.json({
@@ -601,7 +684,9 @@ router.get('/stats', auth, requireCollegeAdmin, async (req, res) => {
                 activeExams: activeExamsCount,
                 totalSubmissions,
                 totalViolations,
-                avgViolationsPerSubmission: totalSubmissions > 0 ? (totalViolations / totalSubmissions).toFixed(1) : '0.0'
+                avgViolationsPerSubmission: totalSubmissions > 0 ? (totalViolations / totalSubmissions).toFixed(1) : '0.0',
+                publishedModules: collegeModulesMemoryStore.filter(m => m.org_id === org.id && m.is_published).length,
+                totalModules: collegeModulesMemoryStore.filter(m => m.org_id === org.id).length
             }
         });
     } catch (err) {
@@ -791,16 +876,26 @@ router.get('/students', auth, requireCollegeAdmin, async (req, res) => {
         res.json({
             success: true,
             total: students.length,
-            students: students.map(s => ({
-                id: s.id,
-                rollNo: s.roll_no || '',
-                username: s.username,
-                email: s.email,
-                branch: s.branch || 'CSE',
-                batch: s.batch || '2026',
-                isTempPassword: !!s.is_temp_password,
-                createdAt: s.created_at
-            }))
+            students: students.map(s => {
+                const xp = s.xp || 0;
+                const rankInfo = getRankLevel(xp);
+                return {
+                    id: s.id,
+                    rollNo: s.roll_no || '',
+                    username: s.username,
+                    name: s.name || s.username,
+                    email: s.email,
+                    branch: s.branch || 'CSE',
+                    batch: s.batch || '2026',
+                    xp,
+                    rankLevel: rankInfo.title,
+                    rankBadge: rankInfo.badgeClass,
+                    problemsSolved: s.problems_solved || 0,
+                    streak: s.streak || 0,
+                    isTempPassword: !!s.is_temp_password,
+                    createdAt: s.created_at
+                };
+            })
         });
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch student directory' });
@@ -1342,6 +1437,234 @@ router.delete('/assignments/:id', auth, requireCollegeAdmin, async (req, res) =>
         res.json({ success: true, message: 'Lab sheet assignment removed.' });
     } catch (err) {
         res.status(500).json({ error: 'Failed to delete assignment' });
+    }
+});
+
+
+// ── Campus Leaderboard ──────────────────────────────────────────────────────
+router.get('/leaderboard', auth, requireCollegeAdmin, async (req, res) => {
+    try {
+        const orgId = req.user.org_id || 'demo_college';
+        const { branch, batch } = req.query;
+
+        let students = [];
+        if (useMemoryDB) {
+            let users = [];
+            if (fs.existsSync(USERS_FILE)) {
+                try { users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8')).users || []; } catch (e) {}
+            }
+            students = users.filter(u => u.org_id === orgId && u.role === 'student');
+        } else {
+            const { rows } = await pool.query(
+                "SELECT id, username, email, roll_no, branch, batch, xp, problems_solved, streak, name FROM users WHERE org_id = $1 AND role = 'student'",
+                [orgId]
+            );
+            students = rows;
+        }
+
+        if (branch && branch !== 'ALL') students = students.filter(s => s.branch === branch);
+        if (batch && batch !== 'ALL') students = students.filter(s => s.batch === batch);
+
+        // Sort descending by XP, then problems solved
+        students.sort((a, b) => (b.xp || 0) - (a.xp || 0) || (b.problems_solved || 0) - (a.problems_solved || 0));
+
+        const leaderboard = students.map((s, index) => {
+            const xp = s.xp || 0;
+            const rankInfo = getRankLevel(xp);
+            return {
+                rank: index + 1,
+                id: s.id,
+                rollNo: s.roll_no || '',
+                username: s.username,
+                name: s.name || s.username,
+                email: s.email,
+                branch: s.branch || 'CSE',
+                batch: s.batch || '2026',
+                xp,
+                rankLevel: rankInfo.title,
+                rankBadge: rankInfo.badgeClass,
+                problemsSolved: s.problems_solved || 0,
+                streak: s.streak || 0
+            };
+        });
+
+        res.json({
+            success: true,
+            total: leaderboard.length,
+            leaderboard
+        });
+    } catch (err) {
+        logger.error('[COLLEGE LEADERBOARD] Error:', err);
+        res.status(500).json({ error: 'Failed to retrieve college leaderboard' });
+    }
+});
+
+// ── Faculty Curriculum & Library Studio Endpoints ───────────────────────────
+
+// GET /api/college/library/modules - Faculty lists all modules (drafts + published)
+router.get('/library/modules', auth, requireCollegeAdmin, async (req, res) => {
+    try {
+        const orgId = req.user.org_id || 'demo_college';
+        const modules = collegeModulesMemoryStore.filter(m => m.org_id === orgId);
+        res.json({ success: true, count: modules.length, modules });
+    } catch (err) {
+        logger.error('[COLLEGE GET MODULES] Error:', err);
+        res.status(500).json({ error: 'Failed to fetch library modules' });
+    }
+});
+
+// POST /api/college/library/modules - Faculty creates new module
+router.post('/library/modules', auth, requireCollegeAdmin, async (req, res) => {
+    try {
+        const orgId = req.user.org_id || 'demo_college';
+        const { title, description, category, color, icon, target_branch, target_batch, topics, isPublished } = req.body;
+
+        if (!title || !title.trim()) {
+            return res.status(400).json({ error: 'Module title is required' });
+        }
+
+        const newModule = {
+            id: 'mod_' + uuidV4().substring(0, 8),
+            org_id: orgId,
+            title: title.trim(),
+            description: (description || '').trim(),
+            category: category || 'Computer Science',
+            color: color || '#ef4444',
+            icon: icon || 'BookOpen',
+            target_branch: target_branch || 'ALL',
+            target_batch: target_batch || 'ALL',
+            created_by: req.user.id || 'faculty',
+            is_published: !!isPublished,
+            created_at: new Date().toISOString(),
+            published_at: isPublished ? new Date().toISOString() : null,
+            topics: Array.isArray(topics) ? topics : []
+        };
+
+        collegeModulesMemoryStore.unshift(newModule);
+        saveModules();
+
+        logger.info(`[COLLEGE] Created new library module "${newModule.title}" (${newModule.is_published ? 'PUBLISHED' : 'DRAFT'})`);
+        res.json({ success: true, module: newModule });
+    } catch (err) {
+        logger.error('[COLLEGE CREATE MODULE] Error:', err);
+        res.status(500).json({ error: 'Failed to create library module' });
+    }
+});
+
+// PUT /api/college/library/modules/:id - Faculty updates existing module
+router.put('/library/modules/:id', auth, requireCollegeAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const orgId = req.user.org_id || 'demo_college';
+        const modIndex = collegeModulesMemoryStore.findIndex(m => m.id === id && m.org_id === orgId);
+
+        if (modIndex === -1) {
+            return res.status(404).json({ error: 'Module not found' });
+        }
+
+        const existing = collegeModulesMemoryStore[modIndex];
+        const { title, description, category, color, icon, target_branch, target_batch, topics, isPublished } = req.body;
+
+        const updatedModule = {
+            ...existing,
+            title: title !== undefined ? title.trim() : existing.title,
+            description: description !== undefined ? description.trim() : existing.description,
+            category: category || existing.category,
+            color: color || existing.color,
+            icon: icon || existing.icon,
+            target_branch: target_branch || existing.target_branch,
+            target_batch: target_batch || existing.target_batch,
+            topics: Array.isArray(topics) ? topics : existing.topics,
+            is_published: isPublished !== undefined ? !!isPublished : existing.is_published,
+            published_at: (isPublished && !existing.is_published) ? new Date().toISOString() : existing.published_at,
+            updated_at: new Date().toISOString()
+        };
+
+        collegeModulesMemoryStore[modIndex] = updatedModule;
+        saveModules();
+
+        res.json({ success: true, module: updatedModule });
+    } catch (err) {
+        logger.error('[COLLEGE UPDATE MODULE] Error:', err);
+        res.status(500).json({ error: 'Failed to update library module' });
+    }
+});
+
+// PATCH /api/college/library/modules/:id/publish - Toggle publish state
+router.patch('/library/modules/:id/publish', auth, requireCollegeAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const orgId = req.user.org_id || 'demo_college';
+        const mod = collegeModulesMemoryStore.find(m => m.id === id && m.org_id === orgId);
+
+        if (!mod) {
+            return res.status(404).json({ error: 'Module not found' });
+        }
+
+        const targetState = req.body.isPublished !== undefined ? !!req.body.isPublished : !mod.is_published;
+        mod.is_published = targetState;
+        mod.published_at = targetState ? new Date().toISOString() : null;
+        mod.updated_at = new Date().toISOString();
+        saveModules();
+
+        logger.info(`[COLLEGE] Module "${mod.title}" is now ${mod.is_published ? 'PUBLISHED' : 'UNPUBLISHED'}`);
+        res.json({ success: true, is_published: mod.is_published, module: mod });
+    } catch (err) {
+        logger.error('[COLLEGE PUBLISH MODULE] Error:', err);
+        res.status(500).json({ error: 'Failed to update module publish status' });
+    }
+});
+
+// DELETE /api/college/library/modules/:id - Faculty deletes module
+router.delete('/library/modules/:id', auth, requireCollegeAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const orgId = req.user.org_id || 'demo_college';
+
+        const beforeCount = collegeModulesMemoryStore.length;
+        collegeModulesMemoryStore = collegeModulesMemoryStore.filter(m => !(m.id === id && m.org_id === orgId));
+
+        if (collegeModulesMemoryStore.length === beforeCount) {
+            return res.status(404).json({ error: 'Module not found' });
+        }
+
+        saveModules();
+        res.json({ success: true, message: 'Library module removed' });
+    } catch (err) {
+        logger.error('[COLLEGE DELETE MODULE] Error:', err);
+        res.status(500).json({ error: 'Failed to delete library module' });
+    }
+});
+
+// GET /api/college/student/library-modules - Student gets published modules for their college
+router.get('/student/library-modules', auth, async (req, res) => {
+    try {
+        const orgId = req.user.org_id;
+        if (!orgId) {
+            return res.json({ success: true, isCollegeStudent: false, modules: [] });
+        }
+
+        const studentBranch = req.user.branch || 'ALL';
+        const studentBatch = req.user.batch || 'ALL';
+
+        // Only return published modules targeting student's branch/batch
+        const modules = collegeModulesMemoryStore.filter(m => {
+            if (m.org_id !== orgId || !m.is_published) return false;
+            if (m.target_branch && m.target_branch !== 'ALL' && studentBranch !== 'ALL' && m.target_branch !== studentBranch) return false;
+            if (m.target_batch && m.target_batch !== 'ALL' && studentBatch !== 'ALL' && m.target_batch !== studentBatch) return false;
+            return true;
+        });
+
+        res.json({
+            success: true,
+            isCollegeStudent: true,
+            orgId,
+            count: modules.length,
+            modules
+        });
+    } catch (err) {
+        logger.error('[COLLEGE STUDENT MODULES] Error:', err);
+        res.status(500).json({ error: 'Failed to fetch college curriculum modules' });
     }
 });
 
