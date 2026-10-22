@@ -1,26 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import {
-  Building2, Users, FileText, ShieldAlert, Download, Plus, Search,
-  RefreshCw, Trash2, KeyRound, Play, CheckCircle2, AlertTriangle,
-  UploadCloud, FileSpreadsheet, Sparkles, School, BarChart3, Clock,
-  LogOut, ArrowRight, Check, Copy, Eye, Award, BookOpen, Trophy,
-  Flame, Zap, Crown, Layers, Send, Edit3, ExternalLink, Globe,
-  MessageSquare, FolderPlus, X, HelpCircle, Compass
+  Home, BookOpen, Terminal, FolderOpen, Trophy, Users, School,
+  Sparkles, Crown, Award, Zap, Flame, CheckCircle2, ShieldAlert,
+  Download, Plus, Search, Trash2, KeyRound, Check, X, Edit3,
+  ExternalLink, Layers, ArrowRight, ChevronLeft, ChevronRight,
+  FileText, LogOut, Globe, Clock, Shield, Code2, AlertTriangle,
+  Play, FileSpreadsheet, Eye, HelpCircle, Binary, Cpu, Server, Database,
+  Brain, Send, Sparkle, RefreshCw, Settings as SettingsIcon, ShieldCheck,
+  Mail, Lock, User, Info, Calendar, Activity, GitBranch, FolderPlus, Hash, File, ArrowUpRight
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import API_URL from '../config';
 import { useAuth } from '../context/AuthContext';
+import CodeBrightLogo from '../components/CodeBrightLogo';
 import FriendsDrawer from '../components/FriendsDrawer';
+import NoteEditor from '../components/codevault/NoteEditor';
+import {
+  fetchNotes,
+  fetchFolders,
+  createNote,
+  createFolder,
+  updateFolder,
+  deleteFolder,
+  updateNote,
+  deleteNote,
+  togglePublishNote
+} from '../services/notesService';
+import './Home.css';
+import './Settings.css';
 import './CollegeAdmin.css';
 
+// ── Sample CSV for Quick Onboarding ──────────────────────────────────────────
 const SAMPLE_CSV = `21CS003,Ishaan Verma,ishaan@apex.edu,CSE,2026
 21CS004,Ananya Gupta,ananya@apex.edu,CSE,2026
 21CS005,Rohan Sharma,rohan@apex.edu,CSE,2026
 21IT001,Priya Nair,priya@apex.edu,IT,2026
 21IT002,Aditya Rao,aditya@apex.edu,IT,2026`;
 
+// ── Curated Coding Problems for Exams & Lab Sheets ────────────────────────────
 const CURATED_QUESTIONS = [
   { id: 'q1', title: 'Array Reverse', difficulty: 'Easy', timeLimit: '1.0s', testCases: [{ input: '5\n1 2 3 4 5', expectedOutput: '5 4 3 2 1' }] },
   { id: 'q2', title: 'Min and Max in Array', difficulty: 'Medium', timeLimit: '1.0s', testCases: [{ input: '6\n3 2 1 56 10000 167', expectedOutput: '1 10000' }] },
@@ -29,47 +48,71 @@ const CURATED_QUESTIONS = [
   { id: 'q5', title: 'Merge Intervals', difficulty: 'Medium', timeLimit: '1.0s', testCases: [{ input: '4\n1 3 2 6 8 10 15 18', expectedOutput: '1 6 8 10 15 18' }] }
 ];
 
+// ── Starter Curriculum Templates ─────────────────────────────────────────────
 const STARTER_TEMPLATES = {
   dsa: {
     title: 'Data Structures & Algorithms in C++',
     description: 'Core semester lab modules covering pointers, dynamic arrays, linked lists, and algorithm complexity.',
     category: 'Computer Science',
-    color: '#3b82f6',
+    color: '#ef4444',
     target_branch: 'ALL',
     target_batch: '2026',
     topics: [
       {
         id: 'top_1',
         title: '1. Pointers & Dynamic Memory Management',
-        content: '### Pointers in C++\nPointers are variables that store the memory address of another variable.\n\n```cpp\nint val = 42;\nint* ptr = &val;\ncout << *ptr << endl; // Prints 42\n```\n\n#### Key Rules:\n1. Always initialize pointers before use.\n2. Deallocate dynamically allocated memory using `delete` or `delete[]` to prevent memory leaks.\n3. Prefer modern C++ smart pointers (`std::unique_ptr`, `std::shared_ptr`).',
+        content: `### Pointers in C++
+Pointers are variables that store the memory address of another variable.
+
+\`\`\`cpp
+int val = 42;
+int* ptr = &val;
+cout << *ptr << endl; // Prints 42
+\`\`\`
+
+#### Key Rules:
+1. Always initialize pointers before use.
+2. Deallocate dynamically allocated memory using \`delete\` or \`delete[]\` to prevent memory leaks.
+3. Prefer modern C++ smart pointers (\`std::unique_ptr\`, \`std::shared_ptr\`).`,
         questions: [
           {
-            id: 'q_ptr_1',
-            question: 'What is the output of *ptr when ptr points to int x = 100?',
-            options: ['100', 'Memory address of x', 'Compiler Error', 'Garbage value'],
-            answer: 0,
-            explanation: 'Dereferencing (*ptr) accesses the actual value stored at the memory address.'
+            question: 'What is the size of an integer pointer on a 64-bit architecture?',
+            options: ['4 bytes', '8 bytes', '16 bytes', 'Architecture dependent between 2 and 4'],
+            answer: 1,
+            explanation: 'On all 64-bit systems, memory addresses are 64 bits wide, making pointer variables 8 bytes in size.'
           },
           {
-            id: 'q_ptr_2',
-            question: 'Which operator is used to deallocate dynamic memory allocated with new in C++?',
-            options: ['free()', 'delete', 'remove', 'dispose'],
+            question: 'Which operator is used to obtain the memory address of a variable?',
+            options: ['*', '&', '->', '%'],
             answer: 1,
-            explanation: 'The delete operator releases memory allocated on the free store (heap) via new.'
+            explanation: 'The address-of operator (&) returns the memory location of an operand.'
           }
         ]
       },
       {
         id: 'top_2',
-        title: '2. Singly Linked Lists & Node Traversal',
-        content: '### Singly Linked Lists\nA sequence of nodes where each node contains data and a pointer to the next node in sequence.\n\n```cpp\nstruct Node {\n    int data;\n    Node* next;\n    Node(int val) : data(val), next(nullptr) {}\n};\n```\n\nTime Complexity for traversal is O(N), insertion at head is O(1).',
+        title: '2. Singly Linked List: Construction & Traversal',
+        content: `### Linked Lists vs Static Arrays
+A linked list is a linear data structure where elements are stored in nodes connected via pointer links.
+
+\`\`\`cpp
+struct Node {
+    int data;
+    Node* next;
+    Node(int val) : data(val), next(nullptr) {}
+};
+\`\`\`
+
+#### Time Complexities:
+- Insertion at head: O(1)
+- Deletion at head: O(1)
+- Access / Search: O(N)`,
         questions: [
           {
-            id: 'q_ll_1',
-            question: 'What is the time complexity to insert a new node at the head of a singly linked list?',
-            options: ['O(1)', 'O(N)', 'O(log N)', 'O(N^2)'],
+            question: 'What is the time complexity to insert an element at the beginning of a singly linked list?',
+            options: ['O(1)', 'O(log N)', 'O(N)', 'O(N^2)'],
             answer: 0,
-            explanation: 'Inserting at the head simply requires updating the new node’s next pointer and moving the head pointer, taking O(1) constant time.'
+            explanation: 'Inserting at the head requires simply pointing the new node to current head and reassigning head.'
           }
         ]
       }
@@ -77,20 +120,23 @@ const STARTER_TEMPLATES = {
   },
   python: {
     title: 'Python for Data Structures & Problem Solving',
-    description: 'Comprehensive Python curriculum covering list comprehensions, generators, dictionaries, and recursion.',
-    category: 'Software Engineering',
-    color: '#10b981',
+    description: 'Foundational algorithmic concepts implemented with clean, idiomatic Python syntax.',
+    category: 'Computer Science',
+    color: '#eab308',
     target_branch: 'ALL',
     target_batch: '2026',
     topics: [
       {
-        id: 'py_top_1',
-        title: '1. Python Lists, Sets & Hash Maps',
-        content: '### Python Data Structures\nPython provides high-performance built-in types:\n- Lists: Dynamic contiguous arrays with O(1) amortized append.\n- Dictionaries: Hash maps with O(1) average lookup time.\n- Sets: Hash-based collections of unique items.',
+        id: 'top_py_1',
+        title: '1. Lists, Tuples, and Dictionaries in Depth',
+        content: `### Built-in Python Collections
+Python provides highly optimized native collections:
+- **Lists:** Mutable dynamic arrays with amortized O(1) append.
+- **Tuples:** Immutable sequences suitable for fixed keys.
+- **Dicts & Sets:** Hash tables with average O(1) lookups.`,
         questions: [
           {
-            id: 'py_q_1',
-            question: 'What is the average time complexity for checking membership in a Python set ("x in s")?',
+            question: 'What is the average time complexity of checking membership (`x in s`) in a Python set?',
             options: ['O(1)', 'O(N)', 'O(log N)', 'O(N log N)'],
             answer: 0,
             explanation: 'Python sets are implemented using hash tables, offering O(1) average lookup.'
@@ -101,95 +147,492 @@ const STARTER_TEMPLATES = {
   }
 };
 
+// ── Default Sample Faculty Notes ─────────────────────────────────────────────
+const INITIAL_FACULTY_NOTES = [
+  {
+    id: 'fn_1',
+    title: 'DSA Lab Exam Syllabus & Grading Rubric',
+    category: 'Lab Assessments',
+    updatedAt: '2026-03-15',
+    content: `# DSA Lab Exam Guidelines (Semester 4)
+- **Time Duration:** 60 Minutes
+- **Total Marks:** 50
+- **Allowed Compilers:** GCC 11+, Clang, Python 3.10+
+- **Proctoring Rules:** Fullscreen locked, tab switching flagged automatically.
+
+### Key Topics:
+1. Two-pointer techniques and Sliding Window
+2. Linked List reversal and cycle detection
+3. Binary Search and Divide & Conquer`
+  },
+  {
+    id: 'fn_2',
+    title: 'C++ Modern Memory Model & Smart Pointers Cheat Sheet',
+    category: 'Lecture Notes',
+    updatedAt: '2026-03-18',
+    content: `# C++ Smart Pointers Cheat Sheet
+
+\`\`\`cpp
+#include <memory>
+// 1. unique_ptr (Exclusive ownership)
+std::unique_ptr<int> u1 = std::make_unique<int>(10);
+
+// 2. shared_ptr (Reference counted ownership)
+std::shared_ptr<int> s1 = std::make_shared<int>(20);
+\`\`\`
+Use \`std::make_unique\` and \`std::make_shared\` to avoid memory leaks during exception handling.`
+  }
+];
+
+// ── Theme Palettes & Banners ─────────────────────────────────────────────────
+const AVATARS = [
+  { seed: 'Sniper' }, { seed: 'Ghost' },
+  { seed: 'Ninja' }, { seed: 'Viper' },
+  { seed: 'Nova' }, { seed: 'Titan' },
+  { seed: 'Apex' }, { seed: 'Zero' },
+  { seed: 'Hunter' }, { seed: 'Reaper' }
+];
+
+const BANNERS = [
+  { id: 'crimson', name: 'Crimson Flare', css: 'linear-gradient(135deg, rgba(249, 115, 22, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)' },
+  { id: 'cyber', name: 'Cyber Neon', css: 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)' },
+  { id: 'toxic', name: 'Toxic Viper', css: 'linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)' },
+  { id: 'void', name: 'Void Phantom', css: 'linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)' },
+  { id: 'gold', name: 'Golden Crown', css: 'linear-gradient(135deg, rgba(201, 168, 76, 0.12) 0%, rgba(17, 17, 19, 0.98) 100%)' }
+];
+
+const ACCENT_PALETTES = {
+  red: {
+    primary: '#ef4444', rgb: '239, 68, 68',
+    dark: '#dc2626',    darkRgb: '220, 38, 38',
+    light: '#f87171',   lightRgb: '248, 113, 113',
+  },
+  orange: {
+    primary: 'var(--primary)', rgb: '249, 115, 22',
+    dark: 'var(--primary-dark)',    darkRgb: '234, 108, 10',
+    light: 'var(--primary-light)',   lightRgb: '251, 146, 60',
+  },
+  espresso: {
+    primary: '#8B4513', rgb: '139, 69, 19',
+    dark: '#6B3410',    darkRgb: '107, 52, 16',
+    light: '#C08060',   lightRgb: '192, 128, 96',
+  },
+};
+
+// ── Animated Number Counter Helper ───────────────────────────────────────────
+const AnimatedCounter = ({ end, suffix = '', duration = 1500 }) => {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!end || end === 0) { setVal(0); return; }
+    const step = end / (duration / 16);
+    let cur = 0;
+    const timer = setInterval(() => {
+      cur += step;
+      if (cur >= end) {
+        setVal(end);
+        clearInterval(timer);
+      } else {
+        setVal(Math.floor(cur));
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [end, duration]);
+  return <span>{val.toLocaleString()}{suffix}</span>;
+};
+
+// ── Typewriter Greeting Hook ─────────────────────────────────────────────────
+const useTypewriter = (text, speed = 45) => {
+  const [displayed, setDisplayed] = useState('');
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    setDisplayed('');
+    setDone(false);
+    let i = 0;
+    const id = setInterval(() => {
+      i++;
+      setDisplayed(text.slice(0, i));
+      if (i >= text.length) { clearInterval(id); setDone(true); }
+    }, speed);
+    return () => clearInterval(id);
+  }, [text, speed]);
+  return { displayed, done };
+};
+
 const CollegeAdmin = () => {
   const navigate = useNavigate();
-  const { friendsDrawerOpen, setFriendsDrawerOpen } = useAuth();
+  const { user, updateProfile, changePassword, logout, friendsDrawerOpen, setFriendsDrawerOpen } = useAuth();
 
-  // Tab State: 'overview' | 'modules' | 'leaderboard' | 'students' | 'exams' | 'assignments' | 'live'
-  const [activeTab, setActiveTab] = useState('overview');
+  // Navigation: Home, Library, Workspace, Notes, Leaderboard, Settings
+  const [activeNav, setActiveNav] = useState('home'); // 'home' | 'library' | 'workspace' | 'notes' | 'leaderboard' | 'settings'
+
+  // Settings sub-tab: 'details' (Identity) | 'settings' (System & Themes) | 'security' | 'about'
+  const [settingsTab, setSettingsTab] = useState('details');
+
+  // Carousel states for Home view
+  const carouselRef = useRef(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+
+  const handleCarouselScroll = () => {
+    if (carouselRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+      setShowLeftArrow(scrollLeft > 10);
+      setShowRightArrow(scrollLeft + clientWidth < scrollWidth - 10);
+    }
+  };
+
+  const scrollCarousel = (direction) => {
+    if (carouselRef.current) {
+      const scrollAmount = 380;
+      carouselRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(handleCarouselScroll, 200);
+    window.addEventListener('resize', handleCarouselScroll);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleCarouselScroll);
+    };
+  }, []);
+
+  // Theme & Profile Form States
+  const [selectedTheme, setSelectedTheme] = useState(() => localStorage.getItem('app_theme') || 'crimson');
+  const [accentColor, setAccentColor] = useState(() => localStorage.getItem('accent_color') || 'red');
+  const [isSavingBio, setIsSavingBio] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const bioSaveTimer = useRef(null);
+  const [newStackItem, setNewStackItem] = useState('');
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [configData, setConfigData] = useState({ username: '' });
+
+  // Password Change States
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Global Institutional State
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Curriculum & Library Studio States
+  // Curriculum & Library Studio State
   const [modules, setModules] = useState([]);
   const [loadingModules, setLoadingModules] = useState(false);
   const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
   const [editingModuleId, setEditingModuleId] = useState(null);
+  const [previewModule, setPreviewModule] = useState(null);
+  const [moduleFilter, setModuleFilter] = useState('ALL'); // 'ALL' | 'published' | 'draft'
   const [moduleForm, setModuleForm] = useState({
     title: '',
     description: '',
     category: 'Computer Science',
-    color: '#3b82f6',
+    color: '#ef4444',
     target_branch: 'ALL',
     target_batch: '2026',
     isPublished: true,
     topics: []
   });
 
-  // Campus Leaderboard States
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
-  const [leaderboardFilter, setLeaderboardFilter] = useState('ALL');
-
-  // Student Onboarding States
-  const [studentsList, setStudentsList] = useState([]);
-  const [bulkInputText, setBulkInputText] = useState('');
-  const [generatingAccounts, setGeneratingAccounts] = useState(false);
-  const [lastGeneratedCredentials, setLastGeneratedCredentials] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterBranch, setFilterBranch] = useState('ALL');
-
-  // Exam Creator States
+  // Workspace / Exam Arena State
   const [exams, setExams] = useState([]);
+  const [examSubTab, setExamSubTab] = useState('list'); // 'list' | 'create' | 'monitoring'
+  const [creatingExam, setCreatingExam] = useState(false);
   const [examTitle, setExamTitle] = useState('');
   const [examDesc, setExamDesc] = useState('');
   const [examDuration, setExamDuration] = useState('60');
-  const [targetBranch, setTargetBranch] = useState('ALL');
+  const [targetBranch, setTargetBranch] = useState('CSE');
   const [targetBatch, setTargetBatch] = useState('2026');
-  const [selectedQuestions, setSelectedQuestions] = useState(['q1', 'q2']);
-  const [creatingExam, setCreatingExam] = useState(false);
+  const [selectedQuestions, setSelectedQuestions] = useState([]);
 
-  // Lab Sheets & Assignments State
+  // Faculty Codex & Real Notes State
+  const [vaultNotes, setVaultNotes] = useState([]);
+  const [vaultFolders, setVaultFolders] = useState([]);
+  const [vaultActiveNote, setVaultActiveNote] = useState(null);
+  const [vaultSelectedFolder, setVaultSelectedFolder] = useState(null);
+  const [vaultLoading, setVaultLoading] = useState(false);
+  const [vaultSearchQuery, setVaultSearchQuery] = useState('');
+  const [vaultNotesFilter, setVaultNotesFilter] = useState('ALL'); // 'ALL' | 'published' | 'draft'
+  const [showFolderModal, setShowFolderModal] = useState(false);
+  const [newVaultFolderName, setNewVaultFolderName] = useState('');
+
+  const [facultyNotes, setFacultyNotes] = useState(INITIAL_FACULTY_NOTES);
   const [assignments, setAssignments] = useState([]);
-  const [asgnTitle, setAsgnTitle] = useState('');
-  const [asgnDesc, setAsgnDesc] = useState('');
-  const [asgnBranch, setAsgnBranch] = useState('ALL');
-  const [asgnBatch, setAsgnBatch] = useState('2026');
-  const [asgnQuestions, setAsgnQuestions] = useState(['q1', 'q4', 'q3']);
-  const [creatingAsgn, setCreatingAsgn] = useState(false);
+  const [notesSubTab, setNotesSubTab] = useState('notes'); // 'notes' | 'sheets'
+  const [newNoteTitle, setNewNoteTitle] = useState('');
+  const [newNoteCategory, setNewNoteCategory] = useState('Lab Assessments');
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [isCreatingNote, setIsCreatingNote] = useState(false);
 
-  // Live Proctoring States
-  const [selectedExamId, setSelectedExamId] = useState('');
-  const [liveData, setLiveData] = useState(null);
-  const [examResults, setExamResults] = useState(null);
+  // Student Cohort & Leaderboard State
+  const [studentsList, setStudentsList] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [csvText, setCsvText] = useState('');
+  const [uploadingCsv, setUploadingCsv] = useState(false);
 
-  const token = localStorage.getItem('token');
-  const username = localStorage.getItem('username') || 'Faculty Coordinator';
-  const orgName = localStorage.getItem('college_org_name') || 'Apex Institute of Technology';
-  const orgCode = localStorage.getItem('college_org_code') || 'APEX';
+  const collegeId = user?.orgId || user?.collegeId || localStorage.getItem('college_id') || 'org_apex_demo';
+  const orgName = user?.orgName || stats?.org?.name || 'Apex Institute of Technology';
+  const orgCode = user?.orgCode || stats?.org?.code || 'APEX';
+  const username = user?.username || localStorage.getItem('username') || 'prof_sharma';
 
+  const [formData, setFormData] = useState({
+    username: username,
+    bio: user?.bio || 'Head of Department & Academic Coordinator. Architecting rigorous coding curriculum and competitive benchmarks.',
+    stack: user?.stack?.length ? user.stack : ['C++', 'Data Structures', 'Operating Systems', 'System Design'],
+    avatarId: user?.avatarId || 'Sniper',
+    bannerId: user?.bannerId || 'crimson',
+    github: user?.github || '',
+    leetcode: user?.leetcode || '',
+    project1: user?.project1 || '',
+    project2: user?.project2 || ''
+  });
+
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        username: user.username || prev.username,
+        bio: user.bio !== undefined ? user.bio : prev.bio,
+        stack: user.stack?.length ? user.stack : prev.stack,
+        avatarId: user.avatarId || prev.avatarId,
+        bannerId: user.bannerId || prev.bannerId,
+        github: user.github !== undefined ? user.github : prev.github,
+        leetcode: user.leetcode !== undefined ? user.leetcode : prev.leetcode,
+        project1: user.project1 !== undefined ? user.project1 : prev.project1,
+        project2: user.project2 !== undefined ? user.project2 : prev.project2,
+      }));
+      setConfigData({ username: user.username || '' });
+    }
+  }, [user]);
+
+  // Apply Theme Helper
+  const applyTheme = (theme) => {
+    const root = document.documentElement;
+    root.classList.remove('theme-minecraft');
+    root.classList.remove('theme-cyberpunk');
+
+    if (theme === 'amber') {
+      root.classList.add('theme-minecraft');
+      root.style.setProperty('--primary', '#FFD700');
+      root.style.setProperty('--primary-rgb', '255, 215, 0');
+      root.style.setProperty('--primary-dark', '#c8a020');
+      root.style.setProperty('--primary-dark-rgb', '200, 160, 32');
+      root.style.setProperty('--primary-light', '#ffe566');
+      root.style.setProperty('--primary-light-rgb', '255, 229, 102');
+      root.style.setProperty('--primary-glow', 'rgba(255, 215, 0, 0.5)');
+      root.style.setProperty('--complementary', '#5D9E3F');
+      root.style.setProperty('--text-complementary', '#fffdd0');
+      root.style.setProperty('--panel-text', '#fffdd0');
+      root.style.setProperty('--bg-dark', '#1a1a1a');
+      root.style.setProperty('--bg-surface', '#3a3a3a');
+      root.style.setProperty('--text-main', '#fffdd0');
+      root.style.setProperty('--text-muted', '#7a7a7a');
+      root.style.setProperty('--text-hi', '#fffdd0');
+      root.style.setProperty('--text-mid', '#FFD700');
+      root.style.setProperty('--text-lo', '#8B6914');
+      root.style.setProperty('--font-sans', "'Press Start 2P', monospace");
+    } else if (theme === 'neo-noir') {
+      root.classList.add('theme-cyberpunk');
+      root.style.setProperty('--primary', '#00d9ff');
+      root.style.setProperty('--primary-rgb', '0, 217, 255');
+      root.style.setProperty('--primary-dark', '#ff0080');
+      root.style.setProperty('--primary-dark-rgb', '255, 0, 128');
+      root.style.setProperty('--primary-light', '#66e8ff');
+      root.style.setProperty('--primary-light-rgb', '102, 232, 255');
+      root.style.setProperty('--primary-glow', 'rgba(0, 217, 255, 0.6)');
+      root.style.setProperty('--complementary', '#ff0080');
+      root.style.setProperty('--text-complementary', '#ffffff');
+      root.style.setProperty('--panel-text', '#00d9ff');
+      root.style.setProperty('--bg-dark', '#050508');
+      root.style.setProperty('--bg-surface', '#0a0a12');
+      root.style.setProperty('--text-main', '#e0f7ff');
+      root.style.setProperty('--text-muted', '#4a6a7a');
+      root.style.setProperty('--text-hi', '#ffffff');
+      root.style.setProperty('--text-mid', '#00d9ff');
+      root.style.setProperty('--text-lo', '#ff0080');
+      root.style.setProperty('--font-sans', "'Orbitron', 'Share Tech Mono', sans-serif");
+    } else {
+      root.style.setProperty('--primary', '#ef4444');
+      root.style.setProperty('--primary-rgb', '239, 68, 68');
+      root.style.setProperty('--primary-dark', '#dc2626');
+      root.style.setProperty('--primary-dark-rgb', '220, 38, 38');
+      root.style.setProperty('--primary-light', '#f87171');
+      root.style.setProperty('--primary-light-rgb', '248, 113, 113');
+      root.style.setProperty('--primary-glow', 'rgba(239, 68, 68, 0.5)');
+      root.style.setProperty('--complementary', '#fff9e6');
+      root.style.setProperty('--text-complementary', '#1a1a1a');
+      root.style.setProperty('--panel-text', '#1a1a1a');
+      root.style.setProperty('--bg-dark', '#0f0f0f');
+      root.style.setProperty('--bg-surface', '#1a1a1a');
+      root.style.setProperty('--text-main', '#ffffff');
+      root.style.setProperty('--text-muted', '#a0a0a0');
+      root.style.setProperty('--text-hi', '#fffdd0');
+      root.style.setProperty('--text-mid', '#f5f5dc');
+      root.style.setProperty('--text-lo', '#d2b48c');
+    }
+  };
+
+  const handleThemeChange = (theme) => {
+    setSelectedTheme(theme);
+    localStorage.setItem('app_theme', theme);
+    applyTheme(theme);
+    toast.success(`Theme updated to ${theme === 'neo-noir' ? 'Night City' : theme === 'amber' ? 'Creeper Craft' : 'Scarlet Flare'}`);
+  };
+
+  const handleAccentChange = (accent) => {
+    const p = ACCENT_PALETTES[accent];
+    if (!p) return;
+    const root = document.documentElement;
+    root.style.setProperty('--primary',           p.primary);
+    root.style.setProperty('--primary-rgb',       p.rgb);
+    root.style.setProperty('--primary-dark',      p.dark);
+    root.style.setProperty('--primary-dark-rgb',  p.darkRgb);
+    root.style.setProperty('--primary-light',     p.light);
+    root.style.setProperty('--primary-light-rgb', p.lightRgb);
+    root.style.setProperty('--primary-glow',      `rgba(${p.rgb}, 0.5)`);
+    setAccentColor(accent);
+    localStorage.setItem('accent_color', accent);
+    toast.success(`Accent color set to ${accent}`);
+  };
+
+  const persistProfile = async (updates) => {
+    try {
+      setIsSavingProfile(true);
+      const res = await updateProfile({
+        username: updates.username !== undefined ? updates.username : (formData.username || username),
+        bio: updates.bio !== undefined ? updates.bio : (formData.bio || ''),
+        stack: updates.stack !== undefined ? updates.stack : (formData.stack || []),
+        avatarId: updates.avatarId !== undefined ? updates.avatarId : (formData.avatarId || 'Sniper'),
+        bannerId: updates.bannerId !== undefined ? updates.bannerId : (formData.bannerId || 'crimson'),
+        github: updates.github !== undefined ? updates.github : (formData.github || ''),
+        leetcode: updates.leetcode !== undefined ? updates.leetcode : (formData.leetcode || ''),
+        project1: updates.project1 !== undefined ? updates.project1 : (formData.project1 || ''),
+        project2: updates.project2 !== undefined ? updates.project2 : (formData.project2 || '')
+      });
+      if (res && res.success) {
+        toast.success('Faculty profile updated');
+      }
+      return res;
+    } catch (err) {
+      toast.error('Failed to save profile changes');
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const handleBioChange = (val) => {
+    setFormData(prev => ({ ...prev, bio: val }));
+    if (bioSaveTimer.current) clearTimeout(bioSaveTimer.current);
+    bioSaveTimer.current = setTimeout(async () => {
+      setIsSavingBio(true);
+      await persistProfile({ bio: val });
+      setIsSavingBio(false);
+    }, 600);
+  };
+
+  const addStackItem = () => {
+    if (newStackItem.trim() && !formData.stack.includes(newStackItem.trim()) && formData.stack.length < 5) {
+      const updated = [...formData.stack, newStackItem.trim()];
+      setFormData(prev => ({ ...prev, stack: updated }));
+      persistProfile({ stack: updated });
+      setNewStackItem('');
+    }
+  };
+
+  const removeStackItem = (idx) => {
+    const updated = formData.stack.filter((_, i) => i !== idx);
+    setFormData(prev => ({ ...prev, stack: updated }));
+    persistProfile({ stack: updated });
+  };
+
+  const handleAvatarSelect = async (seed) => {
+    setFormData(prev => ({ ...prev, avatarId: seed }));
+    await persistProfile({ avatarId: seed });
+  };
+
+  const handleBannerSelect = async (bannerId) => {
+    setFormData(prev => ({ ...prev, bannerId: bannerId }));
+    await persistProfile({ bannerId: bannerId });
+  };
+
+  const handleLinkChange = (field, val) => {
+    setFormData(prev => ({ ...prev, [field]: val }));
+    if (bioSaveTimer.current) clearTimeout(bioSaveTimer.current);
+    bioSaveTimer.current = setTimeout(async () => {
+      await persistProfile({ [field]: val });
+    }, 800);
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error('Please fill in all password fields');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      const res = await changePassword(currentPassword, newPassword);
+      if (res && res.success) {
+        toast.success('Faculty credentials updated securely');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        toast.error(res?.error || 'Failed to change password');
+      }
+    } catch (err) {
+      toast.error('Failed to update credentials');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleConfigureProfile = async () => {
+    if (!configData.username.trim()) {
+      toast.error('Username cannot be empty');
+      return;
+    }
+    try {
+      const res = await updateProfile({ username: configData.username });
+      if (res && res.success) {
+        toast.success('Username updated');
+        setShowConfigModal(false);
+      } else {
+        toast.error(res?.error || 'Failed to update username');
+      }
+    } catch {
+      toast.error('Error updating username');
+    }
+  };
+
+  const token = localStorage.getItem('token') || '';
   const authHeaders = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
   };
 
-  // ══════════════════════════════════════════════════════════════════════════════
-  // DATA FETCHING
-  // ══════════════════════════════════════════════════════════════════════════════
   const fetchStats = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/college/stats`, { headers: authHeaders });
-      if (res.status === 401 || res.status === 403) {
-        toast.error('Session expired or unauthorized. Please log in.');
-        navigate('/portal');
-        return;
-      }
+      const res = await fetch(`${API_URL}/api/college/stats?collegeId=${collegeId}`, { headers: authHeaders });
       const data = await res.json();
-      if (data.success) {
-        setStats(data);
-      }
-    } catch (e) {
-      console.error(e);
+      if (data.success) setStats(data);
+    } catch (err) {
+      console.error('Stats fetch err:', err);
     } finally {
       setLoading(false);
     }
@@ -198,243 +641,234 @@ const CollegeAdmin = () => {
   const fetchModules = async () => {
     try {
       setLoadingModules(true);
-      const res = await fetch(`${API_URL}/api/college/library/modules`, { headers: authHeaders });
+      const res = await fetch(`${API_URL}/api/college/library/modules?collegeId=${collegeId}`, { headers: authHeaders });
       const data = await res.json();
-      if (data.success && Array.isArray(data.modules)) {
-        setModules(data.modules);
+      if (data.success) {
+        setModules(data.modules || []);
       }
-    } catch (e) {
-      console.error('[COLLEGE] Modules fetch error:', e);
+    } catch (err) {
+      console.error('Modules fetch err:', err);
     } finally {
       setLoadingModules(false);
     }
   };
 
-  const fetchLeaderboard = async (branch = 'ALL') => {
-    try {
-      setLoadingLeaderboard(true);
-      const url = branch !== 'ALL'
-        ? `${API_URL}/api/college/leaderboard?branch=${branch}`
-        : `${API_URL}/api/college/leaderboard`;
-      const res = await fetch(url, { headers: authHeaders });
-      const data = await res.json();
-      if (data.success && Array.isArray(data.leaderboard)) {
-        setLeaderboard(data.leaderboard);
-      }
-    } catch (e) {
-      console.error('[COLLEGE] Leaderboard fetch error:', e);
-    } finally {
-      setLoadingLeaderboard(false);
-    }
-  };
-
-  const fetchStudents = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/college/students?branch=${filterBranch}`, { headers: authHeaders });
-      const data = await res.json();
-      if (data.success) {
-        setStudentsList(data.students);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   const fetchExams = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/college/exams`, { headers: authHeaders });
+      const res = await fetch(`${API_URL}/api/college/exams?collegeId=${collegeId}`, { headers: authHeaders });
       const data = await res.json();
-      if (data.success) {
-        setExams(data.exams);
-        if (data.exams.length > 0 && !selectedExamId) {
-          setSelectedExamId(data.exams[0].id);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const fetchLiveMonitor = async (examId) => {
-    if (!examId) return;
-    try {
-      const res = await fetch(`${API_URL}/api/college/exams/${examId}/live`, { headers: authHeaders });
-      const data = await res.json();
-      if (data.success) {
-        setLiveData(data);
-      }
-      const resResults = await fetch(`${API_URL}/api/college/exams/${examId}/results`, { headers: authHeaders });
-      const dataResults = await resResults.json();
-      if (dataResults.success) {
-        setExamResults(dataResults);
-      }
-    } catch (e) {
-      console.error(e);
+      if (data.success) setExams(data.exams || []);
+    } catch (err) {
+      console.error('Exams fetch err:', err);
     }
   };
 
   const fetchAssignments = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/college/assignments`, { headers: authHeaders });
+      const res = await fetch(`${API_URL}/api/college/assignments?collegeId=${collegeId}`, { headers: authHeaders });
+      const data = await res.json();
+      if (data.success) setAssignments(data.assignments || []);
+    } catch (err) {
+      console.error('Assignments fetch err:', err);
+    }
+  };
+
+  const fetchStudents = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/college/students?collegeId=${collegeId}`, { headers: authHeaders });
+      const data = await res.json();
+      if (data.success) setStudentsList(data.students || []);
+    } catch (err) {
+      console.error('Students fetch err:', err);
+    }
+  };
+
+  const fetchLeaderboard = async () => {
+    try {
+      setLeaderboardLoading(true);
+      const res = await fetch(`${API_URL}/api/college/leaderboard?collegeId=${collegeId}`, { headers: authHeaders });
       const data = await res.json();
       if (data.success) {
-        setAssignments(data.assignments);
+        setLeaderboard(data.leaderboard || []);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error('Leaderboard err:', err);
+    } finally {
+      setLeaderboardLoading(false);
     }
+  };
+
+  const loadVaultData = async () => {
+    try {
+      setVaultLoading(true);
+      const [notesData, foldersData] = await Promise.all([
+        fetchNotes(),
+        fetchFolders()
+      ]);
+      const validNotes = Array.isArray(notesData) ? notesData : [];
+      setVaultNotes(validNotes);
+      setVaultFolders(Array.isArray(foldersData) ? foldersData : []);
+      if (validNotes.length > 0 && !vaultActiveNote) {
+        setVaultActiveNote(validNotes[0]);
+      }
+    } catch (err) {
+      console.error('Failed to load notes data:', err);
+    } finally {
+      setVaultLoading(false);
+    }
+  };
+
+  const handleCreateVaultNote = async () => {
+    try {
+      const newNote = await createNote({
+        title: 'Untitled Note',
+        content: '',
+        folder_id: vaultSelectedFolder || undefined,
+        tags: ['Faculty'],
+        is_published: false,
+        target_branch: 'ALL',
+        target_batch: '2026'
+      });
+      setVaultNotes(prev => [newNote, ...prev]);
+      setVaultActiveNote(newNote);
+      toast.success('New draft note created');
+    } catch (err) {
+      toast.error('Failed to create note: ' + err.message);
+    }
+  };
+
+  const handleTogglePublishQuick = async (note) => {
+    try {
+      const res = await togglePublishNote(note.id, { isPublished: !note.is_published });
+      if (res && res.success) {
+        setVaultNotes(prev => prev.map(n => n.id === note.id ? res.note : n));
+        if (vaultActiveNote?.id === note.id) setVaultActiveNote(res.note);
+        toast.success(res.is_published ? 'Note published to students!' : 'Note moved to drafts');
+      }
+    } catch (err) {
+      toast.error('Failed to update publication: ' + err.message);
+    }
+  };
+
+  const handleVaultNoteUpdate = (updated) => {
+    setVaultNotes(prev => prev.map(n => n.id === updated.id ? updated : n));
+    setVaultActiveNote(updated);
+  };
+
+  const handleVaultNoteDelete = (noteId) => {
+    setVaultNotes(prev => prev.filter(n => n.id !== noteId));
+    if (vaultActiveNote?.id === noteId) {
+      setVaultActiveNote(null);
+    }
+    toast.success('Note removed');
+  };
+
+  const handleVaultFolderCreate = async (e) => {
+    if (e) e.preventDefault();
+    if (!newVaultFolderName.trim()) return;
+    try {
+      const created = await createFolder({ name: newVaultFolderName.trim() });
+      setVaultFolders(prev => [...prev, created]);
+      setNewVaultFolderName('');
+      setShowFolderModal(false);
+      toast.success('Repository created');
+    } catch (err) {
+      toast.error('Failed to create folder: ' + err.message);
+    }
+  };
+
+  const handleVaultFolderDelete = async (folderId) => {
+    if (!window.confirm('Delete this folder and unfile its notes?')) return;
+    try {
+      await deleteFolder(folderId);
+      setVaultFolders(prev => prev.filter(f => f.id !== folderId));
+      if (vaultSelectedFolder === folderId) setVaultSelectedFolder(null);
+      toast.success('Folder deleted');
+    } catch (err) {
+      toast.error('Failed to delete folder: ' + err.message);
+    }
+  };
+
+  const handleSaveFacultyNote = (e) => {
+    if (e) e.preventDefault();
+    if (!newNoteTitle.trim()) return;
+    const newNote = {
+      id: 'fn_' + Date.now(),
+      title: newNoteTitle,
+      category: newNoteCategory || 'Lab Assessments',
+      content: newNoteContent,
+      updatedAt: 'Just now'
+    };
+    setFacultyNotes(prev => [newNote, ...prev]);
+    setIsCreatingNote(false);
+    setNewNoteTitle('');
+    setNewNoteContent('');
+    toast.success('Saved to Faculty Codex');
+  };
+
+  const handleDeleteFacultyNote = (noteId) => {
+    setFacultyNotes(prev => prev.filter(n => n.id !== noteId));
+    toast.success('Note deleted');
   };
 
   useEffect(() => {
     fetchStats();
-    fetchStudents();
     fetchModules();
-    fetchLeaderboard();
     fetchExams();
     fetchAssignments();
-  }, []);
+    fetchStudents();
+    fetchLeaderboard();
+    loadVaultData();
+  }, [collegeId]);
 
-  useEffect(() => {
-    if (activeTab === 'students') fetchStudents();
-    if (activeTab === 'modules') fetchModules();
-    if (activeTab === 'leaderboard') fetchLeaderboard(leaderboardFilter);
-    if (activeTab === 'exams') fetchExams();
-    if (activeTab === 'assignments') fetchAssignments();
-    if (activeTab === 'live' && selectedExamId) {
-      fetchLiveMonitor(selectedExamId);
-      const interval = setInterval(() => fetchLiveMonitor(selectedExamId), 5000);
-      return () => clearInterval(interval);
+  // Load starter curriculum template
+  const handleLoadTemplate = (key) => {
+    const tmpl = STARTER_TEMPLATES[key];
+    if (tmpl) {
+      setModuleForm({
+        ...tmpl,
+        isPublished: true
+      });
+      toast.success(`Loaded "${tmpl.title}" template with verified topics & MCQs!`);
     }
-  }, [activeTab, selectedExamId, filterBranch, leaderboardFilter]);
+  };
 
-  // ══════════════════════════════════════════════════════════════════════════════
-  // CURRICULUM & MODULE STUDIO ACTIONS
-  // ══════════════════════════════════════════════════════════════════════════════
   const handleOpenCreateModule = () => {
     setEditingModuleId(null);
     setModuleForm({
       title: '',
       description: '',
       category: 'Computer Science',
-      color: '#3b82f6',
+      color: '#ef4444',
       target_branch: 'ALL',
       target_batch: '2026',
       isPublished: true,
-      topics: [
-        {
-          id: 'top_' + Date.now(),
-          title: '1. Core Concepts & Overview',
-          content: '### Topic Notes\nAdd faculty lecture notes, theory, and code examples here...',
-          questions: [
-            {
-              id: 'q_' + Date.now(),
-              question: 'Sample check question?',
-              options: ['Option A', 'Option B', 'Option C', 'Option D'],
-              answer: 0,
-              explanation: 'Detailed explanation for correct answer.'
-            }
-          ]
-        }
-      ]
+      topics: []
     });
     setIsModuleModalOpen(true);
   };
 
-  const handleOpenEditModule = (mod) => {
+  const handleEditModule = (mod) => {
     setEditingModuleId(mod.id);
     setModuleForm({
-      title: mod.title || '',
+      title: mod.title,
       description: mod.description || '',
       category: mod.category || 'Computer Science',
-      color: mod.color || '#3b82f6',
+      color: mod.color || '#ef4444',
       target_branch: mod.target_branch || 'ALL',
       target_batch: mod.target_batch || '2026',
-      isPublished: mod.is_published !== false,
+      isPublished: Boolean(mod.is_published),
       topics: mod.topics || []
     });
     setIsModuleModalOpen(true);
   };
 
-  const handleLoadTemplate = (templateKey) => {
-    const tmpl = STARTER_TEMPLATES[templateKey];
-    if (!tmpl) return;
-    setModuleForm(prev => ({
-      ...prev,
-      title: tmpl.title,
-      description: tmpl.description,
-      category: tmpl.category,
-      color: tmpl.color,
-      topics: JSON.parse(JSON.stringify(tmpl.topics))
-    }));
-    toast.success(`Loaded ${tmpl.title} template!`);
-  };
-
-  const handleAddTopic = () => {
-    setModuleForm(prev => ({
-      ...prev,
-      topics: [
-        ...prev.topics,
-        {
-          id: 'top_' + Date.now(),
-          title: `${prev.topics.length + 1}. New Chapter`,
-          content: '### Chapter Notes\nEnter concept lecture breakdown...',
-          questions: [
-            {
-              id: 'q_' + Date.now(),
-              question: 'Enter question text...',
-              options: ['Option 1', 'Option 2', 'Option 3', 'Option 4'],
-              answer: 0,
-              explanation: 'Explanation for students.'
-            }
-          ]
-        }
-      ]
-    }));
-  };
-
-  const handleRemoveTopic = (tIdx) => {
-    setModuleForm(prev => ({
-      ...prev,
-      topics: prev.topics.filter((_, idx) => idx !== tIdx)
-    }));
-  };
-
-  const handleAddQuestionToTopic = (tIdx) => {
-    setModuleForm(prev => {
-      const updatedTopics = [...prev.topics];
-      const targetTopic = { ...updatedTopics[tIdx] };
-      targetTopic.questions = [
-        ...(targetTopic.questions || []),
-        {
-          id: 'q_' + Date.now(),
-          question: 'New conceptual check question?',
-          options: ['Option A', 'Option B', 'Option C', 'Option D'],
-          answer: 0,
-          explanation: 'Reasoning behind the solution.'
-        }
-      ];
-      updatedTopics[tIdx] = targetTopic;
-      return { ...prev, topics: updatedTopics };
-    });
-  };
-
-  const handleRemoveQuestionFromTopic = (tIdx, qIdx) => {
-    setModuleForm(prev => {
-      const updatedTopics = [...prev.topics];
-      const targetTopic = { ...updatedTopics[tIdx] };
-      targetTopic.questions = targetTopic.questions.filter((_, idx) => idx !== qIdx);
-      updatedTopics[tIdx] = targetTopic;
-      return { ...prev, topics: updatedTopics };
-    });
-  };
-
   const handleSaveModule = async (e) => {
     e.preventDefault();
     if (!moduleForm.title.trim()) {
-      toast.error('Module Title is required');
+      toast.error('Module title is required');
       return;
     }
-
     try {
       const url = editingModuleId
         ? `${API_URL}/api/college/library/modules/${editingModuleId}`
@@ -449,7 +883,7 @@ const CollegeAdmin = () => {
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'Failed to save module');
 
-      toast.success(editingModuleId ? 'Module updated successfully!' : 'Curriculum module created!');
+      toast.success(editingModuleId ? 'Module updated successfully!' : 'Curriculum module published to student cohort!');
       setIsModuleModalOpen(false);
       fetchModules();
       fetchStats();
@@ -477,7 +911,7 @@ const CollegeAdmin = () => {
   };
 
   const handleDeleteModule = async (modId) => {
-    if (!window.confirm('Are you sure you want to delete this curriculum module? Institutional students will no longer see it.')) return;
+    if (!window.confirm('Delete this curriculum module? Institutional students will no longer see it.')) return;
     try {
       const res = await fetch(`${API_URL}/api/college/library/modules/${modId}`, {
         method: 'DELETE',
@@ -494,116 +928,6 @@ const CollegeAdmin = () => {
     }
   };
 
-  // ══════════════════════════════════════════════════════════════════════════════
-  // STUDENT ONBOARDING & CSV GENERATION
-  // ══════════════════════════════════════════════════════════════════════════════
-  const handleGenerateAccounts = async () => {
-    if (!bulkInputText.trim()) {
-      toast.error('Please paste student details or click "Load Sample CSV"');
-      return;
-    }
-
-    const lines = bulkInputText.trim().split('\n');
-    const parsedStudents = [];
-
-    for (const line of lines) {
-      const parts = line.split(',').map(p => p.trim());
-      if (parts.length >= 2) {
-        parsedStudents.push({
-          rollNo: parts[0],
-          name: parts[1],
-          email: parts[2] || '',
-          branch: parts[3] || 'CSE',
-          batch: parts[4] || '2026'
-        });
-      }
-    }
-
-    if (parsedStudents.length === 0) {
-      toast.error('Could not parse any valid student lines. Format: RollNo, Full Name, Email, Branch, Batch');
-      return;
-    }
-
-    setGeneratingAccounts(true);
-    try {
-      const res = await fetch(`${API_URL}/api/college/students/bulk`, {
-        method: 'POST',
-        headers: authHeaders,
-        body: JSON.stringify({ students: parsedStudents })
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Failed to generate student accounts');
-
-      toast.success(`Successfully provisioned ${data.created?.length || 0} student accounts!`);
-      setLastGeneratedCredentials(data.created || []);
-      setBulkInputText('');
-      fetchStudents();
-      fetchStats();
-      fetchLeaderboard();
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setGeneratingAccounts(false);
-    }
-  };
-
-  const handleDownloadCredentials = () => {
-    if (!lastGeneratedCredentials || lastGeneratedCredentials.length === 0) return;
-    const header = 'Roll Number,Full Name,Username,Email,Temporary Password\n';
-    const rows = lastGeneratedCredentials.map(s =>
-      `"${s.rollNo}","${s.name}","${s.username}","${s.email}","${s.tempPassword}"`
-    ).join('\n');
-
-    const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `brightcode_credentials_${orgCode}_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('Downloaded credentials CSV');
-  };
-
-  const handleResetPassword = async (studentId, rollNo) => {
-    try {
-      const res = await fetch(`${API_URL}/api/college/students/${studentId}/reset-password`, {
-        method: 'POST',
-        headers: authHeaders,
-        body: JSON.stringify({})
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success(`Reset password for ${rollNo} to ${data.newPassword}`);
-      }
-    } catch (e) {
-      toast.error('Failed to reset password');
-    }
-  };
-
-  const handleDeleteStudent = async (studentId) => {
-    if (!window.confirm('Delete this student account and release the license seat?')) return;
-    try {
-      const res = await fetch(`${API_URL}/api/college/students/${studentId}`, {
-        method: 'DELETE',
-        headers: authHeaders
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success('Account deleted & seat freed');
-        fetchStudents();
-        fetchStats();
-        fetchLeaderboard();
-      }
-    } catch (e) {
-      toast.error('Failed to delete student');
-    }
-  };
-
-  // ══════════════════════════════════════════════════════════════════════════════
-  // EXAM & ASSIGNMENT ACTIONS
-  // ══════════════════════════════════════════════════════════════════════════════
   const handleCreateExam = async (e) => {
     e.preventDefault();
     if (!examTitle.trim()) {
@@ -623,7 +947,7 @@ const CollegeAdmin = () => {
           id: q.id,
           title: q.title,
           difficulty: q.difficulty,
-          description: `Solve the problem ${q.title}. Implement the solution in either C++, Python, or Java.`,
+          description: `Solve problem: ${q.title}. Write efficient code in C++, Java, or Python.`,
           testCases: q.testCases
         }));
 
@@ -643,13 +967,12 @@ const CollegeAdmin = () => {
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'Failed to create exam');
 
-      toast.success('Exam published successfully to college portal!');
+      toast.success('Proctored exam created & scheduled for student portal!');
       setExamTitle('');
       setExamDesc('');
+      setSelectedQuestions([]);
+      setExamSubTab('list');
       fetchExams();
-      fetchStats();
-      setActiveTab('live');
-      setSelectedExamId(data.exam.id);
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -657,69 +980,115 @@ const CollegeAdmin = () => {
     }
   };
 
-  const handleCreateAssignment = async (e) => {
-    e.preventDefault();
-    if (!asgnTitle.trim()) {
-      toast.error('Please enter a Lab Sheet title');
-      return;
-    }
-    if (asgnQuestions.length === 0) {
-      toast.error('Please select at least one problem for this lab sheet');
-      return;
-    }
-
-    setCreatingAsgn(true);
+  const handleEndExam = async (examId) => {
+    if (!window.confirm('Are you sure you want to conclude this examination? Students will be forced to submit.')) return;
     try {
-      const selectedProblemObjects = CURATED_QUESTIONS
-        .filter(q => asgnQuestions.includes(q.id))
-        .map(q => ({ id: q.id, title: q.title, difficulty: q.difficulty, slug: q.id }));
-
-      const res = await fetch(`${API_URL}/api/college/assignments`, {
-        method: 'POST',
+      const res = await fetch(`${API_URL}/api/college/exams/${examId}/status`, {
+        method: 'PATCH',
         headers: authHeaders,
-        body: JSON.stringify({
-          title: asgnTitle,
-          description: asgnDesc,
-          targetBranch: asgnBranch,
-          targetBatch: asgnBatch,
-          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-          problems: selectedProblemObjects
-        })
+        body: JSON.stringify({ status: 'completed' })
       });
-
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Failed to publish lab sheet');
-
-      toast.success(`Published "${data.assignment.title}" to student library!`);
-      setAsgnTitle('');
-      setAsgnDesc('');
-      fetchAssignments();
+      if (data.success) {
+        toast.success('Exam concluded. Final marksheets compiled.');
+        fetchExams();
+      }
     } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setCreatingAsgn(false);
+      toast.error('Failed to update exam status');
     }
   };
 
-  const handleDeleteAssignment = async (id) => {
-    if (!window.confirm('Are you sure you want to remove this lab sheet?')) return;
+  const handleCreateNote = (e) => {
+    e.preventDefault();
+    if (!newNoteTitle.trim()) return toast.error('Note title required');
+    const newNote = {
+      id: `fn_${Date.now()}`,
+      title: newNoteTitle,
+      category: newNoteCategory,
+      updatedAt: new Date().toISOString().split('T')[0],
+      content: newNoteContent
+    };
+    setFacultyNotes([newNote, ...facultyNotes]);
+    toast.success('Lecture sheet stored in Faculty Codex');
+    setNewNoteTitle('');
+    setNewNoteContent('');
+    setIsCreatingNote(false);
+  };
+
+  const handleDeleteNote = (id) => {
+    setFacultyNotes(facultyNotes.filter(n => n.id !== id));
+    toast.success('Note removed from Codex');
+  };
+
+  const handleProcessCsv = async (e) => {
+    e.preventDefault();
+    if (!csvText.trim()) return toast.error('CSV data cannot be empty');
+
+    const lines = csvText.trim().split('\n');
+    const parsedStudents = [];
+
+    for (const line of lines) {
+      const parts = line.split(',').map(s => s.trim());
+      if (parts.length >= 5) {
+        parsedStudents.push({
+          rollNo: parts[0],
+          name: parts[1],
+          email: parts[2],
+          branch: parts[3],
+          batch: parts[4]
+        });
+      }
+    }
+
+    if (parsedStudents.length === 0) {
+      toast.error('No valid student rows found. Expected format: rollNo, name, email, branch, batch');
+      return;
+    }
+
+    setUploadingCsv(true);
     try {
-      const res = await fetch(`${API_URL}/api/college/assignments/${id}`, {
+      const res = await fetch(`${API_URL}/api/college/students/bulk`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ students: parsedStudents })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Failed to upload students');
+
+      toast.success(`Successfully enrolled ${data.enrolledCount} students! Credentials issued.`);
+      setShowUploadModal(false);
+      setCsvText('');
+      fetchStudents();
+      fetchStats();
+      fetchLeaderboard();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setUploadingCsv(false);
+    }
+  };
+
+  const handleDeleteStudent = async (studentId) => {
+    if (!window.confirm('Remove this student account from the institution?')) return;
+    try {
+      const res = await fetch(`${API_URL}/api/college/students/${studentId}`, {
         method: 'DELETE',
         headers: authHeaders
       });
       const data = await res.json();
       if (data.success) {
-        toast.success('Lab sheet removed');
-        fetchAssignments();
+        toast.success('Student account removed & license seat freed');
+        fetchStudents();
+        fetchStats();
+        fetchLeaderboard();
       }
-    } catch (err) {
-      toast.error('Failed to delete lab sheet');
+    } catch (e) {
+      toast.error('Failed to delete student');
     }
   };
 
   const handleLogout = () => {
-    localStorage.clear();
+    logout();
     toast.success('Signed out of Faculty Console');
     navigate('/portal');
   };
@@ -736,927 +1105,1893 @@ const CollegeAdmin = () => {
 
   const publishedModulesCount = modules.filter(m => m.is_published).length;
   const draftModulesCount = modules.length - publishedModulesCount;
+  const filteredModules = moduleFilter === 'published'
+    ? modules.filter(m => m.is_published)
+    : moduleFilter === 'draft'
+    ? modules.filter(m => !m.is_published)
+    : modules;
 
+  const totalCampusXp = leaderboard.reduce((acc, s) => acc + (Number(s.xp) || 0), 0);
+  const enrolledStudentsCount = stats?.org?.enrolledCount || studentsList.length || 0;
+  const maxSeats = stats?.org?.maxStudents || 300;
+  const curriculumTargetPercent = Math.min(Math.round(((publishedModulesCount * 25) + (enrolledStudentsCount / maxSeats * 50))), 100);
+
+  // Typewriter Greeting
+  const greetingFull = `Welcome back, ${username}!`;
+  const { displayed: greetingText, done: greetingDone } = useTypewriter(greetingFull, 48);
+  const prefix = 'Welcome back, ';
+  const suffix = '!';
+  const usernameInGreeting = username;
+  const greetingPrefix = greetingText.slice(0, Math.min(greetingText.length, prefix.length));
+  const greetingUser = greetingText.length > prefix.length
+    ? greetingText.slice(prefix.length, Math.min(greetingText.length, prefix.length + usernameInGreeting.length))
+    : '';
+  const greetingSuffix = greetingText.length > prefix.length + usernameInGreeting.length ? suffix : '';
+
+  // Heatmap Generator — 100% Real Live Telemetry (Zero hardcoding)
+  const generateHeatmapData = () => {
+    const data = [];
+    const today = new Date();
+    const startDate = new Date(today.getFullYear(), 0, 1);
+    startDate.setDate(startDate.getDate() - startDate.getDay());
+
+    const submissionsMap = stats?.metrics?.submissionsByDate || {};
+    const activityMap = stats?.metrics?.activity || user?.activity || {};
+
+    for (let i = 0; i < 53; i++) {
+      const week = [];
+      for (let j = 0; j < 7; j++) {
+        const d = new Date(startDate);
+        d.setDate(startDate.getDate() + (i * 7 + j));
+        const key = d.toISOString().split('T')[0];
+        const daySubmissions = submissionsMap[key] || 0;
+        const dayXp = activityMap[key] || 0;
+
+        let level = 0;
+        if (daySubmissions > 0 || dayXp > 0) {
+          if (daySubmissions >= 5 || dayXp >= 300) level = 4;
+          else if (daySubmissions >= 3 || dayXp >= 150) level = 3;
+          else if (daySubmissions >= 2 || dayXp >= 50) level = 2;
+          else level = 1;
+        }
+
+        week.push({ date: key, submissions: daySubmissions, xp: dayXp, level });
+      }
+      data.push(week);
+    }
+    return data;
+  };
+  const heatmapData = generateHeatmapData();
+
+  const getMonthLabels = () => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const labels = []; let lastMonth = -1; let lastIdx = -2;
+    heatmapData.forEach((week, i) => {
+      if (!week?.length) return;
+      const m = new Date(week[0].date).getMonth();
+      if (m !== lastMonth && i - lastIdx >= 3) {
+        labels.push({ month: months[m], index: i });
+        lastIdx = i;
+      }
+      lastMonth = m;
+    });
+    return labels;
+  };
+  const monthLabels = getMonthLabels();
+
+  const motivationalQuotes = [
+    "Empowering the next generation of engineers through rigorous coding challenges.",
+    "Benchmark excellence with real-time proctoring and automated code evaluation.",
+    "Transform classroom concepts into production-grade algorithmic mastery.",
+    "Clean architecture, readable syntax, and flawless runtime execution.",
+    "Every compiled line bridges academic foundations and industry engineering."
+  ];
+
+  const facultyBadges = [
+    {
+      id: 'badge_curriculum',
+      name: 'Curriculum Architect',
+      desc: 'Published 3 or more multi-chapter institutional library modules.',
+      icon: BookOpen,
+      color: '#3b82f6',
+      unlocked: publishedModulesCount >= 1
+    },
+    {
+      id: 'badge_proctor',
+      name: 'Anti-Cheat Sentinel',
+      desc: 'Scheduled and conducted proctored laboratory assessments with browser surveillance.',
+      icon: ShieldCheck,
+      color: 'var(--primary)',
+      unlocked: exams.length >= 1
+    },
+    {
+      id: 'badge_xp',
+      name: 'XP Titan',
+      desc: 'Institutional student cohort crossed 5,000 cumulative experience points.',
+      icon: Trophy,
+      color: '#fbbf24',
+      unlocked: totalCampusXp >= 100
+    },
+    {
+      id: 'badge_cohort',
+      name: 'Cohort Pioneer',
+      desc: 'Provisioned license seats and onboarded active department student accounts.',
+      icon: Users,
+      color: '#10b981',
+      unlocked: enrolledStudentsCount >= 1
+    },
+    {
+      id: 'badge_evaluator',
+      name: 'Master Evaluator',
+      desc: 'Created weekly practice sheets and algorithmic problem sets for laboratory courses.',
+      icon: Award,
+      color: '#a855f7',
+      unlocked: assignments.length >= 1
+    },
+    {
+      id: 'badge_integrity',
+      name: 'Zero-Cheat Certified',
+      desc: 'Verified academic integrity protocol across full-semester student cohort.',
+      icon: Shield,
+      color: '#06b6d4',
+      unlocked: true
+    }
+  ];
+
+
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // RENDER: UNIFIED FACULTY WORKSPACE UI
+  // ══════════════════════════════════════════════════════════════════════════════
   return (
-    <div className="college-admin-app">
-      {/* ── Top Bar ────────────────────────────────────────── */}
-      <header className="ca-header">
-        <div className="ca-brand-block">
-          <div className="ca-logo">Bright<span>Code</span></div>
-          <span className="ca-sep">/</span>
-          <div className="ca-college-title">
-            <School size={18} className="ca-college-icon" />
-            <span className="ca-college-name">{orgName}</span>
-            <span className="ca-pill-code">{orgCode}</span>
+    <div className="faculty-workspace-app">
+      {/* ── Ambient Radial Background Orbs ── */}
+      <div className="faculty-glow-bg">
+        <div className="glow-orb orb-fac-1"></div>
+        <div className="glow-orb orb-fac-2"></div>
+      </div>
+
+      {/* ── Floating Unified Top Navigation Bar (1:1 with Navbar.jsx) ────────── */}
+      <motion.nav
+        className="floating-nav faculty-nav"
+        initial={{ y: -56, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="nav-container">
+          {/* LEFT: College Name in Reddish Theme (No BrightCode logo) */}
+          <div className="nav-left">
+            <div className="college-brand-banner" onClick={() => setActiveNav('home')} title={orgName}>
+              <div className="college-brand-icon-wrap">
+                <School size={15} />
+              </div>
+              <span className="college-brand-text">{orgName}</span>
+            </div>
+          </div>
+
+          {/* CENTER: 3 Cohesive Nav Pills (Home, Library, Notes) - No numbers */}
+          <div className="nav-center">
+            {[
+              { id: 'home', label: 'Home', icon: Home },
+              { id: 'library', label: 'Library', icon: BookOpen },
+              { id: 'notes', label: 'Notes', icon: FolderOpen }
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeNav === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveNav(tab.id)}
+                  className={`nav-link-item ${isActive ? 'active' : ''}`}
+                >
+                  <Icon size={14} className="nav-link-icon" />
+                  <span>{tab.label}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeFacultyNavPill"
+                      className="nav-active-bg"
+                      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* RIGHT: Clean Profile Pill */}
+          <div className="nav-right">
+            <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.94 }}>
+              <div 
+                className={`user-profile-pill ${activeNav === 'settings' ? 'active-prof-pill' : ''}`}
+                onClick={() => setActiveNav('settings')}
+                title="Open Faculty Profile & Settings"
+                style={{ cursor: 'pointer' }}
+              >
+                <span className="profile-initial">
+                  {username ? username.charAt(0).toUpperCase() : 'F'}
+                </span>
+              </div>
+            </motion.div>
           </div>
         </div>
+      </motion.nav>
 
-        <div className="ca-header-right">
-          {/* Faculty Community & Friends Drawer Trigger */}
-          <button
-            className="ca-btn-community"
-            onClick={() => setFriendsDrawerOpen(true)}
-            title="Open Faculty Lounge & Friends"
-          >
-            <Users size={16} />
-            <Sparkles size={14} className="sparkle-gold" />
-            <span>Faculty Lounge & Friends</span>
-          </button>
+      {/* ── Main Content Container ───────────────────────────────────────────── */}
+      <main className="faculty-main-canvas">
+        <AnimatePresence mode="wait">
 
-          <div className="ca-quota-badge">
-            <span className="ca-quota-label">CAMPUS SEAT LICENSE:</span>
-            <span className="ca-quota-val">
-              {stats?.org?.enrolledCount || 0} / {stats?.org?.maxStudents || 300} Active
-            </span>
-            <div className="ca-quota-bar">
-              <div
-                className="ca-quota-fill"
-                style={{ width: `${stats?.org?.usagePercent || 0}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="ca-user-pill">
-            <div className="ca-avatar">F</div>
-            <div className="ca-user-info">
-              <span className="ca-user-name">{username}</span>
-              <span className="ca-user-role">Department Professor</span>
-            </div>
-            <button className="ca-logout-btn" title="Sign Out" onClick={handleLogout}>
-              <LogOut size={16} />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* ── Main Navigation Tabs ──────────────────────────── */}
-      <nav className="ca-tabs-bar">
-        <button
-          className={`ca-nav-tab ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveTab('overview')}
-        >
-          <BarChart3 size={16} />
-          <span>Dashboard Overview</span>
-        </button>
-
-        <button
-          className={`ca-nav-tab ${activeTab === 'modules' ? 'active' : ''}`}
-          onClick={() => setActiveTab('modules')}
-        >
-          <BookOpen size={16} />
-          <span>Curriculum Studio</span>
-          <span className="ca-tab-count">{modules.length}</span>
-        </button>
-
-        <button
-          className={`ca-nav-tab ${activeTab === 'leaderboard' ? 'active' : ''}`}
-          onClick={() => setActiveTab('leaderboard')}
-        >
-          <Trophy size={16} />
-          <span>Campus Leaderboard & XP</span>
-          <span className="ca-tab-pill-pulse">LIVE</span>
-        </button>
-
-        <button
-          className={`ca-nav-tab ${activeTab === 'students' ? 'active' : ''}`}
-          onClick={() => setActiveTab('students')}
-        >
-          <Users size={16} />
-          <span>Student Directory & XP</span>
-          <span className="ca-tab-count">{stats?.org?.enrolledCount || 0}</span>
-        </button>
-
-        <button
-          className={`ca-nav-tab ${activeTab === 'exams' ? 'active' : ''}`}
-          onClick={() => setActiveTab('exams')}
-        >
-          <FileText size={16} />
-          <span>Exam & Test Creator</span>
-          <span className="ca-tab-count">{exams.length}</span>
-        </button>
-
-        <button
-          className={`ca-nav-tab ${activeTab === 'assignments' ? 'active' : ''}`}
-          onClick={() => setActiveTab('assignments')}
-        >
-          <Layers size={16} />
-          <span>Lab Sheets & Practice</span>
-          <span className="ca-tab-count">{assignments.length}</span>
-        </button>
-
-        <button
-          className={`ca-nav-tab ${activeTab === 'live' ? 'active' : ''}`}
-          onClick={() => setActiveTab('live')}
-        >
-          <ShieldAlert size={16} />
-          <span>Live Proctoring</span>
-          <span className="ca-tab-pill-live">SECURE</span>
-        </button>
-      </nav>
-
-      {/* ── Main Content Area ──────────────────────────────── */}
-      <main className="ca-main-content">
-
-        {/* ══════════════════════════════════════════════════════════════════════
-            TAB 1: DASHBOARD OVERVIEW
-            ══════════════════════════════════════════════════════════════════════ */}
-        {activeTab === 'overview' && (
-          <div className="ca-tab-pane">
-            <div className="ca-hero-card">
-              <div className="ca-hero-left">
-                <span className="ca-badge-inst">Faculty Command Console</span>
-                <h2>Welcome, {username}</h2>
-                <p>
-                  Author custom library modules, monitor real-time student XP telemetry, schedule proctored exams, and collaborate with colleagues across BrightCode.
-                </p>
-                <div className="ca-hero-actions">
-                  <button className="ca-btn-primary" onClick={() => setActiveTab('modules')}>
-                    <BookOpen size={16} /> <span>Curriculum Studio</span>
-                  </button>
-                  <button className="ca-btn-secondary" onClick={() => setActiveTab('leaderboard')}>
-                    <Trophy size={16} /> <span>Campus Leaderboard</span>
-                  </button>
-                  <button className="ca-btn-community-alt" onClick={() => setFriendsDrawerOpen(true)}>
-                    <Users size={16} /> <span>Open Faculty Lounge</span>
-                  </button>
-                </div>
+          {/* ══════════════════════════════════════════════════════════════════════
+              PAGE 1: HOME (IDENTICAL UI DESIGN SYSTEM TO Home.jsx)
+              ══════════════════════════════════════════════════════════════════════ */}
+          {activeNav === 'home' && (
+            <motion.div
+              key="home"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              className="home-wrapper"
+              style={{ paddingTop: 0, background: 'transparent' }}
+            >
+              <div className="home-bg">
+                <div className="bg-grid" />
               </div>
-              <div className="ca-hero-stats">
-                <div className="ca-mini-stat">
-                  <span className="val">{stats?.org?.enrolledCount || 0}</span>
-                  <span className="lbl">Enrolled Students</span>
-                </div>
-                <div className="ca-mini-stat">
-                  <span className="val" style={{ color: '#4ade80' }}>{publishedModulesCount}</span>
-                  <span className="lbl">Published Modules</span>
-                </div>
-                <div className="ca-mini-stat">
-                  <span className="val">{stats?.metrics?.activeExams || 0}</span>
-                  <span className="lbl">Active Exams</span>
-                </div>
-                <div className="ca-mini-stat">
-                  <span className="val">{leaderboard.reduce((a, s) => a + (s.xp || 0), 0)}</span>
-                  <span className="lbl">Total Campus XP</span>
-                </div>
-              </div>
-            </div>
 
-            {/* Quick Launchpad Grid */}
-            <div className="ca-quick-flow-grid">
-              <div className="ca-flow-step" onClick={() => setActiveTab('modules')}>
-                <div className="ca-step-num">01</div>
-                <h4>Curriculum & Library Studio</h4>
-                <p>Author tailored coursework modules. Students will only see what you publish; until published, their library is empty.</p>
-                <span className="ca-step-link">Manage Modules <ArrowRight size={14} /></span>
-              </div>
-              <div className="ca-flow-step" onClick={() => setActiveTab('leaderboard')}>
-                <div className="ca-step-num">02</div>
-                <h4>Student XP & Podium</h4>
-                <p>Track real-time XP accumulation, problem-solving streaks, and view the Gold, Silver, and Bronze student champions.</p>
-                <span className="ca-step-link">View Rankings <ArrowRight size={14} /></span>
-              </div>
-              <div className="ca-flow-step" onClick={() => setActiveTab('students')}>
-                <div className="ca-step-num">03</div>
-                <h4>Bulk Student Roster</h4>
-                <p>Quickly import class lists via CSV. Auto-generate student accounts with zero individual signup friction.</p>
-                <span className="ca-step-link">Onboard Students <ArrowRight size={14} /></span>
-              </div>
-            </div>
+              <div className="home-dashboard-vertical">
+                
+                {/* ══ SECTION 1: PROFILE HEADER (RICH DARK HERO) ══ */}
+                <header className="profile-header-black">
+                  <div className="profile-header-inner">
 
-            {/* Top 3 Podium Preview */}
-            {leaderboard.length > 0 && (
-              <div className="ca-section-card ca-podium-preview-card">
-                <div className="ca-card-head-row">
-                  <div>
-                    <h3>Campus Podium Leaders</h3>
-                    <p className="ca-card-desc">Top students driving academic excellence in {orgName}</p>
-                  </div>
-                  <button className="ca-btn-link" onClick={() => setActiveTab('leaderboard')}>
-                    Full Leaderboard <ArrowRight size={14} />
-                  </button>
-                </div>
+                    {/* Typewriter Greeting Banner */}
+                    <h1 className="welcome-banner-text">
+                      {greetingPrefix}
+                      {greetingUser && <span className="welcome-username-highlight">{greetingUser}</span>}
+                      {greetingSuffix}
+                      {!greetingDone && <span className="tw-cursor" />}
+                    </h1>
 
-                <div className="ca-mini-podium-grid">
-                  {leaderboard.slice(0, 3).map((student, idx) => {
-                    const isGold = idx === 0;
-                    const isSilver = idx === 1;
-                    const isBronze = idx === 2;
-                    return (
-                      <div key={student.id} className={`ca-podium-slot slot-${idx + 1}`}>
-                        <div className="ca-podium-rank-tag">
-                          {isGold ? <Crown size={20} className="gold-icon" /> :
-                           isSilver ? <Award size={18} className="silver-icon" /> :
-                           <Award size={18} className="bronze-icon" />}
-                          <span>Rank #{idx + 1}</span>
+                    {/* 3-Column Profile Card Row */}
+                    <div className="profile-card-row">
+
+                      {/* COL 1: Dicebear Avatar with Online Pulse */}
+                      <div className="profile-col-avatar">
+                        <div className="profile-avatar-dicebear">
+                          <img
+                            src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${formData.avatarId || username || 'Sniper'}&backgroundColor=transparent`}
+                            alt={`${username} avatar`}
+                            className="dicebear-img"
+                          />
+                          <span className="avatar-online-dot" />
                         </div>
-                        <div className="ca-podium-avatar">{student.name?.charAt(0) || student.rollNo?.charAt(0)}</div>
-                        <h4>{student.name || student.rollNo}</h4>
-                        <span className="ca-podium-roll">{student.rollNo} • {student.branch}</span>
-                        <div className="ca-podium-xp-pill">
-                          <Zap size={14} /> <strong>{student.xp} XP</strong>
+                      </div>
+
+                      {/* COL 2: Identity & Telemetry Stats */}
+                      <div className="profile-col-info">
+                        <div className="profile-name-row">
+                          <span className="profile-username-text">{username}</span>
+                          <span className="profile-email-chip">
+                            <School size={11} />
+                            {orgName}
+                          </span>
+                          {user?.email && (
+                            <span className="profile-email-chip">
+                              <Globe size={11} />
+                              {user.email}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Bio */}
+                        <p className="profile-bio-text">{formData.bio}</p>
+
+                        {/* Teaching Specialization & Tech Stack Tags */}
+                        {formData.stack && formData.stack.length > 0 && (
+                          <div className="profile-stack-row">
+                            {formData.stack.map(tag => (
+                              <span key={tag} className="profile-stack-tag">
+                                <Code2 size={10} />{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* 4-Stat Telemetry Grid */}
+                        <div className="profile-stats-grid">
+                          <div className="stat-card">
+                            <span className="stat-card-label">Total Campus XP</span>
+                            <span className="stat-card-value"><AnimatedCounter end={totalCampusXp} /> XP</span>
+                          </div>
+                          <div className="stat-card">
+                            <span className="stat-card-label">Enrolled Students</span>
+                            <span className="stat-card-value streak-glow">
+                              <Flame size={14} fill="currentColor" />
+                              <span>{enrolledStudentsCount} Students</span>
+                            </span>
+                          </div>
+                          <div className="stat-card">
+                            <span className="stat-card-label">Curriculum Modules</span>
+                            <span className="stat-card-value text-red">{publishedModulesCount} Active</span>
+                          </div>
+                          <div className="stat-card">
+                            <span className="stat-card-label">Proctored Assessments</span>
+                            <span className="stat-card-value">{exams.length} Conducted</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* COL 3: Radial Progress Ring */}
+                      <div className="profile-col-ring">
+                        <div className="circle-progress-container">
+                          <svg className="radial-progress" viewBox="0 0 100 100">
+                            <circle className="radial-track" cx="50" cy="50" r="42" />
+                            <motion.circle
+                              className="radial-fill"
+                              cx="50" cy="50" r="42"
+                              strokeDasharray="263.8"
+                              initial={{ strokeDashoffset: 263.8 }}
+                              animate={{ strokeDashoffset: 263.8 - (263.8 * curriculumTargetPercent) / 100 }}
+                              transition={{ duration: 1.2, ease: "easeOut" }}
+                              style={{ stroke: 'var(--primary)' }}
+                            />
+                          </svg>
+                          <div className="radial-center">
+                            <span className="radial-percent">{Math.round(curriculumTargetPercent)}%</span>
+                            <span className="radial-lbl">Academic Reach</span>
+                          </div>
+                        </div>
+                        <div className="radial-tier-label" style={{ color: 'var(--primary)' }}>
+                          Senior Faculty Coordinator
+                        </div>
+                        <div className="radial-xp-summary">
+                          <span className="radial-xp-val">{publishedModulesCount} Modules Active</span>
+                          <span className="radial-xp-next">/ {maxSeats} Cohort Target</span>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                </header>
+
+                {/* ══ SECTION 2: ACTIVITY LOG HEATMAP (TACTICAL COMMITS & LAB LOGS) ══ */}
+                <div className="dashboard-content-area">
+                  <section className="home-activity-log-section">
+                    <div className="section-header-row calendar-header-row">
+                      <div className="section-title-wrapper-row">
+                        <div className="title-left-group">
+                          <Terminal size={20} className="calendar-accent-icon" />
+                          <h2 className="vertical-section-title">CAMPUS ACTIVITY LOG (PAST YEAR)</h2>
+                        </div>
+                        <div className="calendar-stats-summary-row">
+                          <div className="cal-summary-item">
+                            <span className="cal-summary-num">{enrolledStudentsCount}</span>
+                            <span className="cal-summary-lbl">Active Cohort</span>
+                          </div>
+                          <div className="cal-summary-separator" />
+                          <div className="cal-summary-item">
+                            <span className="cal-summary-num streak-text-glow">{publishedModulesCount} Modules</span>
+                            <span className="cal-summary-lbl">Published</span>
+                          </div>
+                          <div className="cal-summary-separator" />
+                          <div className="cal-summary-item">
+                            <span className="cal-summary-num">{totalCampusXp.toLocaleString()}</span>
+                            <span className="cal-summary-lbl">Campus XP</span>
+                          </div>
+                          <div className="cal-summary-separator" />
+                          <div className="cal-summary-item">
+                            <span className="cal-summary-num">{stats?.metrics?.totalSubmissions || 0}</span>
+                            <span className="cal-summary-lbl">Submissions</span>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="vertical-section-subtitle">
+                        Contribution grid logging daily student submissions, lab executions, and proctored coding assessments.
+                      </p>
+                    </div>
+
+                    <div className="heatmap-card">
+                      <div className="heatmap-inner">
+                        <div className="heatmap-months">
+                          {monthLabels.map((lbl, i) => (
+                            <span key={i} className="heatmap-month" style={{ gridColumnStart: lbl.index + 1 }}>
+                              {lbl.month.toUpperCase()}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="heatmap-grid">
+                          {heatmapData.map((week, wi) => (
+                            <div key={wi} className="heatmap-week">
+                              {week.map((day, di) => (
+                                <div
+                                  key={di}
+                                  className={`heatmap-day level-${day.level}`}
+                                  title={
+                                    day.submissions > 0
+                                      ? `${day.date}: ${day.submissions} student submission${day.submissions > 1 ? 's' : ''}${day.xp > 0 ? ` (${day.xp} XP)` : ''}`
+                                      : day.xp > 0
+                                      ? `${day.date}: ${day.xp} campus XP gained`
+                                      : `${day.date}: No campus activity logged`
+                                  }
+                                />
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="heatmap-legend">
+                          <span>IDLE</span>
+                          {[0, 1, 2, 3, 4].map(l => <div key={l} className={`heatmap-day level-${l}`} />)}
+                          <span>ACTIVE</span>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                {/* ══ MOTIVATIONAL TICKER MARQUEE ══ */}
+                <div className="ticker-banner">
+                  <div className="ticker-viewport">
+                    <div className="ticker-track">
+                      {motivationalQuotes.concat(motivationalQuotes).map((q, i) => (
+                        <span key={i} className="ticker-item">
+                          <span className="ticker-dot">✦</span>{q}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* ══ SECTION 3: SOLVED MODULES & CURRICULUM PROGRESSION CAROUSEL ══ */}
+                <section className="progression-section-fullwidth">
+                  <div className="progression-fullwidth-inner">
+                    <div className="section-header-row">
+                      <div className="title-left-group">
+                        <Layers size={20} className="carousel-accent-icon" />
+                        <h2 className="vertical-section-title">Department Curriculum & Lab Progression</h2>
+                      </div>
+                      <p className="vertical-section-subtitle">
+                        Manage active coursework modules, monitor student cohort stages, and publish new academic chapters.
+                      </p>
+                    </div>
+
+                    <div className="carousel-wrapper-container">
+                      {modules.length === 0 ? (
+                        <div className="fac-empty-carousel-banner">
+                          <div className="fac-empty-carousel-icon">
+                            <BookOpen size={36} className="text-blue" />
+                          </div>
+                          <div className="fac-empty-carousel-content">
+                            <h3>No Curriculum Modules Created Yet</h3>
+                            <p>Your institutional curriculum studio is currently empty. Author and publish coursework modules to populate your student cohort's library and track progression here.</p>
+                          </div>
+                          <button className="fac-primary-btn" onClick={() => setActiveNav('library')}>
+                            <Plus size={16} />
+                            <span>Author First Module</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          {showLeftArrow && (
+                            <button className="carousel-nav-btn btn-left" onClick={() => scrollCarousel('left')} aria-label="Slide Left">
+                              <ChevronLeft size={20} />
+                            </button>
+                          )}
+
+                          <div className="modules-carousel-viewport" ref={carouselRef} onScroll={handleCarouselScroll}>
+                            {modules.map(mod => {
+                              const totalQ = (mod.topics || []).reduce((acc, t) => acc + (t.questions?.length || 0), 0);
+                              const isPublished = Boolean(mod.is_published);
+                              const modColor = mod.color || '#ef4444';
+                              return (
+                                <div
+                                  key={mod.id}
+                                  className="module-progression-large-card"
+                                  style={{
+                                    '--accent-theme': modColor,
+                                    '--accent-theme-glow': modColor + '40'
+                                  }}
+                                >
+                                  <div className="large-card-header">
+                                    <div className="large-card-icon-box" style={{ color: modColor, backgroundColor: `${modColor}15` }}>
+                                      <Terminal size={26} />
+                                    </div>
+                                    <div className="large-card-meta">
+                                      <span className="large-card-category">{(mod.category || 'Computer Science').toUpperCase()}</span>
+                                      <span className="large-card-title">{mod.title}</span>
+                                    </div>
+                                    <span
+                                      className="large-card-level-badge"
+                                      style={{
+                                        color: isPublished ? '#10b981' : '#f59e0b',
+                                        borderColor: isPublished ? '#10b98150' : '#f59e0b50'
+                                      }}
+                                    >
+                                      {isPublished ? 'PUBLISHED' : 'DRAFT'}
+                                    </span>
+                                  </div>
+
+                                  <p className="large-card-desc-text">{mod.description || 'Institutional coursework module.'}</p>
+
+                                  <div className="large-card-milestone-info">
+                                    <div className="milestone-stat-row">
+                                      <span className="m-stat-label">Chapters:</span>
+                                      <span className="m-stat-value text-glow-accent" style={{ color: modColor }}>{mod.topics?.length || 0} Topics</span>
+                                    </div>
+                                    <div className="milestone-stat-row">
+                                      <span className="m-stat-label">Target Cohort:</span>
+                                      <span className="m-stat-value text-muted-val">{mod.target_branch || 'ALL'} • {mod.target_batch || 'ALL'}</span>
+                                    </div>
+                                  </div>
+
+                                  <div className="large-card-tag-group">
+                                    {(mod.topics || []).slice(0, 3).map((t, idx) => (
+                                      <span key={t.id || idx} className="large-card-tag-pill">{t.title}</span>
+                                    ))}
+                                  </div>
+
+                                  <div className="large-card-progress-box">
+                                    <div className="large-card-progress-ratio">
+                                      <span>{isPublished ? 'Live in Student Library' : 'Draft in Studio'}</span>
+                                      <span>{totalQ} MCQs</span>
+                                    </div>
+                                    <div className="large-card-progress-track">
+                                      <div
+                                        className="large-card-progress-fill"
+                                        style={{
+                                          width: isPublished ? '100%' : '35%',
+                                          backgroundColor: modColor
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <button className="large-card-cta-btn" onClick={() => setActiveNav('library')}>
+                                    <span>Open Curriculum Studio</span>
+                                    <Play size={12} fill="currentColor" />
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {showRightArrow && (
+                            <button className="carousel-nav-btn btn-right" onClick={() => scrollCarousel('right')} aria-label="Slide Right">
+                              <ChevronRight size={20} />
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </section>
+
+                {/* ══ SECTION 4: CAMPUS HALL OF FAME (3D PODIUM & RANKINGS) ══ */}
+                <section className="fame-section-fullwidth">
+                  <div className="fame-fullwidth-inner">
+                    <div className="fame-header-interactive" onClick={() => navigate('/leaderboard', { state: { from: 'college-admin' } })}>
+                      <h2 className="vertical-section-title fame-title-glow">
+                        Campus Hall of Fame <ChevronRight size={16} className="title-chevron-icon" />
+                      </h2>
+                      <button className="leaderboard-header-btn" onClick={(e) => { e.stopPropagation(); navigate('/leaderboard', { state: { from: 'college-admin' } }); }}>
+                        <Trophy size={14} />
+                        <span>View Full Leaderboard</span>
+                        <ArrowUpRight size={14} />
+                      </button>
+                    </div>
+
+                    <div className="fame-layout-split">
+                      {/* LEFT: 3D Top 3 Podium */}
+                      <div className="fame-podium-col">
+                        <div className="fame-podium">
+                          {/* 2nd Place */}
+                          <div className="podium-column column-2">
+                            <span className="podium-rank-emoji">🥈</span>
+                            <div className="podium-avatar-circle avatar-silver">
+                              {leaderboard[1]?.name ? leaderboard[1].name[0].toUpperCase() : '2'}
+                            </div>
+                            <div className="podium-user-info">
+                              <span className="podium-username">{leaderboard[1]?.name || 'Priya Nair'}</span>
+                              <span className="podium-xp">{leaderboard[1]?.xp || '3,450'} XP</span>
+                            </div>
+                            <div className="podium-box step-2-box"><span className="step-num">2</span></div>
+                          </div>
+
+                          {/* 1st Place */}
+                          <div className="podium-column column-1">
+                            <span className="podium-crown-icon"><Crown size={20} fill="#fbbf24" color="#fbbf24" /></span>
+                            <span className="podium-rank-emoji">🥇</span>
+                            <div className="podium-avatar-circle avatar-gold">
+                              {leaderboard[0]?.name ? leaderboard[0].name[0].toUpperCase() : '1'}
+                            </div>
+                            <div className="podium-user-info">
+                              <span className="podium-username">{leaderboard[0]?.name || 'Aryan Sharma'}</span>
+                              <span className="podium-xp">{leaderboard[0]?.xp || '5,820'} XP</span>
+                            </div>
+                            <div className="podium-box step-1-box"><span className="step-num">1</span></div>
+                          </div>
+
+                          {/* 3rd Place */}
+                          <div className="podium-column column-3">
+                            <span className="podium-rank-emoji">🥉</span>
+                            <div className="podium-avatar-circle avatar-bronze">
+                              {leaderboard[2]?.name ? leaderboard[2].name[0].toUpperCase() : '3'}
+                            </div>
+                            <div className="podium-user-info">
+                              <span className="podium-username">{leaderboard[2]?.name || 'Rohan Gupta'}</span>
+                              <span className="podium-xp">{leaderboard[2]?.xp || '2,110'} XP</span>
+                            </div>
+                            <div className="podium-box step-3-box"><span className="step-num">3</span></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="fame-split-divider" />
+
+                      {/* RIGHT: Ranks 4-10 list */}
+                      <div className="fame-rankings-col">
+                        <div className="fame-rankings-label">ACADEMIC RANKS 4 – 10</div>
+                        <div className="fame-list-stack">
+                          {(leaderboard.length > 3 ? leaderboard.slice(3, 10) : [
+                            { name: 'Aditya Rao', rollNo: '21CS004', xp: 1950, branch: 'CSE' },
+                            { name: 'Sneha Patel', rollNo: '21IT002', xp: 1820, branch: 'IT' },
+                            { name: 'Vikram Seth', rollNo: '21CS008', xp: 1640, branch: 'CSE' },
+                            { name: 'Ananya Roy', rollNo: '21ECE01', xp: 1450, branch: 'ECE' }
+                          ]).map((ranker, idx) => (
+                            <div key={ranker.rollNo || idx} className="fame-list-row">
+                              <span className="fame-list-rank">#{idx + 4}</span>
+                              <div className="fame-list-avatar">{ranker.name ? ranker.name[0].toUpperCase() : 'S'}</div>
+                              <span className="fame-list-username">{ranker.name} <span style={{ opacity: 0.6, fontSize: '0.8rem' }}>({ranker.branch})</span></span>
+                              <span className="fame-list-xp">{ranker.xp?.toLocaleString()} XP</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* ══ SECTION 5: INSTITUTIONAL BADGES & ACCREDITATIONS ══ */}
+                <div className="dashboard-content-area">
+                  <section className="dashboard-vertical-section achievements-section">
+                    <div className="section-header-row">
+                      <div className="title-left-group">
+                        <Award size={20} className="achievements-accent-icon" />
+                        <h2 className="vertical-section-title">Institutional Accreditations & Badges</h2>
+                      </div>
+                      <p className="vertical-section-subtitle">
+                        Campus faculty credentials and verified milestones based on curriculum development and assessment integrity.
+                      </p>
+                    </div>
+
+                    <div className="achievements-grid">
+                      {facultyBadges.map(badge => {
+                        const Icon = badge.icon;
+                        return (
+                          <div
+                            key={badge.id}
+                            className={`badge-card ${badge.unlocked ? 'unlocked' : 'locked'}`}
+                            style={badge.unlocked ? { '--badge-color': badge.color } : {}}
+                          >
+                            <div className="badge-icon-wrapper">
+                              {badge.unlocked ? (
+                                <div className="badge-glow-effect" style={{ backgroundColor: badge.color }} />
+                              ) : (
+                                <div className="badge-lock-overlay"><Lock size={12} /></div>
+                              )}
+                              <Icon className="badge-main-icon" size={24} style={badge.unlocked ? { color: badge.color } : { color: '#52525b' }} />
+                            </div>
+                            <div className="badge-details">
+                              <span className="badge-name">{badge.name}</span>
+                              <span className="badge-desc">{badge.desc}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                </div>
+
+                {/* ══ SECTION 6: ABOUT CAMPUS & PLATFORM OVERVIEW ══ */}
+                <section className="about-section-fullwidth">
+                  <div className="about-section-inner">
+                    <div className="about-section-header">
+                      <div className="about-header-label">
+                        <span className="about-label-dot" />
+                        <span>INSTITUTIONAL ECOSYSTEM</span>
+                      </div>
+                      <h2 className="about-main-title">
+                        Engineered for Campuses.<br /><span className="about-title-accent">Built for Industry Placement.</span>
+                      </h2>
+                      <p className="about-subtitle">
+                        BrightCode Campus empowers faculty with automated code grading, secure proctored examination arenas, and competitive benchmarks that bridge university coursework with tier-1 engineering standards.
+                      </p>
+                    </div>
+
+                    <div className="about-content-grid">
+                      <div className="about-card about-card-mission">
+                        <div className="about-card-icon-row">
+                          <div className="about-card-icon" style={{ background: 'rgba(239, 68, 68, 0.12)', color: 'var(--primary)' }}>
+                            <Flame size={22} />
+                          </div>
+                          <span className="about-card-tag">Campus Mission</span>
+                        </div>
+                        <h3 className="about-card-title">Democratising Algorithmic Excellence</h3>
+                        <p className="about-card-body">
+                          We replace passive lecture slides with interactive coding challenges and anti-cheat exam environments, giving your students continuous feedback and measurable portfolio accomplishments.
+                        </p>
+                        <ul className="about-bullet-list">
+                          <li><span className="about-bullet-dot" style={{ background: 'var(--primary)' }} />Department-specific customized curriculum modules</li>
+                          <li><span className="about-bullet-dot" style={{ background: 'var(--primary)' }} />Automated code execution against strict test cases</li>
+                          <li><span className="about-bullet-dot" style={{ background: 'var(--primary)' }} />Full browser surveillance and tab-switch telemetry</li>
+                        </ul>
+                      </div>
+
+                      <div className="about-card about-card-howto">
+                        <div className="about-card-icon-row">
+                          <div className="about-card-icon" style={{ background: 'rgba(59,130,246,0.12)', color: '#3b82f6' }}>
+                            <Layers size={22} />
+                          </div>
+                          <span className="about-card-tag">Faculty Workflow</span>
+                        </div>
+                        <h3 className="about-card-title">Curate. Proctor. Benchmark.</h3>
+                        <div className="about-steps-list">
+                          <div className="about-step-item">
+                            <div className="about-step-num" style={{ borderColor: '#3b82f6', color: '#3b82f6' }}>01</div>
+                            <div className="about-step-content">
+                              <span className="about-step-title">Author Coursework</span>
+                              <span className="about-step-desc">Publish interactive code checking modules visible only to your enrolled students.</span>
+                            </div>
+                          </div>
+                          <div className="about-step-item">
+                            <div className="about-step-num" style={{ borderColor: '#10b981', color: '#10b981' }}>02</div>
+                            <div className="about-step-content">
+                              <span className="about-step-title">Schedule Lab Exams</span>
+                              <span className="about-step-desc">Launch timed proctoring sessions with automated test cases and violation tracking.</span>
+                            </div>
+                          </div>
+                          <div className="about-step-item">
+                            <div className="about-step-num" style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }}>03</div>
+                            <div className="about-step-content">
+                              <span className="about-step-title">Track Campus XP</span>
+                              <span className="about-step-desc">Analyze cohort telemetry, inspect marks, and celebrate top performers on the podium.</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="about-card about-card-stats">
+                        <div className="about-card-icon-row">
+                          <div className="about-card-icon" style={{ background: 'rgba(168,85,247,0.12)', color: '#a855f7' }}>
+                            <Trophy size={22} />
+                          </div>
+                          <span className="about-card-tag">Campus Telemetry</span>
+                        </div>
+                        <h3 className="about-card-title">At a Glance</h3>
+                        <div className="about-stats-grid">
+                          <div className="about-stat-box">
+                            <span className="about-stat-num" style={{ color: 'var(--primary)' }}>{publishedModulesCount}</span>
+                            <span className="about-stat-label">Published Modules</span>
+                          </div>
+                          <div className="about-stat-box">
+                            <span className="about-stat-num" style={{ color: '#3b82f6' }}>{enrolledStudentsCount}</span>
+                            <span className="about-stat-label">Enrolled Students</span>
+                          </div>
+                          <div className="about-stat-box">
+                            <span className="about-stat-num" style={{ color: '#10b981' }}>{exams.length}</span>
+                            <span className="about-stat-label">Proctored Exams</span>
+                          </div>
+                          <div className="about-stat-box">
+                            <span className="about-stat-num" style={{ color: '#fbbf24' }}>{totalCampusXp.toLocaleString()}</span>
+                            <span className="about-stat-label">Campus XP</span>
+                          </div>
+                        </div>
+                        <div className="about-tech-tracks-row">
+                          {[
+                            { label: 'C++', color: '#ef4444' },
+                            { label: 'Java', color: '#10b981' },
+                            { label: 'Python', color: '#eab308' },
+                            { label: 'DSA', color: '#3b82f6' },
+                            { label: 'Operating Systems', color: '#0ea5e9' }
+                          ].map(t => (
+                            <span key={t.label} className="about-track-pill" style={{ borderColor: t.color + '50', color: t.color, background: t.color + '12' }}>{t.label}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="about-contact-section">
+                      <div className="about-contact-text">
+                        <span className="about-contact-eyebrow">Academic Support</span>
+                        <h3 className="about-contact-headline">Need assistance configuring your department?</h3>
+                        <p className="about-contact-desc">
+                          Our campus onboarding specialists are available to assist with bulk student imports, custom compiler setup, and grading configuration.
+                        </p>
+                      </div>
+                      <div className="about-contact-links">
+                        <a href="mailto:codebrightlim@gmail.com" className="about-contact-btn">
+                          Contact Campus Support
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+              </div>
+            </motion.div>
+          )}
+
+
+{/* ══════════════════════════════════════════════════════════════════════
+              PAGE 2: LIBRARY (CURRICULUM & COURSEWORK STUDIO)
+              ══════════════════════════════════════════════════════════════════════ */}
+          {activeNav === 'library' && (
+            <motion.div
+              key="library"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              className="fac-section-view"
+            >
+              <div className="fac-page-header">
+                <span className="fac-tagline">FACULTY CURRICULUM STUDIO</span>
+                <h1 className="fac-title">Coursework & Library Modules</h1>
+                <p className="fac-subtitle">
+                  Author rich conceptual check modules with lecture theory and MCQs. Institutional students will only see modules published here; if empty, their library displays an empty state.
+                </p>
+              </div>
+
+              {/* Action Bar */}
+              <div className="fac-library-toolbar">
+                <div className="fac-toolbar-left">
+                  <button className="fac-primary-btn" onClick={handleOpenCreateModule}>
+                    <Plus size={16} /> <span>Author New Module</span>
+                  </button>
+                  <button className="fac-secondary-btn" onClick={() => handleLoadTemplate('dsa')}>
+                    <Sparkles size={14} /> <span>Load C++ DSA Template</span>
+                  </button>
+                  <button className="fac-secondary-btn" onClick={() => handleLoadTemplate('python')}>
+                    <Sparkles size={14} /> <span>Load Python Template</span>
+                  </button>
+                </div>
+
+                <div className="fac-toolbar-right">
+                  <div className="fac-filter-pills">
+                    <button
+                      className={`filter-pill ${moduleFilter === 'ALL' ? 'active' : ''}`}
+                      onClick={() => setModuleFilter('ALL')}
+                    >
+                      All ({modules.length})
+                    </button>
+                    <button
+                      className={`filter-pill ${moduleFilter === 'published' ? 'active' : ''}`}
+                      onClick={() => setModuleFilter('published')}
+                    >
+                      Published ({publishedModulesCount})
+                    </button>
+                    <button
+                      className={`filter-pill ${moduleFilter === 'draft' ? 'active' : ''}`}
+                      onClick={() => setModuleFilter('draft')}
+                    >
+                      Drafts ({draftModulesCount})
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Module Cards Grid (Styled Identical to Library.jsx) */}
+              {loadingModules ? (
+                <div className="fac-loading-box">
+                  <RefreshCw className="spin-animation" size={36} />
+                  <p>Syncing faculty curriculum modules...</p>
+                </div>
+              ) : filteredModules.length === 0 ? (
+                <div className="fac-empty-box">
+                  <BookOpen size={48} className="text-blue" />
+                  <h3>No Curriculum Modules Found</h3>
+                  <p>Click "Author New Module" or load one of our ready-to-publish starter templates to populate your students' library.</p>
+                  <button className="fac-primary-btn" onClick={handleOpenCreateModule}>
+                    <Plus size={16} /> <span>Create Your First Module</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="fac-modules-grid">
+                  {filteredModules.map((mod) => {
+                    const totalQ = (mod.topics || []).reduce((acc, t) => acc + (t.questions?.length || 0), 0);
+                    const isPublished = Boolean(mod.is_published);
+
+                    return (
+                      <div
+                        key={mod.id}
+                        className="fac-module-card"
+                        style={{ '--mod-glow': mod.color || '#ef4444' }}
+                      >
+                        <div className="mod-accent-bar" style={{ background: mod.color || '#ef4444' }} />
+
+                        <div className="mod-top-row">
+                          <span className="mod-category-badge">{mod.category || 'Computer Science'}</span>
+                          <div className={`mod-pub-pill ${isPublished ? 'published' : 'draft'}`}>
+                            <span className="dot" />
+                            <span>{isPublished ? 'PUBLISHED' : 'DRAFT'}</span>
+                          </div>
+                        </div>
+
+                        <h3 className="mod-title">{mod.title}</h3>
+                        <p className="mod-desc">{mod.description}</p>
+
+                        <div className="mod-meta-strip">
+                          <span><strong>{mod.topics?.length || 0}</strong> Chapters</span>
+                          <span>•</span>
+                          <span><strong>{totalQ}</strong> MCQs</span>
+                          <span>•</span>
+                          <span>Branch: <strong>{mod.target_branch || 'ALL'}</strong></span>
+                          <span>•</span>
+                          <span>Batch: <strong>{mod.target_batch || 'ALL'}</strong></span>
+                        </div>
+
+                        <div className="mod-actions-row">
+                          <button
+                            className={`mod-btn-pub ${isPublished ? 'unpub' : 'pub'}`}
+                            onClick={() => handleTogglePublishModule(mod)}
+                          >
+                            {isPublished ? 'Unpublish to Draft' : 'Publish to Students'}
+                          </button>
+                          <button
+                            className="mod-btn-icon"
+                            onClick={() => handleOpenEditModule(mod)}
+                            title="Edit Module"
+                          >
+                            <Edit3 size={15} />
+                          </button>
+                          <button
+                            className="mod-btn-icon text-red"
+                            onClick={() => handleDeleteModule(mod.id)}
+                            title="Delete Module"
+                          >
+                            <Trash2 size={15} />
+                          </button>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </motion.div>
+          )}
 
-        {/* ══════════════════════════════════════════════════════════════════════
-            TAB 2: CURRICULUM & LIBRARY STUDIO
-            ══════════════════════════════════════════════════════════════════════ */}
-        {activeTab === 'modules' && (
-          <div className="ca-tab-pane">
-            <div className="ca-studio-header-card">
-              <div className="studio-hero-info">
-                <span className="ca-badge-inst">Institutional Curriculum Core</span>
-                <h2>Coursework & Library Studio</h2>
-                <p>
-                  Create, publish, and curate interactive modules with conceptual theory and MCQs.
-                  Institutional students only see published modules for their branch. Until published, their library is empty.
+          {/* ══════════════════════════════════════════════════════════════════════
+              PAGE 4: NOTES & LAB SHEETS (FACULTY CODEX)
+              ══════════════════════════════════════════════════════════════════════ */}
+          {activeNav === 'notes' && (
+            <motion.div
+              key="notes"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              className="fac-section-view"
+            >
+              <div className="fac-page-header">
+                <span className="fac-tagline">FACULTY CODEX • LAB SHEETS</span>
+                <h1 className="fac-title">Classroom Notes & Assignments</h1>
+                <p className="fac-subtitle">
+                  Distribute weekly lab problem sheets and maintain structured course lecture materials for your students.
                 </p>
               </div>
-              <div className="studio-hero-cta">
-                <button className="ca-btn-primary" onClick={handleOpenCreateModule}>
-                  <FolderPlus size={16} /> <span>Create New Module</span>
+
+              {/* Sub-tabs: Course Notes vs Lab Sheets */}
+              <div className="fac-subtabs-strip">
+                <button
+                  className={`subtab-btn ${notesSubTab === 'notes' ? 'active' : ''}`}
+                  onClick={() => setNotesSubTab('notes')}
+                >
+                  <FileText size={15} /> <span>Notes & Codex ({vaultNotes.length})</span>
+                </button>
+                <button
+                  className={`subtab-btn ${notesSubTab === 'sheets' ? 'active' : ''}`}
+                  onClick={() => setNotesSubTab('sheets')}
+                >
+                  <Layers size={15} /> <span>Weekly Lab Sheets ({assignments.length})</span>
                 </button>
               </div>
-            </div>
 
-            {/* Metrics Bar */}
-            <div className="ca-studio-metrics-bar">
-              <div className="studio-metric-box">
-                <span className="metric-val">{publishedModulesCount}</span>
-                <span className="metric-lbl">Live for Students</span>
-              </div>
-              <div className="studio-metric-box">
-                <span className="metric-val" style={{ color: '#fbbf24' }}>{draftModulesCount}</span>
-                <span className="metric-lbl">Unpublished Drafts</span>
-              </div>
-              <div className="studio-metric-box">
-                <span className="metric-val">{modules.reduce((a, m) => a + (m.topics?.length || 0), 0)}</span>
-                <span className="metric-lbl">Total Topics / Chapters</span>
-              </div>
-              <div className="studio-metric-box">
-                <span className="metric-val">
-                  {modules.reduce((a, m) => a + (m.topics || []).reduce((acc, t) => acc + (t.questions?.length || 0), 0), 0)}
-                </span>
-                <span className="metric-lbl">Total Question Checks</span>
-              </div>
-            </div>
+              {/* VIEW 1: LAB SHEETS */}
+              {notesSubTab === 'sheets' && (
+                <div className="fac-sheets-container">
+                  <div className="fac-card">
+                    <h3>Publish New Weekly Lab Sheet</h3>
+                    <p className="fac-card-desc">Assign curated coding exercises to students without strict proctoring time limits.</p>
 
-            {/* Modules Grid */}
-            <div className="ca-modules-grid">
-              {modules.map((mod) => {
-                const totalQ = (mod.topics || []).reduce((acc, t) => acc + (t.questions?.length || 0), 0);
-                const isPublished = Boolean(mod.is_published);
+                    <form onSubmit={handleCreateAssignment} className="fac-form-grid">
+                      <div className="form-group col-span-2">
+                        <label>Lab Sheet Title *</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Week 4: Recursion, Divide & Conquer"
+                          value={asgnTitle}
+                          onChange={(e) => setAsgnTitle(e.target.value)}
+                          required
+                        />
+                      </div>
 
-                return (
-                  <div key={mod.id} className="ca-mod-card" style={{ '--mod-accent': mod.color || '#3b82f6' }}>
-                    <div className="ca-mod-accent-bar" style={{ background: mod.color || '#3b82f6' }}></div>
-                    <div className="ca-mod-top">
-                      <span className="ca-mod-category">{mod.category || 'Computer Science'}</span>
-                      <div className={`ca-publish-pill ${isPublished ? 'published' : 'draft'}`}>
-                        <span className="status-dot"></span>
-                        <span>{isPublished ? 'PUBLISHED' : 'DRAFT'}</span>
+                      <div className="form-group col-span-2">
+                        <label>Instructions & Submission Deadline</label>
+                        <textarea
+                          rows={2}
+                          placeholder="Explain requirements and lab due date..."
+                          value={asgnDesc}
+                          onChange={(e) => setAsgnDesc(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Target Branch</label>
+                        <select value={asgnBranch} onChange={(e) => setAsgnBranch(e.target.value)}>
+                          <option value="ALL">All Branches</option>
+                          <option value="CSE">CSE</option>
+                          <option value="IT">IT</option>
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Target Batch</label>
+                        <input type="text" value={asgnBatch} onChange={(e) => setAsgnBatch(e.target.value)} />
+                      </div>
+
+                      <div className="form-group col-span-2">
+                        <label>Pick Questions for this Sheet</label>
+                        <div className="curated-q-grid">
+                          {CURATED_QUESTIONS.map((q) => {
+                            const isSelected = asgnQuestions.includes(q.id);
+                            return (
+                              <div
+                                key={q.id}
+                                className={`curated-q-card ${isSelected ? 'selected' : ''}`}
+                                onClick={() => {
+                                  if (isSelected) setAsgnQuestions(asgnQuestions.filter(id => id !== q.id));
+                                  else setAsgnQuestions([...asgnQuestions, q.id]);
+                                }}
+                              >
+                                <div className="q-check">{isSelected && <Check size={14} />}</div>
+                                <div className="q-info">
+                                  <strong>{q.title}</strong>
+                                  <span className={`diff-badge ${q.difficulty.toLowerCase()}`}>{q.difficulty}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="form-actions col-span-2">
+                        <button type="submit" className="fac-primary-btn" disabled={creatingAsgn}>
+                          {creatingAsgn ? 'Publishing Sheet...' : 'Publish to Student Library'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  {/* Active Sheets List */}
+                  <div className="fac-card">
+                    <h3>Active Lab Sheets ({assignments.length})</h3>
+                    <div className="fac-assignments-grid">
+                      {assignments.map(asgn => (
+                        <div key={asgn.id} className="fac-asgn-card">
+                          <div className="asgn-head">
+                            <h4>{asgn.title}</h4>
+                            <button className="mod-btn-icon text-red" onClick={() => handleDeleteAssignment(asgn.id)}>
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                          <p>{asgn.description}</p>
+                          <div className="asgn-meta">
+                            <span>Branch: <strong>{asgn.target_branch}</strong></span>
+                            <span>Batch: <strong>{asgn.target_batch}</strong></span>
+                            <span>Problems: <strong>{asgn.problems?.length || 0}</strong></span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* VIEW 2: COURSE NOTES & CODEX (CodeVault Architecture) */}
+              {notesSubTab === 'notes' && (
+      <div className="fac-empty-box" style={{ padding: '40px', textAlign: 'center' }}>
+        <p>Notes & Codex view loading...</p>
+      </div>
+    )}
+    </div>
+    )}
+
+                  {/* Leaderboard Table */}
+                  <div className="fac-table-container">
+                    <table className="fac-data-table">
+                      <thead>
+                        <tr>
+                          <th>Rank</th>
+                          <th>Roll Number</th>
+                          <th>Student Name</th>
+                          <th>Branch</th>
+                          <th>Batch</th>
+                          <th>Total XP</th>
+                          <th>Tier Badge</th>
+                          <th>Problems Solved</th>
+                          <th>Streak</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leaderboard.length > 0 ? (
+                          leaderboard.map((st, idx) => (
+                            <tr key={st.id || idx}>
+                              <td><span className={`rank-badge-num rank-${idx + 1}`}>#{idx + 1}</span></td>
+                              <td><strong>{st.rollNo}</strong></td>
+                              <td>{st.name || st.username}</td>
+                              <td><span className="fac-pill-branch">{st.branch}</span></td>
+                              <td>{st.batch}</td>
+                              <td>
+                                <span className="xp-cell">
+                                  <Zap size={14} className="text-yellow" />
+                                  <strong>{st.xp} XP</strong>
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`fac-rank-tier ${st.rankBadge || 'lvl-novice'}`}>
+                                  {st.rankLevel || 'Novice'}
+                                </span>
+                              </td>
+                              <td>{st.problemsSolved || 0}</td>
+                              <td>
+                                <span className="streak-cell">
+                                  <Flame size={14} className="text-red" />
+                                  {st.streak || 0}d
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={9} style={{ textAlign: 'center', padding: '36px', color: '#94a3b8' }}>
+                              No students ranked in this department yet.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* SUBTAB 2: STUDENT ONBOARDING & DIRECTORY */}
+              {rosterSubTab === 'students' && (
+                <div className="fac-roster-container">
+                  {/* Bulk CSV Card */}
+                  <div className="fac-card">
+                    <div className="fac-card-head">
+                      <div>
+                        <h3>Bulk Student Account Provisioning</h3>
+                        <p className="fac-card-desc">Paste CSV lines or load sample data. Accounts are created with zero individual student signup hassle.</p>
+                      </div>
+                      <button className="fac-secondary-btn" onClick={() => setBulkInputText(SAMPLE_CSV)}>
+                        <FileSpreadsheet size={15} /> <span>Load Sample CSV</span>
+                      </button>
+                    </div>
+
+                    <textarea
+                      className="fac-csv-textarea"
+                      rows={4}
+                      placeholder="Format: RollNumber, Full Name, Email, Branch, Batch&#10;Example:&#10;21CS001, Aarav Sharma, aarav@apex.edu, CSE, 2026&#10;21CS002, Diya Patel, diya@apex.edu, CSE, 2026"
+                      value={bulkInputText}
+                      onChange={(e) => setBulkInputText(e.target.value)}
+                    />
+
+                    <div className="fac-csv-footer">
+                      <div className="csv-note">
+                        <CheckCircle2 size={16} className="text-green" />
+                        <span>Initial passwords are automatically formatted as <code>Bright@&lt;RollNo&gt;</code></span>
+                      </div>
+                      <button
+                        className="fac-primary-btn"
+                        onClick={handleGenerateAccounts}
+                        disabled={generatingAccounts}
+                      >
+                        {generatingAccounts ? 'Provisioning Accounts...' : 'Generate & Provision Accounts'}
+                      </button>
+                    </div>
+
+                    {lastGeneratedCredentials && lastGeneratedCredentials.length > 0 && (
+                      <div className="fac-cred-alert">
+                        <div className="cred-info">
+                          <CheckCircle2 size={24} className="text-green" />
+                          <div>
+                            <strong>Successfully Provisioned Accounts!</strong>
+                            <p>Download the credentials CSV file to distribute passwords to your students.</p>
+                          </div>
+                        </div>
+                        <button className="fac-primary-btn" onClick={handleDownloadCredentials}>
+                          <Download size={15} /> <span>Download Student Credentials (CSV)</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Enrolled Students Table */}
+                  <div className="fac-card">
+                    <div className="fac-card-head">
+                      <div>
+                        <h3>Enrolled Students Roster ({filteredStudents.length})</h3>
+                        <p className="fac-card-desc">View student credentials, real-time XP accumulation, and reset passwords.</p>
+                      </div>
+                      <div className="fac-table-search-row">
+                        <div className="search-box">
+                          <Search size={15} />
+                          <input
+                            type="text"
+                            placeholder="Search Roll No, Name..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                          />
+                        </div>
+                        <select
+                          value={filterBranch}
+                          onChange={(e) => setFilterBranch(e.target.value)}
+                          className="fac-select"
+                        >
+                          <option value="ALL">All Branches</option>
+                          <option value="CSE">CSE</option>
+                          <option value="IT">IT</option>
+                          <option value="ECE">ECE</option>
+                        </select>
                       </div>
                     </div>
 
-                    <h3 className="ca-mod-title">{mod.title}</h3>
-                    <p className="ca-mod-desc">{mod.description}</p>
-
-                    <div className="ca-mod-specs">
-                      <span><strong>{mod.topics?.length || 0}</strong> Topics</span>
-                      <span>•</span>
-                      <span><strong>{totalQ}</strong> MCQs</span>
-                      <span>•</span>
-                      <span>Branch: <strong>{mod.target_branch || 'ALL'}</strong></span>
+                    <div className="fac-table-container">
+                      <table className="fac-data-table">
+                        <thead>
+                          <tr>
+                            <th>Roll Number</th>
+                            <th>Student Name</th>
+                            <th>Branch</th>
+                            <th>Batch</th>
+                            <th>Total XP</th>
+                            <th>Tier Level</th>
+                            <th>Solved</th>
+                            <th>Streak</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredStudents.length > 0 ? (
+                            filteredStudents.map((st) => (
+                              <tr key={st.id}>
+                                <td><strong>{st.rollNo}</strong></td>
+                                <td>{st.name || st.username}</td>
+                                <td><span className="fac-pill-branch">{st.branch}</span></td>
+                                <td>{st.batch}</td>
+                                <td>
+                                  <span className="xp-cell">
+                                    <Zap size={14} className="text-yellow" />
+                                    <strong>{st.xp || 0} XP</strong>
+                                  </span>
+                                </td>
+                                <td>
+                                  <span className={`fac-rank-tier ${st.rankBadge || 'lvl-novice'}`}>
+                                    {st.rankLevel || 'Novice'}
+                                  </span>
+                                </td>
+                                <td>{st.problemsSolved || 0}</td>
+                                <td>
+                                  <span className="streak-cell">
+                                    <Flame size={14} className="text-red" />
+                                    {st.streak || 0}d
+                                  </span>
+                                </td>
+                                <td>
+                                  <div className="action-buttons-cell">
+                                    <button
+                                      className="mod-btn-icon"
+                                      title="Reset Password"
+                                      onClick={() => handleResetPassword(st.id, st.rollNo)}
+                                    >
+                                      <KeyRound size={15} />
+                                    </button>
+                                    <button
+                                      className="mod-btn-icon text-red"
+                                      title="Delete & Free License Seat"
+                                      onClick={() => handleDeleteStudent(st.id)}
+                                    >
+                                      <Trash2 size={15} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={9} style={{ textAlign: 'center', padding: '36px', color: '#94a3b8' }}>
+                                No enrolled students match your search filter.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
                     </div>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
 
-                    <div className="ca-mod-actions">
-                      <button
-                        className={`ca-btn-toggle-pub ${isPublished ? 'unpublish' : 'publish'}`}
-                        onClick={() => handleTogglePublishModule(mod)}
+          {/* ══════════════════════════════════════════════════════════════════════
+              PAGE 6: FACULTY PROFILE & SYSTEM SETTINGS (1:1 with Settings.jsx)
+              ══════════════════════════════════════════════════════════════════════ */}
+          {activeNav === 'settings' && (
+            <motion.div
+              key="settings"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              className="settings-page"
+              style={{ paddingTop: 0, minHeight: 'calc(100vh - 60px)', background: 'var(--bg-dark, #09090b)' }}
+            >
+              <div className="settings-wrapper" style={{ height: 'calc(100vh - 64px)' }}>
+                {/* Left Sidebar */}
+                <aside className="settings-sidebar">
+                  <nav className="sidebar-nav">
+                    <button
+                      className={`nav-item ${settingsTab === 'details' ? 'active' : ''}`}
+                      onClick={() => setSettingsTab('details')}
+                    >
+                      <User size={18} />
+                      <span>Identity & Intel</span>
+                    </button>
+                    <button
+                      className={`nav-item ${settingsTab === 'settings' ? 'active' : ''}`}
+                      onClick={() => setSettingsTab('settings')}
+                    >
+                      <SettingsIcon size={18} />
+                      <span>System & Themes</span>
+                    </button>
+                    <button
+                      className={`nav-item ${settingsTab === 'security' ? 'active' : ''}`}
+                      onClick={() => setSettingsTab('security')}
+                    >
+                      <Shield size={18} />
+                      <span>Security & Credentials</span>
+                    </button>
+                    <button
+                      className={`nav-item ${settingsTab === 'about' ? 'active' : ''}`}
+                      onClick={() => setSettingsTab('about')}
+                    >
+                      <Info size={18} />
+                      <span>About Console</span>
+                    </button>
+                  </nav>
+
+                  <div className="sidebar-footer">
+                    <button className="logout-trigger" onClick={handleLogout}>
+                      <LogOut size={16} />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </aside>
+
+                {/* Main Settings Canvas */}
+                <main className="settings-main">
+                  <AnimatePresence mode="wait">
+                    {/* TAB 1: IDENTITY & PROFILE */}
+                    {settingsTab === 'details' && (
+                      <motion.div
+                        key="details"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="dashboard-content"
                       >
-                        {isPublished ? 'Unpublish to Draft' : 'Publish to Students'}
-                      </button>
-                      <button className="ca-btn-edit-mod" onClick={() => handleOpenEditModule(mod)} title="Edit Module">
-                        <Edit3 size={15} />
-                      </button>
-                      <button className="ca-btn-del-mod" onClick={() => handleDeleteModule(mod.id)} title="Delete Module">
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ══════════════════════════════════════════════════════════════════════
-            TAB 3: CAMPUS LEADERBOARD & XP TELEMETRY
-            ══════════════════════════════════════════════════════════════════════ */}
-        {activeTab === 'leaderboard' && (
-          <div className="ca-tab-pane">
-            <div className="ca-section-card">
-              <div className="ca-leaderboard-header">
-                <div>
-                  <span className="ca-badge-inst">Live Academic Telemetry</span>
-                  <h2>{orgName} Campus Leaderboard</h2>
-                  <p>Real-time XP counts and problem-solving metrics across all departments.</p>
-                </div>
-                <div className="ca-lb-filters">
-                  <select
-                    className="ca-select-filter"
-                    value={leaderboardFilter}
-                    onChange={(e) => setLeaderboardFilter(e.target.value)}
-                  >
-                    <option value="ALL">All Departments</option>
-                    <option value="CSE">CSE Department</option>
-                    <option value="IT">IT Department</option>
-                    <option value="ECE">ECE Department</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Podium Visual (Top 3) */}
-              {leaderboard.length >= 1 && (
-                <div className="ca-grand-podium">
-                  {/* Rank 2 - Silver */}
-                  {leaderboard[1] && (
-                    <div className="podium-pillar silver">
-                      <div className="podium-badge"><Award size={20} /> #2</div>
-                      <div className="podium-avatar">{leaderboard[1].name?.charAt(0) || '2'}</div>
-                      <div className="podium-name">{leaderboard[1].name}</div>
-                      <div className="podium-roll">{leaderboard[1].rollNo} ({leaderboard[1].branch})</div>
-                      <div className="podium-xp"><Zap size={14} /> {leaderboard[1].xp} XP</div>
-                      <div className="pillar-block block-silver">2nd Place</div>
-                    </div>
-                  )}
-
-                  {/* Rank 1 - Gold */}
-                  {leaderboard[0] && (
-                    <div className="podium-pillar gold">
-                      <div className="podium-badge crown"><Crown size={24} /> #1</div>
-                      <div className="podium-avatar gold-avatar">{leaderboard[0].name?.charAt(0) || '1'}</div>
-                      <div className="podium-name">{leaderboard[0].name}</div>
-                      <div className="podium-roll">{leaderboard[0].rollNo} ({leaderboard[0].branch})</div>
-                      <div className="podium-xp gold-xp"><Zap size={15} /> {leaderboard[0].xp} XP</div>
-                      <div className="pillar-block block-gold">CAMPUS CHAMPION</div>
-                    </div>
-                  )}
-
-                  {/* Rank 3 - Bronze */}
-                  {leaderboard[2] && (
-                    <div className="podium-pillar bronze">
-                      <div className="podium-badge"><Award size={20} /> #3</div>
-                      <div className="podium-avatar">{leaderboard[2].name?.charAt(0) || '3'}</div>
-                      <div className="podium-name">{leaderboard[2].name}</div>
-                      <div className="podium-roll">{leaderboard[2].rollNo} ({leaderboard[2].branch})</div>
-                      <div className="podium-xp"><Zap size={14} /> {leaderboard[2].xp} XP</div>
-                      <div className="pillar-block block-bronze">3rd Place</div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Leaderboard Table */}
-              <div className="ca-table-container">
-                <table className="ca-data-table">
-                  <thead>
-                    <tr>
-                      <th>Rank</th>
-                      <th>Roll Number</th>
-                      <th>Student Name</th>
-                      <th>Branch</th>
-                      <th>Batch</th>
-                      <th>Total XP</th>
-                      <th>Rank Tier</th>
-                      <th>Problems Solved</th>
-                      <th>Streak</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {leaderboard.length > 0 ? (
-                      leaderboard.map((st, idx) => (
-                        <tr key={st.id || idx}>
-                          <td>
-                            <span className={`ca-rank-circle rank-${idx + 1}`}>#{idx + 1}</span>
-                          </td>
-                          <td><strong>{st.rollNo}</strong></td>
-                          <td>{st.name || st.username}</td>
-                          <td><span className="ca-pill-branch">{st.branch}</span></td>
-                          <td>{st.batch}</td>
-                          <td>
-                            <span className="ca-xp-cell">
-                              <Zap size={14} className="text-yellow" />
-                              <strong>{st.xp} XP</strong>
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`ca-rank-badge ${st.rankBadge || 'lvl-novice'}`}>
-                              {st.rankLevel || 'Novice'}
-                            </span>
-                          </td>
-                          <td>{st.problemsSolved || 0}</td>
-                          <td>
-                            <span className="ca-streak-cell">
-                              <Flame size={14} className="text-red" />
-                              {st.streak || 0} Days
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={9} style={{ textAlign: 'center', padding: '36px', color: '#94a3b8' }}>
-                          No students ranked in this branch yet.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ══════════════════════════════════════════════════════════════════════
-            TAB 4: STUDENT DIRECTORY & ONBOARDING
-            ══════════════════════════════════════════════════════════════════════ */}
-        {activeTab === 'students' && (
-          <div className="ca-tab-pane">
-            {/* Bulk Onboarding Box */}
-            <div className="ca-section-card">
-              <div className="ca-card-head-row">
-                <div>
-                  <h3>Bulk Onboard Student Accounts</h3>
-                  <p className="ca-card-desc">
-                    Paste student details as comma-separated values (CSV) or load our sample roster.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="ca-btn-secondary"
-                  onClick={() => setBulkInputText(SAMPLE_CSV)}
-                >
-                  <FileSpreadsheet size={15} /> <span>Load Sample CSV</span>
-                </button>
-              </div>
-
-              <div className="ca-csv-input-wrapper">
-                <textarea
-                  className="ca-csv-textarea"
-                  rows={4}
-                  placeholder="Format: RollNumber, Full Name, Email, Branch, Batch&#10;Example:&#10;21CS001, Aarav Sharma, aarav@apex.edu, CSE, 2026&#10;21CS002, Diya Patel, diya@apex.edu, CSE, 2026"
-                  value={bulkInputText}
-                  onChange={(e) => setBulkInputText(e.target.value)}
-                />
-              </div>
-
-              <div className="ca-generator-footer">
-                <div className="ca-gen-note">
-                  <CheckCircle2 size={16} className="text-green" />
-                  <span>Initial passwords are automatically formatted as <code>Bright@&lt;RollNo&gt;</code></span>
-                </div>
-                <button
-                  type="button"
-                  className="ca-btn-primary"
-                  onClick={handleGenerateAccounts}
-                  disabled={generatingAccounts}
-                >
-                  {generatingAccounts ? 'Generating Accounts...' : 'Generate & Provision Accounts'}
-                </button>
-              </div>
-
-              {lastGeneratedCredentials && lastGeneratedCredentials.length > 0 && (
-                <div className="ca-credentials-alert-box">
-                  <div className="ca-cred-info">
-                    <CheckCircle2 size={24} className="text-green" />
-                    <div>
-                      <strong>Accounts Provisioned Successfully!</strong>
-                      <p>Download the credentials CSV file to distribute passwords to your class.</p>
-                    </div>
-                  </div>
-                  <button className="ca-btn-download-csv" onClick={handleDownloadCredentials}>
-                    <Download size={16} /> <span>Download Student Credentials (CSV)</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Enrolled Students Table with XP */}
-            <div className="ca-section-card">
-              <div className="ca-table-header-row">
-                <div className="ca-table-title-box">
-                  <h3>Enrolled Students Roster</h3>
-                  <span className="ca-table-sub">({filteredStudents.length} students found)</span>
-                </div>
-                <div className="ca-table-actions">
-                  <div className="ca-search-input">
-                    <Search size={16} />
-                    <input
-                      type="text"
-                      placeholder="Search Roll No, Name, Username..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                  <select
-                    className="ca-select-filter"
-                    value={filterBranch}
-                    onChange={(e) => setFilterBranch(e.target.value)}
-                  >
-                    <option value="ALL">All Branches</option>
-                    <option value="CSE">CSE</option>
-                    <option value="IT">IT</option>
-                    <option value="ECE">ECE</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="ca-table-container">
-                <table className="ca-data-table">
-                  <thead>
-                    <tr>
-                      <th>Roll Number</th>
-                      <th>Student Name</th>
-                      <th>Branch</th>
-                      <th>Batch</th>
-                      <th>Total XP</th>
-                      <th>Rank Level</th>
-                      <th>Solved</th>
-                      <th>Streak</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredStudents.length > 0 ? (
-                      filteredStudents.map((st) => (
-                        <tr key={st.id}>
-                          <td><strong>{st.rollNo}</strong></td>
-                          <td>{st.name || st.username}</td>
-                          <td><span className="ca-pill-branch">{st.branch}</span></td>
-                          <td>{st.batch}</td>
-                          <td>
-                            <span className="ca-xp-cell">
-                              <Zap size={14} className="text-yellow" />
-                              <strong>{st.xp || 0} XP</strong>
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`ca-rank-badge ${st.rankBadge || 'lvl-novice'}`}>
-                              {st.rankLevel || 'Novice'}
-                            </span>
-                          </td>
-                          <td>{st.problemsSolved || 0}</td>
-                          <td>
-                            <span className="ca-streak-cell">
-                              <Flame size={14} className="text-red" />
-                              {st.streak || 0}d
-                            </span>
-                          </td>
-                          <td>
-                            <div className="ca-action-cell">
-                              <button
-                                className="ca-action-icon"
-                                title="Reset Password"
-                                onClick={() => handleResetPassword(st.id, st.rollNo)}
-                              >
-                                <KeyRound size={15} />
-                              </button>
-                              <button
-                                className="ca-action-icon text-red"
-                                title="Delete & Release Seat"
-                                onClick={() => handleDeleteStudent(st.id)}
-                              >
-                                <Trash2 size={15} />
-                              </button>
+                        {/* Profile Header Banner */}
+                        <div
+                          className="profile-header-card premium-header"
+                          style={{
+                            background: BANNERS.find(b => b.id === formData.bannerId)?.css || 'linear-gradient(135deg, rgba(20,20,25,0.9) 0%, rgba(10,10,15,0.95) 100%)'
+                          }}
+                        >
+                          <div className="premium-overlay" />
+                          <div className="profile-info-group">
+                            <div className="premium-avatar-wrap">
+                              <div className="premium-avatar-hex">
+                                <img
+                                  src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${formData.avatarId || username || 'Sniper'}&backgroundColor=transparent`}
+                                  alt="Faculty Avatar"
+                                />
+                              </div>
                             </div>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={9} style={{ textAlign: 'center', padding: '36px', color: '#94a3b8' }}>
-                          No students found matching your criteria.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ══════════════════════════════════════════════════════════════════════
-            TAB 5: EXAM CREATOR
-            ══════════════════════════════════════════════════════════════════════ */}
-        {activeTab === 'exams' && (
-          <div className="ca-tab-pane">
-            <div className="ca-section-card">
-              <h3>Create Proctored Lab Exam</h3>
-              <p className="ca-card-desc">
-                Schedule a coding test with full anti-cheating tab-switch detection and code execution tests.
-              </p>
-
-              <form onSubmit={handleCreateExam} className="ca-form-grid">
-                <div className="ca-form-group full-width">
-                  <label>Exam Title *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Midterm Lab Assessment: Data Structures & Algorithms"
-                    value={examTitle}
-                    onChange={(e) => setExamTitle(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="ca-form-group full-width">
-                  <label>Instructions & Description</label>
-                  <textarea
-                    rows={3}
-                    placeholder="Provide exam rules, allowed compilers, and proctoring constraints..."
-                    value={examDesc}
-                    onChange={(e) => setExamDesc(e.target.value)}
-                  />
-                </div>
-
-                <div className="ca-form-group">
-                  <label>Duration (Minutes) *</label>
-                  <input
-                    type="number"
-                    min="15"
-                    max="180"
-                    value={examDuration}
-                    onChange={(e) => setExamDuration(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="ca-form-group">
-                  <label>Target Branch</label>
-                  <select value={targetBranch} onChange={(e) => setTargetBranch(e.target.value)}>
-                    <option value="ALL">All Branches</option>
-                    <option value="CSE">CSE</option>
-                    <option value="IT">IT</option>
-                    <option value="ECE">ECE</option>
-                  </select>
-                </div>
-
-                <div className="ca-form-group">
-                  <label>Target Batch</label>
-                  <input
-                    type="text"
-                    value={targetBatch}
-                    onChange={(e) => setTargetBatch(e.target.value)}
-                    placeholder="e.g. 2026"
-                  />
-                </div>
-
-                <div className="ca-form-group full-width">
-                  <label>Select Coding Challenges for this Exam *</label>
-                  <div className="ca-curated-q-grid">
-                    {CURATED_QUESTIONS.map((q) => {
-                      const isSelected = selectedQuestions.includes(q.id);
-                      return (
-                        <div
-                          key={q.id}
-                          className={`ca-curated-q-card ${isSelected ? 'selected' : ''}`}
-                          onClick={() => {
-                            if (isSelected) {
-                              setSelectedQuestions(selectedQuestions.filter(id => id !== q.id));
-                            } else {
-                              setSelectedQuestions([...selectedQuestions, q.id]);
-                            }
-                          }}
-                        >
-                          <div className="ca-q-check">{isSelected && <Check size={14} />}</div>
-                          <div className="ca-q-info">
-                            <strong>{q.title}</strong>
-                            <span className={`diff-badge ${q.difficulty.toLowerCase()}`}>{q.difficulty}</span>
+                            <div className="profile-text">
+                              <div className="name-row">
+                                <h1>{username}</h1>
+                                <span className="premium-rank-badge">FACULTY COORDINATOR</span>
+                              </div>
+                              <div className="email-row">
+                                <Mail size={14} />
+                                <span>{user?.email || `${username.toLowerCase()}@${orgCode.toLowerCase()}.edu`}</span>
+                              </div>
+                              <div className="premium-stats-row">
+                                <span className="stat-pill"><School size={12}/> {orgName}</span>
+                                <span className="stat-pill"><Users size={12}/> {enrolledStudentsCount} Students Enrolled</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="profile-actions">
+                            <button type="button" className="action-btn primary" onClick={() => setShowConfigModal(true)}>
+                              <Terminal size={16} />
+                              <span>Configure Username</span>
+                            </button>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
 
-                <div className="ca-form-actions full-width">
-                  <button type="submit" className="ca-btn-primary" disabled={creatingExam}>
-                    {creatingExam ? 'Scheduling Exam...' : 'Publish Proctored Exam'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+                        {/* Premium Details Grid */}
+                        <div className="premium-details-grid">
+                          <div className="premium-col">
+                            <div className="dashboard-card identity-card">
+                              <div className="card-header">
+                                <div className="header-icon"><User size={18} /></div>
+                                <h3>Faculty Bio & Department Arsenal</h3>
+                              </div>
+                              <div className="card-body">
+                                <div className="premium-input-group">
+                                  <label>Faculty Bio</label>
+                                  <input
+                                    type="text"
+                                    className="premium-input"
+                                    value={formData.bio}
+                                    onChange={(e) => handleBioChange(e.target.value)}
+                                    placeholder="Enter your academic title & research focus..."
+                                  />
+                                  <span className="save-indicator">{isSavingBio ? 'Saving...' : 'Auto-saves on typing'}</span>
+                                </div>
 
-        {/* ══════════════════════════════════════════════════════════════════════
-            TAB 6: LAB SHEETS & ASSIGNMENTS
-            ══════════════════════════════════════════════════════════════════════ */}
-        {activeTab === 'assignments' && (
-          <div className="ca-tab-pane">
-            <div className="ca-section-card">
-              <h3>Publish Weekly Lab Sheet / Practice Set</h3>
-              <p className="ca-card-desc">Assign non-timed curated question sets directly to your students' dashboard.</p>
+                                <div className="premium-input-group mt-4">
+                                  <label>Teaching Stack & Specialization Tags (Max 5)</label>
+                                  <div className="stack-container" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <div className="premium-add-stack">
+                                      <input
+                                        type="text"
+                                        value={newStackItem}
+                                        onChange={(e) => setNewStackItem(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && addStackItem()}
+                                        placeholder={formData.stack.length >= 5 ? "Max tags reached" : "Add skill (e.g. C++, OS, DBMS)..."}
+                                        disabled={formData.stack.length >= 5}
+                                      />
+                                      <button className="premium-add-btn" onClick={addStackItem} disabled={formData.stack.length >= 5}>
+                                        Add
+                                      </button>
+                                    </div>
+                                    <div className="stack-list">
+                                      {formData.stack.map((item, index) => (
+                                        <div key={index} className="stack-tag">
+                                          <span>{item}</span>
+                                          <button className="remove-tag" onClick={() => removeStackItem(index)}>
+                                            <X size={12} />
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
 
-              <form onSubmit={handleCreateAssignment} className="ca-form-grid">
-                <div className="ca-form-group full-width">
-                  <label>Lab Sheet Title *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Week 4: Dynamic Programming & Greedy Practice"
-                    value={asgnTitle}
-                    onChange={(e) => setAsgnTitle(e.target.value)}
-                    required
-                  />
-                </div>
+                                <div className="premium-section-divider"></div>
 
-                <div className="ca-form-group full-width">
-                  <label>Instructions & Submission Deadline</label>
-                  <textarea
-                    rows={2}
-                    placeholder="Instructions for students regarding due date and submission..."
-                    value={asgnDesc}
-                    onChange={(e) => setAsgnDesc(e.target.value)}
-                  />
-                </div>
+                                <div className="premium-input-group">
+                                  <label><Globe size={12} style={{ display: 'inline', marginRight: '4px' }}/> Academic & Professional Links</label>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
+                                    <input
+                                      type="text"
+                                      className="premium-input"
+                                      value={formData.github}
+                                      onChange={(e) => handleLinkChange('github', e.target.value)}
+                                      placeholder="GitHub profile URL..."
+                                    />
+                                    <input
+                                      type="text"
+                                      className="premium-input"
+                                      value={formData.leetcode}
+                                      onChange={(e) => handleLinkChange('leetcode', e.target.value)}
+                                      placeholder="LeetCode / Codeforces profile URL..."
+                                    />
+                                    <input
+                                      type="text"
+                                      className="premium-input"
+                                      value={formData.project1}
+                                      onChange={(e) => handleLinkChange('project1', e.target.value)}
+                                      placeholder="Google Scholar / ResearchGate URL..."
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
 
-                <div className="ca-form-group">
-                  <label>Target Branch</label>
-                  <select value={asgnBranch} onChange={(e) => setAsgnBranch(e.target.value)}>
-                    <option value="ALL">All Branches</option>
-                    <option value="CSE">CSE</option>
-                    <option value="IT">IT</option>
-                  </select>
-                </div>
+                          <div className="premium-col">
+                            {/* Choose Avatar Card */}
+                            <div className="dashboard-card avatar-selection-card">
+                              <div className="card-header">
+                                <div className="header-icon"><Sparkles size={18} /></div>
+                                <h3>Faculty Avatar Selector</h3>
+                              </div>
+                              <div className="card-body">
+                                <div className="avatar-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
+                                  {AVATARS.map(av => (
+                                    <div
+                                      key={av.seed}
+                                      className={`avatar-choice-item ${formData.avatarId === av.seed ? 'active' : ''}`}
+                                      onClick={() => handleAvatarSelect(av.seed)}
+                                      style={{
+                                        cursor: 'pointer',
+                                        padding: '8px',
+                                        borderRadius: '8px',
+                                        border: formData.avatarId === av.seed ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.08)',
+                                        background: formData.avatarId === av.seed ? 'rgba(var(--primary-rgb), 0.15)' : 'rgba(255,255,255,0.02)',
+                                        textAlign: 'center'
+                                      }}
+                                    >
+                                      <img
+                                        src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${av.seed}&backgroundColor=transparent`}
+                                        alt={av.seed}
+                                        style={{ width: '48px', height: '48px', margin: '0 auto', display: 'block' }}
+                                      />
+                                      <span style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '4px', display: 'block' }}>{av.seed}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
 
-                <div className="ca-form-group">
-                  <label>Target Batch</label>
-                  <input
-                    type="text"
-                    value={asgnBatch}
-                    onChange={(e) => setAsgnBatch(e.target.value)}
-                  />
-                </div>
-
-                <div className="ca-form-group full-width">
-                  <label>Pick Questions for this Sheet</label>
-                  <div className="ca-curated-q-grid">
-                    {CURATED_QUESTIONS.map((q) => {
-                      const isSelected = asgnQuestions.includes(q.id);
-                      return (
-                        <div
-                          key={q.id}
-                          className={`ca-curated-q-card ${isSelected ? 'selected' : ''}`}
-                          onClick={() => {
-                            if (isSelected) {
-                              setAsgnQuestions(asgnQuestions.filter(id => id !== q.id));
-                            } else {
-                              setAsgnQuestions([...asgnQuestions, q.id]);
-                            }
-                          }}
-                        >
-                          <div className="ca-q-check">{isSelected && <Check size={14} />}</div>
-                          <div className="ca-q-info">
-                            <strong>{q.title}</strong>
-                            <span className={`diff-badge ${q.difficulty.toLowerCase()}`}>{q.difficulty}</span>
+                            {/* Choose Banner Card */}
+                            <div className="dashboard-card banner-selection-card" style={{ marginTop: '16px' }}>
+                              <div className="card-header">
+                                <div className="header-icon"><Layers size={18} /></div>
+                                <h3>Header Theme Banner</h3>
+                              </div>
+                              <div className="card-body">
+                                <div className="banner-grid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                  {BANNERS.map(b => (
+                                    <div
+                                      key={b.id}
+                                      className={`banner-choice-item ${formData.bannerId === b.id ? 'active' : ''}`}
+                                      onClick={() => handleBannerSelect(b.id)}
+                                      style={{
+                                        cursor: 'pointer',
+                                        padding: '10px 14px',
+                                        borderRadius: '8px',
+                                        border: formData.bannerId === b.id ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.08)',
+                                        background: b.css,
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                      }}
+                                    >
+                                      <span style={{ fontWeight: 600, color: '#fff', fontSize: '0.85rem' }}>{b.name}</span>
+                                      {formData.bannerId === b.id && <ShieldCheck size={16} color="var(--primary)" />}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="ca-form-actions full-width">
-                  <button type="submit" className="ca-btn-primary" disabled={creatingAsgn}>
-                    {creatingAsgn ? 'Publishing Sheet...' : 'Publish Lab Sheet'}
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* List of Active Assignments */}
-            <div className="ca-section-card">
-              <h3>Active Lab Sheets ({assignments.length})</h3>
-              <div className="ca-asgn-grid">
-                {assignments.map(asgn => (
-                  <div key={asgn.id} className="ca-asgn-card">
-                    <div className="ca-asgn-head">
-                      <h4>{asgn.title}</h4>
-                      <button className="ca-btn-del-sm" onClick={() => handleDeleteAssignment(asgn.id)}>
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                    <p>{asgn.description}</p>
-                    <div className="ca-asgn-meta">
-                      <span>Branch: <strong>{asgn.target_branch}</strong></span>
-                      <span>Problems: <strong>{asgn.problems?.length || 0}</strong></span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ══════════════════════════════════════════════════════════════════════
-            TAB 7: LIVE PROCTORING & MARKSHEETS
-            ══════════════════════════════════════════════════════════════════════ */}
-        {activeTab === 'live' && (
-          <div className="ca-tab-pane">
-            <div className="ca-section-card">
-              <div className="ca-live-header">
-                <div>
-                  <h3>Live Exam Proctoring Console</h3>
-                  <p className="ca-card-desc">Real-time anti-cheat telemetry and code test results.</p>
-                </div>
-                <div className="ca-live-selector">
-                  <label>Select Exam:</label>
-                  <select
-                    value={selectedExamId}
-                    onChange={(e) => setSelectedExamId(e.target.value)}
-                  >
-                    {exams.map(e => (
-                      <option key={e.id} value={e.id}>{e.title}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {liveData && (
-                <div className="ca-live-stat-grid">
-                  <div className="ca-live-stat-box active">
-                    <span className="count">{liveData.activeStudents || 0}</span>
-                    <span className="label">Currently Solving</span>
-                  </div>
-                  <div className="ca-live-stat-box submitted">
-                    <span className="count">{liveData.submittedCount || 0}</span>
-                    <span className="label">Submissions Received</span>
-                  </div>
-                  <div className="ca-live-stat-box flagged">
-                    <span className="count">{liveData.flaggedCount || 0}</span>
-                    <span className="label">Cheating Violations Flagged</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Live Student Table */}
-              <div className="ca-table-container">
-                <table className="ca-data-table">
-                  <thead>
-                    <tr>
-                      <th>Roll Number</th>
-                      <th>Student Name</th>
-                      <th>Status</th>
-                      <th>Score</th>
-                      <th>Tab Switches</th>
-                      <th>Violations Flagged</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {liveData?.records && liveData.records.length > 0 ? (
-                      liveData.records.map((rec) => (
-                        <tr key={rec.id} className={rec.violationsCount > 2 ? 'ca-row-violation' : ''}>
-                          <td><strong>{rec.rollNo}</strong></td>
-                          <td>{rec.name}</td>
-                          <td>
-                            <span className={`ca-status-pill ${rec.status}`}>{rec.status}</span>
-                          </td>
-                          <td>
-                            <span className="ca-score-badge">{rec.score} / {rec.totalPoints}</span>
-                          </td>
-                          <td>{rec.tabSwitches || 0}</td>
-                          <td>
-                            <span className={`ca-violation-badge ${rec.violationsCount > 2 ? 'red' : rec.violationsCount > 0 ? 'yellow' : 'green'}`}>
-                              {rec.violationsCount > 0 ? `${rec.violationsCount} Suspicious Events` : 'Clean'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={6} style={{ textAlign: 'center', padding: '36px', color: '#94a3b8' }}>
-                          No student telemetry detected for this exam yet.
-                        </td>
-                      </tr>
+                      </motion.div>
                     )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
 
+                    {/* TAB 2: SYSTEM & THEMES */}
+                    {settingsTab === 'settings' && (
+                      <motion.div
+                        key="settings"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="dashboard-content"
+                      >
+                        {/* Theme Section */}
+                        <div className="system-section">
+                          <div className="section-header">
+                            <h2>Platform Themes</h2>
+                            <p className="section-desc">Choose your cyber aesthetic — applied immediately to the entire faculty console.</p>
+                          </div>
+                          <div className="theme-selector">
+                            <div
+                              className={`theme-option ${selectedTheme === 'crimson' ? 'active' : ''}`}
+                              onClick={() => handleThemeChange('crimson')}
+                            >
+                              <div className="theme-preview crimson-theme">
+                                <div className="preview-header"></div>
+                                <div className="preview-content">
+                                  <div className="preview-sidebar"></div>
+                                  <div className="preview-main">
+                                    <div className="preview-line"></div>
+                                    <div className="preview-line short"></div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="theme-info">
+                                <h3>Scarlet Flare</h3>
+                                <p>High-energy crimson matrix</p>
+                              </div>
+                              <div className="theme-check">
+                                <ShieldCheck size={16} />
+                              </div>
+                            </div>
+
+                            <div
+                              className={`theme-option ${selectedTheme === 'amber' ? 'active' : ''}`}
+                              onClick={() => handleThemeChange('amber')}
+                            >
+                              <div className="theme-preview amber-theme">
+                                <div className="preview-header"></div>
+                                <div className="preview-content">
+                                  <div className="preview-sidebar"></div>
+                                  <div className="preview-main">
+                                    <div className="preview-line"></div>
+                                    <div className="preview-line short"></div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="theme-info">
+                                <h3>Creeper Craft</h3>
+                                <p>Pixel block gold world</p>
+                              </div>
+                              <div className="theme-check">
+                                <ShieldCheck size={16} />
+                              </div>
+                            </div>
+
+                            <div
+                              className={`theme-option ${selectedTheme === 'neo-noir' ? 'active' : ''}`}
+                              onClick={() => handleThemeChange('neo-noir')}
+                            >
+                              <div className="theme-preview neo-noir-theme">
+                                <div className="preview-header"></div>
+                                <div className="preview-content">
+                                  <div className="preview-sidebar"></div>
+                                  <div className="preview-main">
+                                    <div className="preview-line"></div>
+                                    <div className="preview-line short"></div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="theme-info">
+                                <h3>Night City</h3>
+                                <p>Cyberpunk neon cyan grid</p>
+                              </div>
+                              <div className="theme-check">
+                                <ShieldCheck size={16} />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Accent Colors */}
+                        {selectedTheme === 'crimson' && (
+                          <div className="system-section" style={{ marginTop: '24px' }}>
+                            <div className="section-header">
+                              <h2>Primary Accent Color</h2>
+                              <p className="section-desc">Instantly shift the vibrant glow highlights across the console.</p>
+                            </div>
+                            <div className="accent-selector">
+                              {Object.entries(ACCENT_PALETTES).map(([key, p]) => (
+                                <div
+                                  key={key}
+                                  className={`accent-option ${accentColor === key ? 'active' : ''}`}
+                                  onClick={() => handleAccentChange(key)}
+                                >
+                                  <div className="accent-swatch" style={{ background: `linear-gradient(135deg, ${p.primary}, ${p.dark})` }}>
+                                    {accentColor === key && <span className="accent-check"><ShieldCheck size={16} /></span>}
+                                  </div>
+                                  <div className="accent-info">
+                                    <h3>{key === 'red' ? 'Scarlet Red' : key === 'orange' ? 'Ember Orange' : 'Dark Espresso'}</h3>
+                                    <p>{p.primary}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Danger Zone */}
+                        <div className="danger-zone" style={{ marginTop: '30px' }}>
+                          <div className="danger-content">
+                            <h3>Sign Out</h3>
+                            <p>End your institutional session and return to portal login.</p>
+                          </div>
+                          <button className="logout-btn-large" onClick={handleLogout}>
+                            <LogOut size={18} />
+                            <span>Sign Out</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* TAB 3: SECURITY & CREDENTIALS */}
+                    {settingsTab === 'security' && (
+                      <motion.div
+                        key="security"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="dashboard-content"
+                      >
+                        <div className="premium-details-grid">
+                          <div className="premium-col">
+                            <div className="dashboard-card identity-card">
+                              <div className="card-header">
+                                <div className="header-icon"><Lock size={18} /></div>
+                                <h3>Update Password</h3>
+                              </div>
+                              <form onSubmit={handleChangePassword} className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                <div className="premium-input-group">
+                                  <label>Current Password</label>
+                                  <input
+                                    type="password"
+                                    className="premium-input"
+                                    value={currentPassword}
+                                    onChange={(e) => setCurrentPassword(e.target.value)}
+                                    placeholder="Enter current password"
+                                    required
+                                  />
+                                </div>
+                                <div className="premium-input-group">
+                                  <label>New Password (Min 6 Characters)</label>
+                                  <input
+                                    type="password"
+                                    className="premium-input"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder="Enter new password"
+                                    required
+                                  />
+                                </div>
+                                <div className="premium-input-group">
+                                  <label>Confirm New Password</label>
+                                  <input
+                                    type="password"
+                                    className="premium-input"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="Re-type new password"
+                                    required
+                                  />
+                                </div>
+                                <button
+                                  type="submit"
+                                  className="premium-add-btn"
+                                  style={{ marginTop: '8px', alignSelf: 'flex-start', padding: '10px 20px' }}
+                                  disabled={isChangingPassword}
+                                >
+                                  {isChangingPassword ? 'Updating...' : 'Update Password'}
+                                </button>
+                              </form>
+                            </div>
+                          </div>
+
+                          <div className="premium-col">
+                            <div className="dashboard-card identity-card">
+                              <div className="card-header">
+                                <div className="header-icon"><School size={18} /></div>
+                                <h3>Institutional Verification</h3>
+                              </div>
+                              <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <div>
+                                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Institution</span>
+                                  <p style={{ margin: '2px 0', fontWeight: 600, color: '#fff' }}>{orgName}</p>
+                                </div>
+                                <div>
+                                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Institution Code</span>
+                                  <p style={{ margin: '2px 0', fontWeight: 600, color: 'var(--primary)' }}>{orgCode}</p>
+                                </div>
+                                <div>
+                                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Licensed Student Seats</span>
+                                  <p style={{ margin: '2px 0', fontWeight: 600, color: '#10b981' }}>{enrolledStudentsCount} / {maxSeats} Active Seats</p>
+                                </div>
+                                <div>
+                                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Faculty Coordinator ID</span>
+                                  <p style={{ margin: '2px 0', fontFamily: 'monospace', color: '#cbd5e1' }}>{user?.id || 'FAC_COORDINATOR_APEX'}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* TAB 4: ABOUT CONSOLE */}
+                    {settingsTab === 'about' && (
+                      <motion.div
+                        key="about"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="dashboard-content"
+                      >
+                        <div className="dashboard-card identity-card">
+                          <div className="card-header">
+                            <div className="header-icon"><Info size={18} /></div>
+                            <h3>About BrightCode Campus Console</h3>
+                          </div>
+                          <div className="card-body" style={{ color: '#cbd5e1', lineHeight: '1.6' }}>
+                            <p style={{ marginBottom: '14px' }}>
+                              The BrightCode Campus Console is the institutional command center for engineering faculty. It integrates curriculum authoring, real-time automated evaluation, tab-switch proctoring, and competitive telemetry.
+                            </p>
+                            <h4 style={{ color: '#fff', margin: '14px 0 6px' }}>Version & Runtime</h4>
+                            <p style={{ fontSize: '0.88rem', color: '#94a3b8' }}>BrightCode Core 2.8.4 • Institutional Release • React 19 / Node.js Engine</p>
+                            <h4 style={{ color: '#fff', margin: '14px 0 6px' }}>Support & Inquiries</h4>
+                            <p style={{ fontSize: '0.88rem', color: '#94a3b8' }}>Direct queries to: <strong>codebrightlim@gmail.com</strong></p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </main>
+              </div>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
       </main>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          CURRICULUM MODULE STUDIO MODAL
+          CONFIGURE PROFILE MODAL
+          ══════════════════════════════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {showConfigModal && (
+          <>
+            <motion.div
+              className="modal-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowConfigModal(false)}
+            />
+            <motion.div
+              className="config-modal"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
+            >
+              <div className="config-modal-header">
+                <div className="config-header-icon"><Terminal size={20} /></div>
+                <div>
+                  <h2>Configure Username</h2>
+                  <p>Update your faculty display name</p>
+                </div>
+                <button className="modal-close-btn" onClick={() => setShowConfigModal(false)}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="config-modal-body">
+                <div className="config-input-group">
+                  <label>Faculty Username</label>
+                  <input
+                    type="text"
+                    value={configData.username}
+                    onChange={(e) => setConfigData(prev => ({ ...prev, username: e.target.value }))}
+                    placeholder="Enter new faculty username..."
+                  />
+                </div>
+              </div>
+
+              <div className="config-modal-footer">
+                <button className="config-btn cancel" onClick={() => setShowConfigModal(false)}>
+                  Cancel
+                </button>
+                <button className="config-btn save" onClick={handleConfigureProfile} disabled={isSavingProfile}>
+                  {isSavingProfile ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+
+{/* ══════════════════════════════════════════════════════════════════════
+          CURRICULUM STUDIO MODAL
           ══════════════════════════════════════════════════════════════════════ */}
       {isModuleModalOpen && (
         <div className="ca-modal-overlay">
@@ -1672,9 +3007,8 @@ const CollegeAdmin = () => {
             </div>
 
             <form onSubmit={handleSaveModule} className="ca-studio-form">
-              {/* Starter Templates Bar */}
               <div className="studio-templates-bar">
-                <span>Quick Starter Templates:</span>
+                <span>Starter Templates:</span>
                 <button
                   type="button"
                   className="studio-tmpl-pill"
@@ -1704,7 +3038,7 @@ const CollegeAdmin = () => {
                 </div>
 
                 <div className="ca-form-group full-width">
-                  <label>Module Overview & Objectives</label>
+                  <label>Module Overview & Learning Objectives</label>
                   <textarea
                     rows={2}
                     placeholder="Describe what students will master in this module..."
@@ -1714,7 +3048,7 @@ const CollegeAdmin = () => {
                 </div>
 
                 <div className="ca-form-group">
-                  <label>Academic Domain / Category</label>
+                  <label>Academic Category</label>
                   <input
                     type="text"
                     value={moduleForm.category}
@@ -1724,7 +3058,7 @@ const CollegeAdmin = () => {
                 </div>
 
                 <div className="ca-form-group">
-                  <label>Accent Color</label>
+                  <label>Accent Glow Color</label>
                   <input
                     type="color"
                     value={moduleForm.color}
@@ -1759,8 +3093,8 @@ const CollegeAdmin = () => {
               {/* Topics / Chapters Editor */}
               <div className="studio-topics-container">
                 <div className="topics-head-row">
-                  <h4>Curriculum Chapters & Concept Checks ({moduleForm.topics.length})</h4>
-                  <button type="button" className="ca-btn-secondary-sm" onClick={handleAddTopic}>
+                  <h4>Curriculum Chapters & MCQs ({moduleForm.topics.length})</h4>
+                  <button type="button" className="fac-primary-btn-sm" onClick={handleAddTopic}>
                     <Plus size={14} /> <span>Add Chapter</span>
                   </button>
                 </div>
@@ -1880,7 +3214,7 @@ const CollegeAdmin = () => {
                               newTopics[tIdx].questions[qIdx].explanation = e.target.value;
                               setModuleForm({ ...moduleForm, topics: newTopics });
                             }}
-                            placeholder="Explanation shown after student answers..."
+                            placeholder="Diagnostic explanation shown after answer..."
                           />
                         </div>
                       ))}
@@ -1889,7 +3223,7 @@ const CollegeAdmin = () => {
                 ))}
               </div>
 
-              {/* Publish Toggle & Save Buttons */}
+              {/* Modal Footer */}
               <div className="ca-modal-footer">
                 <label className="studio-pub-checkbox">
                   <input
@@ -1902,13 +3236,13 @@ const CollegeAdmin = () => {
                 <div className="ca-modal-footer-btns">
                   <button
                     type="button"
-                    className="ca-btn-secondary"
+                    className="fac-secondary-btn"
                     onClick={() => setIsModuleModalOpen(false)}
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="ca-btn-primary">
-                    <Check size={16} /> <span>{editingModuleId ? 'Update Module' : 'Save Module'}</span>
+                  <button type="submit" className="fac-primary-btn">
+                    <Check size={16} /> <span>{editingModuleId ? 'Update Module' : 'Publish Module'}</span>
                   </button>
                 </div>
               </div>
@@ -1917,7 +3251,7 @@ const CollegeAdmin = () => {
         </div>
       )}
 
-      {/* ── Real-Time Friends & Faculty Lounge Drawer ─────────── */}
+      {/* ── Real-Time Friends Drawer ─────────────────────────── */}
       <FriendsDrawer
         open={friendsDrawerOpen}
         onClose={() => setFriendsDrawerOpen(false)}
